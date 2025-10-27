@@ -1,7 +1,7 @@
 """OpenAI provider adapter for GenOps AI governance."""
 
 import logging
-from typing import Any, Optional
+from typing import Any, Optional, Tuple
 
 from genops.core.telemetry import GenOpsTelemetry
 
@@ -29,11 +29,43 @@ class GenOpsOpenAIAdapter:
 
         self.client = client or OpenAI(**client_kwargs)
         self.telemetry = GenOpsTelemetry()
+        
+        # Define governance and request attributes
+        self.GOVERNANCE_ATTRIBUTES = {
+            'team', 'project', 'feature', 'customer_id', 'customer', 
+            'environment', 'cost_center', 'user_id'
+        }
+        self.REQUEST_ATTRIBUTES = {
+            'temperature', 'max_tokens', 'top_p', 'frequency_penalty',
+            'presence_penalty', 'stop', 'seed', 'stream'
+        }
+
+    def _extract_attributes(self, kwargs: dict) -> Tuple[dict, dict, dict]:
+        """Extract governance and request attributes from kwargs."""
+        governance_attrs = {}
+        request_attrs = {}
+        api_kwargs = kwargs.copy()
+        
+        # Extract governance attributes
+        for attr in self.GOVERNANCE_ATTRIBUTES:
+            if attr in kwargs:
+                governance_attrs[attr] = kwargs[attr]
+                api_kwargs.pop(attr)
+        
+        # Extract request attributes
+        for attr in self.REQUEST_ATTRIBUTES:
+            if attr in kwargs:
+                request_attrs[attr] = kwargs[attr]
+        
+        return governance_attrs, request_attrs, api_kwargs
 
     def chat_completions_create(self, **kwargs) -> Any:
         """Create chat completion with governance tracking."""
-        model = kwargs.get("model", "unknown")
-        messages = kwargs.get("messages", [])
+        # Extract attributes from kwargs
+        governance_attrs, request_attrs, api_kwargs = self._extract_attributes(kwargs)
+        
+        model = api_kwargs.get("model", "unknown")
+        messages = api_kwargs.get("messages", [])
 
         # Estimate input tokens (rough approximation)
         input_text = " ".join(
@@ -43,16 +75,33 @@ class GenOpsOpenAIAdapter:
 
         operation_name = "openai.chat.completions.create"
 
-        with self.telemetry.trace_operation(
-            operation_name=operation_name,
-            operation_type="ai.inference",
-            provider="openai",
-            model=model,
-            tokens_estimated_input=int(estimated_input_tokens),
-        ) as span:
+        # Add governance attributes to trace_operation
+        trace_attrs = {
+            "operation_name": operation_name,
+            "operation_type": "ai.inference",
+            "provider": "openai",
+            "model": model,
+            "tokens_estimated_input": int(estimated_input_tokens),
+        }
+        
+        # Add default attributes from instrumentation system
+        try:
+            from genops.auto_instrumentation import get_default_attributes
+            default_attrs = get_default_attributes() or {}
+            trace_attrs.update(default_attrs)
+        except (ImportError, Exception):
+            pass  # Fallback if not available
+            
+        trace_attrs.update(governance_attrs)
+
+        with self.telemetry.trace_operation(**trace_attrs) as span:
+            # Record request parameters in telemetry
+            for param, value in request_attrs.items():
+                span.set_attribute(f"genops.request.{param}", value)
+            
             try:
-                # Call OpenAI API
-                response = self.client.chat.completions.create(**kwargs)
+                # Call OpenAI API with cleaned kwargs (no governance attributes)
+                response = self.client.chat.completions.create(**api_kwargs)
 
                 # Extract usage and cost information
                 if hasattr(response, "usage") and response.usage:
@@ -84,24 +133,44 @@ class GenOpsOpenAIAdapter:
 
     def completions_create(self, **kwargs) -> Any:
         """Create completion with governance tracking."""
-        model = kwargs.get("model", "unknown")
-        prompt = kwargs.get("prompt", "")
+        # Extract attributes from kwargs
+        governance_attrs, request_attrs, api_kwargs = self._extract_attributes(kwargs)
+        
+        model = api_kwargs.get("model", "unknown")
+        prompt = api_kwargs.get("prompt", "")
 
         # Estimate input tokens
         estimated_input_tokens = len(str(prompt).split()) * 1.3
 
         operation_name = "openai.completions.create"
 
-        with self.telemetry.trace_operation(
-            operation_name=operation_name,
-            operation_type="ai.inference",
-            provider="openai",
-            model=model,
-            tokens_estimated_input=int(estimated_input_tokens),
-        ) as span:
+        # Add governance attributes to trace_operation
+        trace_attrs = {
+            "operation_name": operation_name,
+            "operation_type": "ai.inference",
+            "provider": "openai",
+            "model": model,
+            "tokens_estimated_input": int(estimated_input_tokens),
+        }
+        
+        # Add default attributes from instrumentation system
+        try:
+            from genops.auto_instrumentation import get_default_attributes
+            default_attrs = get_default_attributes() or {}
+            trace_attrs.update(default_attrs)
+        except (ImportError, Exception):
+            pass  # Fallback if not available
+            
+        trace_attrs.update(governance_attrs)
+
+        with self.telemetry.trace_operation(**trace_attrs) as span:
+            # Record request parameters in telemetry
+            for param, value in request_attrs.items():
+                span.set_attribute(f"genops.request.{param}", value)
+            
             try:
-                # Call OpenAI API
-                response = self.client.completions.create(**kwargs)
+                # Call OpenAI API with cleaned kwargs (no governance attributes)
+                response = self.client.completions.create(**api_kwargs)
 
                 # Extract usage and cost information
                 if hasattr(response, "usage") and response.usage:

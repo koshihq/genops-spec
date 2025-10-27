@@ -123,10 +123,10 @@ class TestEndToEndWorkflows:
         assert attrs["genops.provider"] == "openai"
         assert attrs["genops.model"] == "gpt-3.5-turbo"
         assert attrs["genops.request.temperature"] == 0.7
-        assert "genops.cost.total" in attrs
+        assert "genops.cost.amount" in attrs
         assert attrs["genops.cost.currency"] == "USD"
-        assert "genops.tokens.input" in attrs
-        assert "genops.tokens.output" in attrs
+        assert "genops.cost.tokens.input" in attrs
+        assert "genops.cost.tokens.output" in attrs
 
     def test_provider_integration_anthropic(
         self, mock_anthropic_import, mock_otel_setup
@@ -171,8 +171,8 @@ class TestEndToEndWorkflows:
         assert attrs["genops.model"] == "claude-3-sonnet-20240229"
         assert attrs["genops.request.temperature"] == 0.3
         assert attrs["genops.request.max_tokens"] == 1024
-        assert "genops.cost.total" in attrs
-        assert "genops.tokens.input" in attrs
+        assert "genops.cost.amount" in attrs
+        assert "genops.cost.tokens.input" in attrs
 
     def test_multi_provider_governance(
         self,
@@ -355,7 +355,7 @@ class TestEndToEndWorkflows:
         # Verify each span has complete cost attribution data
         for span in spans:
             attrs = span.attributes
-            assert "genops.cost.total" in attrs
+            assert "genops.cost.amount" in attrs
             assert "genops.customer_id" in attrs
             assert "genops.feature" in attrs
             assert "genops.team" in attrs
@@ -373,8 +373,8 @@ class TestEndToEndWorkflows:
         assert len(gpt4_spans) == 2
 
         # GPT-4 should be more expensive than GPT-3.5-turbo
-        gpt35_cost = gpt35_spans[0].attributes["genops.cost.total"]
-        gpt4_cost = gpt4_spans[0].attributes["genops.cost.total"]
+        gpt35_cost = gpt35_spans[0].attributes["genops.cost.amount"]
+        gpt4_cost = gpt4_spans[0].attributes["genops.cost.amount"]
         assert gpt4_cost > gpt35_cost
 
     def test_error_handling_and_recovery(self, mock_openai_import, mock_otel_setup):
