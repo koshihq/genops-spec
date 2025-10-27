@@ -1,7 +1,7 @@
 """OpenAI provider adapter for GenOps AI governance."""
 
 import logging
-from typing import Any, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 from genops.core.telemetry import GenOpsTelemetry
 
@@ -40,7 +40,7 @@ class GenOpsOpenAIAdapter:
             'presence_penalty', 'stop', 'seed', 'stream'
         }
 
-    def _extract_attributes(self, kwargs: dict) -> Tuple[dict, dict, dict]:
+    def _extract_attributes(self, kwargs: Dict) -> Tuple[Dict, Dict, Dict]:
         """Extract governance and request attributes from kwargs."""
         governance_attrs = {}
         request_attrs = {}
