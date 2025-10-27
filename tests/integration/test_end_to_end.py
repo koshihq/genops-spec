@@ -2,7 +2,10 @@
 
 import pytest
 from unittest.mock import MagicMock, patch
-from tests.utils.mock_providers import MockOpenAIClient, MockAnthropicClient
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+from utils.mock_providers import MockOpenAIClient, MockAnthropicClient
 
 import genops
 from genops.core.policy import PolicyConfig, PolicyResult, register_policy
