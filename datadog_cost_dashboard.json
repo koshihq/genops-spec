@@ -1,0 +1,105 @@
+{
+  "title": "GenOps AI - Cost Attribution & Governance",
+  "description": "Comprehensive AI cost tracking and governance monitoring",
+  "widgets": [
+    {
+      "id": "ai-cost-overview",
+      "definition": {
+        "title": "AI Cost Overview",
+        "type": "timeseries",
+        "requests": [
+          {
+            "q": "sum:genops.cost.total{*} by {genops.team,genops.project}",
+            "display_type": "line"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cost-by-customer",
+      "definition": {
+        "title": "Cost by Customer",
+        "type": "toplist",
+        "requests": [
+          {
+            "q": "sum:genops.cost.total{*} by {genops.customer_id}",
+            "limit": 20
+          }
+        ]
+      }
+    },
+    {
+      "id": "token-usage",
+      "definition": {
+        "title": "Token Usage by Provider",
+        "type": "query_value",
+        "requests": [
+          {
+            "q": "sum:genops.tokens.total{*} by {genops.cost.provider}",
+            "aggregator": "sum"
+          }
+        ]
+      }
+    },
+    {
+      "id": "policy-violations",
+      "definition": {
+        "title": "Policy Violations",
+        "type": "timeseries",
+        "requests": [
+          {
+            "q": "sum:genops.policy.violation{*} by {genops.policy.name}",
+            "display_type": "bars"
+          }
+        ]
+      }
+    },
+    {
+      "id": "evaluation-scores",
+      "definition": {
+        "title": "AI Evaluation Scores",
+        "type": "heatmap",
+        "requests": [
+          {
+            "q": "avg:genops.eval.safety{*} by {genops.team,genops.feature}"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cost-per-operation",
+      "definition": {
+        "title": "Average Cost per Operation",
+        "type": "query_value",
+        "requests": [
+          {
+            "q": "avg:genops.cost.total{*}",
+            "aggregator": "avg"
+          }
+        ]
+      }
+    }
+  ],
+  "template_variables": [
+    {
+      "name": "team",
+      "prefix": "genops.team",
+      "available_values": []
+    },
+    {
+      "name": "environment",
+      "prefix": "genops.environment",
+      "available_values": [
+        "production",
+        "staging",
+        "development"
+      ]
+    },
+    {
+      "name": "customer_id",
+      "prefix": "genops.customer_id",
+      "available_values": []
+    }
+  ],
+  "layout_type": "ordered"
+}

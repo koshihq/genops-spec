@@ -1,0 +1,481 @@
+{
+  "report_metadata": {
+    "generated_at": "2025-10-27T23:28:36.218016",
+    "report_period": {
+      "start": null,
+      "end": null
+    },
+    "filters": {
+      "operation_ids": null,
+      "compliance_framework": null
+    },
+    "total_operations": 3,
+    "total_events": 9
+  },
+  "compliance_summary": {
+    "compliant_operations": 3,
+    "non_compliant_operations": 0,
+    "operations_with_warnings": 0,
+    "total_violations": 0,
+    "violation_types": []
+  },
+  "cost_analysis": {
+    "total_cost": 0.09129999999999999,
+    "average_cost_per_operation": 0.03043333333333333,
+    "total_tokens": 4240,
+    "average_tokens_per_operation": 1413
+  },
+  "operations": [
+    {
+      "operation_id": "a3074748-68f2-4c68-a1cd-7fc3253d9525",
+      "events": [
+        {
+          "operation_id": "a3074748-68f2-4c68-a1cd-7fc3253d9525",
+          "event_type": "operation_start",
+          "timestamp": "2025-10-27T23:28:34.701773",
+          "compliance_context": {
+            "operation_id": "a3074748-68f2-4c68-a1cd-7fc3253d9525",
+            "operation_name": "loan_risk_assessment",
+            "compliance_framework": "sox",
+            "data_classification": "confidential",
+            "purpose": "Automated loan risk scoring for regulatory compliance",
+            "timestamp": "2025-10-27T23:28:34.701773",
+            "audit_required": true,
+            "customer_id": "bank_customer_12345",
+            "loan_application_id": "LA-2024-001234",
+            "loan_amount": 250000,
+            "borrower_type": "commercial",
+            "legal_basis": "Contractual necessity for loan processing",
+            "retention_period_days": 2555
+          },
+          "status": "started"
+        },
+        {
+          "operation_id": "a3074748-68f2-4c68-a1cd-7fc3253d9525",
+          "event_type": "evaluation_completed",
+          "timestamp": "2025-10-27T23:28:35.207089",
+          "evaluation_metrics": {
+            "safety_score": 0.92,
+            "accuracy_score": 0.88,
+            "bias_score": 0.15,
+            "privacy_score": 0.94,
+            "credit_score_confidence": 0.91,
+            "fraud_detection_score": 0.97,
+            "regulatory_score": 0.89,
+            "human_reviewed": true,
+            "reviewer_id": "risk_analyst_jane_doe"
+          },
+          "policy_results": [],
+          "compliance_status": "compliant"
+        },
+        {
+          "operation_id": "a3074748-68f2-4c68-a1cd-7fc3253d9525",
+          "event_type": "operation_completed",
+          "timestamp": "2025-10-27T23:28:35.207734",
+          "outcome": "Risk assessment completed - APPROVED with conditions",
+          "cost": 0.0234,
+          "tokens_used": 1250,
+          "completion_metadata": {
+            "risk_rating": "Medium",
+            "approval_conditions": [
+              "Collateral requirement: 20%",
+              "Personal guarantee required"
+            ],
+            "approver_id": "senior_underwriter_john_smith"
+          },
+          "final_context": {
+            "operation_id": "a3074748-68f2-4c68-a1cd-7fc3253d9525",
+            "operation_name": "loan_risk_assessment",
+            "compliance_framework": "sox",
+            "data_classification": "confidential",
+            "purpose": "Automated loan risk scoring for regulatory compliance",
+            "timestamp": "2025-10-27T23:28:34.701773",
+            "audit_required": true,
+            "customer_id": "bank_customer_12345",
+            "loan_application_id": "LA-2024-001234",
+            "loan_amount": 250000,
+            "borrower_type": "commercial",
+            "legal_basis": "Contractual necessity for loan processing",
+            "retention_period_days": 2555
+          }
+        }
+      ],
+      "compliance_status": "compliant",
+      "cost": 0.0234,
+      "tokens": 1250
+    },
+    {
+      "operation_id": "fd5ce17a-06f3-4fbb-9934-1df7d50a28cc",
+      "events": [
+        {
+          "operation_id": "fd5ce17a-06f3-4fbb-9934-1df7d50a28cc",
+          "event_type": "operation_start",
+          "timestamp": "2025-10-27T23:28:35.208061",
+          "compliance_context": {
+            "operation_id": "fd5ce17a-06f3-4fbb-9934-1df7d50a28cc",
+            "operation_name": "customer_support_ai",
+            "compliance_framework": "gdpr",
+            "data_classification": "restricted",
+            "purpose": "Automated customer support response generation",
+            "timestamp": "2025-10-27T23:28:35.208061",
+            "audit_required": true,
+            "customer_id": "eu_customer_67890",
+            "support_ticket_id": "TICKET-EU-98765",
+            "data_subject_consent": true,
+            "processing_location": "eu-central-1",
+            "legal_basis": "Legitimate interest for customer service improvement",
+            "retention_period_days": 90,
+            "audit_justification": "Customer explicitly requested AI assistance for faster support resolution"
+          },
+          "status": "started"
+        },
+        {
+          "operation_id": "fd5ce17a-06f3-4fbb-9934-1df7d50a28cc",
+          "event_type": "evaluation_completed",
+          "timestamp": "2025-10-27T23:28:35.512198",
+          "evaluation_metrics": {
+            "safety_score": 0.89,
+            "accuracy_score": 0.85,
+            "bias_score": 0.12,
+            "privacy_score": 0.96,
+            "data_minimization_score": 0.93,
+            "purpose_limitation_score": 0.91,
+            "consent_validity_score": 1.0,
+            "right_to_explanation_score": 0.88,
+            "human_reviewed": true,
+            "reviewer_id": "privacy_specialist_maria_garcia"
+          },
+          "policy_results": [],
+          "compliance_status": "compliant"
+        },
+        {
+          "operation_id": "fd5ce17a-06f3-4fbb-9934-1df7d50a28cc",
+          "event_type": "operation_completed",
+          "timestamp": "2025-10-27T23:28:35.512525",
+          "outcome": "Customer support response generated and reviewed",
+          "cost": 0.0156,
+          "tokens_used": 890,
+          "completion_metadata": {
+            "response_type": "product_information",
+            "personal_data_processed": true,
+            "data_retention_scheduled": true
+          },
+          "final_context": {
+            "operation_id": "fd5ce17a-06f3-4fbb-9934-1df7d50a28cc",
+            "operation_name": "customer_support_ai",
+            "compliance_framework": "gdpr",
+            "data_classification": "restricted",
+            "purpose": "Automated customer support response generation",
+            "timestamp": "2025-10-27T23:28:35.208061",
+            "audit_required": true,
+            "customer_id": "eu_customer_67890",
+            "support_ticket_id": "TICKET-EU-98765",
+            "data_subject_consent": true,
+            "processing_location": "eu-central-1",
+            "legal_basis": "Legitimate interest for customer service improvement",
+            "retention_period_days": 90,
+            "audit_justification": "Customer explicitly requested AI assistance for faster support resolution"
+          }
+        }
+      ],
+      "compliance_status": "compliant",
+      "cost": 0.0156,
+      "tokens": 890
+    },
+    {
+      "operation_id": "17dc2dc8-3b6d-4590-bb22-46f2098a140f",
+      "events": [
+        {
+          "operation_id": "17dc2dc8-3b6d-4590-bb22-46f2098a140f",
+          "event_type": "operation_start",
+          "timestamp": "2025-10-27T23:28:35.512810",
+          "compliance_context": {
+            "operation_id": "17dc2dc8-3b6d-4590-bb22-46f2098a140f",
+            "operation_name": "medical_image_analysis",
+            "compliance_framework": "hipaa",
+            "data_classification": "top_secret",
+            "purpose": "AI-assisted medical diagnosis for patient care",
+            "timestamp": "2025-10-27T23:28:35.512810",
+            "audit_required": true,
+            "patient_id": "PATIENT_789123",
+            "medical_record_number": "MRN-45678901",
+            "physician_id": "DR_SMITH_MD",
+            "phi_present": true,
+            "minimum_necessary": true,
+            "legal_basis": "Treatment - HIPAA permitted use",
+            "retention_period_days": 365,
+            "audit_justification": "AI diagnostic assistance requested by attending physician for complex case requiring specialized analysis"
+          },
+          "status": "started"
+        },
+        {
+          "operation_id": "17dc2dc8-3b6d-4590-bb22-46f2098a140f",
+          "event_type": "evaluation_completed",
+          "timestamp": "2025-10-27T23:28:36.217249",
+          "evaluation_metrics": {
+            "safety_score": 0.95,
+            "accuracy_score": 0.91,
+            "bias_score": 0.08,
+            "privacy_score": 0.98,
+            "phi_protection_score": 0.99,
+            "minimum_necessary_score": 0.94,
+            "audit_log_completeness": 1.0,
+            "diagnostic_confidence": 0.87,
+            "human_reviewed": true,
+            "reviewer_id": "radiologist_dr_johnson_md"
+          },
+          "policy_results": [],
+          "compliance_status": "compliant"
+        },
+        {
+          "operation_id": "17dc2dc8-3b6d-4590-bb22-46f2098a140f",
+          "event_type": "operation_completed",
+          "timestamp": "2025-10-27T23:28:36.217612",
+          "outcome": "Medical diagnosis assistance completed - findings documented",
+          "cost": 0.0523,
+          "tokens_used": 2100,
+          "completion_metadata": {
+            "diagnosis_suggestion": "Preliminary findings suggest further cardiac evaluation needed",
+            "physician_review": "Attending physician concurred with AI analysis",
+            "phi_disclosed": false
+          },
+          "final_context": {
+            "operation_id": "17dc2dc8-3b6d-4590-bb22-46f2098a140f",
+            "operation_name": "medical_image_analysis",
+            "compliance_framework": "hipaa",
+            "data_classification": "top_secret",
+            "purpose": "AI-assisted medical diagnosis for patient care",
+            "timestamp": "2025-10-27T23:28:35.512810",
+            "audit_required": true,
+            "patient_id": "PATIENT_789123",
+            "medical_record_number": "MRN-45678901",
+            "physician_id": "DR_SMITH_MD",
+            "phi_present": true,
+            "minimum_necessary": true,
+            "legal_basis": "Treatment - HIPAA permitted use",
+            "retention_period_days": 365,
+            "audit_justification": "AI diagnostic assistance requested by attending physician for complex case requiring specialized analysis"
+          }
+        }
+      ],
+      "compliance_status": "compliant",
+      "cost": 0.0523,
+      "tokens": 2100
+    }
+  ],
+  "compliance_violations": [],
+  "audit_trail": [
+    {
+      "operation_id": "a3074748-68f2-4c68-a1cd-7fc3253d9525",
+      "event_type": "operation_start",
+      "timestamp": "2025-10-27T23:28:34.701773",
+      "compliance_context": {
+        "operation_id": "a3074748-68f2-4c68-a1cd-7fc3253d9525",
+        "operation_name": "loan_risk_assessment",
+        "compliance_framework": "sox",
+        "data_classification": "confidential",
+        "purpose": "Automated loan risk scoring for regulatory compliance",
+        "timestamp": "2025-10-27T23:28:34.701773",
+        "audit_required": true,
+        "customer_id": "bank_customer_12345",
+        "loan_application_id": "LA-2024-001234",
+        "loan_amount": 250000,
+        "borrower_type": "commercial",
+        "legal_basis": "Contractual necessity for loan processing",
+        "retention_period_days": 2555
+      },
+      "status": "started"
+    },
+    {
+      "operation_id": "a3074748-68f2-4c68-a1cd-7fc3253d9525",
+      "event_type": "evaluation_completed",
+      "timestamp": "2025-10-27T23:28:35.207089",
+      "evaluation_metrics": {
+        "safety_score": 0.92,
+        "accuracy_score": 0.88,
+        "bias_score": 0.15,
+        "privacy_score": 0.94,
+        "credit_score_confidence": 0.91,
+        "fraud_detection_score": 0.97,
+        "regulatory_score": 0.89,
+        "human_reviewed": true,
+        "reviewer_id": "risk_analyst_jane_doe"
+      },
+      "policy_results": [],
+      "compliance_status": "compliant"
+    },
+    {
+      "operation_id": "a3074748-68f2-4c68-a1cd-7fc3253d9525",
+      "event_type": "operation_completed",
+      "timestamp": "2025-10-27T23:28:35.207734",
+      "outcome": "Risk assessment completed - APPROVED with conditions",
+      "cost": 0.0234,
+      "tokens_used": 1250,
+      "completion_metadata": {
+        "risk_rating": "Medium",
+        "approval_conditions": [
+          "Collateral requirement: 20%",
+          "Personal guarantee required"
+        ],
+        "approver_id": "senior_underwriter_john_smith"
+      },
+      "final_context": {
+        "operation_id": "a3074748-68f2-4c68-a1cd-7fc3253d9525",
+        "operation_name": "loan_risk_assessment",
+        "compliance_framework": "sox",
+        "data_classification": "confidential",
+        "purpose": "Automated loan risk scoring for regulatory compliance",
+        "timestamp": "2025-10-27T23:28:34.701773",
+        "audit_required": true,
+        "customer_id": "bank_customer_12345",
+        "loan_application_id": "LA-2024-001234",
+        "loan_amount": 250000,
+        "borrower_type": "commercial",
+        "legal_basis": "Contractual necessity for loan processing",
+        "retention_period_days": 2555
+      }
+    },
+    {
+      "operation_id": "fd5ce17a-06f3-4fbb-9934-1df7d50a28cc",
+      "event_type": "operation_start",
+      "timestamp": "2025-10-27T23:28:35.208061",
+      "compliance_context": {
+        "operation_id": "fd5ce17a-06f3-4fbb-9934-1df7d50a28cc",
+        "operation_name": "customer_support_ai",
+        "compliance_framework": "gdpr",
+        "data_classification": "restricted",
+        "purpose": "Automated customer support response generation",
+        "timestamp": "2025-10-27T23:28:35.208061",
+        "audit_required": true,
+        "customer_id": "eu_customer_67890",
+        "support_ticket_id": "TICKET-EU-98765",
+        "data_subject_consent": true,
+        "processing_location": "eu-central-1",
+        "legal_basis": "Legitimate interest for customer service improvement",
+        "retention_period_days": 90,
+        "audit_justification": "Customer explicitly requested AI assistance for faster support resolution"
+      },
+      "status": "started"
+    },
+    {
+      "operation_id": "fd5ce17a-06f3-4fbb-9934-1df7d50a28cc",
+      "event_type": "evaluation_completed",
+      "timestamp": "2025-10-27T23:28:35.512198",
+      "evaluation_metrics": {
+        "safety_score": 0.89,
+        "accuracy_score": 0.85,
+        "bias_score": 0.12,
+        "privacy_score": 0.96,
+        "data_minimization_score": 0.93,
+        "purpose_limitation_score": 0.91,
+        "consent_validity_score": 1.0,
+        "right_to_explanation_score": 0.88,
+        "human_reviewed": true,
+        "reviewer_id": "privacy_specialist_maria_garcia"
+      },
+      "policy_results": [],
+      "compliance_status": "compliant"
+    },
+    {
+      "operation_id": "fd5ce17a-06f3-4fbb-9934-1df7d50a28cc",
+      "event_type": "operation_completed",
+      "timestamp": "2025-10-27T23:28:35.512525",
+      "outcome": "Customer support response generated and reviewed",
+      "cost": 0.0156,
+      "tokens_used": 890,
+      "completion_metadata": {
+        "response_type": "product_information",
+        "personal_data_processed": true,
+        "data_retention_scheduled": true
+      },
+      "final_context": {
+        "operation_id": "fd5ce17a-06f3-4fbb-9934-1df7d50a28cc",
+        "operation_name": "customer_support_ai",
+        "compliance_framework": "gdpr",
+        "data_classification": "restricted",
+        "purpose": "Automated customer support response generation",
+        "timestamp": "2025-10-27T23:28:35.208061",
+        "audit_required": true,
+        "customer_id": "eu_customer_67890",
+        "support_ticket_id": "TICKET-EU-98765",
+        "data_subject_consent": true,
+        "processing_location": "eu-central-1",
+        "legal_basis": "Legitimate interest for customer service improvement",
+        "retention_period_days": 90,
+        "audit_justification": "Customer explicitly requested AI assistance for faster support resolution"
+      }
+    },
+    {
+      "operation_id": "17dc2dc8-3b6d-4590-bb22-46f2098a140f",
+      "event_type": "operation_start",
+      "timestamp": "2025-10-27T23:28:35.512810",
+      "compliance_context": {
+        "operation_id": "17dc2dc8-3b6d-4590-bb22-46f2098a140f",
+        "operation_name": "medical_image_analysis",
+        "compliance_framework": "hipaa",
+        "data_classification": "top_secret",
+        "purpose": "AI-assisted medical diagnosis for patient care",
+        "timestamp": "2025-10-27T23:28:35.512810",
+        "audit_required": true,
+        "patient_id": "PATIENT_789123",
+        "medical_record_number": "MRN-45678901",
+        "physician_id": "DR_SMITH_MD",
+        "phi_present": true,
+        "minimum_necessary": true,
+        "legal_basis": "Treatment - HIPAA permitted use",
+        "retention_period_days": 365,
+        "audit_justification": "AI diagnostic assistance requested by attending physician for complex case requiring specialized analysis"
+      },
+      "status": "started"
+    },
+    {
+      "operation_id": "17dc2dc8-3b6d-4590-bb22-46f2098a140f",
+      "event_type": "evaluation_completed",
+      "timestamp": "2025-10-27T23:28:36.217249",
+      "evaluation_metrics": {
+        "safety_score": 0.95,
+        "accuracy_score": 0.91,
+        "bias_score": 0.08,
+        "privacy_score": 0.98,
+        "phi_protection_score": 0.99,
+        "minimum_necessary_score": 0.94,
+        "audit_log_completeness": 1.0,
+        "diagnostic_confidence": 0.87,
+        "human_reviewed": true,
+        "reviewer_id": "radiologist_dr_johnson_md"
+      },
+      "policy_results": [],
+      "compliance_status": "compliant"
+    },
+    {
+      "operation_id": "17dc2dc8-3b6d-4590-bb22-46f2098a140f",
+      "event_type": "operation_completed",
+      "timestamp": "2025-10-27T23:28:36.217612",
+      "outcome": "Medical diagnosis assistance completed - findings documented",
+      "cost": 0.0523,
+      "tokens_used": 2100,
+      "completion_metadata": {
+        "diagnosis_suggestion": "Preliminary findings suggest further cardiac evaluation needed",
+        "physician_review": "Attending physician concurred with AI analysis",
+        "phi_disclosed": false
+      },
+      "final_context": {
+        "operation_id": "17dc2dc8-3b6d-4590-bb22-46f2098a140f",
+        "operation_name": "medical_image_analysis",
+        "compliance_framework": "hipaa",
+        "data_classification": "top_secret",
+        "purpose": "AI-assisted medical diagnosis for patient care",
+        "timestamp": "2025-10-27T23:28:35.512810",
+        "audit_required": true,
+        "patient_id": "PATIENT_789123",
+        "medical_record_number": "MRN-45678901",
+        "physician_id": "DR_SMITH_MD",
+        "phi_present": true,
+        "minimum_necessary": true,
+        "legal_basis": "Treatment - HIPAA permitted use",
+        "retention_period_days": 365,
+        "audit_justification": "AI diagnostic assistance requested by attending physician for complex case requiring specialized analysis"
+      }
+    }
+  ]
+}

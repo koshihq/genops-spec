@@ -37,6 +37,14 @@ class GenOpsTelemetry:
         self, operation_name: str, operation_type: str = "ai.inference", **attributes
     ):
         """Context manager for tracing AI operations with governance metadata."""
+        # Get effective attributes (defaults + context + overrides)
+        try:
+            from genops.core.context import get_effective_attributes
+            effective_attributes = get_effective_attributes(**attributes)
+        except ImportError:
+            # Fallback if context module not available
+            effective_attributes = attributes
+            
         with self.tracer.start_as_current_span(operation_name) as span:
             try:
                 # Set core operation attributes
@@ -44,8 +52,8 @@ class GenOpsTelemetry:
                 span.set_attribute("genops.operation.name", operation_name)
                 span.set_attribute("genops.timestamp", int(time.time()))
 
-                # Set additional attributes
-                for key, value in attributes.items():
+                # Set effective attributes (includes defaults, context, and overrides)
+                for key, value in effective_attributes.items():
                     if value is not None:
                         span.set_attribute(f"genops.{key}", value)
 

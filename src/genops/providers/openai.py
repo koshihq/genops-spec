@@ -86,15 +86,14 @@ class GenOpsOpenAIAdapter:
             "tokens_estimated_input": int(estimated_input_tokens),
         }
 
-        # Add default attributes from instrumentation system
+        # Add effective attributes (defaults + context + governance)
         try:
-            from genops.auto_instrumentation import get_default_attributes
-            default_attrs = get_default_attributes() or {}
-            trace_attrs.update(default_attrs)
+            from genops.core.context import get_effective_attributes
+            effective_attrs = get_effective_attributes(**governance_attrs)
+            trace_attrs.update(effective_attrs)
         except (ImportError, Exception):
-            pass  # Fallback if not available
-
-        trace_attrs.update(governance_attrs)
+            # Fallback to just governance attributes
+            trace_attrs.update(governance_attrs)
 
         with self.telemetry.trace_operation(**trace_attrs) as span:
             # Record request parameters in telemetry
@@ -155,15 +154,14 @@ class GenOpsOpenAIAdapter:
             "tokens_estimated_input": int(estimated_input_tokens),
         }
 
-        # Add default attributes from instrumentation system
+        # Add effective attributes (defaults + context + governance)
         try:
-            from genops.auto_instrumentation import get_default_attributes
-            default_attrs = get_default_attributes() or {}
-            trace_attrs.update(default_attrs)
+            from genops.core.context import get_effective_attributes
+            effective_attrs = get_effective_attributes(**governance_attrs)
+            trace_attrs.update(effective_attrs)
         except (ImportError, Exception):
-            pass  # Fallback if not available
-
-        trace_attrs.update(governance_attrs)
+            # Fallback to just governance attributes
+            trace_attrs.update(governance_attrs)
 
         with self.telemetry.trace_operation(**trace_attrs) as span:
             # Record request parameters in telemetry
