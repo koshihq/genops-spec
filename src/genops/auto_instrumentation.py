@@ -78,7 +78,7 @@ class GenOpsInstrumentor:
         # Check if OpenTelemetry is already configured
         current_tracer_provider = trace.get_tracer_provider()
         if hasattr(current_tracer_provider, "add_span_processor"):
-            logger.debug("OpenTelemetry already configured, skipping setup")
+            logger.debug("OpenTelemetry already configured, using existing provider")
             return current_tracer_provider
 
         # Create resource with service information

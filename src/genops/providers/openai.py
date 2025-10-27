@@ -209,23 +209,27 @@ def patch_openai(auto_track: bool = True):
     global _original_openai_create, _original_completions_create
 
     if auto_track and _original_openai_create is None:
-        # Store original methods
-        _original_openai_create = openai.OpenAI.chat.completions.create
-        _original_completions_create = openai.OpenAI.completions.create
+        try:
+            # Store original methods
+            _original_openai_create = openai.OpenAI.chat.completions.create
+            _original_completions_create = openai.OpenAI.completions.create
 
-        def patched_chat_create(self, **kwargs):
-            adapter = GenOpsOpenAIAdapter(client=self)
-            return adapter.chat_completions_create(**kwargs)
+            def patched_chat_create(self, **kwargs):
+                adapter = GenOpsOpenAIAdapter(client=self)
+                return adapter.chat_completions_create(**kwargs)
 
-        def patched_completions_create(self, **kwargs):
-            adapter = GenOpsOpenAIAdapter(client=self)
-            return adapter.completions_create(**kwargs)
+            def patched_completions_create(self, **kwargs):
+                adapter = GenOpsOpenAIAdapter(client=self)
+                return adapter.completions_create(**kwargs)
 
-        # Apply patches
-        openai.OpenAI.chat.completions.create = patched_chat_create
-        openai.OpenAI.completions.create = patched_completions_create
+            # Apply patches
+            openai.OpenAI.chat.completions.create = patched_chat_create
+            openai.OpenAI.completions.create = patched_completions_create
 
-        logger.info("OpenAI client patched with GenOps telemetry")
+            logger.info("OpenAI client patched with GenOps telemetry")
+        except AttributeError as e:
+            logger.warning(f"Failed to patch OpenAI: {e}")
+            return
 
 
 def unpatch_openai():

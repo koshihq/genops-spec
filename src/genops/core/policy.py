@@ -160,6 +160,7 @@ class PolicyEngine:
 
 # Global policy engine instance
 _policy_engine = PolicyEngine()
+_global_policy_engine = _policy_engine  # Alias for testing compatibility
 
 
 def register_policy(

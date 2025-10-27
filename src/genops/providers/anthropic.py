@@ -250,27 +250,31 @@ def patch_anthropic(auto_track: bool = True):
     global _original_messages_create, _original_completions_create
 
     if auto_track and _original_messages_create is None:
-        # Store original methods
-        _original_messages_create = anthropic.Anthropic.messages.create
+        try:
+            # Store original methods
+            _original_messages_create = anthropic.Anthropic.messages.create
 
-        def patched_messages_create(self, **kwargs):
-            adapter = GenOpsAnthropicAdapter(client=self)
-            return adapter.messages_create(**kwargs)
-
-        # Apply patches
-        anthropic.Anthropic.messages.create = patched_messages_create
-
-        # Patch completions if available (legacy API)
-        if hasattr(anthropic.Anthropic, "completions"):
-            _original_completions_create = anthropic.Anthropic.completions.create
-
-            def patched_completions_create(self, **kwargs):
+            def patched_messages_create(self, **kwargs):
                 adapter = GenOpsAnthropicAdapter(client=self)
-                return adapter.completions_create(**kwargs)
+                return adapter.messages_create(**kwargs)
 
-            anthropic.Anthropic.completions.create = patched_completions_create
+            # Apply patches
+            anthropic.Anthropic.messages.create = patched_messages_create
 
-        logger.info("Anthropic client patched with GenOps telemetry")
+            # Patch completions if available (legacy API)
+            if hasattr(anthropic.Anthropic, "completions"):
+                _original_completions_create = anthropic.Anthropic.completions.create
+
+                def patched_completions_create(self, **kwargs):
+                    adapter = GenOpsAnthropicAdapter(client=self)
+                    return adapter.completions_create(**kwargs)
+
+                anthropic.Anthropic.completions.create = patched_completions_create
+
+            logger.info("Anthropic client patched with GenOps telemetry")
+        except AttributeError as e:
+            logger.warning(f"Failed to patch Anthropic: {e}")
+            return
 
 
 def unpatch_anthropic():
