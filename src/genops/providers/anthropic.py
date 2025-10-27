@@ -31,10 +31,10 @@ class GenOpsAnthropicAdapter:
 
         self.client = client or Anthropic(**client_kwargs)
         self.telemetry = GenOpsTelemetry()
-        
+
         # Define governance and request attributes
         self.GOVERNANCE_ATTRIBUTES = {
-            'team', 'project', 'feature', 'customer_id', 'customer', 
+            'team', 'project', 'feature', 'customer_id', 'customer',
             'environment', 'cost_center', 'user_id'
         }
         self.REQUEST_ATTRIBUTES = {
@@ -46,25 +46,25 @@ class GenOpsAnthropicAdapter:
         governance_attrs = {}
         request_attrs = {}
         api_kwargs = kwargs.copy()
-        
+
         # Extract governance attributes
         for attr in self.GOVERNANCE_ATTRIBUTES:
             if attr in kwargs:
                 governance_attrs[attr] = kwargs[attr]
                 api_kwargs.pop(attr)
-        
+
         # Extract request attributes
         for attr in self.REQUEST_ATTRIBUTES:
             if attr in kwargs:
                 request_attrs[attr] = kwargs[attr]
-        
+
         return governance_attrs, request_attrs, api_kwargs
 
     def messages_create(self, **kwargs) -> Any:
         """Create message with governance tracking."""
         # Extract attributes from kwargs
         governance_attrs, request_attrs, api_kwargs = self._extract_attributes(kwargs)
-        
+
         model = api_kwargs.get("model", "unknown")
         messages = api_kwargs.get("messages", [])
         system = api_kwargs.get("system", "")
@@ -93,7 +93,7 @@ class GenOpsAnthropicAdapter:
             "model": model,
             "tokens_estimated_input": int(estimated_input_tokens),
         }
-        
+
         # Add default attributes from instrumentation system
         try:
             from genops.auto_instrumentation import get_default_attributes
@@ -101,14 +101,14 @@ class GenOpsAnthropicAdapter:
             trace_attrs.update(default_attrs)
         except (ImportError, Exception):
             pass  # Fallback if not available
-            
+
         trace_attrs.update(governance_attrs)
 
         with self.telemetry.trace_operation(**trace_attrs) as span:
             # Record request parameters in telemetry
             for param, value in request_attrs.items():
                 span.set_attribute(f"genops.request.{param}", value)
-            
+
             try:
                 # Call Anthropic API with cleaned kwargs (no governance attributes)
                 response = self.client.messages.create(**api_kwargs)
@@ -144,7 +144,7 @@ class GenOpsAnthropicAdapter:
         """Create completion with governance tracking (legacy API)."""
         # Extract attributes from kwargs
         governance_attrs, request_attrs, api_kwargs = self._extract_attributes(kwargs)
-        
+
         model = api_kwargs.get("model", "unknown")
         prompt = api_kwargs.get("prompt", "")
 
@@ -161,7 +161,7 @@ class GenOpsAnthropicAdapter:
             "model": model,
             "tokens_estimated_input": int(estimated_input_tokens),
         }
-        
+
         # Add default attributes from instrumentation system
         try:
             from genops.auto_instrumentation import get_default_attributes
@@ -169,14 +169,14 @@ class GenOpsAnthropicAdapter:
             trace_attrs.update(default_attrs)
         except (ImportError, Exception):
             pass  # Fallback if not available
-            
+
         trace_attrs.update(governance_attrs)
 
         with self.telemetry.trace_operation(**trace_attrs) as span:
             # Record request parameters in telemetry
             for param, value in request_attrs.items():
                 span.set_attribute(f"genops.request.{param}", value)
-            
+
             try:
                 # Call Anthropic API (legacy)
                 if hasattr(self.client, "completions"):

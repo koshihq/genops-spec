@@ -31,10 +31,10 @@ class GenOpsOpenAIAdapter:
 
         self.client = client or OpenAI(**client_kwargs)
         self.telemetry = GenOpsTelemetry()
-        
+
         # Define governance and request attributes
         self.GOVERNANCE_ATTRIBUTES = {
-            'team', 'project', 'feature', 'customer_id', 'customer', 
+            'team', 'project', 'feature', 'customer_id', 'customer',
             'environment', 'cost_center', 'user_id'
         }
         self.REQUEST_ATTRIBUTES = {
@@ -47,25 +47,25 @@ class GenOpsOpenAIAdapter:
         governance_attrs = {}
         request_attrs = {}
         api_kwargs = kwargs.copy()
-        
+
         # Extract governance attributes
         for attr in self.GOVERNANCE_ATTRIBUTES:
             if attr in kwargs:
                 governance_attrs[attr] = kwargs[attr]
                 api_kwargs.pop(attr)
-        
+
         # Extract request attributes
         for attr in self.REQUEST_ATTRIBUTES:
             if attr in kwargs:
                 request_attrs[attr] = kwargs[attr]
-        
+
         return governance_attrs, request_attrs, api_kwargs
 
     def chat_completions_create(self, **kwargs) -> Any:
         """Create chat completion with governance tracking."""
         # Extract attributes from kwargs
         governance_attrs, request_attrs, api_kwargs = self._extract_attributes(kwargs)
-        
+
         model = api_kwargs.get("model", "unknown")
         messages = api_kwargs.get("messages", [])
 
@@ -85,7 +85,7 @@ class GenOpsOpenAIAdapter:
             "model": model,
             "tokens_estimated_input": int(estimated_input_tokens),
         }
-        
+
         # Add default attributes from instrumentation system
         try:
             from genops.auto_instrumentation import get_default_attributes
@@ -93,14 +93,14 @@ class GenOpsOpenAIAdapter:
             trace_attrs.update(default_attrs)
         except (ImportError, Exception):
             pass  # Fallback if not available
-            
+
         trace_attrs.update(governance_attrs)
 
         with self.telemetry.trace_operation(**trace_attrs) as span:
             # Record request parameters in telemetry
             for param, value in request_attrs.items():
                 span.set_attribute(f"genops.request.{param}", value)
-            
+
             try:
                 # Call OpenAI API with cleaned kwargs (no governance attributes)
                 response = self.client.chat.completions.create(**api_kwargs)
@@ -137,7 +137,7 @@ class GenOpsOpenAIAdapter:
         """Create completion with governance tracking."""
         # Extract attributes from kwargs
         governance_attrs, request_attrs, api_kwargs = self._extract_attributes(kwargs)
-        
+
         model = api_kwargs.get("model", "unknown")
         prompt = api_kwargs.get("prompt", "")
 
@@ -154,7 +154,7 @@ class GenOpsOpenAIAdapter:
             "model": model,
             "tokens_estimated_input": int(estimated_input_tokens),
         }
-        
+
         # Add default attributes from instrumentation system
         try:
             from genops.auto_instrumentation import get_default_attributes
@@ -162,14 +162,14 @@ class GenOpsOpenAIAdapter:
             trace_attrs.update(default_attrs)
         except (ImportError, Exception):
             pass  # Fallback if not available
-            
+
         trace_attrs.update(governance_attrs)
 
         with self.telemetry.trace_operation(**trace_attrs) as span:
             # Record request parameters in telemetry
             for param, value in request_attrs.items():
                 span.set_attribute(f"genops.request.{param}", value)
-            
+
             try:
                 # Call OpenAI API with cleaned kwargs (no governance attributes)
                 response = self.client.completions.create(**api_kwargs)

@@ -113,6 +113,10 @@ ignore = [
     "E501",  # line too long, handled by formatter
     "B008",  # do not perform function calls in argument defaults
     "C901",  # too complex
+    "UP006", # use `dict` instead of `Dict` (Python 3.9+ only)
+    "UP007", # use `X | Y` instead of `Union[X, Y]` (Python 3.10+ only)
+    "UP037", # remove quotes from type annotation (can break with forward refs)
+    "UP045", # use `X | None` instead of `Optional[X]` (Python 3.10+ only)
 ]
 
 [tool.ruff.lint.per-file-ignores]
