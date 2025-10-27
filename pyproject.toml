@@ -29,7 +29,6 @@ classifiers = [
     "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -38,16 +37,16 @@ classifiers = [
     "Topic :: System :: Monitoring",
 ]
 dependencies = [
-    "opentelemetry-api>=1.15.0",
-    "opentelemetry-sdk>=1.15.0",
-    "opentelemetry-exporter-otlp>=1.15.0",
-    "opentelemetry-semantic-conventions>=0.35b0",
+    "opentelemetry-api>=1.20.0",
+    "opentelemetry-sdk>=1.20.0",
+    "opentelemetry-exporter-otlp>=1.20.0",
+    "opentelemetry-semantic-conventions>=0.41b0",
     "typing-extensions>=4.0.0",
 ]
 
 [project.optional-dependencies]
-openai = ["openai>=0.27.0"]
-anthropic = ["anthropic>=0.20.0"]
+openai = ["openai>=1.0.0"]
+anthropic = ["anthropic>=0.25.0"]
 langchain = ["langchain>=0.1.0"]
 llamaindex = ["llama-index>=0.10.0"]
 bedrock = ["boto3>=1.34.0"]
@@ -96,7 +95,7 @@ packages = ["src/genops"]
 
 [tool.ruff]
 line-length = 88
-target-version = "py38"
+target-version = "py39"
 src = ["src", "tests"]
 
 [tool.ruff.lint]
@@ -113,10 +112,7 @@ ignore = [
     "E501",  # line too long, handled by formatter
     "B008",  # do not perform function calls in argument defaults
     "C901",  # too complex
-    "UP006", # use `dict` instead of `Dict` (Python 3.9+ only)
-    "UP007", # use `X | Y` instead of `Union[X, Y]` (Python 3.10+ only)
     "UP037", # remove quotes from type annotation (can break with forward refs)
-    "UP045", # use `X | None` instead of `Optional[X]` (Python 3.10+ only)
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -124,7 +120,7 @@ ignore = [
 "tests/**/*" = ["B011"]
 
 [tool.mypy]
-python_version = "3.8"
+python_version = "3.9"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
