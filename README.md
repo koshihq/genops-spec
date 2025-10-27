@@ -129,27 +129,33 @@ pip install "genops[all]"               # All providers
 
 ```python
 from genops.providers.openai import instrument_openai
-from genops.providers.anthropic import instrument_anthropic
+import genops
 
-# 1. Instrument your AI providers
-openai_client = instrument_openai(api_key="your-openai-key")
-anthropic_client = instrument_anthropic(api_key="your-anthropic-key")  
-
-# 2. Use them normally - governance is automatic
-response = openai_client.chat_completions_create(
-    model="gpt-3.5-turbo",
-    messages=[{"role": "user", "content": "Hello!"}],
-    # Add governance context
-    team="support-team",
-    project="ai-assistant", 
-    customer_id="enterprise-123"
+# 1. Set default attribution (once at app startup)
+genops.set_default_attributes(
+    team="platform-engineering",
+    project="ai-services", 
+    environment="production"
 )
 
-# 3. OpenTelemetry exports to your observability stack
-# ✅ Cost, tokens, governance attributes → Datadog/Honeycomb/etc.
+# 2. Instrument your AI providers  
+client = instrument_openai(api_key="your-openai-key")
+
+# 3. Use normally - defaults inherited automatically
+response = client.chat_completions_create(
+    model="gpt-3.5-turbo",
+    messages=[{"role": "user", "content": "Hello!"}],
+    # Only specify what's unique to this operation
+    customer_id="enterprise-123",
+    feature="chat-assistant"
+    # team, project, environment automatically included!
+)
+
+# 4. OpenTelemetry exports complete attribution data
+# ✅ Cost, tokens, team, customer, feature → Your observability platform
 ```
 
-**That's it!** Full governance telemetry with just provider instrumentation.
+**That's it!** Full governance telemetry with intelligent attribution inheritance.
 
 ### 🎯 **Real-World Governance Scenarios**
 
@@ -214,7 +220,7 @@ graph TB
     D --> G[Dashboards & Alerts]
     D --> H[Cost Attribution]  
     D --> I[Policy Automation]
-    D --> J[Koshi Control Plane]
+    D --> J[Enterprise Dashboards]
     
     style B fill:#e1f5fe
     style D fill:#f3e5f5
@@ -383,12 +389,12 @@ Perfect for financial operations teams:
 - **Feature-level cost analysis** for product decisions
 - **Model efficiency metrics** for optimization opportunities
 
-### **Integration with Koshi**
-GenOps AI telemetry feeds into **[Koshi](https://getkoshi.ai)** - the commercial control plane for enterprise AI governance:
+### **Enterprise Integration**
+GenOps AI telemetry can be exported to your existing observability stack:
 - **Real-time dashboards** for executives and compliance teams
 - **Automated policy management** across multiple teams and projects  
 - **Advanced analytics** for cost optimization and risk management
-- **Enterprise SSO and RBAC** for governance at scale
+- **Enterprise-grade security** for governance at scale
 
 ---
 
@@ -431,7 +437,7 @@ Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for detai
 - **For Product Teams**: Feature-level AI cost analysis and optimization insights
 - **For Executives**: Enterprise-wide AI governance visibility and control
 
-**Start with the open-source GenOps AI SDK. Scale with the Koshi commercial control plane.**
+**Start with the open-source GenOps AI SDK. Scale with your existing enterprise observability platform.**
 
 ---
 
