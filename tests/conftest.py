@@ -288,14 +288,19 @@ def test_data_generator() -> TestDataGenerator:
 
 
 # Cleanup fixture to ensure test isolation
-@pytest.fixture(autouse=True)
+@pytest.fixture
 def cleanup_test_state():
     """Ensure clean state between tests."""
     yield
     
-    # Reset any global state
+    # Clean up instrumentation without breaking telemetry
     from genops.auto_instrumentation import GenOpsInstrumentor
     if hasattr(GenOpsInstrumentor, '_instance') and GenOpsInstrumentor._instance:
-        # Reset singleton state for isolated testing
-        GenOpsInstrumentor._instance = None
+        instrumentor = GenOpsInstrumentor._instance
+        if instrumentor and instrumentor._initialized:
+            try:
+                instrumentor.uninstrument()
+            except Exception:
+                pass  # Ignore cleanup errors
+        # Only reset initialization flag, not the instance itself
         GenOpsInstrumentor._initialized = False

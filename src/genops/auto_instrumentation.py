@@ -264,6 +264,30 @@ class GenOpsInstrumentor:
     def get_default_attributes(self) -> Dict[str, str]:
         """Get default governance attributes for manual instrumentation."""
         return getattr(self, 'default_attributes', {})
+    
+    def _check_provider_availability(self, provider_name: str) -> bool:
+        """Check if a specific provider is available for instrumentation."""
+        return self.available_providers.get(provider_name, False)
+    
+    def _instrument_provider(self, provider_name: str) -> bool:
+        """Instrument a specific provider with GenOps governance."""
+        if provider_name not in self.provider_patches:
+            logger.warning(f"Unknown provider: {provider_name}")
+            return False
+            
+        if not self._check_provider_availability(provider_name):
+            logger.warning(f"Provider not available: {provider_name}")
+            return False
+            
+        try:
+            config = self.provider_patches[provider_name]
+            config['patch'](auto_track=True)
+            self.patched_providers[provider_name] = config
+            logger.info(f"✓ {provider_name} instrumented with GenOps governance")
+            return True
+        except Exception as e:
+            logger.error(f"✗ Failed to instrument {provider_name}: {e}")
+            return False
 
 
 # Global instance for convenient access
