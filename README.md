@@ -6,7 +6,7 @@
   
   [![GitHub stars](https://img.shields.io/github/stars/KoshiHQ/GenOps-AI?style=social)](https://github.com/KoshiHQ/GenOps-AI/stargazers)
   [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-  [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+  [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
   [![OpenTelemetry](https://img.shields.io/badge/OpenTelemetry-native-purple.svg)](https://opentelemetry.io/)
 </div>
 
@@ -30,63 +30,85 @@ While [OpenLLMetry](https://github.com/traceloop/openllmetry) tells you *what* y
 
 ## ✨ **Key Features**
 
-### 🚀 **One-Line Setup** (OpenLLMetry-inspired)
+### 🚀 **Provider Instrumentation** (Production-Ready)
 ```python
-import genops
+from genops.providers.openai import instrument_openai
 
-# Auto-instrument all AI providers with governance
-genops.init()
+# Instrument OpenAI with automatic governance tracking
+client = instrument_openai(api_key="your-openai-key")
 
-# Your existing AI code now has automatic governance! 
-import openai
-response = openai.chat.completions.create(...)  # Tracked automatically
+# All calls now include cost, token, and governance telemetry
+response = client.chat_completions_create(
+    model="gpt-4",
+    messages=[{"role": "user", "content": "Hello!"}],
+    # Governance attributes
+    team="support-team",
+    project="ai-assistant", 
+    customer_id="enterprise-123"
+)
+# ✅ Cost, tokens, policies automatically tracked and exported via OpenTelemetry
 ```
 
-### 🎛️ **Manual Instrumentation** 
+### 🎛️ **Manual Telemetry Tracking** 
 ```python
-import genops
+from genops.core.telemetry import GenOpsTelemetry
 
-@genops.track_usage(
+telemetry = GenOpsTelemetry()
+
+# Track any operation with governance context
+with telemetry.trace_operation(
     operation_name="customer_support",
-    team="support",
-    project="chatbot", 
-    feature="conversation",
+    team="support-team",
+    project="ai-chatbot",
     customer_id="customer_123"
-)
-def handle_support_query(message: str):
-    # Your AI logic here
-    return ai_response
+) as span:
+    # Your AI processing logic
+    ai_response = call_your_ai_model(message)
+    
+    # Record governance telemetry
+    telemetry.record_cost(span, cost=0.05, provider="openai", model="gpt-3.5-turbo")
+    telemetry.record_evaluation(span, metric_name="quality", score=0.92)
 
-# Governance data flows to your observability stack
+# Governance data automatically flows to your observability stack via OpenTelemetry
 ```
 
 ### 🛡️ **Policy Enforcement**
 ```python
-from genops import enforce_policy, register_policy, PolicyResult
+from genops.core.policy import register_policy, PolicyResult, _policy_engine
 
-# Register governance policies
+# Register governance policies  
 register_policy(
-    name="cost_control",
+    name="cost_limit",
     enforcement_level=PolicyResult.BLOCKED,
-    max_cost=5.00
+    conditions={"max_cost": 5.00}
 )
 
-@enforce_policy(["cost_control"])
-def expensive_ai_operation(prompt: str):
-    # Blocked if cost exceeds $5.00
-    return call_ai_model(prompt)
+# Evaluate policies before operations
+def safe_ai_operation(prompt: str, estimated_cost: float):
+    # Check policy before operation
+    result = _policy_engine.evaluate_policy("cost_limit", {"cost": estimated_cost})
+    
+    if result.result == PolicyResult.BLOCKED:
+        raise Exception(f"Policy violation: {result.reason}")
+    
+    return call_ai_model(prompt)  # Proceeds if policy allows
 ```
 
 ### 📊 **Rich Governance Telemetry**
 ```python
-with genops.track(operation_name="document_analysis") as span:
+from genops.core.telemetry import GenOpsTelemetry
+
+telemetry = GenOpsTelemetry()
+
+with telemetry.trace_operation(operation_name="document_analysis") as span:
     # AI processing...
+    ai_result = process_document()
     
-    # Record governance signals
-    span.record_cost(cost=2.50, currency="USD")
-    span.record_policy("content_safety", "allowed")
-    span.record_evaluation("quality_score", 0.92)
-    span.record_budget("monthly_ai_spend", allocated=1000, used=150)
+    # Record comprehensive governance signals
+    telemetry.record_cost(span, cost=2.50, currency="USD", provider="openai")
+    telemetry.record_policy(span, policy_name="content_safety", result="allowed") 
+    telemetry.record_evaluation(span, metric_name="quality_score", score=0.92)
+    telemetry.record_budget(span, budget_name="monthly_ai_spend", allocated=1000, consumed=150)
 ```
 
 ---
@@ -103,41 +125,48 @@ pip install "genops[openai,anthropic]"  # For OpenAI + Anthropic
 pip install "genops[all]"               # All providers
 ```
 
-### 30-Second Governance Setup
+### 5-Minute Governance Setup
 
 ```python
-import genops
+from genops.providers.openai import instrument_openai
+from genops.providers.anthropic import instrument_anthropic
 
-# 1. Initialize with your observability stack
-genops.init(
-    service_name="my-ai-service",
-    environment="production",
-    exporter_type="otlp",                    # or "console" for testing
-    otlp_endpoint="https://api.honeycomb.io", # Your OTLP endpoint
-    otlp_headers={"x-honeycomb-team": "your-api-key"},
-    
-    # Default governance attributes
-    default_team="ai-platform",
-    default_project="customer-chat"
-)
+# 1. Instrument your AI providers
+openai_client = instrument_openai(api_key="your-openai-key")
+anthropic_client = instrument_anthropic(api_key="your-anthropic-key")  
 
-# 2. Your existing AI code gets automatic governance
-import openai
-client = openai.OpenAI()
-
-response = client.chat.completions.create(
+# 2. Use them normally - governance is automatic
+response = openai_client.chat_completions_create(
     model="gpt-3.5-turbo",
-    messages=[{"role": "user", "content": "Hello!"}]
+    messages=[{"role": "user", "content": "Hello!"}],
+    # Add governance context
+    team="support-team",
+    project="ai-assistant", 
+    customer_id="enterprise-123"
 )
-# ✅ Cost, tokens, model, team, project automatically tracked!
 
-# 3. Check what's being tracked
-status = genops.status()
-print(f"Instrumented providers: {status['instrumented_providers']}")
-print(f"Default attributes: {status['default_attributes']}")
+# 3. OpenTelemetry exports to your observability stack
+# ✅ Cost, tokens, governance attributes → Datadog/Honeycomb/etc.
 ```
 
-**That's it!** Your AI operations now emit governance telemetry to your existing observability infrastructure.
+**That's it!** Full governance telemetry with just provider instrumentation.
+
+### 🎯 **Real-World Governance Scenarios**
+
+See complete end-to-end examples that solve real business problems:
+
+```bash
+# 🚨 Prevent AI budget overruns with automatic enforcement
+python examples/governance_scenarios/budget_enforcement.py
+
+# 🛡️ Block inappropriate content with real-time filtering  
+python examples/governance_scenarios/content_filtering.py
+
+# 📊 Track AI costs per customer for usage-based billing
+python examples/governance_scenarios/customer_attribution.py
+```
+
+Each scenario shows working code with realistic business problems and governance solutions.
 
 ---
 
@@ -244,57 +273,73 @@ register_policy("content_safety", blocked_patterns=["violence"], enforcement_lev
 register_policy("team_budget", max_monthly_spend=5000, enforcement_level=PolicyResult.RATE_LIMITED)
 
 # Apply policies to operations
-@genops.enforce_policy(["cost_limit", "content_safety"])
 def generate_content(prompt: str, customer_tier: str):
+    from genops.core.policy import _policy_engine, PolicyViolationError
+    
     if customer_tier == "enterprise":
-        model = "gpt-4"  # Higher cost, policy will check
+        model = "gpt-4"
+        estimated_cost = 0.12  # Higher cost estimate
     else:
         model = "gpt-3.5-turbo"
+        estimated_cost = 0.03
+    
+    # Check policies before operation
+    context = {"cost": estimated_cost, "content": prompt}
+    cost_result = _policy_engine.evaluate_policy("cost_limit", context)
+    
+    if cost_result.result == PolicyResult.BLOCKED:
+        raise PolicyViolationError("cost_limit", cost_result.reason)
         
     return call_ai_model(model, prompt)
 
-# Automatic policy evaluation + telemetry
+# Policy evaluation with error handling
 try:
     result = generate_content("Write a story", "enterprise") 
     # ✅ Allowed: cost under $10, content safe
-except genops.PolicyViolationError as e:
+except PolicyViolationError as e:
     # ❌ Blocked: policy violation with detailed context
     logger.warning(f"Policy {e.policy_name}: {e.reason}")
 ```
 
 ### **Custom Evaluations & Compliance**
 ```python
-import genops
+from genops.core.telemetry import GenOpsTelemetry
 
-@genops.track_usage(operation_name="content_moderation")
 def moderate_content(text: str):
-    with genops.track("ai_safety_check") as span:
+    telemetry = GenOpsTelemetry()
+    
+    with telemetry.trace_operation(operation_name="content_moderation") as span:
         # Your content moderation logic
         safety_score = run_safety_model(text)
         toxicity_score = check_toxicity(text)
         
         # Record compliance metrics
-        span.record_evaluation("safety", safety_score, threshold=0.8)
-        span.record_evaluation("toxicity", toxicity_score, threshold=0.2) 
+        telemetry.record_evaluation(span, metric_name="safety", score=safety_score, 
+                                   threshold=0.8, passed=safety_score > 0.8)
+        telemetry.record_evaluation(span, metric_name="toxicity", score=toxicity_score,
+                                   threshold=0.2, passed=toxicity_score < 0.2) 
         
         # Policy decision
         if safety_score > 0.8 and toxicity_score < 0.2:
-            span.record_policy("content_policy", "approved")
+            telemetry.record_policy(span, policy_name="content_policy", result="approved")
             return {"approved": True, "reason": "Content meets safety standards"}
         else:
-            span.record_policy("content_policy", "rejected", reason="Safety threshold not met")
+            telemetry.record_policy(span, policy_name="content_policy", result="rejected", 
+                                   reason="Safety threshold not met")
             return {"approved": False, "reason": "Content violates policy"}
 
-# Rich governance telemetry for audit trails
+# Rich governance telemetry automatically exported for audit trails
 ```
 
 ### **Budget Tracking & Alerts**  
 ```python
-import genops
+from genops.core.telemetry import GenOpsTelemetry
 
 def process_customer_requests(customer_id: str, requests: list):
+    telemetry = GenOpsTelemetry()
+    
     # Track budget utilization per customer
-    with genops.track(f"customer_{customer_id}_processing") as span:
+    with telemetry.trace_operation(f"customer_{customer_id}_processing") as span:
         total_cost = 0
         
         for request in requests:
@@ -306,7 +351,8 @@ def process_customer_requests(customer_id: str, requests: list):
         customer_budget = get_customer_budget(customer_id)
         remaining = customer_budget.limit - customer_budget.used - total_cost
         
-        span.record_budget(
+        telemetry.record_budget(
+            span=span,
             budget_name=f"customer_{customer_id}_monthly",
             allocated=customer_budget.limit,
             consumed=customer_budget.used + total_cost, 
@@ -315,8 +361,8 @@ def process_customer_requests(customer_id: str, requests: list):
         
         # Automatic alerts when budget utilization > 80%
         if remaining / customer_budget.limit < 0.2:
-            span.record_policy("budget_warning", "triggered", 
-                             reason=f"Customer {customer_id} at 80% budget utilization")
+            telemetry.record_policy(span, policy_name="budget_warning", result="triggered", 
+                                   reason=f"Customer {customer_id} at 80% budget utilization")
 ```
 
 ---
