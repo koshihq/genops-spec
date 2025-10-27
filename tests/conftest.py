@@ -1,45 +1,51 @@
 """Pytest configuration and shared fixtures for GenOps AI tests."""
 
-import pytest
+from typing import Any, Dict, Generator, List
 from unittest.mock import MagicMock, patch
-from typing import Dict, List, Any, Generator
+
+import pytest
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+
 try:
     from opentelemetry.test.spantestutil import SpanRecorder
 except ImportError:
     # Fallback implementation for SpanRecorder
     from typing import List
+
     from opentelemetry.sdk.trace import Span
-    
+
     class SpanRecorder:
         """Simple span recorder for testing."""
+
         def __init__(self):
             self._spans: List[Span] = []
-        
+
         def export(self, spans):
             self._spans.extend(spans)
             return None
-        
+
         def shutdown(self):
             pass
-        
+
         def on_start(self, span, parent_context):
             pass
-        
+
         def on_end(self, span):
             self._spans.append(span)
-        
+
         def get_finished_spans(self):
             return list(self._spans)
-        
+
         def clear(self):
             self._spans.clear()
+
+
 from opentelemetry.sdk.resources import Resource
 
-from genops.core.telemetry import GenOpsTelemetry
 from genops.core.policy import PolicyConfig, PolicyResult
+from genops.core.telemetry import GenOpsTelemetry
 
 
 @pytest.fixture
@@ -48,17 +54,17 @@ def mock_otel_setup() -> Generator[SpanRecorder, None, None]:
     # Create a tracer provider with test resource
     resource = Resource.create({"service.name": "genops-test"})
     tracer_provider = TracerProvider(resource=resource)
-    
+
     # Set up span recorder for verification
     span_recorder = SpanRecorder()
     span_processor = SimpleSpanProcessor(span_recorder)
     tracer_provider.add_span_processor(span_processor)
-    
+
     # Set the tracer provider
     trace.set_tracer_provider(tracer_provider)
-    
+
     yield span_recorder
-    
+
     # Cleanup
     span_recorder.clear()
 
@@ -73,7 +79,7 @@ def telemetry(mock_otel_setup) -> GenOpsTelemetry:
 def mock_openai_client():
     """Mock OpenAI client for testing without API calls."""
     mock_client = MagicMock()
-    
+
     # Mock chat completion response
     mock_response = MagicMock()
     mock_response.choices = [MagicMock()]
@@ -82,9 +88,9 @@ def mock_openai_client():
     mock_response.usage.completion_tokens = 5
     mock_response.usage.total_tokens = 15
     mock_response.model = "gpt-3.5-turbo"
-    
+
     mock_client.chat.completions.create.return_value = mock_response
-    
+
     return mock_client
 
 
@@ -92,7 +98,7 @@ def mock_openai_client():
 def mock_anthropic_client():
     """Mock Anthropic client for testing without API calls."""
     mock_client = MagicMock()
-    
+
     # Mock message response
     mock_response = MagicMock()
     mock_response.content = [MagicMock()]
@@ -100,9 +106,9 @@ def mock_anthropic_client():
     mock_response.usage.input_tokens = 12
     mock_response.usage.output_tokens = 8
     mock_response.model = "claude-3-sonnet-20240229"
-    
+
     mock_client.messages.create.return_value = mock_response
-    
+
     return mock_client
 
 
@@ -122,7 +128,7 @@ def sample_policy_config() -> PolicyConfig:
         name="test_cost_limit",
         description="Test cost limit policy",
         enforcement_level=PolicyResult.BLOCKED,
-        conditions={"max_cost": 1.0}
+        conditions={"max_cost": 1.0},
     )
 
 
@@ -134,19 +140,19 @@ def sample_policies() -> List[PolicyConfig]:
             name="cost_limit",
             description="Limit AI operation costs",
             enforcement_level=PolicyResult.BLOCKED,
-            conditions={"max_cost": 5.0}
+            conditions={"max_cost": 5.0},
         ),
         PolicyConfig(
             name="rate_limit",
             description="Rate limit AI operations",
             enforcement_level=PolicyResult.RATE_LIMITED,
-            conditions={"max_requests": 100, "time_window": 3600}
+            conditions={"max_requests": 100, "time_window": 3600},
         ),
         PolicyConfig(
             name="content_filter",
             description="Filter inappropriate content",
             enforcement_level=PolicyResult.WARNING,
-            conditions={"blocked_patterns": ["violence", "explicit"]}
+            conditions={"blocked_patterns": ["violence", "explicit"]},
         ),
     ]
 
@@ -156,7 +162,7 @@ def governance_attributes() -> Dict[str, Any]:
     """Provide sample governance attributes."""
     return {
         "team": "ai-platform",
-        "project": "chatbot-service", 
+        "project": "chatbot-service",
         "environment": "testing",
         "feature": "conversation",
         "customer_id": "test-customer-123",
@@ -188,25 +194,26 @@ def mock_span_recorder(mock_otel_setup) -> SpanRecorder:
 
 class SpanAssertions:
     """Helper class for making assertions about OpenTelemetry spans."""
-    
+
     @staticmethod
     def assert_span_exists(spans: List, name: str) -> Any:
         """Assert that a span with the given name exists."""
         matching_spans = [s for s in spans if s.name == name]
         assert len(matching_spans) > 0, f"No span found with name '{name}'"
         return matching_spans[0]
-    
+
     @staticmethod
     def assert_span_attribute(span: Any, key: str, expected_value: Any = None):
         """Assert that a span has a specific attribute."""
-        attributes = getattr(span, 'attributes', {})
+        attributes = getattr(span, "attributes", {})
         assert key in attributes, f"Attribute '{key}' not found in span"
-        
+
         if expected_value is not None:
             actual_value = attributes[key]
-            assert actual_value == expected_value, \
+            assert actual_value == expected_value, (
                 f"Attribute '{key}': expected '{expected_value}', got '{actual_value}'"
-    
+            )
+
     @staticmethod
     def assert_governance_attributes(span: Any, expected_attrs: Dict[str, Any]):
         """Assert that a span contains expected governance attributes."""
@@ -225,33 +232,33 @@ def span_assertions() -> SpanAssertions:
 @pytest.fixture
 def mock_openai_import():
     """Mock OpenAI import for testing without dependency."""
-    with patch('genops.providers.openai.HAS_OPENAI', True):
-        with patch('genops.providers.openai.OpenAI') as mock_openai_class:
+    with patch("genops.providers.openai.HAS_OPENAI", True):
+        with patch("genops.providers.openai.OpenAI") as mock_openai_class:
             yield mock_openai_class
 
 
 @pytest.fixture
 def mock_anthropic_import():
     """Mock Anthropic import for testing without dependency."""
-    with patch('genops.providers.anthropic.HAS_ANTHROPIC', True):
-        with patch('genops.providers.anthropic.Anthropic') as mock_anthropic_class:
+    with patch("genops.providers.anthropic.HAS_ANTHROPIC", True):
+        with patch("genops.providers.anthropic.Anthropic") as mock_anthropic_class:
             yield mock_anthropic_class
 
 
 # Test data generators
 class TestDataGenerator:
     """Generate test data for various scenarios."""
-    
+
     @staticmethod
     def generate_chat_messages(count: int = 3) -> List[Dict[str, str]]:
         """Generate sample chat messages."""
         messages = []
         for i in range(count):
             role = "user" if i % 2 == 0 else "assistant"
-            content = f"Test message {i+1} from {role}"
+            content = f"Test message {i + 1} from {role}"
             messages.append({"role": role, "content": content})
         return messages
-    
+
     @staticmethod
     def generate_policy_violations() -> List[Dict[str, Any]]:
         """Generate sample policy violation scenarios."""
@@ -261,14 +268,14 @@ class TestDataGenerator:
                 "violation_type": "cost_exceeded",
                 "cost": 10.0,
                 "limit": 5.0,
-                "metadata": {"model": "gpt-4", "tokens": 2000}
+                "metadata": {"model": "gpt-4", "tokens": 2000},
             },
             {
                 "policy": "content_filter",
                 "violation_type": "blocked_content",
                 "content": "This contains violence",
                 "patterns": ["violence"],
-                "metadata": {"severity": "high"}
+                "metadata": {"severity": "high"},
             },
             {
                 "policy": "rate_limit",
@@ -276,8 +283,8 @@ class TestDataGenerator:
                 "requests": 150,
                 "limit": 100,
                 "time_window": 3600,
-                "metadata": {"user_id": "test-user"}
-            }
+                "metadata": {"user_id": "test-user"},
+            },
         ]
 
 
@@ -292,10 +299,11 @@ def test_data_generator() -> TestDataGenerator:
 def cleanup_test_state():
     """Ensure clean state between tests."""
     yield
-    
+
     # Clean up instrumentation without breaking telemetry
     from genops.auto_instrumentation import GenOpsInstrumentor
-    if hasattr(GenOpsInstrumentor, '_instance') and GenOpsInstrumentor._instance:
+
+    if hasattr(GenOpsInstrumentor, "_instance") and GenOpsInstrumentor._instance:
         instrumentor = GenOpsInstrumentor._instance
         if instrumentor and instrumentor._initialized:
             try:
