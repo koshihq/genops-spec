@@ -83,21 +83,21 @@ class PolicyEngine:
 
     def evaluate_policy(
         self, policy_name: str, operation_context: Dict[str, Any]
-    ) -> tuple[PolicyResult, Optional[str]]:
+    ) -> PolicyEvaluationResult:
         """
         Evaluate a policy against an operation context.
 
         Returns:
-            tuple: (PolicyResult, reason)
+            PolicyEvaluationResult: Policy evaluation result with details
         """
         if policy_name not in self.policies:
             logger.warning(f"Unknown policy: {policy_name}")
-            return PolicyResult.ALLOWED, None
+            return PolicyEvaluationResult(policy_name, PolicyResult.ALLOWED, "Policy not found")
 
         policy = self.policies[policy_name]
 
         if not policy.enabled:
-            return PolicyResult.ALLOWED, "Policy disabled"
+            return PolicyEvaluationResult(policy_name, PolicyResult.ALLOWED, "Policy disabled")
 
         # Example policy evaluations - extend as needed
         if policy.name == "cost_limit":
@@ -109,69 +109,73 @@ class PolicyEngine:
         elif policy.name == "team_access":
             return self._evaluate_team_access(policy, operation_context)
 
-        return PolicyResult.ALLOWED, None
+        return PolicyEvaluationResult(policy_name, PolicyResult.ALLOWED, None)
 
     def _evaluate_cost_limit(
         self, policy: PolicyConfig, context: Dict[str, Any]
-    ) -> tuple[PolicyResult, Optional[str]]:
+    ) -> PolicyEvaluationResult:
         """Evaluate cost limit policy."""
         max_cost = policy.conditions.get("max_cost", float("inf"))
         estimated_cost = context.get("estimated_cost", 0)
 
         if estimated_cost > max_cost:
-            return (
+            return PolicyEvaluationResult(
+                policy.name,
                 policy.enforcement_level,
                 f"Estimated cost ${estimated_cost:.4f} exceeds limit ${max_cost:.4f}",
             )
 
-        return PolicyResult.ALLOWED, None
+        return PolicyEvaluationResult(policy.name, PolicyResult.ALLOWED, None)
 
     def _evaluate_rate_limit(
         self, policy: PolicyConfig, context: Dict[str, Any]
-    ) -> tuple[PolicyResult, Optional[str]]:
+    ) -> PolicyEvaluationResult:
         """Evaluate rate limit policy."""
         # Simplified rate limiting - in production, use Redis or similar
         max_requests = policy.conditions.get("max_requests_per_minute", 100)
         current_requests = context.get("current_requests", 0)
 
         if current_requests >= max_requests:
-            return (
+            return PolicyEvaluationResult(
+                policy.name,
                 PolicyResult.RATE_LIMITED,
                 f"Rate limit exceeded: {current_requests}/{max_requests} requests per minute",
             )
 
-        return PolicyResult.ALLOWED, None
+        return PolicyEvaluationResult(policy.name, PolicyResult.ALLOWED, None)
 
     def _evaluate_content_filter(
         self, policy: PolicyConfig, context: Dict[str, Any]
-    ) -> tuple[PolicyResult, Optional[str]]:
+    ) -> PolicyEvaluationResult:
         """Evaluate content filtering policy."""
         blocked_patterns = policy.conditions.get("blocked_patterns", [])
         content = context.get("content", "")
 
         for pattern in blocked_patterns:
             if pattern.lower() in content.lower():
-                return (
+                return PolicyEvaluationResult(
+                    policy.name,
                     policy.enforcement_level,
                     f"Content contains blocked pattern: {pattern}",
                 )
 
-        return PolicyResult.ALLOWED, None
+        return PolicyEvaluationResult(policy.name, PolicyResult.ALLOWED, None)
 
     def _evaluate_team_access(
         self, policy: PolicyConfig, context: Dict[str, Any]
-    ) -> tuple[PolicyResult, Optional[str]]:
+    ) -> PolicyEvaluationResult:
         """Evaluate team access policy."""
         allowed_teams = policy.conditions.get("allowed_teams", [])
         team = context.get("team")
 
         if allowed_teams and team not in allowed_teams:
-            return (
+            return PolicyEvaluationResult(
+                policy.name,
                 policy.enforcement_level,
                 f"Team '{team}' not in allowed teams: {allowed_teams}",
             )
 
-        return PolicyResult.ALLOWED, None
+        return PolicyEvaluationResult(policy.name, PolicyResult.ALLOWED, None)
 
 
 # Global policy engine instance
@@ -234,27 +238,27 @@ def enforce_policy(
 
             # Evaluate each policy
             for policy_name in policies:
-                result, reason = _policy_engine.evaluate_policy(policy_name, context)
+                policy_result = _policy_engine.evaluate_policy(policy_name, context)
 
                 # Record policy telemetry
                 if current_span and current_span.is_recording():
                     _policy_engine.telemetry.record_policy(
                         span=current_span,
                         policy_name=policy_name,
-                        policy_result=result.value,
-                        policy_reason=reason,
+                        policy_result=policy_result.result.value,
+                        policy_reason=policy_result.reason,
                     )
 
                 # Handle policy violations
-                if result == PolicyResult.BLOCKED:
+                if policy_result.result == PolicyResult.BLOCKED:
                     raise PolicyViolationError(
-                        policy_name, reason or "Policy violation"
+                        policy_name, policy_result.reason or "Policy violation"
                     )
-                elif result == PolicyResult.WARNING:
-                    logger.warning(f"Policy warning for '{policy_name}': {reason}")
-                elif result == PolicyResult.RATE_LIMITED:
+                elif policy_result.result == PolicyResult.WARNING:
+                    logger.warning(f"Policy warning for '{policy_name}': {policy_result.reason}")
+                elif policy_result.result == PolicyResult.RATE_LIMITED:
                     raise PolicyViolationError(
-                        policy_name, reason or "Rate limit exceeded"
+                        policy_name, policy_result.reason or "Rate limit exceeded"
                     )
 
             # All policies passed, execute the function
@@ -267,11 +271,11 @@ def enforce_policy(
 
 def check_policy(
     policy_name: str, operation_context: Dict[str, Any]
-) -> tuple[PolicyResult, Optional[str]]:
+) -> PolicyEvaluationResult:
     """
     Manually check a policy without enforcement.
 
     Returns:
-        tuple: (PolicyResult, reason)
+        PolicyEvaluationResult: Policy evaluation result with details
     """
     return _policy_engine.evaluate_policy(policy_name, operation_context)
