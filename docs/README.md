@@ -108,8 +108,7 @@ See our [Contributing Guide](../CONTRIBUTING.md) for more details.
 
 - **📖 Browse the docs** - Most questions are answered here
 - **💬 GitHub Discussions** - Ask the community for help
-- **🐛 GitHub Issues** - Report documentation bugs or gaps
-- **📧 Email** - [hello@genopsai.org](mailto:hello@genopsai.org) for direct support
+- **🐛 GitHub Issues** - [Report issues or request features](https://github.com/KoshiHQ/GenOps-AI/issues)
 
 ---
 

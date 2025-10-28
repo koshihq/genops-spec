@@ -439,7 +439,7 @@ def main():
     print("4. Build dashboards showing cost/usage by attribution dimensions") 
     print("5. Set up alerts and budgets based on team/customer/feature usage")
     
-    print(f"\n🔗 Learn more: https://docs.genopsai.org/attribution")
+    print(f"\n🔗 Learn more: https://github.com/KoshiHQ/GenOps-AI/tree/main/docs")
 
 if __name__ == "__main__":
     main()

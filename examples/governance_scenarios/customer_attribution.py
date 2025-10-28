@@ -422,7 +422,7 @@ def main():
     print("4. Integrate with your billing system for usage-based pricing")
     print("5. Analyze customer profitability and optimize pricing strategy")
     
-    print(f"\n🔗 Learn more: https://docs.genopsai.org/cost-attribution")
+    print(f"\n🔗 Learn more: https://github.com/KoshiHQ/GenOps-AI/tree/main/docs")
 
 if __name__ == "__main__":
     main()

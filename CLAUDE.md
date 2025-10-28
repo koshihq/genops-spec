@@ -18,7 +18,7 @@ Where **OpenLLMetry** defines *what* to trace (LLM prompts, completions, tokens)
 
 ### Brand Architecture (Two-Tier System)
 
-1. **GenOps AI** – Open-source standard (this repository, [genopsai.org](https://genopsai.org))
+1. **GenOps AI** – Open-source standard (this repository)
 2. **Koshi** – Commercial control plane (getkoshi.ai) providing managed dashboards, policies, and compliance for enterprises built on top of GenOps telemetry
 
 ---

@@ -59,8 +59,9 @@ representative at an online or offline event.
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported to the community leaders responsible for enforcement at
-[hello@genopsai.org](mailto:hello@genopsai.org).
+reported to the community leaders responsible for enforcement via
+[GitHub Issues](https://github.com/KoshiHQ/GenOps-AI/issues) or by using GitHub's 
+built-in community reporting features.
 
 All complaints will be reviewed and investigated promptly and fairly.
 

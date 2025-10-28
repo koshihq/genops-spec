@@ -410,10 +410,9 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for:
 - Community guidelines and code of conduct
 
 ### **Getting Help**
-- 📖 **Documentation**: [docs.genopsai.org](https://docs.genopsai.org)
+- 📖 **Documentation**: [GitHub Docs](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs)
 - 💬 **Discussions**: [GitHub Discussions](https://github.com/KoshiHQ/GenOps-AI/discussions)
 - 🐛 **Issues**: [GitHub Issues](https://github.com/KoshiHQ/GenOps-AI/issues)
-- 📧 **Email**: [hello@genopsai.org](mailto:hello@genopsai.org)
 
 ### **Roadmap**
 See our [public roadmap](https://github.com/KoshiHQ/GenOps-AI/projects) for upcoming features:

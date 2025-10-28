@@ -335,7 +335,7 @@ def main():
     print("4. Implement custom policies for your specific governance requirements")
     print("5. Scale across your organization's AI operations")
     
-    print(f"\n🔗 Learn more: https://docs.genopsai.org")
+    print(f"\n🔗 Learn more: https://github.com/KoshiHQ/GenOps-AI/tree/main/docs")
 
 if __name__ == "__main__":
     main()

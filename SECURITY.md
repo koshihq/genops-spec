@@ -34,9 +34,9 @@ GenOps AI is designed with security in mind, particularly since it handles sensi
 
 **Please do not report security vulnerabilities through public GitHub issues.**
 
-Instead, please report them responsibly by emailing us at:
+Instead, please report them responsibly by:
 
-**📧 [security@genopsai.org](mailto:security@genopsai.org)**
+**🔒 [Creating a private security issue](https://github.com/KoshiHQ/GenOps-AI/security/advisories/new)** or using GitHub Issues
 
 Please include the following information:
 
@@ -186,15 +186,15 @@ GenOps AI supports compliance requirements:
 - **PCI DSS**: Credit card data redaction
 - **Custom**: Configurable data governance policies
 
-For specific compliance questions, contact [compliance@genopsai.org](mailto:compliance@genopsai.org).
+For specific compliance questions, create a [GitHub Issue](https://github.com/KoshiHQ/GenOps-AI/issues) with the "compliance" label.
 
 ## Contact
 
 For security questions or concerns:
 
-- **Security Issues**: [security@genopsai.org](mailto:security@genopsai.org)
-- **Compliance Questions**: [compliance@genopsai.org](mailto:compliance@genopsai.org)
-- **General Security**: [hello@genopsai.org](mailto:hello@genopsai.org)
+- **Security Issues**: [GitHub Security Tab](https://github.com/KoshiHQ/GenOps-AI/security/advisories/new)
+- **Compliance Questions**: [GitHub Issues with compliance label](https://github.com/KoshiHQ/GenOps-AI/issues/new?labels=compliance)
+- **General Security**: [GitHub Issues](https://github.com/KoshiHQ/GenOps-AI/issues)
 
 ---
 

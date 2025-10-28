@@ -167,4 +167,4 @@ These examples work with your existing tools:
 4. **Configure alerting** for budget warnings and policy violations
 5. **Scale across your organization** with custom governance policies
 
-**Learn more**: [docs.genopsai.org](https://docs.genopsai.org)
+**Learn more**: [GitHub Docs](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs)

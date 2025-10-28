@@ -446,7 +446,7 @@ We are committed to providing a welcoming and inclusive environment. Please read
 - **GitHub Discussions** - For questions, ideas, and general discussion
 - **GitHub Issues** - For bug reports and feature requests
 - **Pull Requests** - For code contributions with discussion
-- **Email** - [hello@genopsai.org](mailto:hello@genopsai.org) for private matters
+- **GitHub Issues** - For private matters, create a private issue or use GitHub's contact features
 
 ### **Recognition**
 
@@ -516,8 +516,7 @@ Stuck? We're here to help!
 
 - 💬 **GitHub Discussions** - [Ask the community](https://github.com/KoshiHQ/GenOps-AI/discussions)
 - 🐛 **Issues** - [Report bugs or request features](https://github.com/KoshiHQ/GenOps-AI/issues)
-- 📧 **Email** - [hello@genopsai.org](mailto:hello@genopsai.org)
-- 📖 **Documentation** - [docs.genopsai.org](https://docs.genopsai.org)
+- 📖 **Documentation** - [GitHub Docs](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs)
 
 ---
 

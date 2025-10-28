@@ -10,7 +10,7 @@ readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.9"
 authors = [
-    { name = "GenOps AI", email = "hello@genopsai.org" },
+    { name = "GenOps AI" },
 ]
 keywords = [
     "opentelemetry",
@@ -70,8 +70,8 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://genopsai.org"
-Documentation = "https://docs.genopsai.org"
+Homepage = "https://github.com/KoshiHQ/GenOps-AI"
+Documentation = "https://github.com/KoshiHQ/GenOps-AI/tree/main/docs"
 Repository = "https://github.com/KoshiHQ/GenOps-AI"
 Issues = "https://github.com/KoshiHQ/GenOps-AI/issues"
 

@@ -275,7 +275,7 @@ Congratulations! You now have AI governance telemetry flowing. Here are some nex
 - 🏢 **Enterprise deployment** - Connect to [Koshi control plane](https://getkoshi.ai)
 
 ### **Community & Learning**
-- 📖 **Read the full documentation** - [docs.genopsai.org](https://docs.genopsai.org)
+- 📖 **Read the full documentation** - [GitHub Docs](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs)
 - 💬 **Join discussions** - [GitHub Discussions](https://github.com/KoshiHQ/GenOps-AI/discussions)
 - 🤝 **Contribute** - [Contributing Guide](../CONTRIBUTING.md)
 
@@ -414,10 +414,9 @@ You'll see governance telemetry flowing with cost attribution, policy enforcemen
 
 ### **Getting Help**
 
-- 📖 **Documentation** - [docs.genopsai.org](https://docs.genopsai.org) 
+- 📖 **Documentation** - [GitHub Docs](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs) 
 - 💬 **Community** - [GitHub Discussions](https://github.com/KoshiHQ/GenOps-AI/discussions)
 - 🐛 **Issues** - [GitHub Issues](https://github.com/KoshiHQ/GenOps-AI/issues)
-- 📧 **Email** - [hello@genopsai.org](mailto:hello@genopsai.org)
 
 ---
 

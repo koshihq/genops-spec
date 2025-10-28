@@ -207,4 +207,4 @@ genops.eval.passed = true
 4. **Instrument your AI applications** with GenOps decorators and context managers
 5. **Monitor your telemetry data** in your observability platform
 
-For more advanced usage, see the main documentation at [docs.genopsai.org](https://docs.genopsai.org).
+For more advanced usage, see the main documentation in [GitHub Docs](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs).

@@ -400,7 +400,7 @@ def main():
     print("4. Train your team on content governance workflows")
     print("5. Monitor content safety metrics in your observability dashboard")
     
-    print(f"\n🔗 Learn more: https://docs.genopsai.org/content-governance")
+    print(f"\n🔗 Learn more: https://github.com/KoshiHQ/GenOps-AI/tree/main/docs")
 
 if __name__ == "__main__":
     main()

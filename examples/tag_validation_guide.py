@@ -438,7 +438,7 @@ def main():
     print("4. Monitor validation metrics in your observability platform")
     print("5. Train teams on proper attribution tag formats and requirements")
     
-    print(f"\n🔗 Learn more: https://docs.genopsai.org/validation")
+    print(f"\n🔗 Learn more: https://github.com/KoshiHQ/GenOps-AI/tree/main/docs")
 
 
 if __name__ == "__main__":
