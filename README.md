@@ -7,9 +7,11 @@
   <p><em>Turn AI telemetry into actionable accountability</em></p>
   
   [![GitHub stars](https://img.shields.io/github/stars/KoshiHQ/GenOps-AI?style=social)](https://github.com/KoshiHQ/GenOps-AI/stargazers)
-  [![CI Status](https://img.shields.io/github/actions/workflow/status/KoshiHQ/GenOps-AI/ci.yml?branch=main)](https://github.com/KoshiHQ/GenOps-AI/actions)
+  [![CI Status](https://img.shields.io/github/actions/workflow/status/KoshiHQ/GenOps-AI/ci.yml?branch=main)](https://github.com/KoshiHQ/GenOps-AI/actions)  
+  [![PyPI version](https://badge.fury.io/py/genops.svg)](https://badge.fury.io/py/genops)
   [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
   [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+  [![Code style: ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
   [![OpenTelemetry](https://img.shields.io/badge/OpenTelemetry-native-purple.svg)](https://opentelemetry.io/)
 </div>
 
@@ -126,6 +128,18 @@ pip install genops
 # With AI provider support
 pip install "genops[openai,anthropic]"  # For OpenAI + Anthropic
 pip install "genops[all]"               # All providers
+```
+
+### ⚡ **30-Second Test**
+
+Verify your installation works:
+
+```bash
+# Test the CLI
+genops --version
+
+# Quick Python test
+python -c "import genops; print('✅ GenOps AI installed successfully!')"
 ```
 
 ### 5-Minute Governance Setup
