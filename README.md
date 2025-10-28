@@ -1,10 +1,13 @@
 # GenOps AI
 
+> 🚧 **Preview Release** - Complete AI governance platform with attribution, validation & compliance features. [Community contributions welcome!](CONTRIBUTING.md)
+
 <div align="center">
   <h3>OpenTelemetry-native governance for AI systems</h3>
   <p><em>Turn AI telemetry into actionable accountability</em></p>
   
   [![GitHub stars](https://img.shields.io/github/stars/KoshiHQ/GenOps-AI?style=social)](https://github.com/KoshiHQ/GenOps-AI/stargazers)
+  [![CI Status](https://img.shields.io/github/actions/workflow/status/KoshiHQ/GenOps-AI/ci.yml?branch=main)](https://github.com/KoshiHQ/GenOps-AI/actions)
   [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
   [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
   [![OpenTelemetry](https://img.shields.io/badge/OpenTelemetry-native-purple.svg)](https://opentelemetry.io/)
@@ -438,6 +441,23 @@ Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for detai
 - **For Executives**: Enterprise-wide AI governance visibility and control
 
 **Start with the open-source GenOps AI SDK. Scale with your existing enterprise observability platform.**
+
+---
+
+## ⚠️ **Known Issues & Contributing**
+
+This is a **preview release** with comprehensive features but some ongoing CI test issues:
+
+### 🚧 Current Status
+- ✅ **Core functionality working**: Security scans pass, package installation works
+- ✅ **Comprehensive examples**: All governance scenarios and integrations functional
+- ⚠️ **Some CI tests failing**: Integration tests and Python 3.11 compatibility
+- 🤝 **Community help wanted**: [See open issues](https://github.com/KoshiHQ/GenOps-AI/issues) for contribution opportunities
+
+### 🆘 Need Help?
+- 💬 **Questions**: [GitHub Discussions](https://github.com/KoshiHQ/GenOps-AI/discussions)
+- 🐛 **Issues**: [GitHub Issues](https://github.com/KoshiHQ/GenOps-AI/issues)
+- 🤝 **Contributing**: [Contributing Guide](CONTRIBUTING.md)
 
 ---
 

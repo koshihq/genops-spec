@@ -38,7 +38,7 @@ GenOps AI is building the future of **OpenTelemetry-native AI governance**, and 
 
 2. **Set Up Python Environment**
    ```bash
-   # Python 3.8+ required
+   # Python 3.9+ required
    python -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    
@@ -484,7 +484,13 @@ We recognize contributors in several ways:
 
 Ready to contribute? Here are some great places to start:
 
-### **🌟 Good First Issues**
+### **🔥 Urgent: CI Test Fixes (Great First Issues!)**
+- Fix failing integration tests ([View CI Status](https://github.com/KoshiHQ/GenOps-AI/actions))
+- Resolve Python 3.11 compatibility issues  
+- Improve test stability and reliability
+- Debug cancelled test scenarios
+
+### **🌟 Other Good First Issues**
 - Add cost models for existing providers
 - Improve error messages and documentation  
 - Add examples for specific use cases
