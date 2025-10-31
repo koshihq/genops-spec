@@ -35,6 +35,27 @@ While [OpenLLMetry](https://github.com/traceloop/openllmetry) tells you *what* y
 
 ---
 
+## 🚨 **The Problem: AI Costs Are Out of Control**
+
+**Real scenarios happening right now:**
+- 💸 **$50,000 surprise bills** - One customer's chat feature cost 10x more than expected
+- 🔍 **No visibility** - "Which team/feature is burning through our AI budget?"  
+- 🚫 **No guardrails** - Production systems calling GPT-4 when GPT-3.5 would work
+- 📊 **CFO questions** - "How much is AI costing us per customer?"
+- ⚖️ **Compliance gaps** - No audit trail for AI decisions in regulated industries
+
+**Without governance, AI is just expensive magic.** ✨💸
+
+### 👥 **Who This Is For**
+
+- **DevOps Teams**: "I need AI costs in my existing dashboards"
+- **FinOps Teams**: "I need per-customer AI cost allocation"  
+- **Platform Teams**: "I need budget controls before we go bankrupt"
+- **Compliance Teams**: "I need audit trails for AI decisions"
+- **CTOs**: "I need to understand what we're actually paying for"
+
+---
+
 ## ✨ **Key Features**
 
 ### 🚀 **Provider Instrumentation** (Production-Ready)
@@ -449,6 +470,22 @@ Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for detai
 - **For Product Teams**: Feature-level AI cost analysis and optimization insights
 
 **Open source, OpenTelemetry-native, and designed to work with your existing stack.**
+
+---
+
+## 🤝 **Community & Quick Wins**
+
+**New to open source?** Start here:
+- 🐛 [Good first issues](https://github.com/KoshiHQ/GenOps-AI/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) - Perfect for newcomers
+- 📚 [Documentation improvements](https://github.com/KoshiHQ/GenOps-AI/issues?q=is%3Aissue+is%3Aopen+label%3Adocumentation) - Help others learn
+- 🔧 [Help fix our CI tests!](https://github.com/KoshiHQ/GenOps-AI/issues?q=is%3Aissue+is%3Aopen+label%3Aci-fix) - Great for contributors who love debugging
+
+**5-minute contributions welcome!** Every small improvement helps the community grow.
+
+**Looking for bigger challenges?**
+- 🏗️ [Provider integrations](https://github.com/KoshiHQ/GenOps-AI/issues?q=is%3Aissue+is%3Aopen+label%3Aprovider) - Add AWS Bedrock, Google Gemini support
+- 📊 [Dashboard templates](https://github.com/KoshiHQ/GenOps-AI/issues?q=is%3Aissue+is%3Aopen+label%3Adashboard) - Pre-built observability dashboards
+- 🤖 [AI governance patterns](https://github.com/KoshiHQ/GenOps-AI/issues?q=is%3Aissue+is%3Aopen+label%3Agovernance) - Real-world scenarios
 
 ---
 
