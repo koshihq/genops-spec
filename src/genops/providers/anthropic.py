@@ -368,3 +368,23 @@ def unpatch_anthropic():
         _original_completions_create = None
 
         logger.info("Anthropic patches removed")
+
+
+# Import validation utilities
+def validate_setup():
+    """Validate Anthropic provider setup."""
+    try:
+        from .anthropic_validation import validate_anthropic_setup
+        return validate_anthropic_setup()
+    except ImportError:
+        logger.warning("Anthropic validation utilities not available")
+        return None
+
+
+def print_validation_result(result):
+    """Print validation result in user-friendly format."""
+    try:
+        from .anthropic_validation import print_anthropic_validation_result
+        print_anthropic_validation_result(result)
+    except ImportError:
+        logger.warning("Anthropic validation utilities not available")

@@ -9,7 +9,15 @@ from genops.auto_instrumentation import (
     init,
     status,
     uninstrument,
+    register_framework_provider,
+    get_available_frameworks,
+    get_framework_status,
 )
+
+# Auto-instrumentation convenience function
+def auto_instrument(**kwargs):
+    """Convenience function for auto-instrumentation. Alias for init()."""
+    return init(**kwargs)
 from genops.core.context import (
     clear_context,
     clear_default_attributes,
@@ -27,6 +35,16 @@ from genops.core.context_manager import track, track_enhanced
 from genops.core.policy import enforce_policy
 from genops.core.telemetry import GenOpsTelemetry
 from genops.core.tracker import track_usage
+
+# Multi-provider cost aggregation
+from genops.core.multi_provider_costs import (
+    MultiProviderCostAggregator,
+    MultiProviderCostSummary,
+    ProviderCostEntry,
+    multi_provider_cost_tracking,
+    compare_provider_costs,
+    estimate_migration_costs,
+)
 
 # Tag validation and enforcement
 from genops.core.validation import (
@@ -53,8 +71,12 @@ __all__ = [
     "GenOpsTelemetry",
     # Auto-instrumentation
     "init",
+    "auto_instrument",
     "uninstrument",
     "status",
+    "register_framework_provider",
+    "get_available_frameworks",
+    "get_framework_status",
     # Attribution context management
     "set_default_attributes",
     "get_default_attributes",
@@ -67,6 +89,13 @@ __all__ = [
     "set_team_defaults",
     "set_customer_context",
     "set_user_context",
+    # Multi-provider cost aggregation
+    "MultiProviderCostAggregator",
+    "MultiProviderCostSummary", 
+    "ProviderCostEntry",
+    "multi_provider_cost_tracking",
+    "compare_provider_costs",
+    "estimate_migration_costs",
     # Tag validation and enforcement
     "ValidationSeverity",
     "ValidationRule", 

@@ -316,3 +316,23 @@ def unpatch_openai():
         _original_completions_create = None
 
         logger.info("OpenAI patches removed")
+
+
+# Import validation utilities
+def validate_setup():
+    """Validate OpenAI provider setup."""
+    try:
+        from .openai_validation import validate_openai_setup
+        return validate_openai_setup()
+    except ImportError:
+        logger.warning("OpenAI validation utilities not available")
+        return None
+
+
+def print_validation_result(result):
+    """Print validation result in user-friendly format."""
+    try:
+        from .openai_validation import print_openai_validation_result
+        print_openai_validation_result(result)
+    except ImportError:
+        logger.warning("OpenAI validation utilities not available")

@@ -4,7 +4,9 @@ This directory contains examples demonstrating how to use GenOps AI for AI gover
 
 ## Examples Overview
 
-### 1. `basic_usage.py`
+### Core Examples
+
+#### 1. `basic_usage.py`
 Comprehensive examples showing all major GenOps AI features:
 - **Function decorators** for automatic tracking
 - **Context managers** for block-level tracking
@@ -12,12 +14,48 @@ Comprehensive examples showing all major GenOps AI features:
 - **Provider instrumentation** for OpenAI and Anthropic
 - **Manual telemetry recording** for cost and evaluation metrics
 
-### 2. `otel_setup.py` 
+#### 2. `otel_setup.py` 
 OpenTelemetry integration examples:
 - Console exporter for development/testing
 - OTLP exporter for production environments
 - Jaeger exporter for distributed tracing
 - Datadog exporter for monitoring platforms
+
+### Framework Integrations
+
+#### 3. `langchain/` Directory 📚
+**Comprehensive LangChain integration examples** with governance telemetry:
+
+**Getting Started:**
+- **[setup_validation.py](langchain/setup_validation.py)** - Verify your setup is working
+- **[basic_chain_tracking.py](langchain/basic_chain_tracking.py)** - Simple chain execution tracking
+- **[auto_instrumentation.py](langchain/auto_instrumentation.py)** - Zero-code setup
+
+**Advanced Use Cases:**
+- **[multi_provider_costs.py](langchain/multi_provider_costs.py)** - Track costs across OpenAI, Anthropic, Cohere
+- **[rag_pipeline_monitoring.py](langchain/rag_pipeline_monitoring.py)** - RAG workflow telemetry
+- **Cost attribution** and **customer billing** scenarios
+
+**Key Features:**
+- ✅ **Chain execution tracking** with detailed performance metrics
+- ✅ **Multi-provider cost aggregation** across different LLM providers  
+- ✅ **RAG operation monitoring** for retrieval and generation costs
+- ✅ **Governance attribute propagation** for team/project/customer attribution
+- ✅ **Auto-instrumentation** for zero-code setup
+
+**Quick Start:**
+```bash
+# Install with LangChain support
+pip install genops-ai[langchain]
+
+# Verify setup
+python examples/langchain/setup_validation.py
+
+# Try basic example
+python examples/langchain/basic_chain_tracking.py
+```
+
+See the **[LangChain Quickstart Guide](../docs/langchain-quickstart.md)** for detailed setup instructions.
 
 ## Quick Start
 

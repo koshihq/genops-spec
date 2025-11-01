@@ -43,18 +43,26 @@ class GenOpsInstrumentor:
                 "patch": patch_openai,
                 "unpatch": unpatch_openai,
                 "module": "openai",
+                "provider_type": "llm_api",
+                "framework_type": "inference",
             },
             "anthropic": {
                 "patch": patch_anthropic,
                 "unpatch": unpatch_anthropic,
-                "module": "anthropic",
+                "module": "anthropic", 
+                "provider_type": "llm_api",
+                "framework_type": "inference",
             },
         }
+        
+        # Framework providers will be added dynamically as they're implemented
+        self.framework_registry = {}
 
     def _detect_available_providers(self) -> Dict[str, bool]:
-        """Detect which AI providers are installed and available."""
+        """Detect which AI providers and frameworks are installed and available."""
         available = {}
 
+        # Detect existing LLM API providers
         for provider_name, config in self.provider_patches.items():
             try:
                 importlib.import_module(config["module"])
@@ -63,6 +71,24 @@ class GenOpsInstrumentor:
             except ImportError:
                 available[provider_name] = False
                 logger.debug(f"✗ {provider_name} not available")
+
+        # Detect frameworks using the FrameworkDetector
+        try:
+            from genops.providers.base import detect_frameworks
+            framework_info = detect_frameworks()
+            
+            for name, info in framework_info.items():
+                if info.available:
+                    # Check if we have a provider implementation for this framework
+                    if name in self.framework_registry:
+                        available[name] = True
+                        logger.debug(f"✓ {name} framework available for instrumentation")
+                    else:
+                        # Framework detected but no provider implementation yet
+                        logger.debug(f"? {name} framework available but no provider implementation")
+                        
+        except Exception as e:
+            logger.debug(f"Framework detection failed: {e}")
 
         return available
 
@@ -279,8 +305,15 @@ class GenOpsInstrumentor:
 
     def _instrument_provider(self, provider_name: str) -> bool:
         """Instrument a specific provider with GenOps governance."""
-        if provider_name not in self.provider_patches:
-            logger.warning(f"Unknown provider: {provider_name}")
+        # Check both provider patches and framework registry
+        config = None
+        if provider_name in self.provider_patches:
+            config = self.provider_patches[provider_name]
+        elif provider_name in self.framework_registry:
+            config = self.framework_registry[provider_name]
+        
+        if not config:
+            logger.warning(f"Unknown provider or framework: {provider_name}")
             return False
 
         if not self._check_provider_availability(provider_name):
@@ -288,7 +321,6 @@ class GenOpsInstrumentor:
             return False
 
         try:
-            config = self.provider_patches[provider_name]
             config["patch"](auto_track=True)
             self.patched_providers[provider_name] = config
             logger.info(f"✓ {provider_name} instrumented with GenOps governance")
@@ -296,6 +328,110 @@ class GenOpsInstrumentor:
         except Exception as e:
             logger.error(f"✗ Failed to instrument {provider_name}: {e}")
             return False
+    
+    def register_framework_provider(
+        self, 
+        name: str,
+        patch_func: Callable,
+        unpatch_func: Callable,
+        module: str,
+        framework_type: str,
+        provider_class: Optional[Any] = None,
+        **metadata
+    ) -> None:
+        """
+        Register a framework provider for auto-instrumentation.
+        
+        Args:
+            name: Framework name (e.g., 'langchain', 'pytorch')
+            patch_func: Function to apply instrumentation
+            unpatch_func: Function to remove instrumentation  
+            module: Python module name to check for availability
+            framework_type: Type of framework (orchestration, training, etc.)
+            provider_class: Optional provider class reference
+            **metadata: Additional metadata about the framework
+        """
+        self.framework_registry[name] = {
+            "patch": patch_func,
+            "unpatch": unpatch_func, 
+            "module": module,
+            "framework_type": framework_type,
+            "provider_type": "framework",
+            "provider_class": provider_class,
+            **metadata
+        }
+        
+        logger.debug(f"Registered framework provider: {name}")
+        
+    def get_available_frameworks(self, framework_type: Optional[str] = None) -> Dict[str, Dict]:
+        """
+        Get available frameworks, optionally filtered by type.
+        
+        Args:
+            framework_type: Filter by framework type (optional)
+            
+        Returns:
+            Dictionary of available frameworks with their info
+        """
+        try:
+            from genops.providers.base import detect_frameworks
+            framework_info = detect_frameworks()
+            
+            available = {}
+            for name, info in framework_info.items():
+                if info.available:
+                    if framework_type is None or info.framework_type == framework_type:
+                        available[name] = {
+                            "name": info.name,
+                            "version": info.version,
+                            "framework_type": info.framework_type,
+                            "instrumented": name in self.framework_registry,
+                            "patched": name in self.patched_providers
+                        }
+                        
+            return available
+            
+        except Exception as e:
+            logger.error(f"Failed to get available frameworks: {e}")
+            return {}
+            
+    def get_framework_status(self) -> Dict[str, Any]:
+        """
+        Get comprehensive status of all providers and frameworks.
+        
+        Returns:
+            Dictionary with status information
+        """
+        status = self.status()
+        
+        # Add framework-specific information
+        status["frameworks"] = {
+            "registered": list(self.framework_registry.keys()),
+            "available": self.get_available_frameworks(),
+            "registry_count": len(self.framework_registry)
+        }
+        
+        # Categorize by type
+        status["providers_by_type"] = {}
+        all_providers = {**self.provider_patches, **self.framework_registry}
+        
+        for name, config in all_providers.items():
+            provider_type = config.get("provider_type", "unknown")
+            framework_type = config.get("framework_type", "unknown") 
+            
+            if provider_type not in status["providers_by_type"]:
+                status["providers_by_type"][provider_type] = {}
+                
+            if framework_type not in status["providers_by_type"][provider_type]:
+                status["providers_by_type"][provider_type][framework_type] = []
+                
+            status["providers_by_type"][provider_type][framework_type].append({
+                "name": name,
+                "available": self.available_providers.get(name, False),
+                "instrumented": name in self.patched_providers
+            })
+            
+        return status
 
 
 # Global instance for convenient access
@@ -343,3 +479,18 @@ def status() -> Dict[str, Any]:
 def get_default_attributes() -> Dict[str, str]:
     """Get default governance attributes for manual instrumentation."""
     return _instrumentor.get_default_attributes()
+
+
+def register_framework_provider(**kwargs) -> None:
+    """Register a framework provider for auto-instrumentation."""
+    return _instrumentor.register_framework_provider(**kwargs)
+
+
+def get_available_frameworks(framework_type: Optional[str] = None) -> Dict[str, Dict]:
+    """Get available frameworks, optionally filtered by type."""
+    return _instrumentor.get_available_frameworks(framework_type)
+
+
+def get_framework_status() -> Dict[str, Any]:
+    """Get comprehensive status of all providers and frameworks."""
+    return _instrumentor.get_framework_status()
