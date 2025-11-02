@@ -87,16 +87,29 @@ class GenOpsOpenRouterAdapter:
         request_attrs = {}
         api_kwargs = kwargs.copy()
 
-        # Extract governance attributes
+        # Valid OpenAI API parameters that should be passed through
+        VALID_OPENAI_PARAMS = {
+            "model", "messages", "prompt", "temperature", "max_tokens", "top_p",
+            "frequency_penalty", "presence_penalty", "stop", "seed", "stream",
+            "response_format", "tools", "tool_choice", "user", "logit_bias",
+            "logprobs", "top_logprobs", "n", "suffix"
+        }
+
+        # Extract governance attributes (remove from both request_attrs and api_kwargs)
         for attr in self.GOVERNANCE_ATTRIBUTES:
             if attr in kwargs:
                 governance_attrs[attr] = kwargs[attr]
-                api_kwargs.pop(attr)
+                api_kwargs.pop(attr, None)
 
-        # Extract request attributes (including OpenRouter-specific ones)
-        for attr in self.REQUEST_ATTRIBUTES:
-            if attr in kwargs:
-                request_attrs[attr] = kwargs[attr]
+        # Extract all non-governance attributes for telemetry
+        for key, value in kwargs.items():
+            if key not in self.GOVERNANCE_ATTRIBUTES:
+                request_attrs[key] = value
+
+        # Remove non-API parameters from api_kwargs
+        for key in list(api_kwargs.keys()):
+            if key not in VALID_OPENAI_PARAMS:
+                api_kwargs.pop(key, None)
 
         return governance_attrs, request_attrs, api_kwargs
 
@@ -108,11 +121,17 @@ class GenOpsOpenRouterAdapter:
         if hasattr(response, "response") and hasattr(response.response, "headers"):
             headers = response.response.headers
             # OpenRouter typically includes routing info in headers
-            routing_info["selected_provider"] = headers.get("x-openrouter-provider")
-            routing_info["fallback_used"] = (
-                headers.get("x-openrouter-fallback") == "true"
-            )
-            routing_info["request_id"] = headers.get("x-request-id")
+            provider = headers.get("x-openrouter-provider")
+            if provider:
+                routing_info["selected_provider"] = provider
+
+            fallback = headers.get("x-openrouter-fallback")
+            if fallback is not None:
+                routing_info["fallback_used"] = fallback == "true"
+
+            request_id = headers.get("x-request-id")
+            if request_id:
+                routing_info["request_id"] = request_id
 
         # Alternative: check for routing info in response object
         elif hasattr(response, "provider"):
