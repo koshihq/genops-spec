@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 
 from genops.core.telemetry import GenOpsTelemetry
 
@@ -23,7 +23,7 @@ except ImportError:
 class GenOpsOpenAIAdapter:
     """OpenAI adapter with automatic governance telemetry."""
 
-    def __init__(self, client: Optional[Any] = None, **client_kwargs):
+    def __init__(self, client: Any | None = None, **client_kwargs):
         if not HAS_OPENAI:
             raise ImportError(
                 "OpenAI package not found. Install with: pip install openai"
@@ -42,7 +42,7 @@ class GenOpsOpenAIAdapter:
             'presence_penalty', 'stop', 'seed', 'stream'
         }
 
-    def _extract_attributes(self, kwargs: Dict) -> Tuple[Dict, Dict, Dict]:
+    def _extract_attributes(self, kwargs: dict) -> tuple[dict, dict, dict]:
         """Extract governance and request attributes from kwargs."""
         governance_attrs = {}
         request_attrs = {}
@@ -226,7 +226,7 @@ class GenOpsOpenAIAdapter:
 
 
 def instrument_openai(
-    client: Optional[Any] = None, **client_kwargs
+    client: Any | None = None, **client_kwargs
 ) -> GenOpsOpenAIAdapter:
     """
     Instrument an OpenAI client with GenOps governance telemetry.

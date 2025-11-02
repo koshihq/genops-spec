@@ -19,13 +19,11 @@ Key features demonstrated:
 - Operational best practices
 """
 
-import os
-import time
 import asyncio
 import logging
-from typing import Dict, List, Any, Optional
-from contextlib import asynccontextmanager
-import json
+import os
+import time
+from typing import Any, Optional
 
 # Set up production-grade logging
 logging.basicConfig(
@@ -36,13 +34,13 @@ logger = logging.getLogger(__name__)
 
 class ProductionOpenRouterClient:
     """Production-ready OpenRouter client with GenOps governance."""
-    
+
     def __init__(self, api_key: str, environment: str = "production"):
         """Initialize production client with comprehensive configuration."""
-        
+
         try:
             from genops.providers.openrouter import instrument_openrouter
-            
+
             self.environment = environment
             self.client = instrument_openrouter(
                 openrouter_api_key=api_key,
@@ -54,7 +52,7 @@ class ProductionOpenRouterClient:
                     "X-Title": os.getenv("APP_NAME", "Production GenOps Application")
                 }
             )
-            
+
             # Production governance defaults
             self.default_governance = {
                 "environment": environment,
@@ -62,7 +60,7 @@ class ProductionOpenRouterClient:
                 "service_version": os.getenv("SERVICE_VERSION", "1.0.0"),
                 "deployment": os.getenv("DEPLOYMENT_ID", "unknown")
             }
-            
+
             # Circuit breaker state for reliability
             self.circuit_breaker = {
                 "failure_count": 0,
@@ -71,54 +69,54 @@ class ProductionOpenRouterClient:
                 "failure_threshold": 5,
                 "recovery_timeout": 60  # seconds
             }
-            
+
             logger.info(f"Production OpenRouter client initialized for {environment}")
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize production client: {e}")
             raise
-    
+
     def _check_circuit_breaker(self) -> bool:
         """Check if circuit breaker allows requests."""
         if not self.circuit_breaker["is_open"]:
             return True
-        
+
         # Check if recovery timeout has passed
         if (time.time() - self.circuit_breaker["last_failure"]) > self.circuit_breaker["recovery_timeout"]:
             logger.info("Circuit breaker recovery attempt")
             self.circuit_breaker["is_open"] = False
             self.circuit_breaker["failure_count"] = 0
             return True
-        
+
         return False
-    
+
     def _record_failure(self):
         """Record a failure for circuit breaker logic."""
         self.circuit_breaker["failure_count"] += 1
         self.circuit_breaker["last_failure"] = time.time()
-        
+
         if self.circuit_breaker["failure_count"] >= self.circuit_breaker["failure_threshold"]:
             logger.warning("Circuit breaker opened due to repeated failures")
             self.circuit_breaker["is_open"] = True
-    
+
     def _record_success(self):
         """Record a success, reset failure count."""
         self.circuit_breaker["failure_count"] = 0
         if self.circuit_breaker["is_open"]:
             logger.info("Circuit breaker closed after successful request")
             self.circuit_breaker["is_open"] = False
-    
+
     async def safe_completion(
-        self, 
+        self,
         model: str,
-        messages: List[Dict],
-        governance_attrs: Dict[str, Any],
+        messages: list[dict],
+        governance_attrs: dict[str, Any],
         **kwargs
-    ) -> Optional[Dict[str, Any]]:
+    ) -> Optional[dict[str, Any]]:
         """
         Production-safe completion with comprehensive error handling.
         """
-        
+
         # Check circuit breaker
         if not self._check_circuit_breaker():
             logger.warning("Request blocked by circuit breaker")
@@ -127,14 +125,14 @@ class ProductionOpenRouterClient:
                 "error": "circuit_breaker_open",
                 "message": "Service temporarily unavailable"
             }
-        
+
         # Merge governance attributes with defaults
         final_governance = {**self.default_governance, **governance_attrs}
-        
+
         # Add request metadata
         request_id = f"req_{int(time.time())}"
         final_governance["request_id"] = request_id
-        
+
         # Validate input
         if not model or not messages:
             logger.error(f"Invalid input - model: {model}, messages: {len(messages) if messages else 0}")
@@ -143,16 +141,16 @@ class ProductionOpenRouterClient:
                 "error": "invalid_input",
                 "message": "Model and messages are required"
             }
-        
+
         max_retries = 3
         retry_delays = [1, 2, 4]  # Exponential backoff
-        
+
         for attempt in range(max_retries):
             try:
                 logger.info(f"Request {request_id} attempt {attempt + 1}/{max_retries}")
-                
+
                 start_time = time.time()
-                
+
                 # Make the request with full governance tracking
                 response = self.client.chat_completions_create(
                     model=model,
@@ -160,18 +158,18 @@ class ProductionOpenRouterClient:
                     **kwargs,
                     **final_governance
                 )
-                
+
                 response_time = time.time() - start_time
-                
+
                 # Record success
                 self._record_success()
-                
+
                 # Extract response data
                 usage = response.usage if hasattr(response, 'usage') else None
                 content = response.choices[0].message.content if response.choices else ""
-                
+
                 logger.info(f"Request {request_id} successful in {response_time:.2f}s")
-                
+
                 return {
                     "success": True,
                     "response": content,
@@ -187,22 +185,22 @@ class ProductionOpenRouterClient:
                         "attempt": attempt + 1
                     }
                 }
-                
+
             except Exception as e:
                 error_type = type(e).__name__
                 error_msg = str(e)
-                
+
                 logger.warning(f"Request {request_id} attempt {attempt + 1} failed: {error_type}: {error_msg}")
-                
+
                 # Check if this is a retryable error
                 retryable_errors = ["timeout", "rate_limit", "server_error", "network_error"]
                 is_retryable = any(err in error_msg.lower() for err in retryable_errors)
-                
+
                 if not is_retryable or attempt == max_retries - 1:
                     # Final failure
                     self._record_failure()
                     logger.error(f"Request {request_id} failed permanently: {error_type}: {error_msg}")
-                    
+
                     return {
                         "success": False,
                         "error": error_type,
@@ -216,7 +214,7 @@ class ProductionOpenRouterClient:
                 else:
                     # Wait before retry
                     await asyncio.sleep(retry_delays[attempt])
-        
+
         return {
             "success": False,
             "error": "max_retries_exceeded",
@@ -226,38 +224,38 @@ class ProductionOpenRouterClient:
 
 async def production_patterns_demo():
     """Demonstrate production patterns for OpenRouter with GenOps."""
-    
+
     print("🏭 OpenRouter Production Patterns with GenOps")
     print("=" * 55)
-    
+
     # Validate production environment
     api_key = os.getenv("OPENROUTER_API_KEY") or os.getenv("OPENAI_API_KEY")
     if not api_key:
         print("❌ Missing API key. Set OPENROUTER_API_KEY environment variable.")
         return
-    
+
     # Check for production configuration
     otlp_endpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
     service_name = os.getenv("OTEL_SERVICE_NAME", "openrouter-production-demo")
-    
-    print(f"🔧 Production Configuration:")
+
+    print("🔧 Production Configuration:")
     print(f"   Service: {service_name}")
     print(f"   OTLP Endpoint: {otlp_endpoint if otlp_endpoint else '❌ Not configured'}")
     print(f"   Environment: {os.getenv('ENVIRONMENT', 'development')}")
-    
+
     try:
         # Initialize production client
         production_client = ProductionOpenRouterClient(
             api_key=api_key,
             environment=os.getenv("ENVIRONMENT", "production")
         )
-        
-        print(f"\n✅ Production client initialized")
-        
+
+        print("\n✅ Production client initialized")
+
         # Demo 1: High-Availability Request Pattern
-        print(f"\n🔄 Demo 1: High-Availability Request Pattern")
+        print("\n🔄 Demo 1: High-Availability Request Pattern")
         print("=" * 45)
-        
+
         ha_scenarios = [
             {
                 "name": "Critical Customer Request",
@@ -277,7 +275,7 @@ async def production_patterns_demo():
                 "prompt": "Analyze this data trend: sales increased 15% this quarter.",
                 "governance": {
                     "team": "analytics",
-                    "project": "real-time-insights", 
+                    "project": "real-time-insights",
                     "urgency": "real-time",
                     "dashboard": "executive"
                 }
@@ -294,42 +292,42 @@ async def production_patterns_demo():
                 }
             }
         ]
-        
+
         for scenario in ha_scenarios:
             print(f"\n   🎯 {scenario['name']}")
             print(f"      Model: {scenario['model']}")
-            
+
             result = await production_client.safe_completion(
                 model=scenario["model"],
                 messages=[{"role": "user", "content": scenario["prompt"]}],
                 max_tokens=150,
                 governance_attrs=scenario["governance"]
             )
-            
+
             if result["success"]:
                 print(f"      ✅ Success in {result['metadata']['response_time']:.2f}s")
                 print(f"         Tokens: {result['usage']['total_tokens']}")
                 print(f"         Attempt: {result['metadata']['attempt']}")
             else:
                 print(f"      ❌ Failed: {result['error']} - {result['message']}")
-        
+
         # Demo 2: Batch Processing Pattern
-        print(f"\n📦 Demo 2: Production Batch Processing")
+        print("\n📦 Demo 2: Production Batch Processing")
         print("=" * 40)
-        
+
         batch_tasks = [
-            {"id": f"task_{i}", "content": f"Analyze customer feedback {i}: 'Great service, very helpful staff!'"} 
+            {"id": f"task_{i}", "content": f"Analyze customer feedback {i}: 'Great service, very helpful staff!'"}
             for i in range(1, 6)
         ]
-        
+
         print(f"   Processing batch of {len(batch_tasks)} tasks...")
-        
+
         batch_results = []
         batch_start = time.time()
-        
+
         # Process with concurrency control (limit concurrent requests)
         semaphore = asyncio.Semaphore(3)  # Max 3 concurrent requests
-        
+
         async def process_batch_item(task):
             async with semaphore:
                 return await production_client.safe_completion(
@@ -343,22 +341,22 @@ async def production_patterns_demo():
                         "task_id": task["id"]
                     }
                 )
-        
+
         # Execute batch with concurrency control
         batch_tasks_coroutines = [process_batch_item(task) for task in batch_tasks]
         batch_results = await asyncio.gather(*batch_tasks_coroutines, return_exceptions=True)
-        
+
         batch_time = time.time() - batch_start
         successful_tasks = sum(1 for r in batch_results if isinstance(r, dict) and r.get("success"))
-        
+
         print(f"   ✅ Batch completed in {batch_time:.2f}s")
         print(f"      Successful: {successful_tasks}/{len(batch_tasks)}")
-        print(f"      Concurrency: 3 max concurrent requests")
-        
+        print("      Concurrency: 3 max concurrent requests")
+
         # Demo 3: Error Handling and Recovery Patterns
-        print(f"\n🛡️ Demo 3: Error Handling & Recovery")
+        print("\n🛡️ Demo 3: Error Handling & Recovery")
         print("=" * 40)
-        
+
         # Simulate various error scenarios
         error_scenarios = [
             {
@@ -367,16 +365,16 @@ async def production_patterns_demo():
                 "expected_error": "model_not_found"
             },
             {
-                "name": "Empty Messages Test", 
+                "name": "Empty Messages Test",
                 "model": "openai/gpt-3.5-turbo",
                 "messages": [],
                 "expected_error": "invalid_input"
             }
         ]
-        
+
         for scenario in error_scenarios:
             print(f"\n   🧪 {scenario['name']}")
-            
+
             try:
                 result = await production_client.safe_completion(
                     model=scenario["model"],
@@ -388,19 +386,19 @@ async def production_patterns_demo():
                         "test_scenario": scenario["name"]
                     }
                 )
-                
+
                 if result["success"]:
-                    print(f"      ⚠️  Unexpected success (expected error)")
+                    print("      ⚠️  Unexpected success (expected error)")
                 else:
                     print(f"      ✅ Handled error correctly: {result['error']}")
-                    
+
             except Exception as e:
                 print(f"      ❌ Unhandled exception: {str(e)}")
-        
+
         # Demo 4: Monitoring and Metrics
-        print(f"\n📊 Demo 4: Production Monitoring & Metrics")
+        print("\n📊 Demo 4: Production Monitoring & Metrics")
         print("=" * 45)
-        
+
         # Simulate monitoring data collection
         monitoring_metrics = {
             "requests_total": 15,
@@ -412,17 +410,17 @@ async def production_patterns_demo():
             "top_models": ["openai/gpt-4o", "anthropic/claude-3-haiku", "meta-llama/llama-3.2-3b"],
             "top_teams": ["customer-success", "analytics", "data-processing"]
         }
-        
-        print(f"   📈 Production Metrics Summary:")
+
+        print("   📈 Production Metrics Summary:")
         print(f"      Success Rate: {(monitoring_metrics['requests_successful']/monitoring_metrics['requests_total'])*100:.1f}%")
         print(f"      Avg Response Time: {monitoring_metrics['avg_response_time']:.2f}s")
         print(f"      Total Cost: ${monitoring_metrics['total_cost_estimate']:.4f}")
         print(f"      Tokens Processed: {monitoring_metrics['total_tokens']:,}")
-        
+
         # Demo 5: Security and Compliance Patterns
-        print(f"\n🔒 Demo 5: Security & Compliance")
+        print("\n🔒 Demo 5: Security & Compliance")
         print("=" * 35)
-        
+
         security_demo = {
             "pii_detection": "Enabled - Automatic PII redaction in logs",
             "encryption": "TLS 1.3 for all API communications",
@@ -430,15 +428,15 @@ async def production_patterns_demo():
             "access_control": "Role-based access with team attribution",
             "compliance": "SOC2, GDPR, HIPAA governance attributes"
         }
-        
+
         for feature, description in security_demo.items():
             print(f"   🛡️  {feature.replace('_', ' ').title()}: {description}")
-        
+
         # Production recommendations
         print("\n" + "=" * 55)
         print("🏭 Production Deployment Recommendations")
         print("=" * 55)
-        
+
         recommendations = {
             "Infrastructure": [
                 "Deploy with container orchestration (Kubernetes)",
@@ -447,7 +445,7 @@ async def production_patterns_demo():
                 "Set up centralized logging (ELK stack or similar)"
             ],
             "Monitoring": [
-                "Configure OpenTelemetry OTLP export to observability platform", 
+                "Configure OpenTelemetry OTLP export to observability platform",
                 "Set up alerts for error rates > 5%",
                 "Monitor response time SLA violations",
                 "Track cost anomalies and budget overruns"
@@ -471,16 +469,16 @@ async def production_patterns_demo():
                 "Monitor and optimize token usage patterns"
             ]
         }
-        
+
         for category, items in recommendations.items():
             print(f"\n🎯 {category}:")
             for item in items:
                 print(f"   • {item}")
-        
-        print(f"\n✅ Production Pattern Demonstration Complete")
-        print(f"   All patterns successfully demonstrated with GenOps governance")
-        print(f"   Ready for enterprise deployment!")
-        
+
+        print("\n✅ Production Pattern Demonstration Complete")
+        print("   All patterns successfully demonstrated with GenOps governance")
+        print("   Ready for enterprise deployment!")
+
     except ImportError as e:
         print(f"❌ Import Error: {e}")
         print("💡 Install: pip install genops-ai openai")
@@ -494,7 +492,7 @@ def show_production_config_examples():
     """Show production configuration examples."""
     print("\n📋 Production Configuration Examples")
     print("=" * 42)
-    
+
     print("🔧 Environment Variables:")
     env_vars = {
         "OPENROUTER_API_KEY": "your-production-api-key",
@@ -507,11 +505,11 @@ def show_production_config_examples():
         "APP_URL": "https://your-production-app.com",
         "LOG_LEVEL": "INFO"
     }
-    
+
     for var, value in env_vars.items():
         print(f"   export {var}='{value}'")
-    
-    print(f"\n🐳 Docker Configuration:")
+
+    print("\n🐳 Docker Configuration:")
     docker_config = """
     FROM python:3.11-slim
 
@@ -534,8 +532,8 @@ def show_production_config_examples():
     CMD ["python", "-m", "gunicorn", "--bind", "0.0.0.0:8000", "app:app"]
     """
     print(docker_config.strip())
-    
-    print(f"\n☸️ Kubernetes Deployment:")
+
+    print("\n☸️ Kubernetes Deployment:")
     k8s_config = """
     apiVersion: apps/v1
     kind: Deployment

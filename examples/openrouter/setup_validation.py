@@ -8,39 +8,40 @@ and basic functionality.
 
 Usage:
     python setup_validation.py
-    
+
 Expected output:
     ✅ Overall Status: VALID
     📊 Summary: X issues found
     💡 Recommendations: Setup looks good!
 """
 
-import sys
 import os
+import sys
+
 
 def main():
     """Run comprehensive OpenRouter setup validation."""
     print("🚀 GenOps + OpenRouter Setup Validation")
     print("=" * 50)
-    
+
     try:
         # Import validation utilities
-        from genops.providers.openrouter import validate_setup, print_validation_result
-        
+        from genops.providers.openrouter import print_validation_result, validate_setup
+
         print("🔍 Running comprehensive setup validation...")
         print("   • Checking environment variables")
-        print("   • Validating dependencies") 
+        print("   • Validating dependencies")
         print("   • Testing OpenRouter connectivity")
         print("   • Verifying GenOps configuration")
         print("   • Testing basic functionality")
         print()
-        
+
         # Run validation
         result = validate_setup()
-        
+
         # Display results in user-friendly format
         print_validation_result(result)
-        
+
         # Exit with appropriate code
         if result.is_valid:
             print("🎉 Validation completed successfully!")
@@ -48,7 +49,7 @@ def main():
         else:
             print("⚠️  Please fix the issues above and re-run validation.")
             sys.exit(1)
-            
+
     except ImportError as e:
         print(f"❌ Import Error: {e}")
         print()
@@ -92,11 +93,11 @@ if __name__ == "__main__":
         print("👋 Welcome to GenOps + OpenRouter!")
         print("It looks like this might be your first time setting up.")
         quick_setup_guide()
-        
+
         response = input("Continue with validation anyway? (y/N): ")
         if response.lower() not in ['y', 'yes']:
             print("Come back after setup! 👍")
             sys.exit(0)
         print()
-    
+
     main()

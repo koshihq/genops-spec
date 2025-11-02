@@ -15,23 +15,25 @@ Features:
 ✅ Multi-tenant observability isolation
 """
 
+import json
 import os
 import time
-import json
-from typing import Dict, Any, Optional, List
+from typing import Any, Optional
 
 import genops
 
 # OpenTelemetry imports for Datadog integration
 try:
-    from opentelemetry import trace, metrics
+    from opentelemetry import metrics, trace
+    from opentelemetry.exporter.otlp.proto.http.metric_exporter import (
+        OTLPMetricExporter,
+    )
     from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
-    from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
-    from opentelemetry.sdk.trace import TracerProvider
-    from opentelemetry.sdk.trace.export import BatchSpanProcessor
     from opentelemetry.sdk.metrics import MeterProvider
     from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
     from opentelemetry.sdk.resources import Resource
+    from opentelemetry.sdk.trace import TracerProvider
+    from opentelemetry.sdk.trace.export import BatchSpanProcessor
     HAS_OPENTELEMETRY = True
 except ImportError:
     HAS_OPENTELEMETRY = False
@@ -48,11 +50,11 @@ except ImportError:
 class DatadogGenOpsIntegration:
     """
     Integration class for sending GenOps AI telemetry to Datadog.
-    
+
     This class sets up OpenTelemetry exporters for Datadog and provides
     utilities for creating dashboards, alerts, and queries.
     """
-    
+
     def __init__(
         self,
         datadog_api_key: Optional[str] = None,
@@ -68,24 +70,24 @@ class DatadogGenOpsIntegration:
         self.service_name = service_name
         self.environment = environment
         self.config = config
-        
+
         if not self.datadog_api_key:
             print("⚠️ DATADOG_API_KEY not set. Using console export for demo.")
-        
+
         # Set up OpenTelemetry for Datadog
         self._setup_opentelemetry()
-        
+
         # Set up Datadog direct integration if available
         if HAS_DATADOG and self.datadog_api_key and self.datadog_app_key:
             self._setup_datadog_direct()
-    
+
     def _setup_opentelemetry(self):
         """Set up OpenTelemetry exporters for Datadog."""
-        
+
         if not HAS_OPENTELEMETRY:
             print("❌ OpenTelemetry not available. Telemetry will not be exported.")
             return
-        
+
         # Create resource with service information
         resource = Resource.create({
             "service.name": self.service_name,
@@ -93,15 +95,15 @@ class DatadogGenOpsIntegration:
             "deployment.environment": self.environment,
             "genops.framework": "datadog-integration"
         })
-        
+
         # Set up tracing
         trace_provider = TracerProvider(resource=resource)
-        
+
         # Datadog OTLP endpoint
         if self.datadog_api_key:
             otlp_endpoint = f"https://otlp.{self.datadog_site}"
             headers = {"DD-API-KEY": self.datadog_api_key}
-            
+
             # Set up OTLP span exporter
             span_exporter = OTLPSpanExporter(
                 endpoint=f"{otlp_endpoint}/v1/traces",
@@ -111,15 +113,15 @@ class DatadogGenOpsIntegration:
             # Console export for demo
             from opentelemetry.sdk.trace.export import ConsoleSpanExporter
             span_exporter = ConsoleSpanExporter()
-        
+
         # Add span processor
         trace_provider.add_span_processor(
             BatchSpanProcessor(span_exporter)
         )
-        
+
         # Set global tracer provider
         trace.set_tracer_provider(trace_provider)
-        
+
         # Set up metrics
         if self.datadog_api_key:
             metric_exporter = OTLPMetricExporter(
@@ -129,67 +131,67 @@ class DatadogGenOpsIntegration:
         else:
             from opentelemetry.sdk.metrics.export import ConsoleMetricExporter
             metric_exporter = ConsoleMetricExporter()
-        
+
         # Create metric reader
         metric_reader = PeriodicExportingMetricReader(
             exporter=metric_exporter,
             export_interval_millis=10000  # 10 seconds
         )
-        
+
         # Set up metrics provider
         metrics_provider = MeterProvider(
             resource=resource,
             metric_readers=[metric_reader]
         )
-        
+
         # Set global metrics provider
         metrics.set_meter_provider(metrics_provider)
-        
-        print(f"✅ OpenTelemetry configured for Datadog export")
+
+        print("✅ OpenTelemetry configured for Datadog export")
         print(f"   Service: {self.service_name}")
         print(f"   Environment: {self.environment}")
         if self.datadog_api_key:
             print(f"   Datadog Site: {self.datadog_site}")
         else:
             print("   Export Mode: Console (demo)")
-    
+
     def _setup_datadog_direct(self):
         """Set up direct Datadog integration for custom metrics."""
-        
+
         initialize(
             api_key=self.datadog_api_key,
             app_key=self.datadog_app_key,
             host_name=f"{self.service_name}-{self.environment}"
         )
-        
+
         print("✅ Datadog direct integration configured")
-    
+
     def send_custom_metric(
-        self, 
-        metric_name: str, 
-        value: float, 
-        tags: Optional[Dict[str, str]] = None
+        self,
+        metric_name: str,
+        value: float,
+        tags: Optional[dict[str, str]] = None
     ):
         """Send a custom metric to Datadog via StatsD."""
-        
+
         if not HAS_DATADOG:
             print(f"📊 Custom Metric (demo): {metric_name} = {value}")
             return
-        
+
         # Convert tags to Datadog format
         tag_list = []
         if tags:
             for key, val in tags.items():
                 tag_list.append(f"{key}:{val}")
-        
+
         # Send metric
         statsd.gauge(f"genops.{metric_name}", value, tags=tag_list)
-        
+
         print(f"📊 Sent custom metric: genops.{metric_name} = {value} {tag_list}")
-    
-    def create_ai_cost_dashboard(self) -> Dict[str, Any]:
+
+    def create_ai_cost_dashboard(self) -> dict[str, Any]:
         """Create a Datadog dashboard configuration for AI cost monitoring."""
-        
+
         dashboard_config = {
             "title": "GenOps AI - Cost Attribution & Governance",
             "description": "Comprehensive AI cost tracking and governance monitoring",
@@ -279,7 +281,7 @@ class DatadogGenOpsIntegration:
                     "available_values": []
                 },
                 {
-                    "name": "environment", 
+                    "name": "environment",
                     "prefix": "genops.environment",
                     "available_values": ["production", "staging", "development"]
                 },
@@ -291,12 +293,12 @@ class DatadogGenOpsIntegration:
             ],
             "layout_type": "ordered"
         }
-        
+
         return dashboard_config
-    
-    def create_compliance_dashboard(self) -> Dict[str, Any]:
+
+    def create_compliance_dashboard(self) -> dict[str, Any]:
         """Create a dashboard for compliance monitoring."""
-        
+
         dashboard_config = {
             "title": "GenOps AI - Compliance & Governance",
             "description": "AI compliance monitoring and audit trail visualization",
@@ -354,12 +356,12 @@ class DatadogGenOpsIntegration:
                 }
             ]
         }
-        
+
         return dashboard_config
-    
-    def create_performance_alerts(self) -> List[Dict[str, Any]]:
+
+    def create_performance_alerts(self) -> list[dict[str, Any]]:
         """Create performance and cost alerting rules."""
-        
+
         alerts = [
             {
                 "name": "High AI Cost per Hour",
@@ -384,7 +386,7 @@ AI costs are unusually high (>${value}) in the last hour.
             },
             {
                 "name": "Policy Violation Rate High",
-                "type": "metric alert", 
+                "type": "metric alert",
                 "query": "sum(last_15m):sum:genops.policy.violation{*} > 10",
                 "message": """
 High rate of policy violations detected (${value} in 15 minutes).
@@ -428,7 +430,7 @@ Unusual token usage pattern detected.
 
 This could indicate:
 - Inefficient prompts or models
-- Unexpected traffic spikes  
+- Unexpected traffic spikes
 - Potential misuse or abuse
 
 Review: [Token Usage Dashboard](https://app.datadoghq.com/dashboard/genops-tokens)
@@ -438,12 +440,12 @@ Review: [Token Usage Dashboard](https://app.datadoghq.com/dashboard/genops-token
                 "tags": ["team:ai-platform", "severity:medium"]
             }
         ]
-        
+
         return alerts
-    
-    def create_sli_monitors(self) -> List[Dict[str, Any]]:
+
+    def create_sli_monitors(self) -> list[dict[str, Any]]:
         """Create SLI (Service Level Indicator) monitors for AI governance."""
-        
+
         sli_monitors = [
             {
                 "name": "AI Operation Success Rate SLI",
@@ -459,7 +461,7 @@ Review: [Token Usage Dashboard](https://app.datadoghq.com/dashboard/genops-token
                 }
             },
             {
-                "name": "Compliance Evaluation Coverage SLI", 
+                "name": "Compliance Evaluation Coverage SLI",
                 "type": "metric alert",
                 "query": "sum(last_1h):sum:genops.eval.performed{*} / sum:genops.operation.total{*} * 100 < 95",
                 "message": "Compliance evaluation coverage below target",
@@ -467,28 +469,28 @@ Review: [Token Usage Dashboard](https://app.datadoghq.com/dashboard/genops-token
             },
             {
                 "name": "Policy Response Time SLI",
-                "type": "metric alert", 
+                "type": "metric alert",
                 "query": "avg(last_5m):avg:genops.policy.response_time{*} > 500",
                 "message": "Policy evaluation response time above target (500ms)",
                 "tags": ["sli", "policy-performance"]
             }
         ]
-        
+
         return sli_monitors
 
 
 def demonstrate_datadog_telemetry():
     """Demonstrate GenOps AI telemetry flowing to Datadog."""
-    
+
     print("\n📊 DATADOG TELEMETRY DEMONSTRATION")
     print("=" * 60)
-    
+
     # Initialize Datadog integration
     datadog_integration = DatadogGenOpsIntegration(
         service_name="genops-ai-demo",
         environment="development"
     )
-    
+
     # Set up GenOps with attribution
     genops.set_default_attributes(
         team="ai-platform",
@@ -496,7 +498,7 @@ def demonstrate_datadog_telemetry():
         environment="development",
         cost_center="engineering"
     )
-    
+
     # Demonstrate various AI operations with telemetry
     operations = [
         {
@@ -506,7 +508,7 @@ def demonstrate_datadog_telemetry():
             "data_classification": "internal"
         },
         {
-            "name": "document_analysis", 
+            "name": "document_analysis",
             "customer_id": "startup-456",
             "feature": "document-processing",
             "data_classification": "confidential"
@@ -514,123 +516,123 @@ def demonstrate_datadog_telemetry():
         {
             "name": "financial_analysis",
             "customer_id": "enterprise-789",
-            "feature": "risk-assessment", 
+            "feature": "risk-assessment",
             "data_classification": "restricted"
         }
     ]
-    
+
     print("🤖 Generating AI operations with full telemetry...")
-    
+
     for i, op in enumerate(operations):
         print(f"\n   Operation {i+1}: {op['name']}")
-        
+
         # Set operation context
         genops.set_context(**op)
-        
+
         # Simulate AI operation
         start_time = time.time()
-        
+
         # Simulate processing
         time.sleep(0.2)
-        
+
         duration = time.time() - start_time
-        
+
         # Record telemetry with effective attributes
         effective_attrs = genops.get_effective_attributes()
-        
+
         # Send custom metrics to Datadog
         datadog_integration.send_custom_metric(
-            "operation.duration", 
+            "operation.duration",
             duration * 1000,  # milliseconds
             tags=effective_attrs
         )
-        
+
         datadog_integration.send_custom_metric(
             "operation.count",
             1,
             tags=effective_attrs
         )
-        
+
         # Simulate cost and token usage
         cost = 0.0234 * (i + 1)  # Varying costs
         tokens = 150 * (i + 2)   # Varying token usage
-        
+
         datadog_integration.send_custom_metric(
             "cost.total",
             cost,
             tags=effective_attrs
         )
-        
+
         datadog_integration.send_custom_metric(
             "tokens.total",
             tokens,
             tags=effective_attrs
         )
-        
+
         # Simulate evaluation scores
         safety_score = 0.92 - (i * 0.02)  # Varying scores
         accuracy_score = 0.88 + (i * 0.01)
-        
+
         datadog_integration.send_custom_metric(
             "eval.safety",
             safety_score,
             tags=effective_attrs
         )
-        
+
         datadog_integration.send_custom_metric(
-            "eval.accuracy", 
+            "eval.accuracy",
             accuracy_score,
             tags=effective_attrs
         )
-        
+
         print(f"      Cost: ${cost:.4f} | Tokens: {tokens:,}")
         print(f"      Safety: {safety_score:.3f} | Accuracy: {accuracy_score:.3f}")
         print(f"      Duration: {duration*1000:.1f}ms")
-        
+
         genops.clear_context()
-    
+
     print("\n✅ All telemetry sent to Datadog!")
 
 
 def demonstrate_dashboard_creation():
     """Demonstrate creating Datadog dashboards for GenOps AI."""
-    
+
     print("\n📈 DATADOG DASHBOARD CREATION")
     print("=" * 60)
-    
+
     # Initialize integration
     datadog_integration = DatadogGenOpsIntegration(
         service_name="genops-ai",
         environment="production"
     )
-    
+
     # Create cost dashboard
     cost_dashboard = datadog_integration.create_ai_cost_dashboard()
     print("📊 AI Cost Dashboard Configuration:")
     print(f"   Title: {cost_dashboard['title']}")
     print(f"   Widgets: {len(cost_dashboard['widgets'])} widgets")
     print(f"   Template Variables: {len(cost_dashboard['template_variables'])} variables")
-    
+
     # Widget details
     for widget in cost_dashboard['widgets']:
         print(f"      • {widget['definition']['title']} ({widget['definition']['type']})")
-    
+
     # Create compliance dashboard
     compliance_dashboard = datadog_integration.create_compliance_dashboard()
-    print(f"\n🛡️ Compliance Dashboard Configuration:")
+    print("\n🛡️ Compliance Dashboard Configuration:")
     print(f"   Title: {compliance_dashboard['title']}")
     print(f"   Widgets: {len(compliance_dashboard['widgets'])} widgets")
-    
+
     for widget in compliance_dashboard['widgets']:
         print(f"      • {widget['definition']['title']} ({widget['definition']['type']})")
-    
+
     # Save dashboard configurations
     with open("datadog_cost_dashboard.json", "w") as f:
         json.dump(cost_dashboard, f, indent=2)
-    
+
     with open("datadog_compliance_dashboard.json", "w") as f:
         json.dump(compliance_dashboard, f, indent=2)
-    
+
     print("\n📄 Dashboard configurations saved:")
     print("   • datadog_cost_dashboard.json")
     print("   • datadog_compliance_dashboard.json")
@@ -638,51 +640,51 @@ def demonstrate_dashboard_creation():
 
 def demonstrate_alerting_setup():
     """Demonstrate creating alerts and SLIs for GenOps AI monitoring."""
-    
+
     print("\n🚨 DATADOG ALERTING SETUP")
     print("=" * 60)
-    
+
     # Initialize integration
     datadog_integration = DatadogGenOpsIntegration(
         service_name="genops-ai",
         environment="production"
     )
-    
+
     # Create performance alerts
     performance_alerts = datadog_integration.create_performance_alerts()
     print(f"⚡ Performance Alerts ({len(performance_alerts)} alerts):")
-    
+
     for alert in performance_alerts:
         print(f"   • {alert['name']}")
         print(f"     Query: {alert['query']}")
         print(f"     Tags: {', '.join(alert['tags'])}")
-    
-    # Create SLI monitors  
+
+    # Create SLI monitors
     sli_monitors = datadog_integration.create_sli_monitors()
     print(f"\n📊 SLI Monitors ({len(sli_monitors)} monitors):")
-    
+
     for monitor in sli_monitors:
         print(f"   • {monitor['name']}")
         print(f"     Tags: {', '.join(monitor['tags'])}")
-    
+
     # Save alerting configurations
     alerting_config = {
         "performance_alerts": performance_alerts,
         "sli_monitors": sli_monitors
     }
-    
+
     with open("datadog_alerting_config.json", "w") as f:
         json.dump(alerting_config, f, indent=2)
-    
+
     print("\n📄 Alerting configuration saved to: datadog_alerting_config.json")
 
 
 def show_datadog_queries():
     """Show example Datadog queries for GenOps AI governance."""
-    
+
     print("\n🔍 DATADOG QUERY EXAMPLES")
     print("=" * 60)
-    
+
     queries = {
         "Cost Analysis": [
             "sum:genops.cost.total{*} by {genops.team}",
@@ -715,13 +717,13 @@ def show_datadog_queries():
             "rate(sum:genops.cost.total{*}) by {genops.cost_center}"
         ]
     }
-    
+
     for category, query_list in queries.items():
         print(f"\n📊 {category}:")
         for query in query_list:
             print(f"   {query}")
-    
-    print(f"\n💡 Query Tips:")
+
+    print("\n💡 Query Tips:")
     print("• Use .rollup(sum, 3600) for hourly aggregation")
     print("• Use .as_count() for rate calculations")
     print("• Use by {*} to group by all available tags")
@@ -731,26 +733,26 @@ def show_datadog_queries():
 
 def main():
     """Run the complete Datadog integration demonstration."""
-    
+
     print("📊 GenOps AI: Datadog Integration Guide")
     print("=" * 80)
     print("\nThis guide demonstrates comprehensive integration between")
     print("GenOps AI telemetry and Datadog observability platform.")
-    
+
     # Check dependencies
     if not HAS_OPENTELEMETRY:
         print("\n⚠️ OpenTelemetry not installed. Install with:")
         print("pip install opentelemetry-api opentelemetry-sdk opentelemetry-exporter-otlp")
         print("\nContinuing with limited functionality...")
-    
+
     try:
         # Run demonstrations
         demonstrate_datadog_telemetry()
         demonstrate_dashboard_creation()
         demonstrate_alerting_setup()
         show_datadog_queries()
-        
-        print(f"\n🎯 INTEGRATION SUMMARY")
+
+        print("\n🎯 INTEGRATION SUMMARY")
         print("=" * 60)
         print("✅ OpenTelemetry OTLP export to Datadog configured")
         print("✅ Custom metrics for AI governance operations")
@@ -758,8 +760,8 @@ def main():
         print("✅ Compliance monitoring and audit trail visualization")
         print("✅ Performance alerting with SLI/SLO monitoring")
         print("✅ Business intelligence queries for cost optimization")
-        
-        print(f"\n📚 DATADOG FEATURES UTILIZED")
+
+        print("\n📚 DATADOG FEATURES UTILIZED")
         print("=" * 60)
         print("🔍 APM: Distributed tracing for AI operations")
         print("📊 Metrics: Custom metrics for cost, tokens, evaluations")
@@ -767,8 +769,8 @@ def main():
         print("🚨 Alerts: Cost, performance, and compliance monitoring")
         print("📋 Logs: Audit trail and policy decision logging")
         print("🎯 SLIs: Service level indicators for AI governance")
-        
-        print(f"\n🔧 SETUP INSTRUCTIONS")
+
+        print("\n🔧 SETUP INSTRUCTIONS")
         print("=" * 60)
         print("1. Set environment variables: DATADOG_API_KEY, DATADOG_APP_KEY")
         print("2. Install dependencies: pip install datadog opentelemetry-exporter-otlp")
@@ -776,15 +778,15 @@ def main():
         print("4. Configure alerts and SLI monitors")
         print("5. Set up log ingestion for audit trails")
         print("6. Create custom notebooks for cost analysis")
-        
-        print(f"\n🔗 Next Steps")
+
+        print("\n🔗 Next Steps")
         print("=" * 60)
         print("• Customize dashboards for your specific use cases")
         print("• Set up team-specific alert channels and escalations")
         print("• Create SLO targets based on your governance requirements")
         print("• Integrate with Datadog Watchdog for anomaly detection")
         print("• Set up cost attribution reports for FinOps workflows")
-        
+
     except Exception as e:
         print(f"\n❌ Datadog integration demo failed: {e}")
         raise

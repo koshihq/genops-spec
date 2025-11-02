@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Git operations helper to work around shell issues."""
 
+import os
 import subprocess
 import sys
-import os
+
 
 def run_git_command(cmd):
     """Run a git command and return result."""
@@ -21,31 +22,31 @@ def run_git_command(cmd):
 def main():
     """Check git status and stage auto-instrumentation files."""
     print("🔍 Checking Git status...")
-    
+
     # Check git status
     retcode, stdout, stderr = run_git_command("git status --porcelain")
     if retcode != 0:
         print(f"❌ Git status failed: {stderr}")
         return 1
-    
+
     print("📁 Current changes:")
     if stdout.strip():
         for line in stdout.strip().split('\n'):
             print(f"  {line}")
     else:
         print("  No changes detected")
-    
+
     # Add auto-instrumentation files
     files_to_add = [
         "src/genops/auto_instrumentation.py",
-        "src/genops/__init__.py", 
+        "src/genops/__init__.py",
         "src/genops/cli/main.py",
         "examples/auto_instrumentation.py",
         "test_auto_init.py"
     ]
-    
+
     print(f"\n📦 Staging {len(files_to_add)} auto-instrumentation files...")
-    
+
     for file in files_to_add:
         if os.path.exists(file):
             retcode, stdout, stderr = run_git_command(f"git add {file}")
@@ -55,14 +56,14 @@ def main():
                 print(f"  ❌ {file}: {stderr}")
         else:
             print(f"  ⚠️ {file}: File not found")
-    
+
     # Check status after adding
-    print(f"\n🔍 Status after staging:")
+    print("\n🔍 Status after staging:")
     retcode, stdout, stderr = run_git_command("git status --porcelain")
     if retcode == 0 and stdout.strip():
         for line in stdout.strip().split('\n'):
             print(f"  {line}")
-    
+
     # Create commit
     commit_msg = """Add auto-instrumentation system inspired by OpenLLMetry
 
@@ -77,15 +78,15 @@ def main():
 
 Co-Authored-By: Claude <noreply@anthropic.com>"""
 
-    print(f"\n📝 Creating commit...")
+    print("\n📝 Creating commit...")
     retcode, stdout, stderr = run_git_command(f'git commit -m "{commit_msg}"')
-    
+
     if retcode == 0:
         print("✅ Commit created successfully!")
         print(f"Output: {stdout}")
-        
+
         # Try to push
-        print(f"\n🚀 Pushing to GitHub...")
+        print("\n🚀 Pushing to GitHub...")
         retcode, stdout, stderr = run_git_command("git push origin main")
         if retcode == 0:
             print("✅ Successfully pushed to GitHub!")

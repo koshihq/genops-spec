@@ -5,7 +5,7 @@ from __future__ import annotations
 import functools
 import logging
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, TypeVar, Union
+from typing import Any, Callable, TypeVar
 
 from opentelemetry import trace
 
@@ -29,7 +29,7 @@ class PolicyViolationError(Exception):
     """Raised when a policy violation blocks an operation."""
 
     def __init__(
-        self, policy_name: str, reason: str, metadata: Optional[Dict[str, Any]] = None
+        self, policy_name: str, reason: str, metadata: dict[str, Any] | None = None
     ):
         self.policy_name = policy_name
         self.reason = reason
@@ -44,8 +44,8 @@ class PolicyEvaluationResult:
         self,
         policy_name: str,
         result: PolicyResult,
-        reason: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        reason: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ):
         self.policy_name = policy_name
         self.result = result
@@ -62,7 +62,7 @@ class PolicyConfig:
         description: str = "",
         enabled: bool = True,
         enforcement_level: PolicyResult = PolicyResult.BLOCKED,
-        conditions: Optional[Dict[str, Any]] = None,
+        conditions: dict[str, Any] | None = None,
     ):
         self.name = name
         self.description = description
@@ -75,7 +75,7 @@ class PolicyEngine:
     """Core policy enforcement engine."""
 
     def __init__(self):
-        self.policies: Dict[str, PolicyConfig] = {}
+        self.policies: dict[str, PolicyConfig] = {}
         self.telemetry = GenOpsTelemetry()
 
     def register_policy(self, policy: PolicyConfig) -> None:
@@ -84,7 +84,7 @@ class PolicyEngine:
         logger.info(f"Registered policy: {policy.name}")
 
     def evaluate_policy(
-        self, policy_name: str, operation_context: Dict[str, Any]
+        self, policy_name: str, operation_context: dict[str, Any]
     ) -> PolicyEvaluationResult:
         """
         Evaluate a policy against an operation context.
@@ -114,7 +114,7 @@ class PolicyEngine:
         return PolicyEvaluationResult(policy_name, PolicyResult.ALLOWED, None)
 
     def _evaluate_cost_limit(
-        self, policy: PolicyConfig, context: Dict[str, Any]
+        self, policy: PolicyConfig, context: dict[str, Any]
     ) -> PolicyEvaluationResult:
         """Evaluate cost limit policy."""
         max_cost = policy.conditions.get("max_cost", float("inf"))
@@ -132,7 +132,7 @@ class PolicyEngine:
         return PolicyEvaluationResult(policy.name, PolicyResult.ALLOWED, None)
 
     def _evaluate_rate_limit(
-        self, policy: PolicyConfig, context: Dict[str, Any]
+        self, policy: PolicyConfig, context: dict[str, Any]
     ) -> PolicyEvaluationResult:
         """Evaluate rate limit policy."""
         # Simplified rate limiting - in production, use Redis or similar
@@ -150,7 +150,7 @@ class PolicyEngine:
         return PolicyEvaluationResult(policy.name, PolicyResult.ALLOWED, None)
 
     def _evaluate_content_filter(
-        self, policy: PolicyConfig, context: Dict[str, Any]
+        self, policy: PolicyConfig, context: dict[str, Any]
     ) -> PolicyEvaluationResult:
         """Evaluate content filtering policy."""
         blocked_patterns = policy.conditions.get("blocked_patterns", [])
@@ -167,7 +167,7 @@ class PolicyEngine:
         return PolicyEvaluationResult(policy.name, PolicyResult.ALLOWED, None)
 
     def _evaluate_team_access(
-        self, policy: PolicyConfig, context: Dict[str, Any]
+        self, policy: PolicyConfig, context: dict[str, Any]
     ) -> PolicyEvaluationResult:
         """Evaluate team access policy."""
         allowed_teams = policy.conditions.get("allowed_teams", [])
@@ -207,7 +207,7 @@ def register_policy(
 
 
 def enforce_policy(
-    policies: Union[str, List[str]], operation_context: Optional[Dict[str, Any]] = None
+    policies: str | list[str], operation_context: dict[str, Any] | None = None
 ) -> Callable[[F], F]:
     """
     Decorator to enforce governance policies on AI operations.
@@ -275,7 +275,7 @@ def enforce_policy(
 
 
 def check_policy(
-    policy_name: str, operation_context: Dict[str, Any]
+    policy_name: str, operation_context: dict[str, Any]
 ) -> PolicyEvaluationResult:
     """
     Manually check a policy without enforcement.

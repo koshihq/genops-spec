@@ -1,8 +1,9 @@
 """Tests for OpenRouter provider adapter."""
 
-from unittest.mock import MagicMock, patch, Mock
+from unittest.mock import MagicMock, Mock, patch
+
 import pytest
-from tests.utils.mock_providers import MockOpenAIClient, MockProviderFactory
+from tests.utils.mock_providers import MockOpenAIClient
 
 from genops.providers.openrouter import GenOpsOpenRouterAdapter
 
@@ -648,7 +649,7 @@ class TestOpenRouterPricingEngineIntegration:
 
         # Check coverage of major providers
         providers_found = set()
-        for model, pricing in pricing_db.items():
+        for _model, pricing in pricing_db.items():
             providers_found.add(pricing.provider)
 
         expected_providers = {
@@ -740,8 +741,8 @@ class TestOpenRouterValidationUtilities:
     def test_validation_setup_structure(self):
         """Test validation setup returns proper structure."""
         from genops.providers.openrouter_validation import (
-            ValidationResult,
             ValidationIssue,
+            ValidationResult,
         )
 
         # Test ValidationIssue structure
@@ -807,7 +808,7 @@ class TestOpenRouterMultiProviderScenarios:
         adapter = GenOpsOpenRouterAdapter(client=mock_client)
 
         # Test with provider preference
-        response = adapter.chat_completions_create(
+        adapter.chat_completions_create(
             model="anthropic/claude-3-sonnet",
             messages=[{"role": "user", "content": "Test"}],
             provider="anthropic",  # Explicit provider preference
@@ -832,7 +833,7 @@ class TestOpenRouterMultiProviderScenarios:
         for strategy in routing_strategies:
             mock_client.reset_mock()
 
-            response = adapter.chat_completions_create(
+            adapter.chat_completions_create(
                 model="openai/gpt-4o",
                 messages=[{"role": "user", "content": "Test routing"}],
                 route=strategy,
@@ -883,7 +884,7 @@ class TestOpenRouterMultiProviderScenarios:
         for model, provider in provider_requests:
             mock_client.reset_mock()
 
-            response = adapter.chat_completions_create(
+            adapter.chat_completions_create(
                 model=model,
                 messages=[{"role": "user", "content": "Multi-provider test"}],
                 team="multi-provider-team",
@@ -1034,7 +1035,7 @@ class TestOpenRouterGovernanceIntegration:
             "compliance_level": "confidential",
         }
 
-        response = adapter.chat_completions_create(
+        adapter.chat_completions_create(
             model="anthropic/claude-3-sonnet",
             messages=[{"role": "user", "content": "Governance test"}],
             **governance_attrs,
@@ -1060,7 +1061,7 @@ class TestOpenRouterGovernanceIntegration:
         adapter = GenOpsOpenRouterAdapter(client=mock_client)
 
         # Test that request-specific attributes override context
-        response = adapter.chat_completions_create(
+        adapter.chat_completions_create(
             model="openai/gpt-4o",
             messages=[{"role": "user", "content": "Context test"}],
             team="override-team",  # Should override any context
@@ -1090,7 +1091,7 @@ class TestOpenRouterGovernanceIntegration:
 
         adapter = GenOpsOpenRouterAdapter(client=mock_client)
 
-        response = adapter.chat_completions_create(
+        adapter.chat_completions_create(
             model="anthropic/claude-3-sonnet",
             messages=[{"role": "user", "content": "Cost tracking test"}],
             team="cost-team",
@@ -1115,7 +1116,7 @@ class TestOpenRouterPerformanceAndScaling:
 
         # Simulate multiple concurrent requests
         for i in range(5):
-            response = adapter.chat_completions_create(
+            adapter.chat_completions_create(
                 model="openai/gpt-3.5-turbo",
                 messages=[{"role": "user", "content": f"Concurrent test {i}"}],
                 team="performance-team",
@@ -1145,7 +1146,7 @@ class TestOpenRouterPerformanceAndScaling:
         # Create a large message (simulating large context)
         large_content = "Large content " * 1000  # ~13KB of text
 
-        response = adapter.chat_completions_create(
+        adapter.chat_completions_create(
             model="openai/gpt-4o",
             messages=[{"role": "user", "content": large_content}],
             team="large-context-team",
@@ -1189,7 +1190,7 @@ class TestOpenRouterEdgeCases:
         mock_client = MockOpenAIClient()
         adapter = GenOpsOpenRouterAdapter(client=mock_client)
 
-        response = adapter.chat_completions_create(
+        adapter.chat_completions_create(
             model="openai/gpt-3.5-turbo",
             messages=[],  # Empty messages
             team="edge-case-team",
@@ -1207,7 +1208,7 @@ class TestOpenRouterEdgeCases:
 
         long_model_name = "very-long-provider/extremely-long-model-name-that-exceeds-normal-length-limits-for-testing-purposes"
 
-        response = adapter.chat_completions_create(
+        adapter.chat_completions_create(
             model=long_model_name,
             messages=[{"role": "user", "content": "Long name test"}],
             team="edge-case-team",
@@ -1224,7 +1225,7 @@ class TestOpenRouterEdgeCases:
 
         unicode_content = "Testing unicode: 你好世界 🌍 ñáéíóú אבגד"
 
-        response = adapter.chat_completions_create(
+        adapter.chat_completions_create(
             model="anthropic/claude-3-sonnet",
             messages=[{"role": "user", "content": unicode_content}],
             team="unicode-team",
@@ -1264,7 +1265,7 @@ class TestOpenRouterEdgeCases:
         large_message = "word " * 50000  # Very large input
 
         # Should not fail during token estimation
-        response = adapter.chat_completions_create(
+        adapter.chat_completions_create(
             model="openai/gpt-4o",
             messages=[{"role": "user", "content": large_message}],
             team="large-tokens-team",
@@ -1284,7 +1285,7 @@ class TestOpenRouterStreamingSupport:
         mock_client = MockOpenAIClient()
         adapter = GenOpsOpenRouterAdapter(client=mock_client)
 
-        response = adapter.chat_completions_create(
+        adapter.chat_completions_create(
             model="openai/gpt-4o",
             messages=[{"role": "user", "content": "Streaming test"}],
             stream=True,  # Enable streaming
@@ -1316,7 +1317,7 @@ class TestOpenRouterStreamingSupport:
 
         adapter = GenOpsOpenRouterAdapter(client=mock_client)
 
-        response = adapter.chat_completions_create(
+        adapter.chat_completions_create(
             model="anthropic/claude-3-sonnet",
             messages=[{"role": "user", "content": "Stream with governance"}],
             stream=True,
