@@ -7,6 +7,45 @@ from tests.utils.mock_providers import MockOpenAIClient, MockProviderFactory
 from genops.providers.openrouter import GenOpsOpenRouterAdapter
 
 
+# Mock OpenAI exception classes for testing
+class APITimeoutError(Exception):
+    """Mock APITimeoutError for testing."""
+    pass
+
+
+class APIConnectionError(Exception):
+    """Mock APIConnectionError for testing."""
+    pass
+
+
+class AuthenticationError(Exception):
+    """Mock AuthenticationError for testing."""
+    pass
+
+
+class RateLimitError(Exception):
+    """Mock RateLimitError for testing."""
+    pass
+
+
+class NotFoundError(Exception):
+    """Mock NotFoundError for testing."""
+    pass
+
+
+class APIError(Exception):
+    """Mock APIError for testing."""
+    pass
+
+
+@pytest.fixture
+def mock_openai_import():
+    """Mock OpenAI import for OpenRouter testing without dependency."""
+    with patch("genops.providers.openrouter.HAS_OPENROUTER_DEPS", True):
+        with patch("genops.providers.openrouter.OpenAI") as mock_openai_class:
+            yield mock_openai_class
+
+
 class TestGenOpsOpenRouterAdapter:
     """Test OpenRouter adapter with governance tracking and multi-provider awareness."""
 
@@ -317,11 +356,11 @@ class TestGenOpsOpenRouterAdapter:
         assert span.name == "openrouter.chat.completions.create"
 
         # Check for OpenRouter-specific attributes
-        attributes = {attr.key: attr.value for attr in span.attributes}
-        assert attributes.get("operation_name") == "openrouter.chat.completions.create"
-        assert attributes.get("provider") == "openrouter"
-        assert attributes.get("model") == "anthropic/claude-3-5-sonnet"
-        assert "openrouter.predicted_provider" in attributes
+        attributes = dict(span.attributes)
+        assert attributes.get("genops.operation.name") == "openrouter.chat.completions.create"
+        assert attributes.get("genops.provider") == "openrouter"
+        assert attributes.get("genops.model") == "anthropic/claude-3-5-sonnet"
+        assert "genops.openrouter.predicted_provider" in attributes
 
     def test_openrouter_specific_attributes_in_telemetry(
         self, mock_openai_import, mock_span_recorder
@@ -345,11 +384,11 @@ class TestGenOpsOpenRouterAdapter:
 
         spans = mock_span_recorder.get_spans()
         span = spans[0]
-        attributes = {attr.key: attr.value for attr in span.attributes}
+        attributes = dict(span.attributes)
 
         # Check OpenRouter routing attributes
-        assert attributes.get("openrouter.routing_strategy") == "least-cost"
-        assert attributes.get("openrouter.preferred_provider") == "anthropic"
+        assert attributes.get("genops.openrouter.routing_strategy") == "least-cost"
+        assert attributes.get("genops.openrouter.preferred_provider") == "anthropic"
 
 
 class TestOpenRouterInstrumentFunction:
@@ -525,12 +564,12 @@ class TestOpenRouterIntegrationPatterns:
 
         spans = mock_span_recorder.get_spans()
         span = spans[0]
-        attributes = {attr.key: attr.value for attr in span.attributes}
+        attributes = dict(span.attributes)
 
         # Verify OpenRouter routing attributes are captured
-        assert attributes.get("openrouter.routing_strategy") == "least-cost"
-        assert attributes.get("openrouter.preferred_provider") == "anthropic"
-        assert attributes.get("openrouter.actual_provider") == "anthropic"
+        assert attributes.get("genops.openrouter.routing_strategy") == "least-cost"
+        assert attributes.get("genops.openrouter.preferred_provider") == "anthropic"
+        assert attributes.get("genops.openrouter.actual_provider") == "anthropic"
         assert attributes.get("openrouter.request_id") == "openrouter-req-123"
 
     def test_cost_calculation_with_actual_provider(
@@ -588,7 +627,7 @@ class TestOpenRouterIntegrationPatterns:
 
         spans = mock_span_recorder.get_spans()
         span = spans[0]
-        attributes = {attr.key: attr.value for attr in span.attributes}
+        attributes = dict(span.attributes)
 
         # Verify fallback was detected and recorded
         assert attributes.get("genops.openrouter.fallback_used") is True
@@ -855,8 +894,8 @@ class TestOpenRouterMultiProviderScenarios:
             spans = mock_span_recorder.get_spans()
             if spans:
                 latest_span = spans[-1]
-                attributes = {attr.key: attr.value for attr in latest_span.attributes}
-                assert attributes.get("openrouter.predicted_provider") == provider
+                attributes = dict(latest_span.attributes)
+                assert attributes.get("genops.openrouter.predicted_provider") == provider
 
 
 class TestOpenRouterErrorHandlingScenarios:
@@ -864,7 +903,6 @@ class TestOpenRouterErrorHandlingScenarios:
 
     def test_network_timeout_handling(self, mock_openai_import, mock_span_recorder):
         """Test handling of network timeout errors."""
-        from openai import APITimeoutError
 
         mock_client = MockOpenAIClient()
         mock_client.chat.completions.create.side_effect = APITimeoutError(
@@ -883,7 +921,7 @@ class TestOpenRouterErrorHandlingScenarios:
         spans = mock_span_recorder.get_spans()
         assert len(spans) == 1
         span = spans[0]
-        attributes = {attr.key: attr.value for attr in span.attributes}
+        attributes = dict(span.attributes)
         assert "genops.error.type" in attributes
         assert "genops.error.message" in attributes
 
@@ -891,7 +929,6 @@ class TestOpenRouterErrorHandlingScenarios:
         self, mock_openai_import, mock_span_recorder
     ):
         """Test handling of authentication errors."""
-        from openai import AuthenticationError
 
         mock_client = MockOpenAIClient()
         mock_client.chat.completions.create.side_effect = AuthenticationError(
@@ -910,12 +947,11 @@ class TestOpenRouterErrorHandlingScenarios:
         spans = mock_span_recorder.get_spans()
         assert len(spans) == 1
         span = spans[0]
-        attributes = {attr.key: attr.value for attr in span.attributes}
+        attributes = dict(span.attributes)
         assert attributes["genops.error.type"] == "AuthenticationError"
 
     def test_rate_limiting_error_handling(self, mock_openai_import, mock_span_recorder):
         """Test handling of rate limiting errors."""
-        from openai import RateLimitError
 
         mock_client = MockOpenAIClient()
         mock_client.chat.completions.create.side_effect = RateLimitError(
@@ -933,14 +969,13 @@ class TestOpenRouterErrorHandlingScenarios:
         # Verify error telemetry
         spans = mock_span_recorder.get_spans()
         span = spans[0]
-        attributes = {attr.key: attr.value for attr in span.attributes}
+        attributes = dict(span.attributes)
         assert attributes["genops.error.type"] == "RateLimitError"
 
     def test_model_not_found_error_handling(
         self, mock_openai_import, mock_span_recorder
     ):
         """Test handling of model not found errors."""
-        from openai import NotFoundError
 
         mock_client = MockOpenAIClient()
         mock_client.chat.completions.create.side_effect = NotFoundError(
@@ -1013,11 +1048,11 @@ class TestOpenRouterGovernanceIntegration:
         # Verify telemetry captured governance attributes
         spans = mock_span_recorder.get_spans()
         span = spans[0]
-        telemetry_attrs = {attr.key: attr.value for attr in span.attributes}
+        telemetry_attrs = dict(span.attributes)
 
         # Check some key governance attributes were captured
-        assert telemetry_attrs.get("team") == "data-science"
-        assert telemetry_attrs.get("project") == "model-evaluation"
+        assert telemetry_attrs.get("genops.team") == "data-science"
+        assert telemetry_attrs.get("genops.project") == "model-evaluation"
 
     def test_context_manager_governance(self, mock_openai_import, mock_span_recorder):
         """Test governance attributes work with context managers."""
@@ -1034,11 +1069,11 @@ class TestOpenRouterGovernanceIntegration:
 
         spans = mock_span_recorder.get_spans()
         span = spans[0]
-        attributes = {attr.key: attr.value for attr in span.attributes}
+        attributes = dict(span.attributes)
 
         # Verify override values were used
-        assert attributes.get("team") == "override-team"
-        assert attributes.get("project") == "context-test-project"
+        assert attributes.get("genops.team") == "override-team"
+        assert attributes.get("genops.project") == "context-test-project"
 
     def test_cost_tracking_accuracy(self, mock_openai_import, mock_span_recorder):
         """Test accuracy of cost tracking in telemetry."""
@@ -1263,8 +1298,8 @@ class TestOpenRouterStreamingSupport:
         # Verify governance attributes were still captured
         spans = mock_span_recorder.get_spans()
         span = spans[0]
-        attributes = {attr.key: attr.value for attr in span.attributes}
-        assert attributes.get("team") == "streaming-team"
+        attributes = dict(span.attributes)
+        assert attributes.get("genops.team") == "streaming-team"
 
     def test_streaming_with_governance_tracking(
         self, mock_openai_import, mock_span_recorder
@@ -1293,8 +1328,8 @@ class TestOpenRouterStreamingSupport:
         spans = mock_span_recorder.get_spans()
         assert len(spans) == 1
         span = spans[0]
-        attributes = {attr.key: attr.value for attr in span.attributes}
-        assert attributes.get("team") == "stream-governance-team"
+        attributes = dict(span.attributes)
+        assert attributes.get("genops.team") == "stream-governance-team"
 
 
 class TestOpenRouterProductionScenarios:
@@ -1321,7 +1356,6 @@ class TestOpenRouterProductionScenarios:
 
     def test_production_timeout_handling(self, mock_openai_import, mock_span_recorder):
         """Test timeout handling in production scenarios."""
-        from openai import APITimeoutError
 
         mock_client = MockOpenAIClient()
         mock_client.chat.completions.create.side_effect = APITimeoutError(
@@ -1340,7 +1374,6 @@ class TestOpenRouterProductionScenarios:
 
     def test_production_error_recovery(self, mock_openai_import, mock_span_recorder):
         """Test error recovery in production environments."""
-        from openai import APIError
 
         mock_client = MockOpenAIClient()
         # First call fails, second succeeds
@@ -1604,7 +1637,6 @@ class TestOpenRouterIntegrationRobustness:
         self, mock_openai_import, mock_span_recorder
     ):
         """Test recovery from network interruptions."""
-        from openai import APIConnectionError
 
         mock_client = MockOpenAIClient()
         # Simulate intermittent network issues

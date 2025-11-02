@@ -37,6 +37,10 @@ except ImportError:
 
         def get_finished_spans(self):
             return list(self._spans)
+        
+        def get_spans(self):
+            """Alias for get_finished_spans for compatibility."""
+            return self.get_finished_spans()
 
         def clear(self):
             self._spans.clear()

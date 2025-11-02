@@ -171,7 +171,21 @@ class MockOpenAIClient(MockProviderClient):
         super().__init__(**kwargs)
         self.chat = MagicMock()
         self.chat.completions = MagicMock()
-        self.chat.completions.create = self._chat_completions_create
+        
+        # Set up chat completions create method with proper mock behavior
+        self.chat.completions.create = MagicMock()
+        self.chat.completions.create.side_effect = self._chat_completions_create
+        self.chat.completions.create.return_value = self._default_chat_response()
+        
+        # Add completions for legacy completions API
+        self.completions = MagicMock()
+        self.completions.create = MagicMock()
+        self.completions.create.side_effect = self._completions_create
+        self.completions.create.return_value = self._default_chat_response()
+    
+    def _default_chat_response(self) -> MockOpenAIResponse:
+        """Create default response for when mock is accessed without parameters."""
+        return MockProviderFactory.create_openai_response()
 
     def _chat_completions_create(self, **kwargs) -> MockOpenAIResponse:
         """Mock chat completions create method."""
@@ -184,6 +198,21 @@ class MockOpenAIClient(MockProviderClient):
         # Estimate content length for response
         input_text = " ".join([msg.get("content", "") for msg in messages])
         response_content = f"AI response to: {input_text[:50]}..."
+
+        return MockProviderFactory.create_openai_response(
+            model=model, content=response_content
+        )
+    
+    def _completions_create(self, **kwargs) -> MockOpenAIResponse:
+        """Mock completions create method (legacy API)."""
+        self._simulate_delay()
+        self._check_failure()
+
+        model = kwargs.get("model", "gpt-3.5-turbo")
+        prompt = kwargs.get("prompt", "")
+
+        # Generate response content
+        response_content = f"AI response to: {prompt[:50]}..."
 
         return MockProviderFactory.create_openai_response(
             model=model, content=response_content
