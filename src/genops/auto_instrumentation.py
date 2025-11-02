@@ -37,6 +37,7 @@ class GenOpsInstrumentor:
         """Set up the registry of available provider patches."""
         from genops.providers.anthropic import patch_anthropic, unpatch_anthropic
         from genops.providers.openai import patch_openai, unpatch_openai
+        from genops.providers.openrouter import patch_openrouter, unpatch_openrouter
 
         self.provider_patches = {
             "openai": {
@@ -51,6 +52,13 @@ class GenOpsInstrumentor:
                 "unpatch": unpatch_anthropic,
                 "module": "anthropic", 
                 "provider_type": "llm_api",
+                "framework_type": "inference",
+            },
+            "openrouter": {
+                "patch": patch_openrouter,
+                "unpatch": unpatch_openrouter,
+                "module": "openai",  # OpenRouter uses OpenAI-compatible SDK
+                "provider_type": "llm_api_gateway",
                 "framework_type": "inference",
             },
         }

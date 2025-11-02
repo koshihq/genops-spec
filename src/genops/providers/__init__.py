@@ -42,6 +42,26 @@ except ImportError:
     
     _anthropic_available = False
 
+try:
+    from genops.providers.openrouter import (
+        instrument_openrouter,
+        patch_openrouter,
+        unpatch_openrouter,
+    )
+    _openrouter_available = True
+except ImportError:
+    # Create stub functions for unavailable providers  
+    def instrument_openrouter(*args, **kwargs):
+        raise ImportError("OpenRouter provider not available. Install with: pip install openai")
+    
+    def patch_openrouter(*args, **kwargs):
+        raise ImportError("OpenRouter provider not available. Install with: pip install openai")
+    
+    def unpatch_openrouter(*args, **kwargs):
+        raise ImportError("OpenRouter provider not available. Install with: pip install openai")
+    
+    _openrouter_available = False
+
 # Explicit __all__ definition with all available exports
 __all__ = [
     "instrument_openai",
@@ -50,4 +70,7 @@ __all__ = [
     "instrument_anthropic",
     "patch_anthropic",
     "unpatch_anthropic",
+    "instrument_openrouter",
+    "patch_openrouter",
+    "unpatch_openrouter",
 ]

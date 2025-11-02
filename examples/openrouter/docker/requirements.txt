@@ -1,0 +1,20 @@
+# Production dependencies for GenOps OpenRouter application
+genops-ai>=1.0.0
+openai>=1.0.0
+gunicorn>=21.2.0
+flask>=2.3.0
+
+# Observability dependencies
+opentelemetry-api>=1.20.0
+opentelemetry-sdk>=1.20.0
+opentelemetry-exporter-otlp>=1.20.0
+opentelemetry-instrumentation-flask>=0.41b0
+opentelemetry-instrumentation-requests>=0.41b0
+
+# Production utilities
+python-dotenv>=1.0.0
+pydantic>=2.0.0
+structlog>=23.1.0
+
+# Health check dependencies
+psutil>=5.9.0

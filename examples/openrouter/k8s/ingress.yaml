@@ -1,0 +1,88 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: openrouter-service-ingress
+  namespace: genops-openrouter
+  labels:
+    app.kubernetes.io/name: openrouter-service
+    app.kubernetes.io/component: ingress
+  annotations:
+    # NGINX Ingress Controller annotations
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "120"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "60"
+    
+    # Rate limiting
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    
+    # CORS headers
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization"
+    
+    # TLS configuration
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    
+    # AWS ALB annotations (alternative to NGINX)
+    # kubernetes.io/ingress.class: "alb"
+    # alb.ingress.kubernetes.io/scheme: "internet-facing"
+    # alb.ingress.kubernetes.io/target-type: "ip"
+    # alb.ingress.kubernetes.io/ssl-redirect: "443"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - openrouter-api.your-domain.com
+    secretName: openrouter-tls-secret
+  rules:
+  - host: openrouter-api.your-domain.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: openrouter-service-internal
+            port:
+              number: 8000
+      - path: /health
+        pathType: Exact
+        backend:
+          service:
+            name: openrouter-service-internal
+            port:
+              number: 8000
+      - path: /ready
+        pathType: Exact
+        backend:
+          service:
+            name: openrouter-service-internal
+            port:
+              number: 8000
+      - path: /chat/completions
+        pathType: Exact
+        backend:
+          service:
+            name: openrouter-service-internal
+            port:
+              number: 8000
+      - path: /models
+        pathType: Exact
+        backend:
+          service:
+            name: openrouter-service-internal
+            port:
+              number: 8000
+      - path: /cost/estimate
+        pathType: Exact
+        backend:
+          service:
+            name: openrouter-service-internal
+            port:
+              number: 8000

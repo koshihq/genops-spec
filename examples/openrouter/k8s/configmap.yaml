@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openrouter-config
+  namespace: genops-openrouter
+  labels:
+    app.kubernetes.io/name: openrouter-service
+    app.kubernetes.io/component: configuration
+data:
+  # Application Configuration
+  ENVIRONMENT: "production"
+  PORT: "8000"
+  FLASK_DEBUG: "false"
+  
+  # OpenTelemetry Configuration
+  OTEL_SERVICE_NAME: "openrouter-k8s-service"
+  OTEL_SERVICE_VERSION: "1.0.0"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "https://api.honeycomb.io"
+  
+  # OpenRouter Configuration
+  OPENROUTER_TIMEOUT: "30.0"
+  OPENROUTER_MAX_RETRIES: "3"
+  OPENROUTER_HTTP_REFERER: "https://your-k8s-cluster.com"
+  OPENROUTER_X_TITLE: "Kubernetes OpenRouter Service"
+  
+  # Default Governance Attributes
+  DEFAULT_TEAM: "platform"
+  DEFAULT_PROJECT: "k8s-openrouter-service"
+  
+  # Logging Configuration
+  LOG_LEVEL: "INFO"
+  LOG_FORMAT: "json"
+  
+  # Python Configuration
+  PYTHONUNBUFFERED: "1"
+  PYTHONDONTWRITEBYTECODE: "1"
