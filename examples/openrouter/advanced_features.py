@@ -194,7 +194,7 @@ def advanced_features_demo():
                 if "provider" in test:
                     request_params["provider"] = test["provider"]
 
-                response = client.chat_completions_create(**request_params)
+                client.chat_completions_create(**request_params)
 
                 # In a real scenario, GenOps would capture if fallback was used
                 print("      ✅ Request successful")
