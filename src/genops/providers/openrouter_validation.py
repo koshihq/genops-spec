@@ -460,9 +460,9 @@ def check_genops_configuration() -> list[ValidationIssue]:
 
     # Check telemetry configuration
     try:
-        from genops.core.telemetry import GenOpsTelemetry
+        import genops.core.telemetry
 
-        GenOpsTelemetry()
+        genops.core.telemetry.GenOpsTelemetry()
         issues.append(
             ValidationIssue(
                 level="info",
@@ -694,9 +694,9 @@ def test_basic_functionality() -> list[ValidationIssue]:
 
         # Test telemetry integration
         try:
-            from genops.core.telemetry import GenOpsTelemetry
+            import genops.core.telemetry
 
-            GenOpsTelemetry()
+            genops.core.telemetry.GenOpsTelemetry()
             issues.append(
                 ValidationIssue(
                     level="info",
