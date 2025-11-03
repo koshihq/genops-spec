@@ -1,0 +1,196 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openrouter-service
+  namespace: genops-openrouter
+  labels:
+    app.kubernetes.io/name: openrouter-service
+    app.kubernetes.io/component: ai-service
+    app.kubernetes.io/part-of: genops-ai
+    app.kubernetes.io/managed-by: kubernetes
+    version: v1
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: openrouter-service
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: openrouter-service
+        app.kubernetes.io/component: ai-service
+        app.kubernetes.io/part-of: genops-ai
+        version: v1
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: openrouter-service-account
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+      - name: openrouter-service
+        image: your-registry/openrouter-service:latest
+        imagePullPolicy: Always
+        ports:
+        - name: http
+          containerPort: 8000
+          protocol: TCP
+        - name: metrics
+          containerPort: 8000
+          protocol: TCP
+        env:
+        # Configuration from ConfigMap
+        - name: ENVIRONMENT
+          valueFrom:
+            configMapKeyRef:
+              name: openrouter-config
+              key: ENVIRONMENT
+        - name: PORT
+          valueFrom:
+            configMapKeyRef:
+              name: openrouter-config
+              key: PORT
+        - name: OTEL_SERVICE_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: openrouter-config
+              key: OTEL_SERVICE_NAME
+        - name: OTEL_SERVICE_VERSION
+          valueFrom:
+            configMapKeyRef:
+              name: openrouter-config
+              key: OTEL_SERVICE_VERSION
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          valueFrom:
+            configMapKeyRef:
+              name: openrouter-config
+              key: OTEL_EXPORTER_OTLP_ENDPOINT
+        - name: DEFAULT_TEAM
+          valueFrom:
+            configMapKeyRef:
+              name: openrouter-config
+              key: DEFAULT_TEAM
+        - name: DEFAULT_PROJECT
+          valueFrom:
+            configMapKeyRef:
+              name: openrouter-config
+              key: DEFAULT_PROJECT
+        
+        # Secrets
+        - name: OPENROUTER_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: openrouter-secrets
+              key: openrouter-api-key
+        - name: HONEYCOMB_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: openrouter-secrets
+              key: honeycomb-api-key
+        - name: OTEL_EXPORTER_OTLP_HEADERS
+          value: "x-honeycomb-team=$(HONEYCOMB_API_KEY)"
+        
+        # Kubernetes-specific environment variables
+        - name: K8S_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: K8S_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: K8S_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        
+        resources:
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+            ephemeral-storage: "1Gi"
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+            ephemeral-storage: "500Mi"
+        
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+          successThreshold: 1
+        
+        startupProbe:
+          httpGet:
+            path: /health
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 10
+          successThreshold: 1
+        
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          capabilities:
+            drop:
+            - ALL
+        
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: app-logs
+          mountPath: /app/logs
+      
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: app-logs
+        emptyDir: {}
+      
+      terminationGracePeriodSeconds: 60
+      
+      # Pod affinity rules for high availability
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app.kubernetes.io/name
+                  operator: In
+                  values:
+                  - openrouter-service
+              topologyKey: kubernetes.io/hostname

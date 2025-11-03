@@ -1,45 +1,46 @@
 #!/usr/bin/env python3
 """Simple working test to demonstrate test framework functionality."""
 
-import sys
 import os
+import sys
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
 def test_genops_basic_functionality():
     """Test basic GenOps functionality that we know works."""
-    
+
     # Test basic imports
     import genops
+    from genops.core.policy import PolicyConfig, PolicyEngine, PolicyResult
     from genops.core.telemetry import GenOpsTelemetry
-    from genops.core.policy import PolicyConfig, PolicyResult, PolicyEngine
-    
+
     # Test telemetry creation
     telemetry = GenOpsTelemetry()
     assert telemetry is not None
-    
+
     # Test policy creation
     policy = PolicyConfig(
         name="test_policy",
-        description="A test policy", 
+        description="A test policy",
         enforcement_level=PolicyResult.BLOCKED
     )
     assert policy.name == "test_policy"
     assert policy.enforcement_level == PolicyResult.BLOCKED
-    
+
     # Test policy engine
     engine = PolicyEngine()
     engine.register_policy(policy)
     assert "test_policy" in engine.policies
-    
+
     # Test policy evaluation returns tuple
     result, reason = engine.evaluate_policy("test_policy", {})
     assert isinstance(result, PolicyResult)
-    
+
     # Test auto-instrumentation status
     status_info = genops.status()
     assert isinstance(status_info, dict)
     assert 'initialized' in status_info
-    
+
     print("✅ All basic functionality tests passed!")
     return True
 

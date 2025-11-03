@@ -75,27 +75,23 @@
   - changed-files:
     - any-glob-to-any-file: ['**/*compliance*', '**/*audit*']
 
-# Size-based labels
+# Size-based labels (note: these are examples - size labeling would need custom logic)
 "size/XS":
   - changed-files:
-    - count-to-any: 1..5
+    - any-glob-to-any-file: ['*.md']  # Simple documentation changes
 
 "size/S":
   - changed-files:
-    - count-to-any: 6..15
+    - any-glob-to-any-file: ['src/**/*.py']  # Small code changes
 
 "size/M":
   - changed-files:
-    - count-to-any: 16..50
+    - any-glob-to-any-file: ['tests/**/*']  # Test changes
 
 "size/L":
   - changed-files:
-    - count-to-any: 51..100
+    - any-glob-to-any-file: ['src/**/provider*.py']  # Provider changes
 
 "size/XL":
   - changed-files:
-    - count-to-any: 101..500
-
-"size/XXL":
-  - changed-files:
-    - count-to-any: 501..
+    - any-glob-to-any-file: ['examples/**/*']  # Example changes

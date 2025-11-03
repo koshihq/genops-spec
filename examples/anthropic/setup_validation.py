@@ -7,7 +7,7 @@ for any configuration issues. Run this first before other examples.
 
 Usage:
     python setup_validation.py
-    
+
 Prerequisites:
     pip install genops-ai[anthropic]
     export ANTHROPIC_API_KEY="your_anthropic_key_here"
@@ -16,28 +16,32 @@ Prerequisites:
 import os
 import sys
 
+
 def main():
     """Run comprehensive Anthropic + GenOps setup validation."""
     print("🔍 Anthropic + GenOps Setup Validation")
     print("=" * 50)
-    
+
     # Import validation utilities
     try:
-        from genops.providers.anthropic_validation import validate_setup, print_validation_result
+        from genops.providers.anthropic_validation import (
+            print_validation_result,
+            validate_setup,
+        )
         print("✅ GenOps Anthropic validation utilities loaded successfully")
     except ImportError as e:
         print(f"❌ Failed to import GenOps Anthropic validation utilities: {e}")
         print("\n💡 Fix: Run 'pip install genops-ai[anthropic]'")
         return False
-    
+
     # Run comprehensive validation
     print("\n🧪 Running validation checks...")
     print("-" * 30)
-    
+
     try:
         validation_result = validate_setup()
         print_validation_result(validation_result)
-        
+
         # Summary
         print("\n" + "=" * 50)
         if validation_result and validation_result.is_valid:
@@ -51,7 +55,7 @@ def main():
             print("⚠️  Setup validation found issues that need attention.")
             print("\n💡 Please fix the errors above and run validation again.")
             return False
-            
+
     except Exception as e:
         print(f"❌ Validation failed with error: {e}")
         print("\n🐛 Debug information:")
@@ -64,9 +68,9 @@ def manual_check():
     """Perform manual validation checks as fallback."""
     print("\n🔧 Manual Validation Checks")
     print("-" * 30)
-    
+
     issues = []
-    
+
     # Check Anthropic API key
     api_key = os.getenv("ANTHROPIC_API_KEY")
     if not api_key:
@@ -76,9 +80,9 @@ def manual_check():
         print("⚠️  ANTHROPIC_API_KEY doesn't look like a valid Anthropic key (should start with 'sk-ant-')")
         issues.append("Verify ANTHROPIC_API_KEY format")
     else:
-        # Security: Never log API key content, even partially  
+        # Security: Never log API key content, even partially
         print("✅ ANTHROPIC_API_KEY is set and properly formatted")
-    
+
     # Check GenOps installation
     try:
         import genops
@@ -86,7 +90,7 @@ def manual_check():
     except ImportError as e:
         print(f"❌ Failed to import genops: {e}")
         issues.append("Install genops with: pip install genops-ai[anthropic]")
-    
+
     # Check Anthropic installation
     try:
         import anthropic
@@ -94,46 +98,46 @@ def manual_check():
     except ImportError as e:
         print(f"❌ Failed to import anthropic: {e}")
         issues.append("Install anthropic with: pip install anthropic")
-    
+
     # Check OpenTelemetry (optional)
     try:
         import opentelemetry
         opentelemetry.__name__  # Reference to avoid unused import warning
         print("✅ OpenTelemetry is available")
-        
+
         # Check if OTLP endpoint is configured
         otlp_endpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
         if otlp_endpoint:
             print(f"✅ OTLP endpoint configured: {otlp_endpoint}")
         else:
             print("ℹ️  No OTLP endpoint configured (optional for basic usage)")
-            
+
     except ImportError:
         print("⚠️  OpenTelemetry not available (optional)")
-    
+
     # Test basic Anthropic connectivity (if key is available)
     if api_key and api_key.startswith("sk-ant-"):
         try:
             from anthropic import Anthropic
             client = Anthropic()
-            
+
             # Simple test call
             response = client.messages.create(
                 model="claude-3-haiku-20240307",
                 max_tokens=10,
                 messages=[{"role": "user", "content": "Hi"}]
             )
-            
+
             if response and hasattr(response, 'content') and response.content:
                 print("✅ Anthropic API connectivity test successful")
             else:
                 print("⚠️  Anthropic API returned unexpected response format")
                 issues.append("Check Anthropic API response handling")
-                
+
         except Exception as e:
             print(f"❌ Anthropic API connectivity test failed: {e}")
             issues.append("Verify Anthropic API key and network connectivity")
-    
+
     # Summary
     print("\n" + "=" * 50)
     if not issues:
@@ -147,12 +151,12 @@ def manual_check():
 
 if __name__ == "__main__":
     success = main()
-    
+
     if not success:
         print("\n" + "=" * 50)
         print("🔧 Falling back to manual validation...")
         success = manual_check()
-    
+
     if success:
         print("\n✨ Ready to explore Anthropic + GenOps examples!")
         sys.exit(0)

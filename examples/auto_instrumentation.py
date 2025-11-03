@@ -10,18 +10,18 @@ def example_simple_init():
     print("=" * 60)
     print("Example 1: Simple Auto-Instrumentation")
     print("=" * 60)
-    
+
     import genops
-    
+
     # One-line initialization - auto-detects and instruments everything
     genops.init()
-    
+
     # Show status
     status = genops.status()
-    print(f"✓ Initialization complete")
+    print("✓ Initialization complete")
     print(f"  Instrumented providers: {', '.join(status['instrumented_providers'])}")
     print(f"  Available providers: {status['available_providers']}")
-    
+
     # Now any AI provider calls will be automatically tracked
     # (This would work if OpenAI/Anthropic were installed)
     print("\n💡 Any AI provider calls are now automatically tracked with governance telemetry!")
@@ -32,9 +32,9 @@ def example_advanced_init():
     print("\n" + "=" * 60)
     print("Example 2: Advanced Auto-Instrumentation Configuration")
     print("=" * 60)
-    
+
     import genops
-    
+
     # Advanced initialization with custom configuration
     genops.init(
         service_name="my-ai-service",
@@ -47,9 +47,9 @@ def example_advanced_init():
         default_project="chatbot-service",
         default_environment="dev"
     )
-    
+
     print("✓ Advanced initialization complete with custom settings")
-    
+
     # Show the configured default attributes
     defaults = genops.get_default_attributes()
     print(f"  Default governance attributes: {defaults}")
@@ -60,20 +60,20 @@ def example_manual_with_defaults():
     print("\n" + "=" * 60)
     print("Example 3: Manual Instrumentation with Auto-Init Defaults")
     print("=" * 60)
-    
+
     import genops
-    
+
     # Initialize with defaults
     genops.init(
         default_team="platform-team",
         default_project="ai-platform",
         exporter_type="console"
     )
-    
+
     # Get the default attributes for manual instrumentation
     defaults = genops.get_default_attributes()
     print(f"Auto-configured defaults: {defaults}")
-    
+
     # Use manual instrumentation that inherits defaults
     @genops.track_usage(
         operation_name="sentiment_analysis",
@@ -87,7 +87,7 @@ def example_manual_with_defaults():
             "sentiment": "positive" if "good" in text.lower() else "neutral",
             "confidence": 0.85
         }
-    
+
     # Use the instrumented function
     result = analyze_sentiment("This is a good example")
     print(f"✓ Manual instrumentation completed: {result}")
@@ -98,18 +98,18 @@ def example_provider_specific():
     print("\n" + "=" * 60)
     print("Example 4: Provider-Specific Instrumentation")
     print("=" * 60)
-    
+
     import genops
-    
+
     # Initialize with specific providers only
     genops.init(
         providers=["openai"],  # Only instrument OpenAI, not Anthropic
         service_name="openai-only-service"
     )
-    
+
     status = genops.status()
-    print(f"✓ Provider-specific initialization")
-    print(f"  Requested providers: ['openai']") 
+    print("✓ Provider-specific initialization")
+    print("  Requested providers: ['openai']")
     print(f"  Actually instrumented: {status['instrumented_providers']}")
 
 
@@ -118,17 +118,17 @@ def example_with_policies():
     print("\n" + "=" * 60)
     print("Example 5: Auto-Instrumentation with Governance Policies")
     print("=" * 60)
-    
+
     import genops
-    from genops.core.policy import register_policy, PolicyResult
-    
+    from genops.core.policy import PolicyResult, register_policy
+
     # Initialize GenOps
     genops.init(
         service_name="governed-ai-service",
         default_team="ai-governance",
         exporter_type="console"
     )
-    
+
     # Register governance policies
     register_policy(
         name="cost_control",
@@ -136,17 +136,17 @@ def example_with_policies():
         enforcement_level=PolicyResult.WARNING,
         max_cost=1.00
     )
-    
+
     register_policy(
         name="content_safety",
         description="Filter unsafe content",
         enforcement_level=PolicyResult.BLOCKED,
         blocked_patterns=["violence", "explicit"]
     )
-    
+
     print("✓ Auto-instrumentation + governance policies configured")
     print("  All AI provider calls will be automatically tracked AND governed")
-    
+
     # Example of using policy enforcement with auto-instrumentation
     @genops.enforce_policy(["cost_control"])
     def expensive_ai_operation(prompt: str) -> str:
@@ -154,7 +154,7 @@ def example_with_policies():
         # This would call an actual AI service
         # Cost tracking happens automatically via auto-instrumentation
         return f"AI response to: {prompt[:50]}..."
-    
+
     try:
         result = expensive_ai_operation("Generate a comprehensive report")
         print(f"✓ Policy-governed operation: {result}")
@@ -167,16 +167,16 @@ def example_uninstrumentation():
     print("\n" + "=" * 60)
     print("Example 6: Removing Auto-Instrumentation")
     print("=" * 60)
-    
+
     import genops
-    
+
     # Check current status
     status_before = genops.status()
     print(f"Before uninstrumentation: {status_before['initialized']}")
-    
+
     # Remove all instrumentation
     genops.uninstrument()
-    
+
     # Check status after
     status_after = genops.status()
     print(f"After uninstrumentation: {status_after['initialized']}")
@@ -187,15 +187,15 @@ def main():
     """Run all auto-instrumentation examples."""
     print("🚀 GenOps AI Auto-Instrumentation Examples")
     print("This demonstrates the OpenLLMetry-inspired auto-instrumentation system")
-    
+
     # Run examples
     example_simple_init()
-    example_advanced_init() 
+    example_advanced_init()
     example_manual_with_defaults()
     example_provider_specific()
     example_with_policies()
     example_uninstrumentation()
-    
+
     print("\n" + "=" * 60)
     print("🎉 All Examples Complete!")
     print("=" * 60)

@@ -1,6 +1,7 @@
 """Pytest configuration and shared fixtures for GenOps AI tests."""
 
-from typing import Any, Dict, Generator, List
+from collections.abc import Generator
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -12,7 +13,6 @@ try:
     from opentelemetry.test.spantestutil import SpanRecorder
 except ImportError:
     # Fallback implementation for SpanRecorder
-    from typing import List
 
     from opentelemetry.sdk.trace import Span
 
@@ -20,7 +20,7 @@ except ImportError:
         """Simple span recorder for testing."""
 
         def __init__(self):
-            self._spans: List[Span] = []
+            self._spans: list[Span] = []
 
         def export(self, spans):
             self._spans.extend(spans)
@@ -38,6 +38,10 @@ except ImportError:
         def get_finished_spans(self):
             return list(self._spans)
 
+        def get_spans(self):
+            """Alias for get_finished_spans for compatibility."""
+            return self.get_finished_spans()
+
         def clear(self):
             self._spans.clear()
 
@@ -53,7 +57,7 @@ def mock_otel_setup() -> Generator[SpanRecorder, None, None]:
     """Set up in-memory OpenTelemetry for isolated testing."""
     # Get existing tracer provider or create new one
     current_tracer_provider = trace.get_tracer_provider()
-    
+
     if not hasattr(current_tracer_provider, "add_span_processor"):
         # Create a tracer provider with test resource only if none exists
         resource = Resource.create({"service.name": "genops-test"})
@@ -117,7 +121,7 @@ def mock_anthropic_client():
 
 
 @pytest.fixture
-def sample_messages() -> List[Dict[str, str]]:
+def sample_messages() -> list[dict[str, str]]:
     """Provide sample chat messages for testing."""
     return [
         {"role": "system", "content": "You are a helpful assistant."},
@@ -137,7 +141,7 @@ def sample_policy_config() -> PolicyConfig:
 
 
 @pytest.fixture
-def sample_policies() -> List[PolicyConfig]:
+def sample_policies() -> list[PolicyConfig]:
     """Provide sample policy configurations for testing."""
     return [
         PolicyConfig(
@@ -162,7 +166,7 @@ def sample_policies() -> List[PolicyConfig]:
 
 
 @pytest.fixture
-def governance_attributes() -> Dict[str, Any]:
+def governance_attributes() -> dict[str, Any]:
     """Provide sample governance attributes."""
     return {
         "team": "ai-platform",
@@ -177,7 +181,7 @@ def governance_attributes() -> Dict[str, Any]:
 
 
 @pytest.fixture
-def cost_data() -> Dict[str, Any]:
+def cost_data() -> dict[str, Any]:
     """Provide sample cost calculation data."""
     return {
         "input_tokens": 100,
@@ -200,7 +204,7 @@ class SpanAssertions:
     """Helper class for making assertions about OpenTelemetry spans."""
 
     @staticmethod
-    def assert_span_exists(spans: List, name: str) -> Any:
+    def assert_span_exists(spans: list, name: str) -> Any:
         """Assert that a span with the given name exists."""
         matching_spans = [s for s in spans if s.name == name]
         assert len(matching_spans) > 0, f"No span found with name '{name}'"
@@ -219,7 +223,7 @@ class SpanAssertions:
             )
 
     @staticmethod
-    def assert_governance_attributes(span: Any, expected_attrs: Dict[str, Any]):
+    def assert_governance_attributes(span: Any, expected_attrs: dict[str, Any]):
         """Assert that a span contains expected governance attributes."""
         for key, expected_value in expected_attrs.items():
             genops_key = f"genops.{key}" if not key.startswith("genops.") else key
@@ -254,7 +258,7 @@ class TestDataGenerator:
     """Generate test data for various scenarios."""
 
     @staticmethod
-    def generate_chat_messages(count: int = 3) -> List[Dict[str, str]]:
+    def generate_chat_messages(count: int = 3) -> list[dict[str, str]]:
         """Generate sample chat messages."""
         messages = []
         for i in range(count):
@@ -264,7 +268,7 @@ class TestDataGenerator:
         return messages
 
     @staticmethod
-    def generate_policy_violations() -> List[Dict[str, Any]]:
+    def generate_policy_violations() -> list[dict[str, Any]]:
         """Generate sample policy violation scenarios."""
         return [
             {

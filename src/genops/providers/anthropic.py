@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 
 from genops.core.telemetry import GenOpsTelemetry
 
@@ -23,7 +23,7 @@ except ImportError:
 class GenOpsAnthropicAdapter:
     """Anthropic adapter with automatic governance telemetry."""
 
-    def __init__(self, client: Optional[Any] = None, **client_kwargs):
+    def __init__(self, client: Any | None = None, **client_kwargs):
         if not HAS_ANTHROPIC:
             raise ImportError(
                 "Anthropic package not found. Install with: pip install anthropic"
@@ -41,7 +41,7 @@ class GenOpsAnthropicAdapter:
             'temperature', 'max_tokens', 'top_p', 'top_k', 'stop_sequences'
         }
 
-    def _extract_attributes(self, kwargs: Dict) -> Tuple[Dict, Dict, Dict]:
+    def _extract_attributes(self, kwargs: dict) -> tuple[dict, dict, dict]:
         """Extract governance and request attributes from kwargs."""
         governance_attrs = {}
         request_attrs = {}
@@ -269,7 +269,7 @@ class GenOpsAnthropicAdapter:
 
 
 def instrument_anthropic(
-    client: Optional[Any] = None, **client_kwargs
+    client: Any | None = None, **client_kwargs
 ) -> GenOpsAnthropicAdapter:
     """
     Instrument an Anthropic client with GenOps governance telemetry.

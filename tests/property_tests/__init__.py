@@ -37,7 +37,7 @@ COST_ATTRIBUTION_TESTS = [
 ]
 
 POLICY_ENFORCEMENT_TESTS = [
-    "test_policy_enforcement.py" 
+    "test_policy_enforcement.py"
 ]
 
 TELEMETRY_TESTS = [
@@ -50,7 +50,7 @@ PROVIDER_INTEGRATION_TESTS = [
 
 __all__ = [
     "HYPOTHESIS_SETTINGS",
-    "COST_ATTRIBUTION_TESTS", 
+    "COST_ATTRIBUTION_TESTS",
     "POLICY_ENFORCEMENT_TESTS",
     "TELEMETRY_TESTS",
     "PROVIDER_INTEGRATION_TESTS"

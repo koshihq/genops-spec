@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import logging
 import re
-from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Callable
 from dataclasses import dataclass
+from enum import Enum
+from typing import Any, Callable
 
 logger = logging.getLogger(__name__)
 
@@ -21,45 +21,45 @@ class ValidationSeverity(Enum):
 @dataclass
 class ValidationRule:
     """A single tag validation rule."""
-    
+
     name: str
     attribute: str
     rule_type: str  # 'required', 'pattern', 'enum', 'length', 'custom'
     severity: ValidationSeverity
     description: str
-    
+
     # Rule-specific parameters
-    pattern: Optional[str] = None
-    allowed_values: Optional[Set[str]] = None
-    min_length: Optional[int] = None
-    max_length: Optional[int] = None
-    validator_func: Optional[Callable[[Any], bool]] = None
-    error_message: Optional[str] = None
+    pattern: str | None = None
+    allowed_values: set[str] | None = None
+    min_length: int | None = None
+    max_length: int | None = None
+    validator_func: Callable[[Any], bool] | None = None
+    error_message: str | None = None
 
 
-@dataclass 
+@dataclass
 class ValidationResult:
     """Result of tag validation."""
-    
+
     valid: bool
-    violations: List[Dict[str, Any]]
-    warnings: List[Dict[str, Any]]
-    cleaned_attributes: Dict[str, Any]
+    violations: list[dict[str, Any]]
+    warnings: list[dict[str, Any]]
+    cleaned_attributes: dict[str, Any]
 
 
 class TagValidator:
     """Validates and enforces attribution tag quality and compliance."""
-    
+
     def __init__(self):
-        self.rules: List[ValidationRule] = []
+        self.rules: list[ValidationRule] = []
         self.enabled = True
-        
+
         # Set up default validation rules
         self._setup_default_rules()
-    
+
     def _setup_default_rules(self):
         """Set up default validation rules for common attribution patterns."""
-        
+
         # Team validation
         self.add_rule(ValidationRule(
             name="team_required",
@@ -69,7 +69,7 @@ class TagValidator:
             description="Team is required for proper cost attribution",
             error_message="Team attribute should be specified for cost tracking"
         ))
-        
+
         self.add_rule(ValidationRule(
             name="team_format",
             attribute="team",
@@ -79,29 +79,29 @@ class TagValidator:
             pattern=r"^[a-z0-9]+(-[a-z0-9]+)*$",
             error_message="Team should be lowercase with hyphens (e.g., 'platform-engineering')"
         ))
-        
+
         # Customer ID validation
         self.add_rule(ValidationRule(
             name="customer_id_format",
-            attribute="customer_id", 
+            attribute="customer_id",
             rule_type="pattern",
             severity=ValidationSeverity.ERROR,
             description="Customer IDs should follow standard format",
             pattern=r"^[a-zA-Z0-9]([a-zA-Z0-9_-]*[a-zA-Z0-9])?$",
             error_message="Customer ID should be alphanumeric with hyphens/underscores"
         ))
-        
+
         # Environment validation
         self.add_rule(ValidationRule(
             name="environment_enum",
             attribute="environment",
-            rule_type="enum", 
+            rule_type="enum",
             severity=ValidationSeverity.WARNING,
             description="Environment should be standard value",
             allowed_values={"production", "staging", "development", "test", "local"},
             error_message="Environment should be one of: production, staging, development, test, local"
         ))
-        
+
         # Feature validation
         self.add_rule(ValidationRule(
             name="feature_length",
@@ -113,7 +113,7 @@ class TagValidator:
             max_length=50,
             error_message="Feature name should be 2-50 characters"
         ))
-        
+
         # User ID validation
         self.add_rule(ValidationRule(
             name="user_id_not_empty",
@@ -124,34 +124,34 @@ class TagValidator:
             validator_func=lambda x: x is None or (isinstance(x, str) and len(x.strip()) > 0),
             error_message="User ID should not be empty string"
         ))
-    
+
     def add_rule(self, rule: ValidationRule):
         """Add a validation rule."""
         self.rules.append(rule)
         logger.debug(f"Added validation rule: {rule.name}")
-    
+
     def remove_rule(self, rule_name: str):
         """Remove a validation rule by name."""
         self.rules = [r for r in self.rules if r.name != rule_name]
         logger.debug(f"Removed validation rule: {rule_name}")
-    
+
     def enable(self):
         """Enable tag validation."""
         self.enabled = True
         logger.info("Tag validation enabled")
-    
+
     def disable(self):
         """Disable tag validation."""
         self.enabled = False
         logger.info("Tag validation disabled")
-    
-    def validate(self, attributes: Dict[str, Any]) -> ValidationResult:
+
+    def validate(self, attributes: dict[str, Any]) -> ValidationResult:
         """
         Validate attribution attributes against all rules.
-        
+
         Args:
             attributes: Dictionary of attribution attributes to validate
-            
+
         Returns:
             ValidationResult with validation status and any violations
         """
@@ -162,11 +162,11 @@ class TagValidator:
                 warnings=[],
                 cleaned_attributes=attributes
             )
-        
+
         violations = []
         warnings = []
         cleaned_attributes = attributes.copy()
-        
+
         # Apply each validation rule
         for rule in self.rules:
             try:
@@ -180,22 +180,22 @@ class TagValidator:
                 logger.error(f"Error applying validation rule {rule.name}: {e}")
                 violations.append({
                     "rule": rule.name,
-                    "attribute": rule.attribute, 
+                    "attribute": rule.attribute,
                     "severity": "error",
                     "message": f"Validation rule failed: {e}"
                 })
-        
+
         # Determine overall validity (only blocking violations make it invalid)
         blocking_violations = [v for v in violations if v.get("severity") == "block"]
         valid = len(blocking_violations) == 0
-        
+
         result = ValidationResult(
             valid=valid,
             violations=violations,
             warnings=warnings,
             cleaned_attributes=cleaned_attributes
         )
-        
+
         # Log results
         if violations or warnings:
             logger.info(f"Tag validation: {len(violations)} violations, {len(warnings)} warnings")
@@ -203,14 +203,14 @@ class TagValidator:
                 logger.error(f"Validation violation: {violation}")
             for warning in warnings:
                 logger.warning(f"Validation warning: {warning}")
-        
+
         return result
-    
-    def _apply_rule(self, rule: ValidationRule, attributes: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+
+    def _apply_rule(self, rule: ValidationRule, attributes: dict[str, Any]) -> dict[str, Any] | None:
         """Apply a single validation rule to attributes."""
-        
+
         attr_value = attributes.get(rule.attribute)
-        
+
         if rule.rule_type == "required":
             if attr_value is None or attr_value == "":
                 return {
@@ -220,11 +220,11 @@ class TagValidator:
                     "message": rule.error_message or f"{rule.attribute} is required",
                     "value": attr_value
                 }
-        
+
         # Skip other validations if attribute is not present (unless required)
         if attr_value is None:
             return None
-            
+
         if rule.rule_type == "pattern" and rule.pattern:
             if isinstance(attr_value, str) and not re.match(rule.pattern, attr_value):
                 return {
@@ -235,7 +235,7 @@ class TagValidator:
                     "value": attr_value,
                     "expected_pattern": rule.pattern
                 }
-        
+
         elif rule.rule_type == "enum" and rule.allowed_values:
             if attr_value not in rule.allowed_values:
                 return {
@@ -246,7 +246,7 @@ class TagValidator:
                     "value": attr_value,
                     "allowed_values": list(rule.allowed_values)
                 }
-        
+
         elif rule.rule_type == "length":
             if isinstance(attr_value, str):
                 length = len(attr_value)
@@ -270,7 +270,7 @@ class TagValidator:
                         "actual_length": length,
                         "max_length": rule.max_length
                     }
-        
+
         elif rule.rule_type == "custom" and rule.validator_func:
             try:
                 if not rule.validator_func(attr_value):
@@ -289,24 +289,24 @@ class TagValidator:
                     "message": f"Custom validation failed: {e}",
                     "value": attr_value
                 }
-        
+
         return None
-    
-    def enforce(self, attributes: Dict[str, Any]) -> Dict[str, Any]:
+
+    def enforce(self, attributes: dict[str, Any]) -> dict[str, Any]:
         """
         Validate attributes and enforce rules, raising exceptions for blocking violations.
-        
+
         Args:
             attributes: Attribution attributes to validate
-            
+
         Returns:
             Cleaned attributes if validation passes
-            
+
         Raises:
             TagValidationError: If there are blocking validation violations
         """
         result = self.validate(attributes)
-        
+
         # Check for blocking violations
         blocking_violations = [v for v in result.violations if v.get("severity") == "block"]
         if blocking_violations:
@@ -315,14 +315,14 @@ class TagValidator:
                 violations=blocking_violations,
                 warnings=result.warnings
             )
-        
+
         return result.cleaned_attributes
 
 
 class TagValidationError(Exception):
     """Exception raised when tag validation blocks an operation."""
-    
-    def __init__(self, message: str, violations: List[Dict[str, Any]], warnings: List[Dict[str, Any]]):
+
+    def __init__(self, message: str, violations: list[dict[str, Any]], warnings: list[dict[str, Any]]):
         super().__init__(message)
         self.violations = violations
         self.warnings = warnings
@@ -337,12 +337,12 @@ def get_validator() -> TagValidator:
     return _global_validator
 
 
-def validate_tags(attributes: Dict[str, Any]) -> ValidationResult:
+def validate_tags(attributes: dict[str, Any]) -> ValidationResult:
     """Convenience function to validate tags using the global validator."""
     return _global_validator.validate(attributes)
 
 
-def enforce_tags(attributes: Dict[str, Any]) -> Dict[str, Any]:
+def enforce_tags(attributes: dict[str, Any]) -> dict[str, Any]:
     """Convenience function to enforce tag validation using the global validator."""
     return _global_validator.enforce(attributes)
 
@@ -363,7 +363,7 @@ def create_required_rule(attribute: str, severity: ValidationSeverity = Validati
     return ValidationRule(
         name=f"{attribute}_required",
         attribute=attribute,
-        rule_type="required", 
+        rule_type="required",
         severity=severity,
         description=f"{attribute} is required for proper attribution",
         error_message=f"{attribute} attribute is required"
@@ -371,8 +371,8 @@ def create_required_rule(attribute: str, severity: ValidationSeverity = Validati
 
 
 def create_enum_rule(
-    attribute: str, 
-    allowed_values: Set[str], 
+    attribute: str,
+    allowed_values: set[str],
     severity: ValidationSeverity = ValidationSeverity.WARNING
 ) -> ValidationRule:
     """Create an enum validation rule."""
@@ -389,7 +389,7 @@ def create_enum_rule(
 
 def create_pattern_rule(
     attribute: str,
-    pattern: str, 
+    pattern: str,
     description: str,
     severity: ValidationSeverity = ValidationSeverity.WARNING
 ) -> ValidationRule:

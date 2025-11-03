@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import importlib
 import logging
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable
 
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 class GenOpsInstrumentor:
     """Auto-instrumentation system for GenOps AI governance."""
 
-    _instance: Optional["GenOpsInstrumentor"] = None
+    _instance: "GenOpsInstrumentor" | None = None
     _initialized = False
 
     def __new__(cls) -> "GenOpsInstrumentor":
@@ -28,15 +28,16 @@ class GenOpsInstrumentor:
 
     def __init__(self):
         if not hasattr(self, "patched_providers"):
-            self.patched_providers: Dict[str, Any] = {}
-            self.available_providers: Dict[str, bool] = {}
-            self.provider_patches: Dict[str, Callable] = {}
+            self.patched_providers: dict[str, Any] = {}
+            self.available_providers: dict[str, bool] = {}
+            self.provider_patches: dict[str, Callable] = {}
             self._setup_provider_registry()
 
     def _setup_provider_registry(self):
         """Set up the registry of available provider patches."""
         from genops.providers.anthropic import patch_anthropic, unpatch_anthropic
         from genops.providers.openai import patch_openai, unpatch_openai
+        from genops.providers.openrouter import patch_openrouter, unpatch_openrouter
 
         self.provider_patches = {
             "openai": {
@@ -49,16 +50,23 @@ class GenOpsInstrumentor:
             "anthropic": {
                 "patch": patch_anthropic,
                 "unpatch": unpatch_anthropic,
-                "module": "anthropic", 
+                "module": "anthropic",
                 "provider_type": "llm_api",
                 "framework_type": "inference",
             },
+            "openrouter": {
+                "patch": patch_openrouter,
+                "unpatch": unpatch_openrouter,
+                "module": "openai",  # OpenRouter uses OpenAI-compatible SDK
+                "provider_type": "llm_api_gateway",
+                "framework_type": "inference",
+            },
         }
-        
+
         # Framework providers will be added dynamically as they're implemented
         self.framework_registry = {}
 
-    def _detect_available_providers(self) -> Dict[str, bool]:
+    def _detect_available_providers(self) -> dict[str, bool]:
         """Detect which AI providers and frameworks are installed and available."""
         available = {}
 
@@ -76,7 +84,7 @@ class GenOpsInstrumentor:
         try:
             from genops.providers.base import detect_frameworks
             framework_info = detect_frameworks()
-            
+
             for name, info in framework_info.items():
                 if info.available:
                     # Check if we have a provider implementation for this framework
@@ -86,7 +94,7 @@ class GenOpsInstrumentor:
                     else:
                         # Framework detected but no provider implementation yet
                         logger.debug(f"? {name} framework available but no provider implementation")
-                        
+
         except Exception as e:
             logger.debug(f"Framework detection failed: {e}")
 
@@ -96,10 +104,10 @@ class GenOpsInstrumentor:
         self,
         service_name: str = "genops-ai-app",
         service_version: str = "0.1.0",
-        environment: Optional[str] = None,
+        environment: str | None = None,
         exporter_type: str = "console",
-        otlp_endpoint: Optional[str] = None,
-        otlp_headers: Optional[Dict[str, str]] = None,
+        otlp_endpoint: str | None = None,
+        otlp_headers: dict[str, str] | None = None,
     ) -> TracerProvider:
         """Set up OpenTelemetry tracing if not already configured."""
 
@@ -147,18 +155,18 @@ class GenOpsInstrumentor:
         # OpenTelemetry configuration
         service_name: str = "genops-ai-app",
         service_version: str = "0.1.0",
-        environment: Optional[str] = None,
+        environment: str | None = None,
         exporter_type: str = "console",
-        otlp_endpoint: Optional[str] = None,
-        otlp_headers: Optional[Dict[str, str]] = None,
+        otlp_endpoint: str | None = None,
+        otlp_headers: dict[str, str] | None = None,
         # Instrumentation configuration
-        providers: Optional[List[str]] = None,
+        providers: list[str] | None = None,
         auto_detect: bool = True,
         patch_all: bool = True,
         # Governance configuration
-        default_team: Optional[str] = None,
-        default_project: Optional[str] = None,
-        default_environment: Optional[str] = None,
+        default_team: str | None = None,
+        default_project: str | None = None,
+        default_environment: str | None = None,
     ) -> "GenOpsInstrumentor":
         """
         Auto-instrument available AI providers with GenOps governance.
@@ -286,7 +294,7 @@ class GenOpsInstrumentor:
 
         logger.info("✓ GenOps instrumentation removed")
 
-    def status(self) -> Dict[str, Any]:
+    def status(self) -> dict[str, Any]:
         """Get the current instrumentation status."""
         return {
             "initialized": self._initialized,
@@ -295,7 +303,7 @@ class GenOpsInstrumentor:
             "default_attributes": getattr(self, "default_attributes", {}),
         }
 
-    def get_default_attributes(self) -> Dict[str, str]:
+    def get_default_attributes(self) -> dict[str, str]:
         """Get default governance attributes for manual instrumentation."""
         return getattr(self, "default_attributes", {})
 
@@ -311,7 +319,7 @@ class GenOpsInstrumentor:
             config = self.provider_patches[provider_name]
         elif provider_name in self.framework_registry:
             config = self.framework_registry[provider_name]
-        
+
         if not config:
             logger.warning(f"Unknown provider or framework: {provider_name}")
             return False
@@ -328,24 +336,24 @@ class GenOpsInstrumentor:
         except Exception as e:
             logger.error(f"✗ Failed to instrument {provider_name}: {e}")
             return False
-    
+
     def register_framework_provider(
-        self, 
+        self,
         name: str,
         patch_func: Callable,
         unpatch_func: Callable,
         module: str,
         framework_type: str,
-        provider_class: Optional[Any] = None,
+        provider_class: Any | None = None,
         **metadata
     ) -> None:
         """
         Register a framework provider for auto-instrumentation.
-        
+
         Args:
             name: Framework name (e.g., 'langchain', 'pytorch')
             patch_func: Function to apply instrumentation
-            unpatch_func: Function to remove instrumentation  
+            unpatch_func: Function to remove instrumentation
             module: Python module name to check for availability
             framework_type: Type of framework (orchestration, training, etc.)
             provider_class: Optional provider class reference
@@ -353,30 +361,30 @@ class GenOpsInstrumentor:
         """
         self.framework_registry[name] = {
             "patch": patch_func,
-            "unpatch": unpatch_func, 
+            "unpatch": unpatch_func,
             "module": module,
             "framework_type": framework_type,
             "provider_type": "framework",
             "provider_class": provider_class,
             **metadata
         }
-        
+
         logger.debug(f"Registered framework provider: {name}")
-        
-    def get_available_frameworks(self, framework_type: Optional[str] = None) -> Dict[str, Dict]:
+
+    def get_available_frameworks(self, framework_type: str | None = None) -> dict[str, dict]:
         """
         Get available frameworks, optionally filtered by type.
-        
+
         Args:
             framework_type: Filter by framework type (optional)
-            
+
         Returns:
             Dictionary of available frameworks with their info
         """
         try:
             from genops.providers.base import detect_frameworks
             framework_info = detect_frameworks()
-            
+
             available = {}
             for name, info in framework_info.items():
                 if info.available:
@@ -388,49 +396,49 @@ class GenOpsInstrumentor:
                             "instrumented": name in self.framework_registry,
                             "patched": name in self.patched_providers
                         }
-                        
+
             return available
-            
+
         except Exception as e:
             logger.error(f"Failed to get available frameworks: {e}")
             return {}
-            
-    def get_framework_status(self) -> Dict[str, Any]:
+
+    def get_framework_status(self) -> dict[str, Any]:
         """
         Get comprehensive status of all providers and frameworks.
-        
+
         Returns:
             Dictionary with status information
         """
         status = self.status()
-        
+
         # Add framework-specific information
         status["frameworks"] = {
             "registered": list(self.framework_registry.keys()),
             "available": self.get_available_frameworks(),
             "registry_count": len(self.framework_registry)
         }
-        
+
         # Categorize by type
         status["providers_by_type"] = {}
         all_providers = {**self.provider_patches, **self.framework_registry}
-        
+
         for name, config in all_providers.items():
             provider_type = config.get("provider_type", "unknown")
-            framework_type = config.get("framework_type", "unknown") 
-            
+            framework_type = config.get("framework_type", "unknown")
+
             if provider_type not in status["providers_by_type"]:
                 status["providers_by_type"][provider_type] = {}
-                
+
             if framework_type not in status["providers_by_type"][provider_type]:
                 status["providers_by_type"][provider_type][framework_type] = []
-                
+
             status["providers_by_type"][provider_type][framework_type].append({
                 "name": name,
                 "available": self.available_providers.get(name, False),
                 "instrumented": name in self.patched_providers
             })
-            
+
         return status
 
 
@@ -471,12 +479,12 @@ def uninstrument() -> None:
     _instrumentor.uninstrument()
 
 
-def status() -> Dict[str, Any]:
+def status() -> dict[str, Any]:
     """Get GenOps AI instrumentation status."""
     return _instrumentor.status()
 
 
-def get_default_attributes() -> Dict[str, str]:
+def get_default_attributes() -> dict[str, str]:
     """Get default governance attributes for manual instrumentation."""
     return _instrumentor.get_default_attributes()
 
@@ -486,11 +494,11 @@ def register_framework_provider(**kwargs) -> None:
     return _instrumentor.register_framework_provider(**kwargs)
 
 
-def get_available_frameworks(framework_type: Optional[str] = None) -> Dict[str, Dict]:
+def get_available_frameworks(framework_type: str | None = None) -> dict[str, dict]:
     """Get available frameworks, optionally filtered by type."""
     return _instrumentor.get_available_frameworks(framework_type)
 
 
-def get_framework_status() -> Dict[str, Any]:
+def get_framework_status() -> dict[str, Any]:
     """Get comprehensive status of all providers and frameworks."""
     return _instrumentor.get_framework_status()
