@@ -6,14 +6,6 @@
 
 GenOps is an open-source runtime governance framework for AI and LLM workloads — built on [OpenTelemetry](https://opentelemetry.io) and FinOps standards.
 
-It provides cost, policy, and compliance telemetry across your AI stack, enabling teams to:
-
-- **Track spend and efficiency** across models, teams, and customers
-- **Enforce usage policies** and model governance in real time  
-- **Integrate with existing** observability, billing, and compliance systems
-
-Because GenOps emits standard OpenTelemetry traces, logs, and metrics, it plugs directly into your existing monitoring, FinOps, and policy infrastructure.
-
 <div align="center">
   
   [![GitHub stars](https://img.shields.io/github/stars/KoshiHQ/GenOps-AI?style=social)](https://github.com/KoshiHQ/GenOps-AI/stargazers)
@@ -28,7 +20,125 @@ Because GenOps emits standard OpenTelemetry traces, logs, and metrics, it plugs 
 
 ---
 
-## 📡 Supported Destinations
+## 🚨 The Problem: AI Is Powerful, Opaque, and Ungoverned
+
+AI is now core to production systems — yet most organizations are flying blind.  
+Costs are rising, but that's just one symptom of a deeper governance gap.
+
+- 💸 **Unpredictable costs** — Token usage explodes without accountability
+- ⚖️ **Policy drift** — Teams deploy new models with no enforcement or oversight  
+- 🔍 **Observability silos** — Logs, metrics, and traces don't connect to governance
+- 🔒 **Compliance blind spots** — No runtime record of who did what, where, or why
+- 🤖 **Shadow AI** — Models and prompts operate outside organizational control
+
+The result: AI systems that are functional but unaccountable — and teams that can't answer:
+
+**"What ran, under whose authority, and at what cost — financial, ethical, or operational?"**
+
+Without runtime governance, AI becomes a black box: costly, risky, and impossible to trust at scale.
+
+## 👥 Who This Is For
+
+GenOps sits where DevOps, FinOps, and RiskOps converge — aligning engineering, finance, and compliance around a single source of operational truth.
+
+| **Stakeholder** | **Core Need** | **What GenOps Provides** |
+|------------------|---------------|---------------------------|
+| **CTOs / Heads of Platform** | Visibility into AI usage, cost, and risk across the enterprise | A unified control plane for runtime governance and observability |
+| **DevOps / Platform Engineers** | Integration with existing telemetry and infra tooling | OpenTelemetry-native instrumentation and tracing |
+| **FinOps Teams** | Transparent attribution by team, customer, and feature | Per-request cost tracking and budget enforcement |
+| **Compliance & Risk Teams** | Runtime audit trails and data residency assurance | Policy telemetry and enforcement hooks with OPA compatibility |
+| **Product & AI Teams** | Safe experimentation with production accountability | Governance-aware SDKs and cost-aware routing intelligence |
+
+GenOps gives each of these roles shared visibility into AI behavior in production —  
+**turning runtime data into governance, and governance into trust.**
+
+---
+
+## 💡 The GenOps Solution
+
+GenOps provides cost, policy, and compliance telemetry across your AI stack, enabling teams to:
+
+- **Track spend and efficiency** across models, teams, and customers
+- **Enforce usage policies** and model governance in real time  
+- **Integrate with existing** observability, billing, and compliance systems
+
+Because GenOps emits standard OpenTelemetry traces, logs, and metrics, it plugs directly into your existing monitoring, FinOps, and policy infrastructure. GenOps standardizes and enforces runtime governance across your AI systems, turning observability data into actionable accountability.
+
+---
+
+## ⚙️ Key Capabilities
+
+GenOps standardizes and enforces runtime governance across your AI systems.
+
+| **Dimension** | **Example Metrics / Policies** | **Purpose** |
+|---------------|----------------------------------|-------------|
+| **Cost Telemetry** | Cost per request, team, feature, or customer | Enables FinOps visibility and chargeback |
+| **Policy Compliance** | Allowed models, region routing, rate limits | Prevents policy drift and shadow usage |
+| **Data Residency** | Model invocation region, storage compliance | Ensures GDPR / SOC2 / FedRAMP adherence |
+| **Performance Metrics** | Latency, cache hits, throughput | Optimizes efficiency and reliability |
+| **Safety & Guardrails** | Toxicity filters, jailbreak detection | Enforces responsible deployment |
+| **Usage Attribution** | Project, user, and customer-level metering | Enables cross-org accountability |
+
+---
+
+## 📦 Quick Start
+
+### 1. Install the SDK
+```bash
+pip install genops
+```
+
+### 2. Initialize in your app
+```python
+from genops import GenOps
+GenOps.init()
+```
+
+### 3. Run your app
+GenOps automatically collects runtime telemetry and governance signals.  
+View data in your existing observability stack or policy engine.
+
+---
+
+## 🔌 Integrations & Destinations
+
+### Supported Integrations
+
+GenOps integrates natively with your AI and infrastructure layer to collect and normalize runtime signals.
+
+#### LLM & Model Providers
+
+✅ [OpenAI](https://openai.com/) / [Azure OpenAI](https://azure.microsoft.com/en-us/products/ai-services/openai-service)  
+✅ [Anthropic](https://www.anthropic.com/)  
+✅ [OpenRouter](https://openrouter.ai/) (Multi-provider routing)  
+☐ [Mistral](https://mistral.ai/) / [Lepton](https://www.lepton.ai/)  
+☐ [Gemini](https://deepmind.google/technologies/gemini/) (Google)  
+☐ [Ollama](https://ollama.com/) / Local Models  
+☐ [Bedrock](https://aws.amazon.com/bedrock/) / [SageMaker](https://aws.amazon.com/sagemaker/) (AWS)  
+☐ [Replicate](https://replicate.com/) / [Together](https://www.together.ai/) / [Groq](https://groq.com/)  
+
+#### Frameworks & Tooling
+
+✅ [LangChain](https://python.langchain.com/) (Comprehensive integration)  
+☐ [LlamaIndex](https://www.llamaindex.ai/)  
+☐ [LiteLLM](https://litellm.vercel.app/)  
+☐ [DSPy](https://dspy-docs.vercel.app/) / [Guidance](https://github.com/guidance-ai/guidance)  
+☐ [CrewAI](https://www.crewai.com/) / OpenAI Agents  
+☐ [Haystack](https://haystack.deepset.ai/)  
+☐ [LangGraph](https://langchain-ai.github.io/langgraph/) / [Langflow](https://www.langflow.org/)  
+
+#### Infrastructure & Runtime
+
+☐ [Kubernetes](https://kubernetes.io/) (K8s)  
+☐ [Cloudflare Workers](https://workers.cloudflare.com/) / [Vercel AI SDK](https://sdk.vercel.ai/)  
+☐ [Ray](https://www.ray.io/) / [Modal](https://modal.com/) / [Fly.io](https://fly.io/)  
+☐ Serverless runtimes ([Lambda](https://aws.amazon.com/lambda/), [Cloud Run](https://cloud.google.com/run), [Functions](https://azure.microsoft.com/en-us/products/functions/))  
+
+### Supported Destinations
+
+GenOps exports standardized telemetry and governance events to your existing stack.
+
+### Observability & Monitoring
 
 GenOps exports standardized telemetry and governance events to your existing stack.
 
@@ -63,468 +173,26 @@ GenOps exports standardized telemetry and governance events to your existing sta
 
 ☐ [BigQuery](https://cloud.google.com/bigquery) / [Snowflake](https://www.snowflake.com/)  
 ☐ [S3](https://aws.amazon.com/s3/) / [GCS](https://cloud.google.com/storage) / [Azure Blob](https://azure.microsoft.com/en-us/products/storage/blobs/)  
-☐ [Splunk](https://www.splunk.com/) / [Elastic](https://www.elastic.co/)  
+☐ [Splunk](https://www.splunk.com/) / [Elastic](https://www.elastic.co/)
 
 ---
 
-## 🔌 Supported Integrations
-
-GenOps integrates natively with your AI and infrastructure layer to collect and normalize runtime signals.
-
-### LLM & Model Providers
-
-✅ [OpenAI](https://openai.com/) / [Azure OpenAI](https://azure.microsoft.com/en-us/products/ai-services/openai-service)  
-✅ [Anthropic](https://www.anthropic.com/)  
-✅ [OpenRouter](https://openrouter.ai/) (Multi-provider routing)  
-☐ [Mistral](https://mistral.ai/) / [Lepton](https://www.lepton.ai/)  
-☐ [Gemini](https://deepmind.google/technologies/gemini/) (Google)  
-☐ [Ollama](https://ollama.com/) / Local Models  
-☐ [Bedrock](https://aws.amazon.com/bedrock/) / [SageMaker](https://aws.amazon.com/sagemaker/) (AWS)  
-☐ [Replicate](https://replicate.com/) / [Together](https://www.together.ai/) / [Groq](https://groq.com/)  
-
-### Frameworks & Tooling
-
-✅ [LangChain](https://python.langchain.com/) (Comprehensive integration)  
-☐ [LlamaIndex](https://www.llamaindex.ai/)  
-☐ [LiteLLM](https://litellm.vercel.app/)  
-☐ [DSPy](https://dspy-docs.vercel.app/) / [Guidance](https://github.com/guidance-ai/guidance)  
-☐ [CrewAI](https://www.crewai.com/) / OpenAI Agents  
-☐ [Haystack](https://haystack.deepset.ai/)  
-☐ [LangGraph](https://langchain-ai.github.io/langgraph/) / [Langflow](https://www.langflow.org/)  
-
-### Infrastructure & Runtime
-
-☐ [Kubernetes](https://kubernetes.io/) (K8s)  
-☐ [Cloudflare Workers](https://workers.cloudflare.com/) / [Vercel AI SDK](https://sdk.vercel.ai/)  
-☐ [Ray](https://www.ray.io/) / [Modal](https://modal.com/) / [Fly.io](https://fly.io/)  
-☐ Serverless runtimes ([Lambda](https://aws.amazon.com/lambda/), [Cloud Run](https://cloud.google.com/run), [Functions](https://azure.microsoft.com/en-us/products/functions/))  
-
----
-
-## 🧠 What Do We Govern?
-
-GenOps standardizes and enforces runtime governance across your AI systems.
-
-| **Dimension** | **Example Metrics / Policies** | **Purpose** |
-|---------------|----------------------------------|-------------|
-| **Cost Telemetry** | Cost per request, team, feature, or customer | Enables FinOps visibility and chargeback |
-| **Policy Compliance** | Allowed models, region routing, rate limits | Prevents policy drift and shadow usage |
-| **Data Residency** | Model invocation region, storage compliance | Ensures GDPR / SOC2 / FedRAMP adherence |
-| **Performance Metrics** | Latency, cache hits, throughput | Optimizes efficiency and reliability |
-| **Safety & Guardrails** | Toxicity filters, jailbreak detection | Enforces responsible deployment |
-| **Usage Attribution** | Project, user, and customer-level metering | Enables cross-org accountability |
-
----
-
-## 🧩 Example Architecture
-
-```
-Your App
-   │
-   ▼
-GenOps SDK (instrumentation + policy hooks)
-   │
-   ├──> OpenTelemetry Exporter → Datadog / Grafana / Collector
-   ├──> Policy Engine (OPA / WASM)
-   └──> Cost & Compliance Store (Snowflake / BigQuery)
-```
-
----
-
-## 🚀 Quick Start
-
-### 1. Install the SDK
-```bash
-pip install genops
-```
-
-### 2. Initialize in your app
-```python
-from genops import GenOps
-GenOps.init()
-```
-
-### 3. Run your app
-GenOps automatically collects runtime telemetry and governance signals.  
-View data in your existing observability stack or policy engine.
-
----
-
-## 🚨 **The Problem: AI Costs Are Out of Control**
-
-**Real scenarios happening right now:**
-- 💸 **$50,000 surprise bills** - One customer's chat feature cost 10x more than expected
-- 🔍 **No visibility** - "Which team/feature is burning through our AI budget?"  
-- 🚫 **No guardrails** - Production systems calling GPT-4 when GPT-3.5 would work
-- 📊 **CFO questions** - "How much is AI costing us per customer?"
-- ⚖️ **Compliance gaps** - No audit trail for AI decisions in regulated industries
-
-**Without governance, AI is just expensive magic.** ✨💸
-
-### 👥 **Who This Is For**
-
-- **DevOps Teams**: "I need AI costs in my existing dashboards"
-- **FinOps Teams**: "I need per-customer AI cost allocation"  
-- **Platform Teams**: "I need budget controls before we go bankrupt"
-- **Compliance Teams**: "I need audit trails for AI decisions"
-- **CTOs**: "I need to understand what we're actually paying for"
-
----
-
-## ✨ **Key Features**
-
-### 🚀 **Provider Instrumentation** (Production-Ready)
-```python
-from genops.providers.openai import instrument_openai
-
-# Instrument OpenAI with automatic governance tracking
-client = instrument_openai(api_key="your-openai-key")
-
-# All calls now include cost, token, and governance telemetry
-response = client.chat_completions_create(
-    model="gpt-4",
-    messages=[{"role": "user", "content": "Hello!"}],
-    # Governance attributes
-    team="support-team",
-    project="ai-assistant", 
-    customer_id="enterprise-123"
-)
-# ✅ Cost, tokens, policies automatically tracked and exported via OpenTelemetry
-```
-
-### 🎛️ **Manual Telemetry Tracking** 
-```python
-from genops.core.telemetry import GenOpsTelemetry
-
-telemetry = GenOpsTelemetry()
-
-# Track any operation with governance context
-with telemetry.trace_operation(
-    operation_name="customer_support",
-    team="support-team",
-    project="ai-chatbot",
-    customer_id="customer_123"
-) as span:
-    # Your AI processing logic
-    ai_response = call_your_ai_model(message)
-    
-    # Record governance telemetry
-    telemetry.record_cost(span, cost=0.05, provider="openai", model="gpt-3.5-turbo")
-    telemetry.record_evaluation(span, metric_name="quality", score=0.92)
-
-# Governance data automatically flows to your observability stack via OpenTelemetry
-```
-
-### 🛡️ **Policy Enforcement**
-```python
-from genops.core.policy import register_policy, PolicyResult, _policy_engine
-
-# Register governance policies  
-register_policy(
-    name="cost_limit",
-    enforcement_level=PolicyResult.BLOCKED,
-    conditions={"max_cost": 5.00}
-)
-
-# Evaluate policies before operations
-def safe_ai_operation(prompt: str, estimated_cost: float):
-    # Check policy before operation
-    result = _policy_engine.evaluate_policy("cost_limit", {"cost": estimated_cost})
-    
-    if result.result == PolicyResult.BLOCKED:
-        raise Exception(f"Policy violation: {result.reason}")
-    
-    return call_ai_model(prompt)  # Proceeds if policy allows
-```
-
-### 📊 **Rich Governance Telemetry**
-```python
-from genops.core.telemetry import GenOpsTelemetry
-
-telemetry = GenOpsTelemetry()
-
-with telemetry.trace_operation(operation_name="document_analysis") as span:
-    # AI processing...
-    ai_result = process_document()
-    
-    # Record comprehensive governance signals
-    telemetry.record_cost(span, cost=2.50, currency="USD", provider="openai")
-    telemetry.record_policy(span, policy_name="content_safety", result="allowed") 
-    telemetry.record_evaluation(span, metric_name="quality_score", score=0.92)
-    telemetry.record_budget(span, budget_name="monthly_ai_spend", allocated=1000, consumed=150)
-```
-
----
-
-## 🚀 **Quick Start**
-
-### Installation
-
-```bash
-pip install genops
-
-# With AI provider support
-pip install "genops[openai,anthropic]"  # For OpenAI + Anthropic
-pip install "genops[all]"               # All providers
-```
-
-### ⚡ **30-Second Test**
-
-Verify your installation works:
-
-```bash
-# Test the CLI
-genops --version
-
-# Quick Python test
-python -c "import genops; print('✅ GenOps AI installed successfully!')"
-```
-
-### 5-Minute Governance Setup
-
-```python
-from genops.providers.openai import instrument_openai
-import genops
-
-# 1. Set default attribution (once at app startup)
-genops.set_default_attributes(
-    team="platform-engineering",
-    project="ai-services", 
-    environment="production"
-)
-
-# 2. Instrument your AI providers  
-client = instrument_openai(api_key="your-openai-key")
-
-# 3. Use normally - defaults inherited automatically
-response = client.chat_completions_create(
-    model="gpt-3.5-turbo",
-    messages=[{"role": "user", "content": "Hello!"}],
-    # Only specify what's unique to this operation
-    customer_id="enterprise-123",
-    feature="chat-assistant"
-    # team, project, environment automatically included!
-)
-
-# 4. OpenTelemetry exports complete attribution data
-# ✅ Cost, tokens, team, customer, feature → Your observability platform
-```
-
-**That's it!** Full governance telemetry with intelligent attribution inheritance.
-
-### 🎯 **Real-World Governance Scenarios**
-
-See complete end-to-end examples that solve real business problems:
-
-```bash
-# 🚨 Prevent AI budget overruns with automatic enforcement
-python examples/governance_scenarios/budget_enforcement.py
-
-# 🛡️ Block inappropriate content with real-time filtering  
-python examples/governance_scenarios/content_filtering.py
-
-# 📊 Track AI costs per customer for usage-based billing
-python examples/governance_scenarios/customer_attribution.py
-```
-
-Each scenario shows working code with realistic business problems and governance solutions.
-
----
-
-## 📖 **Core Concepts**
-
-### **Governance Semantics**
-GenOps extends OpenTelemetry with standardized governance attributes:
-
-- **`genops.cost.*`** - Cost attribution and financial tracking
-- **`genops.policy.*`** - Policy enforcement results and violations  
-- **`genops.eval.*`** - Quality, safety, and performance evaluations
-- **`genops.budget.*`** - Spend tracking and limit management
-
-### **Provider Adapters** 
-Pre-built integrations with accurate cost models:
-
-- ✅ **OpenAI** (GPT-3.5, GPT-4, GPT-4-turbo) with per-token pricing
-- ✅ **Anthropic** (Claude-3 Sonnet, Opus, Haiku) with accurate costs
-- 🚧 **AWS Bedrock** (coming soon)
-- 🚧 **Google Gemini** (coming soon)
-- 🚧 **LangChain** (coming soon) 
-- 🚧 **LlamaIndex** (coming soon)
-
-### **Observability Stack Integration**
-Works with your existing tools:
-
-- 📊 **Datadog, Honeycomb, New Relic** - OTLP export
-- 📈 **Grafana Tempo, Jaeger** - Distributed tracing
-- 🔍 **Elasticsearch, Splunk** - Log aggregation
-- ☁️ **AWS X-Ray, Google Cloud Trace** - Cloud-native tracing
-
----
-
-## 🏗️ **Architecture**
-
-```mermaid
-graph TB
-    A[Your AI Application] --> B[GenOps AI SDK]
-    B --> C[OpenTelemetry]
-    C --> D[Your Observability Stack]
-    
-    B --> E[Provider Adapters]
-    E --> F[OpenAI/Anthropic/Bedrock...]
-    
-    D --> G[Dashboards & Alerts]
-    D --> H[Cost Attribution]  
-    D --> I[Policy Automation]
-    D --> J[Enterprise Dashboards]
-    
-    style B fill:#e1f5fe
-    style D fill:#f3e5f5
-    style J fill:#fff3e0
-```
-
-**GenOps AI sits alongside OpenLLMetry** in your telemetry stack, adding the governance layer that turns observability data into business accountability.
-
----
-
-## 🎭 **Usage Examples**
-
-### **Multi-Provider Cost Attribution**
-```python
-import genops
-
-# Initialize with default governance context
-genops.init(default_team="ai-research", default_project="multimodal")
-
-# Use different providers - all automatically tracked
-import openai
-import anthropic
-
-# OpenAI for quick tasks
-openai_response = openai.chat.completions.create(
-    model="gpt-3.5-turbo",
-    messages=[{"role": "user", "content": "Summarize this"}],
-    # Inherits team/project, adds specific context
-    customer_id="enterprise_123", 
-    feature="document_summary"
-)
-
-# Anthropic for complex reasoning
-anthropic_client = anthropic.Anthropic()
-claude_response = anthropic_client.messages.create(
-    model="claude-3-opus-20240229", 
-    max_tokens=2048,
-    messages=[{"role": "user", "content": "Analyze this data"}],
-    # Different feature, same customer
-    customer_id="enterprise_123",
-    feature="data_analysis"  
-)
-
-# All operations tagged with cost, provider, customer, feature
-# Perfect for FinOps dashboards and customer billing
-```
-
-### **Policy-Driven Governance**
-```python
-import genops
-from genops import register_policy, PolicyResult
-
-# Set up governance policies
-register_policy("cost_limit", max_cost=10.0, enforcement_level=PolicyResult.BLOCKED)
-register_policy("content_safety", blocked_patterns=["violence"], enforcement_level=PolicyResult.WARNING)
-register_policy("team_budget", max_monthly_spend=5000, enforcement_level=PolicyResult.RATE_LIMITED)
-
-# Apply policies to operations
-def generate_content(prompt: str, customer_tier: str):
-    from genops.core.policy import _policy_engine, PolicyViolationError
-    
-    if customer_tier == "enterprise":
-        model = "gpt-4"
-        estimated_cost = 0.12  # Higher cost estimate
-    else:
-        model = "gpt-3.5-turbo"
-        estimated_cost = 0.03
-    
-    # Check policies before operation
-    context = {"cost": estimated_cost, "content": prompt}
-    cost_result = _policy_engine.evaluate_policy("cost_limit", context)
-    
-    if cost_result.result == PolicyResult.BLOCKED:
-        raise PolicyViolationError("cost_limit", cost_result.reason)
-        
-    return call_ai_model(model, prompt)
-
-# Policy evaluation with error handling
-try:
-    result = generate_content("Write a story", "enterprise") 
-    # ✅ Allowed: cost under $10, content safe
-except PolicyViolationError as e:
-    # ❌ Blocked: policy violation with detailed context
-    logger.warning(f"Policy {e.policy_name}: {e.reason}")
-```
-
-### **Custom Evaluations & Compliance**
-```python
-from genops.core.telemetry import GenOpsTelemetry
-
-def moderate_content(text: str):
-    telemetry = GenOpsTelemetry()
-    
-    with telemetry.trace_operation(operation_name="content_moderation") as span:
-        # Your content moderation logic
-        safety_score = run_safety_model(text)
-        toxicity_score = check_toxicity(text)
-        
-        # Record compliance metrics
-        telemetry.record_evaluation(span, metric_name="safety", score=safety_score, 
-                                   threshold=0.8, passed=safety_score > 0.8)
-        telemetry.record_evaluation(span, metric_name="toxicity", score=toxicity_score,
-                                   threshold=0.2, passed=toxicity_score < 0.2) 
-        
-        # Policy decision
-        if safety_score > 0.8 and toxicity_score < 0.2:
-            telemetry.record_policy(span, policy_name="content_policy", result="approved")
-            return {"approved": True, "reason": "Content meets safety standards"}
-        else:
-            telemetry.record_policy(span, policy_name="content_policy", result="rejected", 
-                                   reason="Safety threshold not met")
-            return {"approved": False, "reason": "Content violates policy"}
-
-# Rich governance telemetry automatically exported for audit trails
-```
-
-### **Budget Tracking & Alerts**  
-```python
-from genops.core.telemetry import GenOpsTelemetry
-
-def process_customer_requests(customer_id: str, requests: list):
-    telemetry = GenOpsTelemetry()
-    
-    # Track budget utilization per customer
-    with telemetry.trace_operation(f"customer_{customer_id}_processing") as span:
-        total_cost = 0
-        
-        for request in requests:
-            response = process_with_ai(request)
-            request_cost = calculate_cost(response)
-            total_cost += request_cost
-            
-        # Update customer budget tracking
-        customer_budget = get_customer_budget(customer_id)
-        remaining = customer_budget.limit - customer_budget.used - total_cost
-        
-        telemetry.record_budget(
-            span=span,
-            budget_name=f"customer_{customer_id}_monthly",
-            allocated=customer_budget.limit,
-            consumed=customer_budget.used + total_cost, 
-            remaining=remaining
-        )
-        
-        # Automatic alerts when budget utilization > 80%
-        if remaining / customer_budget.limit < 0.2:
-            telemetry.record_policy(span, policy_name="budget_warning", result="triggered", 
-                                   reason=f"Customer {customer_id} at 80% budget utilization")
-```
+## 🏢 Production Features
+
+### **Compliance & Audit Trails**
+GenOps automatically creates detailed audit logs for:
+- **Cost attribution** with exact token counts and pricing models
+- **Policy decisions** with enforcement context and reasoning
+- **Data flow tracking** for privacy and compliance requirements  
+- **Model usage patterns** for governance and risk management
+
+### **Observability Integration**
+Works with your existing tools and workflows:
+- **Per-customer cost allocation** for accurate billing
+- **Team and department spend tracking** for budget management
+- **Feature-level cost analysis** for product decisions
+- **Model efficiency metrics** for optimization opportunities
+- **Real-time dashboards** using your current observability platform
 
 ---
 
