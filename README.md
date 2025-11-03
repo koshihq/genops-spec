@@ -1,12 +1,20 @@
 <p align="center">
-  <img width="500" src="./assets/brand/genops-logo-optimized.jpg" alt="GenOps AI - OpenTelemetry-native governance for AI systems" style="max-width: 100%;">
+  <img width="500" src="./assets/brand/genops-logo-optimized.jpg" alt="GenOps: Open Runtime Governance for AI Systems" style="max-width: 100%;">
 </p>
 
-> 🚧 **Preview Release** - Complete AI governance platform with attribution, validation & compliance features. [Community contributions welcome!](CONTRIBUTING.md)
+# 🧭 GenOps: Open Runtime Governance for AI Systems
+
+GenOps is an open-source runtime governance framework for AI and LLM workloads — built on [OpenTelemetry](https://opentelemetry.io) and FinOps standards.
+
+It provides cost, policy, and compliance telemetry across your AI stack, enabling teams to:
+
+- **Track spend and efficiency** across models, teams, and customers
+- **Enforce usage policies** and model governance in real time  
+- **Integrate with existing** observability, billing, and compliance systems
+
+Because GenOps emits standard OpenTelemetry traces, logs, and metrics, it plugs directly into your existing monitoring, FinOps, and policy infrastructure.
 
 <div align="center">
-  <h3>OpenTelemetry-native governance for AI systems</h3>
-  <p><em>Turn AI telemetry into actionable accountability</em></p>
   
   [![GitHub stars](https://img.shields.io/github/stars/KoshiHQ/GenOps-AI?style=social)](https://github.com/KoshiHQ/GenOps-AI/stargazers)
   [![CI Status](https://img.shields.io/github/actions/workflow/status/KoshiHQ/GenOps-AI/ci.yml?branch=main)](https://github.com/KoshiHQ/GenOps-AI/actions)  
@@ -15,23 +23,130 @@
   [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
   [![Code style: ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
   [![OpenTelemetry](https://img.shields.io/badge/OpenTelemetry-native-purple.svg)](https://opentelemetry.io/)
+
 </div>
 
 ---
 
-## 🎯 **What is GenOps AI?**
+## 📡 Supported Destinations
 
-GenOps AI is an **open-source governance framework** that brings cost attribution, policy enforcement, and compliance automation to AI systems using **OpenTelemetry standards**.
+GenOps exports standardized telemetry and governance events to your existing stack.
 
-While [OpenLLMetry](https://github.com/traceloop/openllmetry) tells you *what* your AI is doing (prompts, completions, tokens), **GenOps AI tells you *why and how* — with governance telemetry** that enables:
+### Observability & Monitoring
 
-- 💰 **Cost Attribution** across teams, projects, features, and customers
-- 🛡️ **Policy Enforcement** with configurable limits and content filtering  
-- 📊 **Budget Tracking** with automated alerts and spend controls
-- 🔍 **Compliance Automation** with evaluation metrics and audit trails
-- 📈 **Observability Integration** with your existing monitoring stack
+✅ [OpenTelemetry Collector](https://opentelemetry.io/docs/collector/)  
+✅ [Datadog](https://www.datadoghq.com/)  
+✅ [Grafana](https://grafana.com/) / [Loki](https://grafana.com/oss/loki/)  
+✅ [Honeycomb](https://www.honeycomb.io/)  
+✅ [Prometheus](https://prometheus.io/) / [SigNoz](https://signoz.io/)  
+✅ [New Relic](https://newrelic.com/)  
+✅ [Jaeger](https://www.jaegertracing.io/)  
+✅ [Tempo](https://grafana.com/oss/tempo/)  
 
-**Built on OpenTelemetry standards, works alongside OpenLLMetry and other observability tools.**
+### Cost & FinOps Platforms
+
+✅ [OpenCost](https://www.opencost.io/)  
+☐ [Finout](https://www.finout.io/) / [CloudZero](https://www.cloudzero.com/)  
+☐ [AWS Cost Explorer](https://aws.amazon.com/aws-cost-management/) / [GCP Billing](https://cloud.google.com/billing/docs) / [Azure Cost Management](https://azure.microsoft.com/en-us/products/cost-management/)  
+☐ [Cloudflare Workers AI Analytics](https://developers.cloudflare.com/workers-ai/)  
+✅ [Traceloop](https://traceloop.com/) / [OpenLLMetry](https://github.com/traceloop/openllmetry)  
+
+### Policy & Compliance
+
+☐ [OPA (Open Policy Agent)](https://www.openpolicyagent.org/)  
+☐ [Kyverno](https://kyverno.io/)  
+☐ [Cloud Custodian](https://cloudcustodian.io/)  
+☐ [HashiCorp Sentinel](https://www.hashicorp.com/sentinel)  
+☐ Rego-compatible policies  
+
+### Data & Security Pipelines
+
+☐ [BigQuery](https://cloud.google.com/bigquery) / [Snowflake](https://www.snowflake.com/)  
+☐ [S3](https://aws.amazon.com/s3/) / [GCS](https://cloud.google.com/storage) / [Azure Blob](https://azure.microsoft.com/en-us/products/storage/blobs/)  
+☐ [Splunk](https://www.splunk.com/) / [Elastic](https://www.elastic.co/)  
+
+---
+
+## 🔌 Supported Integrations
+
+GenOps integrates natively with your AI and infrastructure layer to collect and normalize runtime signals.
+
+### LLM & Model Providers
+
+✅ [OpenAI](https://openai.com/) / [Azure OpenAI](https://azure.microsoft.com/en-us/products/ai-services/openai-service)  
+✅ [Anthropic](https://www.anthropic.com/)  
+✅ [OpenRouter](https://openrouter.ai/) (Multi-provider routing)  
+☐ [Mistral](https://mistral.ai/) / [Lepton](https://www.lepton.ai/)  
+☐ [Gemini](https://deepmind.google/technologies/gemini/) (Google)  
+☐ [Ollama](https://ollama.com/) / Local Models  
+☐ [Bedrock](https://aws.amazon.com/bedrock/) / [SageMaker](https://aws.amazon.com/sagemaker/) (AWS)  
+☐ [Replicate](https://replicate.com/) / [Together](https://www.together.ai/) / [Groq](https://groq.com/)  
+
+### Frameworks & Tooling
+
+✅ [LangChain](https://python.langchain.com/) (Comprehensive integration)  
+☐ [LlamaIndex](https://www.llamaindex.ai/)  
+☐ [LiteLLM](https://litellm.vercel.app/)  
+☐ [DSPy](https://dspy-docs.vercel.app/) / [Guidance](https://github.com/guidance-ai/guidance)  
+☐ [CrewAI](https://www.crewai.com/) / OpenAI Agents  
+☐ [Haystack](https://haystack.deepset.ai/)  
+☐ [LangGraph](https://langchain-ai.github.io/langgraph/) / [Langflow](https://www.langflow.org/)  
+
+### Infrastructure & Runtime
+
+☐ [Kubernetes](https://kubernetes.io/) (K8s)  
+☐ [Cloudflare Workers](https://workers.cloudflare.com/) / [Vercel AI SDK](https://sdk.vercel.ai/)  
+☐ [Ray](https://www.ray.io/) / [Modal](https://modal.com/) / [Fly.io](https://fly.io/)  
+☐ Serverless runtimes ([Lambda](https://aws.amazon.com/lambda/), [Cloud Run](https://cloud.google.com/run), [Functions](https://azure.microsoft.com/en-us/products/functions/))  
+
+---
+
+## 🧠 What Do We Govern?
+
+GenOps standardizes and enforces runtime governance across your AI systems.
+
+| **Dimension** | **Example Metrics / Policies** | **Purpose** |
+|---------------|----------------------------------|-------------|
+| **Cost Telemetry** | Cost per request, team, feature, or customer | Enables FinOps visibility and chargeback |
+| **Policy Compliance** | Allowed models, region routing, rate limits | Prevents policy drift and shadow usage |
+| **Data Residency** | Model invocation region, storage compliance | Ensures GDPR / SOC2 / FedRAMP adherence |
+| **Performance Metrics** | Latency, cache hits, throughput | Optimizes efficiency and reliability |
+| **Safety & Guardrails** | Toxicity filters, jailbreak detection | Enforces responsible deployment |
+| **Usage Attribution** | Project, user, and customer-level metering | Enables cross-org accountability |
+
+---
+
+## 🧩 Example Architecture
+
+```
+Your App
+   │
+   ▼
+GenOps SDK (instrumentation + policy hooks)
+   │
+   ├──> OpenTelemetry Exporter → Datadog / Grafana / Collector
+   ├──> Policy Engine (OPA / WASM)
+   └──> Cost & Compliance Store (Snowflake / BigQuery)
+```
+
+---
+
+## 🚀 Quick Start
+
+### 1. Install the SDK
+```bash
+pip install genops
+```
+
+### 2. Initialize in your app
+```python
+from genops import GenOps
+GenOps.init()
+```
+
+### 3. Run your app
+GenOps automatically collects runtime telemetry and governance signals.  
+View data in your existing observability stack or policy engine.
 
 ---
 

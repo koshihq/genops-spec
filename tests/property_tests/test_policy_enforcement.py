@@ -10,7 +10,7 @@ from typing import Any
 import pytest
 from hypothesis import assume, given, settings
 from hypothesis import strategies as st
-from hypothesis.stateful import RuleBasedStateMachine, invariant, rule
+from hypothesis.stateful import RuleBasedStateMachine, invariant, rule, Bundle
 
 from genops.core.policy import PolicyResult, _policy_engine, register_policy
 
@@ -18,12 +18,12 @@ from genops.core.policy import PolicyResult, _policy_engine, register_policy
 policy_name_strategy = st.text(
     min_size=1,
     max_size=50,
-    alphabet=st.characters(whitelist_categories=["Ll", "Lu", "Nd", "-", "_"])
+    alphabet="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_"
 )
 cost_limit_strategy = st.floats(min_value=0.01, max_value=1000.0, allow_nan=False, allow_infinity=False)
 enforcement_level_strategy = st.sampled_from([PolicyResult.ALLOWED, PolicyResult.WARNING, PolicyResult.BLOCKED])
 content_patterns_strategy = st.lists(
-    st.text(min_size=1, max_size=20, alphabet=st.characters(whitelist_categories=["Ll", "Lu"])),
+    st.text(min_size=1, max_size=20, alphabet="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"),
     min_size=0,
     max_size=5
 )
@@ -227,7 +227,11 @@ class PolicyEnforcementStateMachine(RuleBasedStateMachine):
         self.registered_policies: dict[str, dict[str, Any]] = {}
         self.policy_evaluations: list[tuple] = []
 
+    # Bundle for managing registered policy names
+    policy_names = Bundle("policy_names")
+
     @rule(
+        target=policy_names,
         policy_name=policy_name_strategy,
         max_cost=cost_limit_strategy,
         enforcement_level=enforcement_level_strategy
@@ -249,9 +253,12 @@ class PolicyEnforcementStateMachine(RuleBasedStateMachine):
             "enforcement_level": enforcement_level,
             "type": "cost"
         }
+        
+        # Return the policy name to the Bundle
+        return name
 
     @rule(
-        policy_name=st.sampled_from([]),  # Only use registered policies
+        policy_name=policy_names,
         test_cost=cost_limit_strategy
     )
     def evaluate_policy(self, policy_name, test_cost):
@@ -264,10 +271,6 @@ class PolicyEnforcementStateMachine(RuleBasedStateMachine):
 
         self.policy_evaluations.append((policy_name, context, result))
 
-    @rule(target=st.sampled_from([]), policy_name=policy_name_strategy)
-    def get_registered_policy_names(self, policy_name):
-        """Rule: Return a registered policy name for use in other rules."""
-        return list(self.registered_policies.keys())
 
     @invariant()
     def all_registered_policies_are_valid(self):
