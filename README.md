@@ -4,7 +4,7 @@
 
 # 🧭 GenOps: Connect Your AI Tools Without the DIY Scripting
 
-GenOps is the open-source layer that connects all your existing AI tools and LLM workloads, built on [OpenTelemetry](https://opentelemetry.io) standards.
+GenOps is the open-source framework that connects all your existing AI tools and LLM workloads, built on [OpenTelemetry](https://opentelemetry.io) standards.
 
 **Think of it as OpenTelemetry for AI**: standard telemetry that gives you cross-stack tracking of usage + costs across any combination of AI tools, providers, and observability platforms.
 
@@ -226,9 +226,10 @@ As governance needs grow beyond what the framework can handle alone, teams typic
 - ✅ [OpenRouter](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/openrouter) (<a href="https://openrouter.ai/" target="_blank">↗</a>)
 - ✅ [OpenAI](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/openai) (<a href="https://openai.com/" target="_blank">↗</a>)
 - ✅ [Anthropic](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/anthropic) (<a href="https://www.anthropic.com/" target="_blank">↗</a>)
-- ☐ Hugging Face (<a href="https://huggingface.co/docs/inference-providers/index" target="_blank">↗</a>)
+- ✅ [Hugging Face](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/huggingface) (<a href="https://huggingface.co/docs/inference-providers/index" target="_blank">↗</a>)
 - ☐ AWS Bedrock (<a href="https://aws.amazon.com/bedrock/" target="_blank">↗</a>)
 - ☐ Google Gemini (<a href="https://deepmind.google/technologies/gemini/" target="_blank">↗</a>)
+- ☐ Replicate (<a href="https://replicate.com/" target="_blank">↗</a>)
 - ✅ [LangChain](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/langchain) (<a href="https://python.langchain.com/" target="_blank">↗</a>)
 - ☐ LlamaIndex (<a href="https://www.llamaindex.ai/" target="_blank">↗</a>)
 - ☐ Ollama (<a href="https://ollama.com/" target="_blank">↗</a>)
