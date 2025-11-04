@@ -618,19 +618,19 @@ data:
     print("```")
     
     # Example Secret
-    secret_manifest = '''apiVersion: v1
+    secret_manifest_template = '''apiVersion: v1
 kind: Secret
 metadata:
   name: genops-hf-secrets
   namespace: ai-services
 type: Opaque
 data:
-  HF_TOKEN: <base64-encoded-token>'''
+  HF_TOKEN: [REDACTED-BASE64-TOKEN]'''
     
     print(f"\n📄 Example Secret:")
     print("```yaml")
-    print("# Secret manifest template - replace <base64-encoded-token> with actual encoded token")
-    print(secret_manifest.replace("<base64-encoded-token>", "[REDACTED-BASE64-TOKEN]"))
+    print("# Secret manifest template - replace [REDACTED-BASE64-TOKEN] with actual base64-encoded token")
+    print(secret_manifest_template)
     print("```")
     
     # Example HPA with custom metrics
