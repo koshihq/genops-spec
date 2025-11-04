@@ -2,9 +2,11 @@
   <img width="500" src="./assets/brand/genops-logo-optimized.jpg" alt="GenOps: Open Runtime Governance for AI Systems" style="max-width: 100%;">
 </p>
 
-# 🧭 GenOps: Open Runtime Governance for AI Systems
+# 🧭 GenOps: The Governance Backbone for Your AI Stack
 
-GenOps is an open-source runtime governance framework for AI and LLM workloads — built on [OpenTelemetry](https://opentelemetry.io) and FinOps standards.
+GenOps is the open-source governance layer that works with your existing AI tools and LLM workloads, built on [OpenTelemetry](https://opentelemetry.io) standards.
+
+**Think of it as the OpenTelemetry fabric for AI governance**: standard telemetry that enables unified governance across any combination of AI tools, providers, and observability platforms.
 
 <div align="center">
   
@@ -20,21 +22,21 @@ GenOps is an open-source runtime governance framework for AI and LLM workloads �
 
 ---
 
-## 🚨 The Problem: You're Building with AI, But Flying Blind
+## 🚨 The Problem: Great AI Tools, Zero Governance
 
-You're shipping AI features faster than ever — but have no idea what they actually cost or how they're performing.
+You're using the best AI tools — routing optimization, trace monitoring, analytics platforms. But when your manager asks about governance, compliance, or cost attribution across all these tools...
 
 Sound familiar?
 
-- 💸 **Surprise AI bills** — Your OpenAI costs jumped 300% last month. Why?
-- 🤷‍♂️ **Model guesswork** — Is GPT-4 actually better than Claude for your use case?
-- ⚡ **Performance mysteries** — Which prompts are slow? Which ones are expensive?
-- 🔍 **Debugging nightmares** — AI requests failing, but your logs tell you nothing
-- 📊 **No team visibility** — Your manager asks "what did we spend on AI?" and you shrug
+- 🏗️ **Siloed tools** — some track routing, some track traces, some track usage, but what tracks governance?
+- 💸 **Scattered costs** — AI spend across multiple tools with no unified attribution
+- 📊 **No team oversight** — Great individual tools, but no governance layer for your team
+- ⚖️ **Compliance gaps** — No audit trail that spans your entire AI stack
+- 🤷‍♂️ **Policy blind spots** — Each tool has policies, but no unified governance
 
-The result: You're building amazing AI features but have zero insight into cost, performance, or reliability.
+The result: You have best-in-class AI tools but no governance backbone to tie them together.
 
-**You need AI observability that actually works.**
+**You need a governance layer that works with the tools you already love.**
 
 ## 👥 Who This Is For
 
@@ -64,42 +66,56 @@ The result: You're building amazing AI features but have zero insight into cost,
 
 ## 💡 The GenOps Solution
 
-GenOps gives you complete visibility into your AI usage with zero infrastructure changes:
+GenOps adds the governance layer your AI stack is missing — without replacing the tools you already love:
 
-- **Track your costs** across all AI providers (OpenAI, Anthropic, etc.)
-- **Monitor performance** and optimize your model choices
-- **Debug AI requests** with proper tracing and error handling
-- **Works with your existing stack** — uses standard OpenTelemetry
+- **Unified governance** across routing tools, trace monitoring, analytics platforms, and more
+- **Cost attribution** that spans your entire AI toolchain
+- **Policy compliance** with audit trails across all your tools
+- **Team visibility** into AI usage across your complete stack
 
-Because GenOps emits standard OpenTelemetry traces, logs, and metrics, it works with whatever observability tools you're already using. Whether that's Datadog, Honeycomb, Grafana, or anything else — GenOps just works.
+Because GenOps uses standard OpenTelemetry, it works with whatever AI tools and observability platforms you're already using. Keep your existing tools, add the governance backbone.
 
 ---
 
 ## ⚙️ What You Get Out of the Box
 
-**🔍 Cost Tracking**
-- See exactly how much each AI request costs
-- Compare costs across different models and providers  
-- Track spending by project, feature, or customer
-- Get alerts before you hit budget limits
+**🏛️ Unified Governance Layer**
+- See governance across ALL your AI tools in one place
+- Cost attribution that spans routing tools + monitoring systems + your direct API calls
+- Policy compliance tracking across your complete AI stack
+- Audit trails that work with any tool combination
 
-**📊 Performance Monitoring**
-- Monitor latency and throughput for all AI requests
-- See which prompts are slow or expensive
-- Track cache hit rates and optimization opportunities
-- Debug failed requests with detailed traces
+**💰 Cross-Tool Cost Attribution**
+- Track spending across routing tools, direct providers, and frameworks
+- See total AI costs regardless of which tools you use
+- Per-project, per-team, per-customer attribution across all providers
+- Budget alerts that cover your entire AI stack
 
-**🚀 Multi-Provider Support**  
-- Works with OpenAI, Anthropic, OpenRouter, and more
-- Switch between providers without changing your code
-- Compare performance and costs across providers
-- Automatic failover and load balancing
+**📋 Policy & Compliance**  
+- Consistent governance policies across all your AI tools
+- Compliance audit trails that span your complete toolchain
+- Data residency tracking across multiple providers and tools
+- Risk management for your entire AI operations
 
-**🛠️ Developer Experience**
+**🔧 Zero-Friction Integration**
 - 30-second setup with auto-instrumentation
-- Works with your existing observability tools
-- Rich debugging information when things go wrong
-- Zero infrastructure changes required
+- Works with whatever AI tools you already use
+- Standard OpenTelemetry output for any observability platform
+- No vendor lock-in or tool replacement required
+
+---
+
+## 🤝 Works with Your Existing Stack
+
+**Keep the tools you love, add the governance you need:**
+
+**Already using routing optimization tools?** GenOps adds cost attribution and policy tracking without changing your setup.
+
+**Already using trace monitoring systems?** GenOps adds governance and compliance data to your existing observability.
+
+**Already using Datadog/Grafana/Honeycomb?** GenOps emits standard OpenTelemetry data that works with your current dashboards.
+
+**The result**: Unified governance across all your AI tools without migration pain or vendor lock-in.
 
 ---
 
@@ -122,72 +138,54 @@ View data in your existing observability stack or policy engine.
 
 ---
 
-## 🌟 Why Developers Choose GenOps
+## 🔧 How Teams Use GenOps Framework
 
-**Start Small, Prove Value**
-"I wanted to track my AI costs for my side project. GenOps took 30 seconds to set up and immediately showed me I was overspending on expensive models for simple tasks. Saved me $200/month instantly."
+**Individual Developer Pattern**
+Start by instrumenting personal AI projects with GenOps telemetry. The framework provides immediate visibility into costs and usage patterns across your development work.
 
-**Become the Team Expert**  
-"My manager kept asking about our AI spend. With GenOps, I became the person with answers. Now I help other teams optimize their AI usage too."
+**Team Integration Pattern**  
+Share governance data across team members using the same OpenTelemetry foundation. Multiple developers can contribute telemetry to shared observability dashboards.
 
-**Scale Without Pain**
-"What started as personal cost tracking became our team's AI observability standard. When the company wanted AI governance, we were already ahead of the game."
+**Organization Scaling Pattern**
+As governance needs grow beyond what the framework can handle alone, teams typically need additional tooling for policy automation, compliance workflows, and enterprise controls.
 
-**The Bottom-Up Success Path:**
-1. **Individual**: Track your own AI usage and costs
-2. **Team**: Share insights and help teammates optimize  
-3. **Organization**: Become the champion for AI observability
+**Common Adoption Progression:**
+1. **Individual**: Implement GenOps instrumentation for personal projects
+2. **Team**: Standardize on GenOps telemetry across team members  
+3. **Organization**: Framework foundation ready for governance platform integration
 
-**When you're ready to scale beyond individual teams, GenOps grows with you.**
+**When you need more than instrumentation can provide, the OpenTelemetry foundation scales to enterprise governance platforms.**
 
 ---
 
-## 🔌 Integrations & Destinations
+## 🔌 Works with Your Existing AI Tools
 
-### Supported Integrations
+### Governance Connectors
 
-GenOps integrates natively with your AI and infrastructure layer to collect and normalize runtime signals.
+GenOps adds governance to the AI tools you already use — no need to switch or replace anything.
 
-#### LLM & Model Providers
+#### AI Tool Integrations
 
-- ✅ [OpenAI](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/openai) (<a href="https://openai.com/" target="_blank">↗</a>)
-- ☐ Azure OpenAI (<a href="https://azure.microsoft.com/en-us/products/ai-services/openai-service" target="_blank">↗</a>)
-- ✅ [Anthropic](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/anthropic) (<a href="https://www.anthropic.com/" target="_blank">↗</a>)
-- ✅ [OpenRouter](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/openrouter) (<a href="https://openrouter.ai/" target="_blank">↗</a>)
-- ☐ Mistral (<a href="https://mistral.ai/" target="_blank">↗</a>)
-- ☐ Lepton (<a href="https://www.lepton.ai/" target="_blank">↗</a>)
-- ☐ Gemini (<a href="https://deepmind.google/technologies/gemini/" target="_blank">↗</a>)
-- ☐ Ollama (<a href="https://ollama.com/" target="_blank">↗</a>)
-- ☐ Bedrock (<a href="https://aws.amazon.com/bedrock/" target="_blank">↗</a>)
-- ☐ SageMaker (<a href="https://aws.amazon.com/sagemaker/" target="_blank">↗</a>)
-- ☐ Replicate (<a href="https://replicate.com/" target="_blank">↗</a>)
-- ☐ Together (<a href="https://www.together.ai/" target="_blank">↗</a>)
-- ☐ Groq (<a href="https://groq.com/" target="_blank">↗</a>)
+- ✅ [OpenRouter](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/openrouter) - Add cost attribution and policy tracking to your model routing
+- 🚧 **Helicone** - Add governance layer to your LLM traces and observability  
+- 🚧 **Traceloop** - Add compliance and audit trails to your LLM monitoring
+- 🚧 **PostHog** - Add AI governance to your product analytics
 
-#### Frameworks & Tooling
+#### Core Provider Support
 
-- ✅ [LangChain](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/langchain) (<a href="https://python.langchain.com/" target="_blank">↗</a>)
-- ☐ LlamaIndex (<a href="https://www.llamaindex.ai/" target="_blank">↗</a>)
-- ☐ LiteLLM (<a href="https://litellm.vercel.app/" target="_blank">↗</a>)
-- ☐ DSPy (<a href="https://dspy-docs.vercel.app/" target="_blank">↗</a>)
-- ☐ Guidance (<a href="https://github.com/guidance-ai/guidance" target="_blank">↗</a>)
-- ☐ CrewAI (<a href="https://www.crewai.com/" target="_blank">↗</a>)
-- ☐ OpenAI Agents (<a href="https://platform.openai.com/docs/assistants/overview" target="_blank">↗</a>)
-- ☐ Haystack (<a href="https://haystack.deepset.ai/" target="_blank">↗</a>)
-- ☐ LangGraph (<a href="https://langchain-ai.github.io/langgraph/" target="_blank">↗</a>)
-- ☐ Langflow (<a href="https://www.langflow.org/" target="_blank">↗</a>)
+- ✅ [OpenAI](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/openai) - Direct governance for OpenAI usage
+- ✅ [Anthropic](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/anthropic) - Direct governance for Claude usage
+- ✅ [LangChain](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/langchain) - Multi-provider governance for LangChain applications
 
-#### Infrastructure & Runtime
+#### Infrastructure Support
 
-- ✅ [Kubernetes](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/kubernetes-getting-started.md) (<a href="https://kubernetes.io/" target="_blank">↗</a>)
-- ☐ Cloudflare Workers (<a href="https://workers.cloudflare.com/" target="_blank">↗</a>)
-- ☐ Vercel AI SDK (<a href="https://sdk.vercel.ai/" target="_blank">↗</a>)
-- ☐ Ray (<a href="https://www.ray.io/" target="_blank">↗</a>)
-- ☐ Modal (<a href="https://modal.com/" target="_blank">↗</a>)
-- ☐ Fly.io (<a href="https://fly.io/" target="_blank">↗</a>)
-- ☐ AWS Lambda (<a href="https://aws.amazon.com/lambda/" target="_blank">↗</a>)
-- ☐ Google Cloud Run (<a href="https://cloud.google.com/run" target="_blank">↗</a>)
-- ☐ Azure Functions (<a href="https://azure.microsoft.com/en-us/products/functions/" target="_blank">↗</a>)
+- ✅ [Kubernetes](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/kubernetes-getting-started.md) - Container orchestration governance
+- 🚧 **Docker** - Container-level AI governance
+- 🚧 **Serverless** - AWS Lambda, Google Cloud Run, Azure Functions
+
+### Community Ecosystem
+
+**Can't find your tool?** GenOps uses standard OpenTelemetry — if your tool supports OTel, it works with GenOps. Plus, we welcome community contributions for new integrations.
 
 ### Supported Destinations
 
@@ -284,16 +282,18 @@ Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for detai
 
 ---
 
-## 🌟 **Why GenOps AI?**
+## 🌟 **Why GenOps Framework?**
 
-**Because you shouldn't have to guess what your AI is doing.**
+**Because great AI tools deserve a governance backbone.**
 
-- **For Individual Developers**: Finally understand your AI costs and performance
-- **For Team Leads**: Get the data you need to make smart AI decisions
-- **For Platform Engineers**: Add AI observability without new infrastructure
-- **For Growing Teams**: Scale from individual tracking to team collaboration
+- **vs Routing tools**: We don't replace routing — we add governance instrumentation to it
+- **vs Trace monitoring**: We don't replace monitoring — we add compliance telemetry to it  
+- **vs Analytics platforms**: We don't replace analytics — we add policy tracking to it
+- **vs Build-it-yourself**: Standard OpenTelemetry approach for governance instrumentation
 
-**Open source, OpenTelemetry-native, and designed to work with your existing stack.**
+**The only framework that adds governance telemetry WITHOUT replacing your existing tools.**
+
+*When you're ready to scale AI governance across larger organizations, the GenOps framework provides the instrumentation foundation for enterprise governance platforms.*
 
 *When you're ready to scale AI governance across larger organizations, GenOps provides the foundation for enterprise control planes and governance workflows.*
 
