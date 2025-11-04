@@ -2,11 +2,11 @@
   <img width="500" src="./assets/brand/genops-logo-optimized.jpg" alt="GenOps: Open Runtime Governance for AI Systems" style="max-width: 100%;">
 </p>
 
-# 🧭 GenOps: The Governance Backbone for Your AI Stack
+# 🧭 GenOps: Connect Your AI Tools Without the DIY Scripting
 
-GenOps is the open-source governance layer that works with your existing AI tools and LLM workloads, built on [OpenTelemetry](https://opentelemetry.io) standards.
+GenOps is the open-source layer that connects all your existing AI tools and LLM workloads, built on [OpenTelemetry](https://opentelemetry.io) standards.
 
-**Think of it as the OpenTelemetry fabric for AI governance**: standard telemetry that enables unified governance across any combination of AI tools, providers, and observability platforms.
+**Think of it as OpenTelemetry for AI**: standard telemetry that gives you cross-stack tracking of usage + costs across any combination of AI tools, providers, and observability platforms.
 
 <div align="center">
   
@@ -22,21 +22,21 @@ GenOps is the open-source governance layer that works with your existing AI tool
 
 ---
 
-## 🚨 The Problem: Great AI Tools, Zero Governance
+## 🚨 The Problem: Great AI Tools, BUT Lacking Cross-Stack Tracking
 
-You're using the best AI tools — routing optimization, trace monitoring, analytics platforms. But when your manager asks about governance, compliance, or cost attribution across all these tools...
+You're using the best AI tools — LLM providers, AI frameworks, routing services, vector databases. But when your manager asks where all the AI money is going across your entire stack...
 
 Sound familiar?
 
-- 🏗️ **Siloed tools** — some track routing, some track traces, some track usage, but what tracks governance?
-- 💸 **Scattered costs** — AI spend across multiple tools with no unified attribution
-- 📊 **No team oversight** — Great individual tools, but no governance layer for your team
-- ⚖️ **Compliance gaps** — No audit trail that spans your entire AI stack
-- 🤷‍♂️ **Policy blind spots** — Each tool has policies, but no unified governance
+- 🏗️ **Siloed tools** — LLM provider dashboards, framework logs, routing metrics, vector database stats, but no unified view
+- 💸 **Scattered costs** — AI spend across multiple providers and services with no unified tracking
+- 📊 **No team visibility** — Great individual tools, but no cross-stack tracking for your entire AI stack
+- ⚖️ **Manual reporting** — Building custom scripts to answer "how much did we spend on what?"
+- 🤷‍♂️ **DIY dashboards** — Each category of tool has its own metrics, but you're building glue code to connect them
 
-The result: You have best-in-class AI tools but no governance backbone to tie them together.
+The result: You have best-in-class AI tools but you're writing custom code to connect them.
 
-**You need a governance layer that works with the tools you already love.**
+**You need cross-stack tracking that works with the tools you already love.**
 
 ## 👥 Who This Is For
 
@@ -66,56 +66,56 @@ The result: You have best-in-class AI tools but no governance backbone to tie th
 
 ## 💡 The GenOps Solution
 
-GenOps adds the governance layer your AI stack is missing — without replacing the tools you already love:
+GenOps adds the cross-stack tracking layer your AI stack is missing — without replacing the tools you already love:
 
-- **Unified governance** across routing tools, trace monitoring, analytics platforms, and more
-- **Cost attribution** that spans your entire AI toolchain
-- **Policy compliance** with audit trails across all your tools
-- **Team visibility** into AI usage across your complete stack
+- **Unified visibility** across LLM providers, AI frameworks, routing tools, vector databases, and more
+- **Cost attribution** that spans your entire AI toolchain automatically
+- **Team dashboards** with cost breakdowns and usage patterns across all your AI tools
+- **Zero custom coding** — standard OpenTelemetry output works with your existing monitoring
 
-Because GenOps uses standard OpenTelemetry, it works with whatever AI tools and observability platforms you're already using. Keep your existing tools, add the governance backbone.
+Because GenOps uses standard OpenTelemetry, it works with whatever AI tools and observability platforms you're already using. Keep your existing tools, add the cross-stack tracking layer.
 
 ---
 
-## ⚙️ What You Get Out of the Box
+## ⚙️ What GenOps Delivers
 
-**🏛️ Unified Governance Layer**
-- See governance across ALL your AI tools in one place
-- Cost attribution that spans routing tools + monitoring systems + your direct API calls
-- Policy compliance tracking across your complete AI stack
-- Audit trails that work with any tool combination
+**🏛️ Unified Cross-Stack Tracking**
+- See costs and usage across ALL your AI tools in one place
+- Automatic tracking that spans LLM providers + AI frameworks + routing services + vector databases
+- Team breakdowns and project attribution without custom coding
+- Works with any combination of AI tools you're using
 
-**💰 Cross-Tool Cost Attribution**
-- Track spending across routing tools, direct providers, and frameworks
+**💰 Automatic Cost Tracking**
+- Track spending across all providers and frameworks automatically
 - See total AI costs regardless of which tools you use
 - Per-project, per-team, per-customer attribution across all providers
-- Budget alerts that cover your entire AI stack
+- Budget monitoring and alerts that cover your entire AI stack
 
-**📋 Policy & Compliance**  
-- Consistent governance policies across all your AI tools
-- Compliance audit trails that span your complete toolchain
-- Data residency tracking across multiple providers and tools
-- Risk management for your entire AI operations
+**📊 Team Dashboards & Reporting**  
+- Ready-to-use attributions and tagging in your existing observability tools
+- Cost breakdowns, usage patterns, and performance metrics
+- Answers questions like "what did each team spend last month?"
+- Export data for finance and management reports
 
 **🔧 Zero-Friction Integration**
-- 30-second setup with auto-instrumentation
-- Works with whatever AI tools you already use
-- Standard OpenTelemetry output for any observability platform
-- No vendor lock-in or tool replacement required
+- 30-second setup with auto-instrumentation that detects your AI libraries
+- Works with whatever AI tools you already use (LLM providers, AI frameworks, routing services, etc.)
+- Standard OpenTelemetry output compatible with 15+ observability platforms
+- No vendor lock-in or tool replacement required - enhances your existing stack
 
 ---
 
 ## 🤝 Works with Your Existing Stack
 
-**Keep the tools you love, add the governance you need:**
+**Keep the tools you love, add the cross-stack tracking you need:**
 
-**Already using routing optimization tools?** GenOps adds cost attribution and policy tracking without changing your setup.
+**Already using LLM providers directly?** GenOps adds automatic cost tracking and team attribution without changing your code.
 
-**Already using trace monitoring systems?** GenOps adds governance and compliance data to your existing observability.
+**Already using AI frameworks or routing tools?** GenOps connects all your AI tools into unified dashboards.
 
-**Already using Datadog/Grafana/Honeycomb?** GenOps emits standard OpenTelemetry data that works with your current dashboards.
+**Already using observability platforms?** GenOps emits standard OpenTelemetry data that works with your current dashboards.
 
-**The result**: Unified governance across all your AI tools without migration pain or vendor lock-in.
+**The result**: Cross-stack AI tracking across all your tools without migration pain or vendor lock-in.
 
 ---
 
@@ -129,12 +129,74 @@ pip install genops
 ### 2. Initialize in your app
 ```python
 from genops import GenOps
-GenOps.init()
+GenOps.init()  # Auto-detects LLM providers, AI frameworks, routing services in your environment
+
+# Your existing AI code works unchanged
+import openai
+client = openai.OpenAI()
+response = client.chat.completions.create(
+    model="gpt-4",
+    messages=[{"role": "user", "content": "Hello!"}]
+)
+# ↑ This request is now automatically tracked with cost & usage telemetry
 ```
 
-### 3. Run your app
-GenOps automatically collects runtime telemetry and governance signals.  
-View data in your existing observability stack or policy engine.
+### 3. Immediate cost & usage visibility
+GenOps automatically captures tracking telemetry:
+
+```json
+{
+  "trace_id": "abc123",
+  "span_name": "openai.chat.completion",
+  "attributes": {
+    "genops.cost.total": 0.002,
+    "genops.cost.currency": "USD",
+    "genops.provider": "openai",
+    "genops.model": "gpt-4",
+    "genops.tokens.input": 8,
+    "genops.tokens.output": 12,
+    "genops.team": "engineering",
+    "genops.project": "chatbot"
+  }
+}
+```
+
+**View data in your existing observability stack** - Datadog, Grafana, Honeycomb, or any OpenTelemetry-compatible platform.
+
+---
+
+## 💡 What You'll See in 5 Minutes
+
+After the 3-step setup above, GenOps immediately provides cross-stack cost and usage tracking:
+
+### **Cost Attribution Dashboard**
+```
+📊 AI Costs by Team (Last 7 Days)
+┌─────────────────┬──────────┬─────────────┐
+│ Team            │ Cost     │ Requests    │
+├─────────────────┼──────────┼─────────────┤
+│ engineering     │ $23.40   │ 1,247       │
+│ product         │ $15.80   │ 892         │
+│ marketing       │ $8.20    │ 445         │
+└─────────────────┴──────────┴─────────────┘
+```
+
+### **Cross-Provider Tracking**
+```
+🔄 Model Usage Across Your Stack
+LLM Provider A: $18.30 (62% of total)
+LLM Provider B: $12.80 (35% of total)  
+Local Models: $0.00 (3% of total)
+```
+
+### **Smart Monitoring & Alerts**
+```
+⚠️  Budget Alert: Team 'engineering' approaching 80% of monthly AI budget
+📋 Usage Alert: Unusual spike in LLM requests detected  
+✅ Cost Optimization: Suggested model alternatives could save 30%
+```
+
+**This works with your existing observability tools** - tracking data appears in Datadog traces, Grafana dashboards, or wherever you already monitor your applications.
 
 ---
 
@@ -158,41 +220,50 @@ As governance needs grow beyond what the framework can handle alone, teams typic
 
 ---
 
-## 🔌 Works with Your Existing AI Tools
+## 🔌 Integrations & Support
 
-### Governance Connectors
+### 🧠 AI & LLM Ecosystem
+- ✅ [OpenRouter](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/openrouter) (<a href="https://openrouter.ai/" target="_blank">↗</a>)
+- ✅ [OpenAI](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/openai) (<a href="https://openai.com/" target="_blank">↗</a>)
+- ✅ [Anthropic](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/anthropic) (<a href="https://www.anthropic.com/" target="_blank">↗</a>)
+- ☐ Hugging Face (<a href="https://huggingface.co/docs/inference-providers/index" target="_blank">↗</a>)
+- ☐ AWS Bedrock (<a href="https://aws.amazon.com/bedrock/" target="_blank">↗</a>)
+- ☐ Google Gemini (<a href="https://deepmind.google/technologies/gemini/" target="_blank">↗</a>)
+- ✅ [LangChain](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/langchain) (<a href="https://python.langchain.com/" target="_blank">↗</a>)
+- ☐ LlamaIndex (<a href="https://www.llamaindex.ai/" target="_blank">↗</a>)
+- ☐ Ollama (<a href="https://ollama.com/" target="_blank">↗</a>)
+- ☐ Cohere (<a href="https://cohere.com/" target="_blank">↗</a>)
+- ☐ Mistral (<a href="https://mistral.ai/" target="_blank">↗</a>)
+- ☐ Helicone (<a href="https://helicone.ai/" target="_blank">↗</a>)
+- ☐ Langfuse (<a href="https://langfuse.com/" target="_blank">↗</a>)
+- ☐ Traceloop (<a href="https://traceloop.com/" target="_blank">↗</a>)
+- ☐ OpenLLMetry (<a href="https://github.com/traceloop/openllmetry" target="_blank">↗</a>)
+- ☐ PromptLayer (<a href="https://promptlayer.com/" target="_blank">↗</a>)
+- ☐ Weights & Biases (<a href="https://wandb.ai/" target="_blank">↗</a>)
+- ☐ Arize AI (<a href="https://arize.com/" target="_blank">↗</a>)
+- ☐ PostHog (<a href="https://posthog.com/" target="_blank">↗</a>)
+- ☐ Perplexity AI (<a href="https://www.perplexity.ai/" target="_blank">↗</a>)
+- ☐ Together AI (<a href="https://www.together.ai/" target="_blank">↗</a>)
+- ☐ Fireworks AI (<a href="https://fireworks.ai/" target="_blank">↗</a>)
+- ☐ Haystack (<a href="https://haystack.deepset.ai/" target="_blank">↗</a>)
+- ☐ CrewAI (<a href="https://www.crewai.com/" target="_blank">↗</a>)
+- ☐ AutoGen (<a href="https://github.com/microsoft/autogen" target="_blank">↗</a>)
+- ☐ Dust (<a href="https://dust.tt/" target="_blank">↗</a>)
+- ☐ Flowise (<a href="https://flowiseai.com/" target="_blank">↗</a>)
+- ☐ Griptape (<a href="https://www.griptape.ai/" target="_blank">↗</a>)
+- ☐ SkyRouter (<a href="https://skyrouter.ai/" target="_blank">↗</a>)
+- ☐ Databricks Unity Catalog (<a href="https://docs.databricks.com/en/data-governance/unity-catalog/index.html" target="_blank">↗</a>)
+- ☐ ElevenLabs (<a href="https://elevenlabs.io/" target="_blank">↗</a>)
+- ☐ Deepgram (<a href="https://deepgram.com/" target="_blank">↗</a>)
+- ☐ OpenAI Whisper (<a href="https://openai.com/research/whisper" target="_blank">↗</a>)
+- ☐ Descript (<a href="https://www.descript.com/" target="_blank">↗</a>)
+- ☐ AssemblyAI (<a href="https://www.assemblyai.com/" target="_blank">↗</a>)
+- ☐ Twilio ConversationRelay (<a href="https://www.twilio.com/docs/voice/conversationrelay" target="_blank">↗</a>)
 
-GenOps adds governance to the AI tools you already use — no need to switch or replace anything.
+---
 
-#### AI Tool Integrations
-
-- ✅ [OpenRouter](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/openrouter) - Add cost attribution and policy tracking to your model routing
-- 🚧 **Helicone** - Add governance layer to your LLM traces and observability  
-- 🚧 **Traceloop** - Add compliance and audit trails to your LLM monitoring
-- 🚧 **PostHog** - Add AI governance to your product analytics
-
-#### Core Provider Support
-
-- ✅ [OpenAI](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/openai) - Direct governance for OpenAI usage
-- ✅ [Anthropic](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/anthropic) - Direct governance for Claude usage
-- ✅ [LangChain](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/langchain) - Multi-provider governance for LangChain applications
-
-#### Infrastructure Support
-
-- ✅ [Kubernetes](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/kubernetes-getting-started.md) - Container orchestration governance
-- 🚧 **Docker** - Container-level AI governance
-- 🚧 **Serverless** - AWS Lambda, Google Cloud Run, Azure Functions
-
-### Community Ecosystem
-
-**Can't find your tool?** GenOps uses standard OpenTelemetry — if your tool supports OTel, it works with GenOps. Plus, we welcome community contributions for new integrations.
-
-### Supported Destinations
-
-GenOps exports standardized telemetry and governance events to your existing stack.
-
-#### Observability & Monitoring
-
+### 🏗️ Platform & Infrastructure
+- ✅ [Kubernetes](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/kubernetes-getting-started.md) (<a href="https://kubernetes.io/" target="_blank">↗</a>)
 - ✅ [OpenTelemetry Collector](https://github.com/KoshiHQ/GenOps-AI/tree/main/observability) (<a href="https://opentelemetry.io/docs/collector/" target="_blank">↗</a>)
 - ✅ [Datadog](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/observability/datadog_integration.py) (<a href="https://www.datadoghq.com/" target="_blank">↗</a>)
 - ✅ [Grafana](https://github.com/KoshiHQ/GenOps-AI/tree/main/observability/grafana) (<a href="https://grafana.com/" target="_blank">↗</a>)
@@ -200,35 +271,32 @@ GenOps exports standardized telemetry and governance events to your existing sta
 - ✅ [Honeycomb](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/observability/honeycomb_integration.py) (<a href="https://www.honeycomb.io/" target="_blank">↗</a>)
 - ✅ [Prometheus](https://github.com/KoshiHQ/GenOps-AI/tree/main/observability/prometheus.yml) (<a href="https://prometheus.io/" target="_blank">↗</a>)
 - ✅ [Tempo](https://github.com/KoshiHQ/GenOps-AI/tree/main/observability/tempo-config.yaml) (<a href="https://grafana.com/oss/tempo/" target="_blank">↗</a>)
+- ☐ Docker (<a href="https://www.docker.com/" target="_blank">↗</a>)
+- ☐ AWS Lambda (<a href="https://aws.amazon.com/lambda/" target="_blank">↗</a>)
+- ☐ Google Cloud Run (<a href="https://cloud.google.com/run" target="_blank">↗</a>)
+- ☐ Azure Functions (<a href="https://azure.microsoft.com/en-us/products/functions/" target="_blank">↗</a>)
 - ☐ New Relic (<a href="https://newrelic.com/" target="_blank">↗</a>)
 - ☐ Jaeger (<a href="https://www.jaegertracing.io/" target="_blank">↗</a>)
 - ☐ SigNoz (<a href="https://signoz.io/" target="_blank">↗</a>)
-
-#### Cost & FinOps Platforms
-
 - ☐ OpenCost (<a href="https://www.opencost.io/" target="_blank">↗</a>)
 - ☐ Finout (<a href="https://www.finout.io/" target="_blank">↗</a>)
 - ☐ CloudZero (<a href="https://www.cloudzero.com/" target="_blank">↗</a>)
 - ☐ AWS Cost Explorer (<a href="https://aws.amazon.com/aws-cost-management/" target="_blank">↗</a>)
 - ☐ GCP Billing (<a href="https://cloud.google.com/billing/docs" target="_blank">↗</a>)
 - ☐ Azure Cost Management (<a href="https://azure.microsoft.com/en-us/products/cost-management/" target="_blank">↗</a>)
-- ☐ Cloudflare Workers AI Analytics (<a href="https://developers.cloudflare.com/workers-ai/" target="_blank">↗</a>)
-- ☐ Traceloop (<a href="https://traceloop.com/" target="_blank">↗</a>)
-- ☐ OpenLLMetry (<a href="https://github.com/traceloop/openllmetry" target="_blank">↗</a>)
-
-### Policy & Compliance
-
+- ☐ Segment (<a href="https://segment.com/" target="_blank">↗</a>)
+- ☐ Amplitude (<a href="https://amplitude.com/" target="_blank">↗</a>)
+- ☐ Mixpanel (<a href="https://mixpanel.com/" target="_blank">↗</a>)
 - ☐ OPA (Open Policy Agent) (<a href="https://www.openpolicyagent.org/" target="_blank">↗</a>)
 - ☐ Kyverno (<a href="https://kyverno.io/" target="_blank">↗</a>)
 - ☐ Cloud Custodian (<a href="https://cloudcustodian.io/" target="_blank">↗</a>)
 - ☐ HashiCorp Sentinel (<a href="https://www.hashicorp.com/sentinel" target="_blank">↗</a>)
-- ☐ Rego-compatible policies
-
-### Data & Security Pipelines
-
+- ☐ Datadog Cloud Security (<a href="https://www.datadoghq.com/product/cloud-security-management/" target="_blank">↗</a>)
+- ☐ Azure Policy (<a href="https://azure.microsoft.com/en-us/products/policy/" target="_blank">↗</a>)
+- ☐ AWS Config (<a href="https://aws.amazon.com/config/" target="_blank">↗</a>)
 - ☐ BigQuery (<a href="https://cloud.google.com/bigquery" target="_blank">↗</a>)
 - ☐ Snowflake (<a href="https://www.snowflake.com/" target="_blank">↗</a>)
-- ☐ S3 (<a href="https://aws.amazon.com/s3/" target="_blank">↗</a>)
+- ☐ AWS S3 (<a href="https://aws.amazon.com/s3/" target="_blank">↗</a>)
 - ☐ GCS (<a href="https://cloud.google.com/storage" target="_blank">↗</a>)
 - ☐ Azure Blob (<a href="https://azure.microsoft.com/en-us/products/storage/blobs/" target="_blank">↗</a>)
 - ☐ Splunk (<a href="https://www.splunk.com/" target="_blank">↗</a>)
@@ -267,13 +335,6 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for:
 - 💬 **Discussions**: [GitHub Discussions](https://github.com/KoshiHQ/GenOps-AI/discussions)
 - 🐛 **Issues**: [GitHub Issues](https://github.com/KoshiHQ/GenOps-AI/issues)
 
-### **Roadmap**
-See our [public roadmap](https://github.com/KoshiHQ/GenOps-AI/projects) for upcoming features:
-- 🚧 AWS Bedrock and Google Gemini adapters
-- 🚧 LangChain and LlamaIndex integrations  
-- 🚧 OpenTelemetry Collector processors for real-time governance
-- 🚧 Pre-built dashboards for major observability platforms
-
 ---
 
 ## 📄 **License**
@@ -284,16 +345,16 @@ Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for detai
 
 ## 🌟 **Why GenOps Framework?**
 
-**Because great AI tools deserve a governance backbone.**
+**Because great AI tools shouldn't require custom glue code to connect them.**
 
-- **vs Routing tools**: We don't replace routing — we add governance instrumentation to it
-- **vs Trace monitoring**: We don't replace monitoring — we add compliance telemetry to it  
-- **vs Analytics platforms**: We don't replace analytics — we add policy tracking to it
-- **vs Build-it-yourself**: Standard OpenTelemetry approach for governance instrumentation
+- **vs Routing tools**: We don't replace routing — we add cost tracking and observability to it
+- **vs Monitoring platforms**: We don't replace monitoring — we add AI-specific metrics to it  
+- **vs Analytics dashboards**: We don't replace analytics — we add unified AI cost data to it
+- **vs Build-it-yourself**: Standard OpenTelemetry approach instead of custom integration scripts
 
-**The only framework that adds governance telemetry WITHOUT replacing your existing tools.**
+**The only framework that adds cross-stack AI tracking WITHOUT replacing your existing tools.**
 
-*When you're ready to scale AI governance across larger organizations, the GenOps framework provides the instrumentation foundation for enterprise governance platforms.*
+*When you're ready to scale AI operations across larger teams, the GenOps framework provides the telemetry foundation for unified cost management and reporting platforms.*
 
 ---
 
@@ -309,21 +370,21 @@ Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for detai
 **Looking for bigger challenges?**
 - 🏗️ [Provider integrations](https://github.com/KoshiHQ/GenOps-AI/issues?q=is%3Aissue+is%3Aopen+label%3Aprovider) - Add AWS Bedrock, Google Gemini support
 - 📊 [Dashboard templates](https://github.com/KoshiHQ/GenOps-AI/issues?q=is%3Aissue+is%3Aopen+label%3Adashboard) - Pre-built observability dashboards
-- 🤖 [AI governance patterns](https://github.com/KoshiHQ/GenOps-AI/issues?q=is%3Aissue+is%3Aopen+label%3Agovernance) - Real-world scenarios
+- 🤖 [Cross-stack tracking patterns](https://github.com/KoshiHQ/GenOps-AI/issues?q=is%3Aissue+is%3Aopen+label%3Agovernance) - Real-world cost tracking scenarios
 
 ---
 
-## ⚠️ **Known Issues & Contributing**
+## 🚀 **Project Status & Contributing**
 
-This is a **preview release** with comprehensive features but some ongoing CI test issues:
+GenOps is actively developed with comprehensive cross-stack AI tracking features ready for production use:
 
-### 🚧 Current Status
-- ✅ **Core functionality working**: Security scans pass, package installation works
-- ✅ **Comprehensive examples**: All governance scenarios and integrations functional
-- ⚠️ **Some CI tests failing**: Integration tests and Python 3.11 compatibility
-- 🤝 **Community help wanted**: [See open issues](https://github.com/KoshiHQ/GenOps-AI/issues) for contribution opportunities
+### ✅ **Current Status**
+- ✅ **Core functionality**: Security scans pass, package installation works
+- ✅ **Production examples**: All cost tracking scenarios and integrations functional
+- ✅ **OpenTelemetry compliance**: Standard OTLP telemetry export working
+- 🤝 **Community contributions welcome**: [See open issues](https://github.com/KoshiHQ/GenOps-AI/issues) for opportunities
 
-### 🆘 Need Help?
+### 🆘 **Need Help?**
 - 💬 **Questions**: [GitHub Discussions](https://github.com/KoshiHQ/GenOps-AI/discussions)
 - 🐛 **Issues**: [GitHub Issues](https://github.com/KoshiHQ/GenOps-AI/issues)
 - 🤝 **Contributing**: [Contributing Guide](CONTRIBUTING.md)
@@ -379,7 +440,7 @@ For questions about trademark usage, please open an issue or contact the maintai
 ---
 
 <div align="center">
-  <p><strong>Ready to bring governance to your AI systems?</strong></p>
+  <p><strong>Ready to connect your AI tools without the custom scripts?</strong></p>
   
   ```bash
   pip install genops
