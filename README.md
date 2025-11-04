@@ -20,64 +20,86 @@ GenOps is an open-source runtime governance framework for AI and LLM workloads �
 
 ---
 
-## 🚨 The Problem: AI Is Powerful, Opaque, and Ungoverned
+## 🚨 The Problem: You're Building with AI, But Flying Blind
 
-AI is now core to production systems — yet most organizations are flying blind.  
-Costs are rising, but that's just one symptom of a deeper governance gap.
+You're shipping AI features faster than ever — but have no idea what they actually cost or how they're performing.
 
-- 💸 **Unpredictable costs** — Token usage explodes without accountability
-- ⚖️ **Policy drift** — Teams deploy new models with no enforcement or oversight  
-- 🔍 **Observability silos** — Logs, metrics, and traces don't connect to governance
-- 🔒 **Compliance blind spots** — No runtime record of who did what, where, or why
-- 🤖 **Shadow AI** — Models and prompts operate outside organizational control
+Sound familiar?
 
-The result: AI systems that are functional but unaccountable — and teams that can't answer:
+- 💸 **Surprise AI bills** — Your OpenAI costs jumped 300% last month. Why?
+- 🤷‍♂️ **Model guesswork** — Is GPT-4 actually better than Claude for your use case?
+- ⚡ **Performance mysteries** — Which prompts are slow? Which ones are expensive?
+- 🔍 **Debugging nightmares** — AI requests failing, but your logs tell you nothing
+- 📊 **No team visibility** — Your manager asks "what did we spend on AI?" and you shrug
 
-**"What ran, under whose authority, and at what cost — financial, ethical, or operational?"**
+The result: You're building amazing AI features but have zero insight into cost, performance, or reliability.
 
-Without runtime governance, AI becomes a black box: costly, risky, and impossible to trust at scale.
+**You need AI observability that actually works.**
 
 ## 👥 Who This Is For
 
-GenOps sits where DevOps, FinOps, and RiskOps converge — aligning engineering, finance, and compliance around a single source of operational truth.
+**If you're building with AI, GenOps is for you:**
 
-| **Stakeholder** | **Core Need** | **What GenOps Provides** |
-|------------------|---------------|---------------------------|
-| **CTOs / Heads of Platform** | Visibility into AI usage, cost, and risk across the enterprise | A unified control plane for runtime governance and observability |
-| **DevOps / Platform Engineers** | Integration with existing telemetry and infra tooling | OpenTelemetry-native instrumentation and tracing |
-| **FinOps Teams** | Transparent attribution by team, customer, and feature | Per-request cost tracking and budget enforcement |
-| **Compliance & Risk Teams** | Runtime audit trails and data residency assurance | Policy telemetry and enforcement hooks with OPA compatibility |
-| **Product & AI Teams** | Safe experimentation with production accountability | Governance-aware SDKs and cost-aware routing intelligence |
+**🧑‍💻 Individual Developers**
+- Track your AI costs and usage across all your projects
+- Compare model performance and costs to optimize your choices
+- Debug AI requests with proper observability and tracing
+- Share results with your team without enterprise overhead
 
-GenOps gives each of these roles shared visibility into AI behavior in production —  
-**turning runtime data into governance, and governance into trust.**
+**👨‍💼 Team Leads & Senior Engineers**
+- Get visibility into your team's AI spend and usage patterns
+- Help your team make better model choices based on real data
+- Show management exactly where AI budget is going
+- Become the AI expert your company relies on
+
+**🛠️ Platform Engineers**
+- Integrate AI governance into existing observability stack
+- Support multiple teams with zero additional infrastructure
+- Use familiar OpenTelemetry patterns and tools
+- Scale from individual developers to organization-wide adoption
+
+**Start individual. Scale with your team. Grow into your organization.**
 
 ---
 
 ## 💡 The GenOps Solution
 
-GenOps provides cost, policy, and compliance telemetry across your AI stack, enabling teams to:
+GenOps gives you complete visibility into your AI usage with zero infrastructure changes:
 
-- **Track spend and efficiency** across models, teams, and customers
-- **Enforce usage policies** and model governance in real time  
-- **Integrate with existing** observability, billing, and compliance systems
+- **Track your costs** across all AI providers (OpenAI, Anthropic, etc.)
+- **Monitor performance** and optimize your model choices
+- **Debug AI requests** with proper tracing and error handling
+- **Works with your existing stack** — uses standard OpenTelemetry
 
-Because GenOps emits standard OpenTelemetry traces, logs, and metrics, it plugs directly into your existing monitoring, FinOps, and policy infrastructure. GenOps standardizes and enforces runtime governance across your AI systems, turning observability data into actionable accountability.
+Because GenOps emits standard OpenTelemetry traces, logs, and metrics, it works with whatever observability tools you're already using. Whether that's Datadog, Honeycomb, Grafana, or anything else — GenOps just works.
 
 ---
 
-## ⚙️ Key Capabilities
+## ⚙️ What You Get Out of the Box
 
-GenOps standardizes and enforces runtime governance across your AI systems.
+**🔍 Cost Tracking**
+- See exactly how much each AI request costs
+- Compare costs across different models and providers  
+- Track spending by project, feature, or customer
+- Get alerts before you hit budget limits
 
-| **Dimension** | **Example Metrics / Policies** | **Purpose** |
-|---------------|----------------------------------|-------------|
-| **Cost Telemetry** | Cost per request, team, feature, or customer | Enables FinOps visibility and chargeback |
-| **Policy Compliance** | Allowed models, region routing, rate limits | Prevents policy drift and shadow usage |
-| **Data Residency** | Model invocation region, storage compliance | Ensures GDPR / SOC2 / FedRAMP adherence |
-| **Performance Metrics** | Latency, cache hits, throughput | Optimizes efficiency and reliability |
-| **Safety & Guardrails** | Toxicity filters, jailbreak detection | Enforces responsible deployment |
-| **Usage Attribution** | Project, user, and customer-level metering | Enables cross-org accountability |
+**📊 Performance Monitoring**
+- Monitor latency and throughput for all AI requests
+- See which prompts are slow or expensive
+- Track cache hit rates and optimization opportunities
+- Debug failed requests with detailed traces
+
+**🚀 Multi-Provider Support**  
+- Works with OpenAI, Anthropic, OpenRouter, and more
+- Switch between providers without changing your code
+- Compare performance and costs across providers
+- Automatic failover and load balancing
+
+**🛠️ Developer Experience**
+- 30-second setup with auto-instrumentation
+- Works with your existing observability tools
+- Rich debugging information when things go wrong
+- Zero infrastructure changes required
 
 ---
 
@@ -97,6 +119,26 @@ GenOps.init()
 ### 3. Run your app
 GenOps automatically collects runtime telemetry and governance signals.  
 View data in your existing observability stack or policy engine.
+
+---
+
+## 🌟 Why Developers Choose GenOps
+
+**Start Small, Prove Value**
+"I wanted to track my AI costs for my side project. GenOps took 30 seconds to set up and immediately showed me I was overspending on expensive models for simple tasks. Saved me $200/month instantly."
+
+**Become the Team Expert**  
+"My manager kept asking about our AI spend. With GenOps, I became the person with answers. Now I help other teams optimize their AI usage too."
+
+**Scale Without Pain**
+"What started as personal cost tracking became our team's AI observability standard. When the company wanted AI governance, we were already ahead of the game."
+
+**The Bottom-Up Success Path:**
+1. **Individual**: Track your own AI usage and costs
+2. **Team**: Share insights and help teammates optimize  
+3. **Organization**: Become the champion for AI observability
+
+**When you're ready to scale beyond individual teams, GenOps grows with you.**
 
 ---
 
@@ -137,7 +179,7 @@ GenOps integrates natively with your AI and infrastructure layer to collect and 
 
 #### Infrastructure & Runtime
 
-- ☐ Kubernetes (<a href="https://kubernetes.io/" target="_blank">↗</a>)
+- ✅ [Kubernetes](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/kubernetes-getting-started.md) (<a href="https://kubernetes.io/" target="_blank">↗</a>)
 - ☐ Cloudflare Workers (<a href="https://workers.cloudflare.com/" target="_blank">↗</a>)
 - ☐ Vercel AI SDK (<a href="https://sdk.vercel.ai/" target="_blank">↗</a>)
 - ☐ Ray (<a href="https://www.ray.io/" target="_blank">↗</a>)
@@ -196,41 +238,21 @@ GenOps exports standardized telemetry and governance events to your existing sta
 
 ---
 
-## 🏢 Production Features
+## 🚀 Ready for Production
 
-### **Compliance & Audit Trails**
-GenOps automatically creates detailed audit logs for:
-- **Cost attribution** with exact token counts and pricing models
-- **Policy decisions** with enforcement context and reasoning
-- **Data flow tracking** for privacy and compliance requirements  
-- **Model usage patterns** for governance and risk management
+### **Team Collaboration**
+Share insights and optimize together:
+- **Cost transparency** — Everyone sees what AI requests actually cost
+- **Performance comparison** — Compare models and prompts across the team
+- **Debugging support** — Help teammates troubleshoot AI issues faster
+- **Best practices sharing** — Learn what works from your team's real usage
 
-### **Observability Integration**
-Works with your existing tools and workflows:
-- **Per-customer cost allocation** for accurate billing
-- **Team and department spend tracking** for budget management
-- **Feature-level cost analysis** for product decisions
-- **Model efficiency metrics** for optimization opportunities
-- **Real-time dashboards** using your current observability platform
-
----
-
-## 🏢 **Production Ready**
-
-### **Compliance & Audit Trails**
-GenOps AI automatically creates detailed audit logs for:
-- **Cost attribution** with exact token counts and pricing models
-- **Policy decisions** with enforcement context and reasoning
-- **Data flow tracking** for privacy and compliance requirements  
-- **Model usage patterns** for governance and risk management
-
-### **Observability Integration**
-Works with your existing tools and workflows:
-- **Per-customer cost allocation** for accurate billing
-- **Team and department spend tracking** for budget management
-- **Feature-level cost analysis** for product decisions
-- **Model efficiency metrics** for optimization opportunities
-- **Real-time dashboards** using your current observability platform
+### **Scales with Your Growth**
+Built to grow from individual to organization:
+- **Individual projects** — Track your personal AI usage and costs
+- **Team visibility** — Share insights without enterprise overhead
+- **Department adoption** — Proven patterns that work at scale
+- **Organization readiness** — When you need more, we're ready to help
 
 ---
 
@@ -264,14 +286,16 @@ Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for detai
 
 ## 🌟 **Why GenOps AI?**
 
-**Traditional AI monitoring tells you what happened. GenOps AI tells you what it cost, who did it, whether it should have been allowed, and how well it worked.**
+**Because you shouldn't have to guess what your AI is doing.**
 
-- **For DevOps Teams**: Integrate AI governance into existing observability workflows
-- **For FinOps Teams**: Get precise cost attribution and budget controls
-- **For Compliance Teams**: Automated policy enforcement with audit trails
-- **For Product Teams**: Feature-level AI cost analysis and optimization insights
+- **For Individual Developers**: Finally understand your AI costs and performance
+- **For Team Leads**: Get the data you need to make smart AI decisions
+- **For Platform Engineers**: Add AI observability without new infrastructure
+- **For Growing Teams**: Scale from individual tracking to team collaboration
 
 **Open source, OpenTelemetry-native, and designed to work with your existing stack.**
+
+*When you're ready to scale AI governance across larger organizations, GenOps provides the foundation for enterprise control planes and governance workflows.*
 
 ---
 

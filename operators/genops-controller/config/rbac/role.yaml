@@ -1,0 +1,288 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: genops-controller-manager
+rules:
+# GenOps AI CRD permissions
+- apiGroups:
+  - genops.ai
+  resources:
+  - aipolicies
+  - aibudgets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - genops.ai
+  resources:
+  - aipolicies/finalizers
+  - aibudgets/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - genops.ai
+  resources:
+  - aipolicies/status
+  - aibudgets/status
+  verbs:
+  - get
+  - patch
+  - update
+
+# Core Kubernetes resources for monitoring and governance
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - services
+  - endpoints
+  - configmaps
+  - secrets
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+- apiGroups:
+  - ""
+  resources:
+  - resourcequotas
+  - limitranges
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+
+# Apps resources
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  - replicasets
+  - statefulsets
+  - daemonsets
+  verbs:
+  - get
+  - list
+  - watch
+  - update
+  - patch
+
+# Metrics and monitoring
+- apiGroups:
+  - metrics.k8s.io
+  resources:
+  - pods
+  - nodes
+  verbs:
+  - get
+  - list
+
+# Admission webhooks
+- apiGroups:
+  - admissionregistration.k8s.io
+  resources:
+  - mutatingadmissionwebhooks
+  - validatingadmissionwebhooks
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+
+# Network policies for security
+- apiGroups:
+  - networking.k8s.io
+  resources:
+  - networkpolicies
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+
+# Policy and security
+- apiGroups:
+  - policy
+  resources:
+  - poddisruptionbudgets
+  verbs:
+  - get
+  - list
+  - watch
+
+# RBAC for service account management
+- apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
+  - roles
+  - rolebindings
+  - clusterroles
+  - clusterrolebindings
+  verbs:
+  - get
+  - list
+  - watch
+
+# Custom metrics for autoscaling
+- apiGroups:
+  - custom.metrics.k8s.io
+  resources:
+  - "*"
+  verbs:
+  - get
+  - list
+
+# External metrics
+- apiGroups:
+  - external.metrics.k8s.io
+  resources:
+  - "*"
+  verbs:
+  - get
+  - list
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: genops-controller-manager
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: genops-controller-manager
+subjects:
+- kind: ServiceAccount
+  name: genops-controller-manager
+  namespace: genops-system
+
+---
+# Leader election role
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: genops-system
+  name: genops-leader-election
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  namespace: genops-system
+  name: genops-leader-election
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: genops-leader-election
+subjects:
+- kind: ServiceAccount
+  name: genops-controller-manager
+  namespace: genops-system
+
+---
+# Webhook permissions
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: genops-webhook
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - services
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  - replicasets
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+- apiGroups:
+  - genops.ai
+  resources:
+  - aipolicies
+  - aibudgets
+  verbs:
+  - get
+  - list
+  - watch
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: genops-webhook
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: genops-webhook
+subjects:
+- kind: ServiceAccount
+  name: genops-webhook
+  namespace: genops-system

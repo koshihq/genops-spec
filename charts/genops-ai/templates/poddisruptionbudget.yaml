@@ -1,0 +1,19 @@
+{{- if .Values.deployment.podDisruptionBudget.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "genops-ai.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "genops-ai.labels" . | nindent 4 }}
+spec:
+  {{- if .Values.deployment.podDisruptionBudget.minAvailable }}
+  minAvailable: {{ .Values.deployment.podDisruptionBudget.minAvailable }}
+  {{- end }}
+  {{- if .Values.deployment.podDisruptionBudget.maxUnavailable }}
+  maxUnavailable: {{ .Values.deployment.podDisruptionBudget.maxUnavailable }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "genops-ai.selectorLabels" . | nindent 6 }}
+{{- end }}

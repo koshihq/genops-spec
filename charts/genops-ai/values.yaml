@@ -1,0 +1,506 @@
+# Default values for genops-ai
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Global configuration
+global:
+  # Image registry settings
+  imageRegistry: ""
+  imagePullSecrets: []
+  
+  # Default governance attributes
+  team: "platform"
+  project: "genops-ai"
+  environment: "production"
+  costCenter: "engineering"
+
+# Deployment configuration
+deployment:
+  replicaCount: 3
+  
+  image:
+    repository: genops/genops-ai
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  
+  # Container configuration
+  container:
+    port: 8000
+    resources:
+      limits:
+        cpu: 500m
+        memory: 1Gi
+        ephemeral-storage: 1Gi
+      requests:
+        cpu: 250m
+        memory: 512Mi
+        ephemeral-storage: 500Mi
+  
+  # Pod configuration
+  podAnnotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8000"
+    prometheus.io/path: "/metrics"
+  
+  podLabels:
+    app.kubernetes.io/component: ai-service
+    app.kubernetes.io/part-of: genops-ai
+  
+  # Security context
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+      - ALL
+  
+  # Pod disruption budget
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+  
+  # Rolling update strategy
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  
+  # Node selection
+  nodeSelector: {}
+  tolerations: []
+  
+  # Pod affinity for high availability
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+            - key: app.kubernetes.io/name
+              operator: In
+              values:
+              - genops-ai
+          topologyKey: kubernetes.io/hostname
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 8000
+  targetPort: 8000
+  annotations: {}
+
+# Ingress configuration
+ingress:
+  enabled: false
+  className: ""
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: genops-ai.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: genops-ai-tls
+      hosts:
+        - genops-ai.example.com
+
+# Network policies
+networkPolicy:
+  enabled: true
+  policyTypes:
+    - Ingress
+    - Egress
+  
+  # Ingress rules
+  ingress:
+    - from:
+      - namespaceSelector:
+          matchLabels:
+            name: ingress-nginx
+      ports:
+      - protocol: TCP
+        port: 8000
+  
+  # Egress rules
+  egress:
+    # Allow DNS resolution
+    - to: []
+      ports:
+      - protocol: UDP
+        port: 53
+    # Allow HTTPS to AI providers
+    - to: []
+      ports:
+      - protocol: TCP
+        port: 443
+    # Allow HTTP to internal services
+    - to:
+      - namespaceSelector: {}
+      ports:
+      - protocol: TCP
+        port: 8080
+
+# Horizontal Pod Autoscaler
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 20
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+  
+  # Custom metrics (requires metrics-server and custom metrics API)
+  customMetrics:
+    enabled: false
+    metrics:
+    - type: Pods
+      pods:
+        metric:
+          name: genops_requests_per_second
+        target:
+          type: AverageValue
+          averageValue: "10"
+
+# Vertical Pod Autoscaler (if VPA is installed)
+verticalPodAutoscaler:
+  enabled: false
+  updateMode: "Auto"  # Off, Initial, Auto
+  
+# AI Provider configurations
+providers:
+  # OpenAI configuration
+  openai:
+    enabled: true
+    apiKeySecret:
+      name: genops-ai-secrets
+      key: openai-api-key
+    
+  # Anthropic configuration  
+  anthropic:
+    enabled: true
+    apiKeySecret:
+      name: genops-ai-secrets
+      key: anthropic-api-key
+  
+  # OpenRouter configuration
+  openrouter:
+    enabled: true
+    apiKeySecret:
+      name: genops-ai-secrets
+      key: openrouter-api-key
+
+# OpenTelemetry configuration
+opentelemetry:
+  enabled: true
+  
+  # Collector endpoint
+  endpoint: "http://otel-collector:4318"
+  
+  # Service configuration
+  serviceName: "genops-ai"
+  serviceVersion: "1.0.0"
+  
+  # Headers for authentication
+  headers:
+    # Honeycomb
+    x-honeycomb-team: ""
+    # Datadog  
+    dd-api-key: ""
+    # New Relic
+    api-key: ""
+  
+  # Resource detection
+  resourceDetection:
+    enabled: true
+    detectors:
+      - env
+      - system
+      - k8s_node
+      - k8s_pod
+
+# Governance configuration
+governance:
+  # Default governance attributes
+  defaultAttributes:
+    team: "platform"
+    project: "genops-ai-deployment"
+    environment: "production"
+    costCenter: "engineering"
+  
+  # Policy enforcement
+  policies:
+    enabled: true
+    
+    # Cost limits
+    costLimits:
+      daily: 100.00
+      monthly: 2500.00
+      currency: "USD"
+    
+    # Rate limiting
+    rateLimits:
+      requestsPerMinute: 60
+      requestsPerHour: 3600
+    
+    # Content safety
+    contentSafety:
+      enabled: true
+      minimumScore: 0.85
+    
+    # Data classification
+    dataClassification:
+      enabled: true
+      allowedLevels:
+        - public
+        - internal
+        - confidential
+
+# Monitoring configuration
+monitoring:
+  # Prometheus ServiceMonitor (requires Prometheus Operator)
+  serviceMonitor:
+    enabled: false
+    interval: 30s
+    scrapeTimeout: 10s
+    labels: {}
+    metricRelabelings: []
+    relabelings: []
+  
+  # Grafana dashboard
+  grafanaDashboard:
+    enabled: false
+    datasource: Prometheus
+    folder: "GenOps AI"
+
+# External services
+external:
+  # Redis for caching (optional)
+  redis:
+    enabled: false
+    host: redis
+    port: 6379
+    database: 0
+    auth:
+      enabled: false
+      existingSecret: ""
+      existingSecretPasswordKey: ""
+  
+  # Database for persistence (optional)
+  database:
+    enabled: false
+    type: postgresql
+    host: postgresql
+    port: 5432
+    name: genops
+    auth:
+      username: genops
+      existingSecret: ""
+      userPasswordKey: ""
+
+# Configuration for specific environments
+environments:
+  development:
+    replicaCount: 1
+    resources:
+      limits:
+        cpu: 200m
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 256Mi
+    autoscaling:
+      enabled: false
+  
+  staging:
+    replicaCount: 2
+    resources:
+      limits:
+        cpu: 300m
+        memory: 768Mi
+      requests:
+        cpu: 150m
+        memory: 384Mi
+    autoscaling:
+      minReplicas: 2
+      maxReplicas: 5
+  
+  production:
+    replicaCount: 3
+    resources:
+      limits:
+        cpu: 500m
+        memory: 1Gi
+      requests:
+        cpu: 250m
+        memory: 512Mi
+    autoscaling:
+      minReplicas: 3
+      maxReplicas: 20
+
+# RBAC configuration
+rbac:
+  # Create RBAC resources
+  create: true
+  
+  # Permissions for the service account
+  rules:
+    # Read access to pods and nodes for resource detection
+    - apiGroups: [""]
+      resources: ["pods", "nodes"]
+      verbs: ["get", "list", "watch"]
+    
+    # Read access to resource quotas for governance
+    - apiGroups: [""]
+      resources: ["resourcequotas"]
+      verbs: ["get", "list"]
+
+# Service account configuration
+serviceAccount:
+  # Create a service account
+  create: true
+  
+  # Annotations to add to the service account
+  annotations:
+    eks.amazonaws.com/role-arn: ""
+    azure.workload.identity/client-id: ""
+    iam.gke.io/gcp-service-account: ""
+  
+  # The name of the service account to use
+  name: ""
+  
+  # Automatically mount service account token
+  automountServiceAccountToken: true
+
+# Secrets management
+secrets:
+  # Create secrets for API keys
+  create: true
+  
+  # Secret name
+  name: genops-ai-secrets
+  
+  # API keys (will be base64 encoded)
+  apiKeys:
+    openai: ""
+    anthropic: ""
+    openrouter: ""
+    honeycomb: ""
+    datadog: ""
+
+# ConfigMap configuration
+configMap:
+  # Create ConfigMap for application configuration
+  create: true
+  
+  # ConfigMap name
+  name: genops-ai-config
+  
+  # Additional configuration data
+  data: {}
+
+# Init containers (for setup tasks)
+initContainers:
+  enabled: false
+  image:
+    repository: busybox
+    tag: latest
+    pullPolicy: IfNotPresent
+
+# Sidecar containers (for additional functionality)
+sidecars:
+  enabled: false
+
+# Volume mounts
+volumes:
+  # Temporary directory for read-only filesystem
+  tmp:
+    enabled: true
+    sizeLimit: 1Gi
+  
+  # Application logs
+  logs:
+    enabled: true
+    sizeLimit: 2Gi
+  
+  # Additional volumes
+  additional: []
+
+# Pod security context
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+
+# Container security context (overrides podSecurityContext)
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  capabilities:
+    drop:
+    - ALL
+
+# Liveness probe
+livenessProbe:
+  enabled: true
+  httpGet:
+    path: /health
+    port: 8000
+    scheme: HTTP
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+  successThreshold: 1
+
+# Readiness probe  
+readinessProbe:
+  enabled: true
+  httpGet:
+    path: /ready
+    port: 8000
+    scheme: HTTP
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+  successThreshold: 1
+
+# Startup probe
+startupProbe:
+  enabled: true
+  httpGet:
+    path: /health
+    port: 8000
+    scheme: HTTP
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 10
+  successThreshold: 1
+
+# Additional labels to add to all resources
+commonLabels:
+  app.kubernetes.io/managed-by: Helm
+  app.kubernetes.io/part-of: genops-ai
+
+# Additional annotations to add to all resources
+commonAnnotations: {}
+
+# Tests configuration
+tests:
+  enabled: true
+  image:
+    repository: curlimages/curl
+    tag: latest
+    pullPolicy: IfNotPresent

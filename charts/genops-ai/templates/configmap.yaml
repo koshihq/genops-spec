@@ -1,0 +1,50 @@
+{{- if .Values.configMap.create -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "genops-ai.configMapName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "genops-ai.labels" . | nindent 4 }}
+data:
+  # Basic application configuration
+  ENVIRONMENT: {{ .Values.global.environment | quote }}
+  PORT: {{ .Values.deployment.container.port | quote }}
+  
+  # OpenTelemetry configuration
+  {{- if .Values.opentelemetry.enabled }}
+  OTEL_SERVICE_NAME: {{ .Values.opentelemetry.serviceName | quote }}
+  OTEL_SERVICE_VERSION: {{ .Values.opentelemetry.serviceVersion | quote }}
+  OTEL_EXPORTER_OTLP_ENDPOINT: {{ .Values.opentelemetry.endpoint | quote }}
+  {{- end }}
+  
+  # Governance configuration
+  DEFAULT_TEAM: {{ .Values.governance.defaultAttributes.team | quote }}
+  DEFAULT_PROJECT: {{ .Values.governance.defaultAttributes.project | quote }}
+  DEFAULT_COST_CENTER: {{ .Values.governance.defaultAttributes.costCenter | quote }}
+  
+  # Policy configuration
+  {{- if .Values.governance.policies.enabled }}
+  COST_LIMIT_DAILY: {{ .Values.governance.policies.costLimits.daily | quote }}
+  COST_LIMIT_MONTHLY: {{ .Values.governance.policies.costLimits.monthly | quote }}
+  COST_LIMIT_CURRENCY: {{ .Values.governance.policies.costLimits.currency | quote }}
+  
+  RATE_LIMIT_RPM: {{ .Values.governance.policies.rateLimits.requestsPerMinute | quote }}
+  RATE_LIMIT_RPH: {{ .Values.governance.policies.rateLimits.requestsPerHour | quote }}
+  
+  {{- if .Values.governance.policies.contentSafety.enabled }}
+  CONTENT_SAFETY_ENABLED: "true"
+  CONTENT_SAFETY_MIN_SCORE: {{ .Values.governance.policies.contentSafety.minimumScore | quote }}
+  {{- end }}
+  
+  {{- if .Values.governance.policies.dataClassification.enabled }}
+  DATA_CLASSIFICATION_ENABLED: "true"
+  DATA_CLASSIFICATION_LEVELS: {{ join "," .Values.governance.policies.dataClassification.allowedLevels | quote }}
+  {{- end }}
+  {{- end }}
+  
+  # Additional custom configuration
+  {{- with .Values.configMap.data }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
+{{- end }}
