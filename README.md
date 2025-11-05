@@ -227,7 +227,7 @@ As governance needs grow beyond what the framework can handle alone, teams typic
 - ✅ [OpenAI](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/openai) (<a href="https://openai.com/" target="_blank">↗</a>)
 - ✅ [Anthropic](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/anthropic) (<a href="https://www.anthropic.com/" target="_blank">↗</a>)
 - ✅ [Hugging Face](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/huggingface) (<a href="https://huggingface.co/docs/inference-providers/index" target="_blank">↗</a>)
-- ☐ AWS Bedrock (<a href="https://aws.amazon.com/bedrock/" target="_blank">↗</a>)
+- ✅ [AWS Bedrock](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/bedrock) (<a href="https://aws.amazon.com/bedrock/" target="_blank">↗</a>)
 - ☐ Google Gemini (<a href="https://deepmind.google/technologies/gemini/" target="_blank">↗</a>)
 - ☐ Replicate (<a href="https://replicate.com/" target="_blank">↗</a>)
 - ✅ [LangChain](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/langchain) (<a href="https://python.langchain.com/" target="_blank">↗</a>)
@@ -369,7 +369,7 @@ Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for detai
 **5-minute contributions welcome!** Every small improvement helps the community grow.
 
 **Looking for bigger challenges?**
-- 🏗️ [Provider integrations](https://github.com/KoshiHQ/GenOps-AI/issues?q=is%3Aissue+is%3Aopen+label%3Aprovider) - Add AWS Bedrock, Google Gemini support
+- 🏗️ [Provider integrations](https://github.com/KoshiHQ/GenOps-AI/issues?q=is%3Aissue+is%3Aopen+label%3Aprovider) - Add Google Gemini, Mistral support
 - 📊 [Dashboard templates](https://github.com/KoshiHQ/GenOps-AI/issues?q=is%3Aissue+is%3Aopen+label%3Adashboard) - Pre-built observability dashboards
 - 🤖 [Cross-stack tracking patterns](https://github.com/KoshiHQ/GenOps-AI/issues?q=is%3Aissue+is%3Aopen+label%3Agovernance) - Real-world cost tracking scenarios
 

@@ -62,6 +62,34 @@ except ImportError:
 
     _openrouter_available = False
 
+try:
+    from genops.providers.bedrock import (
+        instrument_bedrock,
+        auto_instrument_bedrock,
+        GenOpsBedrockAdapter,
+        validate_setup as validate_bedrock_setup,
+        print_validation_result as print_bedrock_validation_result,
+    )
+    _bedrock_available = True
+except ImportError:
+    # Create stub functions for unavailable providers
+    def instrument_bedrock(*args, **kwargs):
+        raise ImportError("Bedrock provider not available. Install with: pip install boto3")
+
+    def auto_instrument_bedrock(*args, **kwargs):
+        raise ImportError("Bedrock provider not available. Install with: pip install boto3")
+
+    def GenOpsBedrockAdapter(*args, **kwargs):
+        raise ImportError("Bedrock provider not available. Install with: pip install boto3")
+    
+    def validate_bedrock_setup(*args, **kwargs):
+        raise ImportError("Bedrock provider not available. Install with: pip install boto3")
+    
+    def print_bedrock_validation_result(*args, **kwargs):
+        raise ImportError("Bedrock provider not available. Install with: pip install boto3")
+
+    _bedrock_available = False
+
 # Explicit __all__ definition with all available exports
 __all__ = [
     "instrument_openai",
@@ -73,4 +101,9 @@ __all__ = [
     "instrument_openrouter",
     "patch_openrouter",
     "unpatch_openrouter",
+    "instrument_bedrock",
+    "auto_instrument_bedrock",
+    "GenOpsBedrockAdapter",
+    "validate_bedrock_setup",
+    "print_bedrock_validation_result",
 ]
