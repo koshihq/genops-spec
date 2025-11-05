@@ -155,17 +155,9 @@ Compatible with:
 
 ## Framework Adapter Development
 
-### Implementation Status & Learnings
-
-**✅ Completed: LangChain Integration (Phase 2)**
-- Full production-ready implementation with 76 passing tests
-- Comprehensive cost aggregation across multiple LLM providers
-- RAG operation monitoring and chain execution tracking  
-- Foundation established for all future framework adapters
-
 ### Framework Adapter Architecture Pattern
 
-**Proven 4-Module Structure:**
+**Required 4-Module Structure:**
 ```
 providers/{framework}/
 ├── adapter.py           # Main GenOps{Framework}Adapter
@@ -174,7 +166,7 @@ providers/{framework}/
 └── registration.py      # Auto-instrumentation registry
 ```
 
-### Key Design Patterns (Validated in LangChain Implementation)
+### Key Design Patterns
 
 **1. Base Provider Interface**
 - All adapters inherit from `BaseFrameworkProvider`
@@ -198,7 +190,7 @@ class FrameworkCostSummary:
     unique_providers: Set[str]          # Automatic deduplication
 ```
 
-### Testing Strategy (Proven Effective)
+### Testing Strategy (Required Standards)
 
 **Layered Test Architecture:**
 - **Unit Tests**: Individual component testing (~35 tests per adapter)  
@@ -231,7 +223,7 @@ class FrameworkCostSummary:
 3. **Framework-Specific Metrics**: Specialized telemetry for each framework's features
 4. **Performance Tracking**: Automatic timing and resource usage capture
 
-### Anti-Patterns to Avoid (Learned from LangChain)
+### Anti-Patterns to Avoid
 
 **Architecture:**
 - ❌ Hardcoded provider detection logic
@@ -244,20 +236,20 @@ class FrameworkCostSummary:
 - ❌ Testing implementation details vs behavior
 - ❌ Insufficient boundary condition coverage
 
-### Roadmap for Future Framework Adapters
+### Framework Adapter Roadmap
 
-**Phase 3: PyTorch & TensorFlow (Pending)**
-- Focus: Training cost tracking, GPU utilization, distributed training overhead
-- Specialized monitoring: Model checkpointing costs, gradient computation, data loading performance
+**Training Frameworks (High Priority):**
+- **PyTorch**: Training cost tracking, GPU utilization, distributed training overhead
+- **TensorFlow**: Model checkpointing costs, gradient computation, data loading performance
 - Cost models: Compute hours, GPU memory usage, storage for model artifacts
 
-**Framework Detection Priority:**
-1. LangChain ✅ (Complete)
-2. PyTorch (Training/Inference)
-3. TensorFlow (Training/Inference) 
-4. LlamaIndex (RAG/Retrieval)
-5. Haystack (NLP Pipelines)
-6. Transformers (Model Loading/Inference)
+**Framework Implementation Priority:**
+1. PyTorch (Training/Inference)
+2. TensorFlow (Training/Inference) 
+3. LlamaIndex (RAG/Retrieval)
+4. Haystack (NLP Pipelines)
+5. Transformers (Model Loading/Inference)
+6. AutoGen (Multi-agent workflows)
 
 ---
 
@@ -265,7 +257,7 @@ class FrameworkCostSummary:
 
 ### Universal Framework Adapter Principles
 
-Based on the comprehensive LangChain implementation, all framework adapters MUST follow these developer experience standards to ensure consistent, frictionless adoption:
+All framework adapters MUST follow these developer experience standards to ensure consistent, frictionless adoption:
 
 ### Documentation Architecture (Required for Every Adapter)
 
@@ -449,15 +441,15 @@ class FrameworkCostSummary:
 - All examples are executable and work immediately
 - Documentation answers common questions proactively
 
-This framework ensures every adapter provides the same high-quality, frictionless developer experience achieved with LangChain, accelerating adoption and reducing support overhead.
+This framework ensures every adapter provides consistent, high-quality developer experience, accelerating adoption and reducing support overhead.
 
 ---
 
 ## Developer Experience Excellence Standards
 
-### Universal Principles Learned from Implementation
+### Universal Development Principles
 
-Based on our comprehensive implementation of the GenOps framework improvements, these standards MUST be applied to all future development work to ensure consistent developer-first excellence:
+These standards MUST be applied to all development work to ensure consistent developer-first excellence:
 
 ### **1. Progressive Complexity Architecture (The "Golden Path")**
 
@@ -642,9 +634,9 @@ with production_workflow_context(workflow_name, customer_id, **kwargs) as (span,
 
 ---
 
-### **Implementation Commitment**
+### **Quality Commitment**
 
-These standards represent our commitment to developer experience excellence based on proven implementation patterns. Every future development effort MUST demonstrate adherence to these principles before being considered complete.
+These standards represent our commitment to developer experience excellence. Every development effort MUST demonstrate adherence to these principles before being considered complete.
 
 The goal is not just functional correctness, but developer delight—creating tools that developers actively want to use and recommend to their colleagues.
 

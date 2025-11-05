@@ -38,6 +38,13 @@ class GenOpsInstrumentor:
         from genops.providers.anthropic import patch_anthropic, unpatch_anthropic
         from genops.providers.openai import patch_openai, unpatch_openai
         from genops.providers.openrouter import patch_openrouter, unpatch_openrouter
+        
+        # Import Bedrock provider with error handling
+        try:
+            from genops.providers.bedrock import instrument_bedrock
+            _bedrock_patch_available = True
+        except ImportError:
+            _bedrock_patch_available = False
 
         self.provider_patches = {
             "openai": {
@@ -62,6 +69,16 @@ class GenOpsInstrumentor:
                 "framework_type": "inference",
             },
         }
+        
+        # Add Bedrock to registry if available
+        if _bedrock_patch_available:
+            self.provider_patches["bedrock"] = {
+                "patch": instrument_bedrock,
+                "unpatch": lambda: None,  # Bedrock uses different instrumentation pattern
+                "module": "boto3",
+                "provider_type": "llm_api",
+                "framework_type": "inference",
+            }
 
         # Framework providers will be added dynamically as they're implemented
         self.framework_registry = {}
