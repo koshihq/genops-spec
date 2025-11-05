@@ -59,6 +59,7 @@ langchain = ["langchain>=0.1.0"]
 llamaindex = ["llama-index>=0.10.0"]
 bedrock = ["boto3>=1.34.0"]
 gemini = ["google-generativeai>=0.3.0; python_version>='3.9'"]
+replicate = ["replicate>=0.20.0"]
 openrouter = ["openai>=1.0.0"]
 docs = [
     "mkdocs>=1.5.0",

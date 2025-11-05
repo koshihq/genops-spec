@@ -229,7 +229,7 @@ As governance needs grow beyond what the framework can handle alone, teams typic
 - ✅ [Hugging Face](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/huggingface) (<a href="https://huggingface.co/docs/inference-providers/index" target="_blank">↗</a>)
 - ✅ [AWS Bedrock](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/bedrock) (<a href="https://aws.amazon.com/bedrock/" target="_blank">↗</a>)
 - ✅ [Google Gemini](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/gemini) (<a href="https://deepmind.google/technologies/gemini/" target="_blank">↗</a>)
-- ☐ Replicate (<a href="https://replicate.com/" target="_blank">↗</a>)
+- ✅ [Replicate](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/replicate) (<a href="https://replicate.com/" target="_blank">↗</a>)
 - ✅ [LangChain](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/langchain) (<a href="https://python.langchain.com/" target="_blank">↗</a>)
 - ☐ LlamaIndex (<a href="https://www.llamaindex.ai/" target="_blank">↗</a>)
 - ☐ Ollama (<a href="https://ollama.com/" target="_blank">↗</a>)
