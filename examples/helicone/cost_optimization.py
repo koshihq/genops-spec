@@ -34,7 +34,7 @@ def demonstrate_intelligent_routing():
         adapter = instrument_helicone(
             team="cost-optimization-team",
             project="smart-routing-demo",
-            cost_center="engineering"
+            environment="production"
         )
         
         print("✅ Cost-optimization adapter initialized")
@@ -114,11 +114,11 @@ def demonstrate_budget_management():
     try:
         from genops.providers.helicone import instrument_helicone
         
-        # Initialize with budget constraints
+        # Initialize for budget management demonstration
         adapter = instrument_helicone(
             team="budget-demo-team",
             project="budget-management",
-            default_max_cost=0.005  # 0.5 cents per request
+            environment="production"
         )
         
         # Simulate budget scenarios

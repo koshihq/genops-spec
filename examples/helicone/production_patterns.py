@@ -64,15 +64,7 @@ class ProductionHeliconeManager:
                 team=os.getenv('TEAM_NAME', 'production'),
                 project=os.getenv('PROJECT_NAME', 'main-application'),
                 environment=os.getenv('ENVIRONMENT', 'production'),
-                
-                # Production performance settings
-                timeout_seconds=30,
-                retry_attempts=3,
-                max_connections=50,
-                
-                # Production monitoring
-                enable_detailed_logging=True,
-                enable_performance_monitoring=True
+                auto_instrument_providers=True
             )
             
             self.logger.info("✅ Production Helicone adapter initialized")

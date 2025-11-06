@@ -96,7 +96,7 @@ def demonstrate_zero_code_integration():
         # Even explicit instrumentation is enhanced with gateway intelligence
         adapter = instrument_helicone(
             team="auto-demo-team",
-            customer_id="demo-customer"
+            project="auto-instrumentation-demo"
         )
         
         # Test multiple providers if available
