@@ -199,8 +199,6 @@ class ProductionOllamaDeployment:
             auto_instrument(
                 team="production",
                 project="enterprise-ollama",
-                environment="production",
-                cost_tracking_enabled=True,
                 resource_monitoring=True,
                 model_management=True
             )

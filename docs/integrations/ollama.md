@@ -46,8 +46,7 @@ import ollama
 # Enable automatic instrumentation for local models
 auto_instrument(
     team="ai-team",
-    project="local-deployment", 
-    environment="development"
+    project="local-deployment"
 )
 
 # Your existing Ollama code now includes GenOps tracking
@@ -482,8 +481,7 @@ success = auto_instrument(
     
     # Governance defaults applied to all operations
     team="ai-platform",
-    project="auto-instrumented-app",
-    environment="production"
+    project="auto-instrumented-app"
 )
 
 if success:

@@ -53,7 +53,6 @@ def main():
         auto_instrument(
             team="optimization-team",
             project="model-efficiency-analysis",
-            environment="development",
             resource_monitoring=True,
             model_management=True
         )

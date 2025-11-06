@@ -52,8 +52,7 @@ def main():
         # Enable automatic tracking with team attribution
         auto_instrument(
             team="quickstart-demo",
-            project="30-second-test",
-            environment="development"
+            project="30-second-test"
         )
         print("✅ GenOps auto-instrumentation enabled")
         
