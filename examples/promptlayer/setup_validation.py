@@ -96,7 +96,7 @@ def main():
     print("\n🌍 Environment Variables:")
     print(f"   • PROMPTLAYER_API_KEY: {'✅ Set' if api_key else '❌ Not set'}")
     if api_key:
-        print(f"     Format: {api_key[:5]}...{api_key[-5:] if len(api_key) > 10 else api_key}")
+        print(f"     Format: Valid (starts with 'pl-')" if api_key.startswith('pl-') else "     Format: Valid")
     
     print(f"   • GENOPS_TEAM: {'✅ ' + team if team else '⚠️ Not set (recommended)'}")
     print(f"   • GENOPS_PROJECT: {'✅ ' + project if project else '⚠️ Not set (recommended)'}")
