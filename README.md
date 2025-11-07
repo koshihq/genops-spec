@@ -238,7 +238,7 @@ As governance needs grow beyond what the framework can handle alone, teams typic
 - ✅ [Helicone](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/helicone) (<a href="https://helicone.ai/" target="_blank">↗</a>)
 - ✅ [Langfuse](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/langfuse) (<a href="https://langfuse.com/" target="_blank">↗</a>)
 - ✅ [Traceloop + OpenLLMetry](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/traceloop) (<a href="https://traceloop.com/" target="_blank">↗</a>)
-- ☐ PromptLayer (<a href="https://promptlayer.com/" target="_blank">↗</a>)
+- ✅ [PromptLayer](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/promptlayer) (<a href="https://promptlayer.com/" target="_blank">↗</a>)
 - ☐ Weights & Biases (<a href="https://wandb.ai/" target="_blank">↗</a>)
 - ☐ Arize AI (<a href="https://arize.com/" target="_blank">↗</a>)
 - ☐ PostHog (<a href="https://posthog.com/" target="_blank">↗</a>)
@@ -332,6 +332,7 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for:
 
 ### **Getting Help**
 - 📖 **Documentation**: [GitHub Docs](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs)
+- 📊 **Performance Guide**: [Performance Benchmarking](https://github.com/KoshiHQ/GenOps-AI/blob/main/docs/performance-benchmarking.md)
 - 💬 **Discussions**: [GitHub Discussions](https://github.com/KoshiHQ/GenOps-AI/discussions)
 - 🐛 **Issues**: [GitHub Issues](https://github.com/KoshiHQ/GenOps-AI/issues)
 
