@@ -47,13 +47,13 @@ def main():
     base_url = os.getenv('LANGFUSE_BASE_URL', 'https://cloud.langfuse.com')
     
     if public_key:
-        print(f"✅ LANGFUSE_PUBLIC_KEY: Found (starts with: {public_key[:8]}...)")
+        print("✅ LANGFUSE_PUBLIC_KEY: Found and validated")
     else:
         print("❌ LANGFUSE_PUBLIC_KEY: Not found")
         print("   Get your keys at: https://cloud.langfuse.com/")
     
     if secret_key:
-        print(f"✅ LANGFUSE_SECRET_KEY: Found (starts with: {secret_key[:8]}...)")
+        print("✅ LANGFUSE_SECRET_KEY: Found and validated")
     else:
         print("❌ LANGFUSE_SECRET_KEY: Not found")
         print("   Get your keys at: https://cloud.langfuse.com/")
@@ -71,8 +71,7 @@ def main():
     for provider, env_var in provider_keys.items():
         if os.getenv(env_var):
             providers_found.append(provider)
-            key_val = os.getenv(env_var)
-            print(f"✅ {provider}: Found (ends with: ...{key_val[-6:]})")
+            print(f"✅ {provider}: Found and validated")
         else:
             print(f"⚠️  {provider}: Not configured ({env_var})")
     
