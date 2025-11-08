@@ -596,7 +596,8 @@ def demonstrate_advanced_governance_features(adapter) -> Dict[str, Any]:
         
         governance_results['policy_enforcement'].append(policy_result)
         
-        print(f"   • {policy['name']}: {'✅ Compliant' if policy_result['violations_detected'] == 0 else f'⚠️  {policy_result[\"violations_detected\"]} violations'}")
+        status = '✅ Compliant' if policy_result['violations_detected'] == 0 else f'⚠️  {policy_result["violations_detected"]} violations'
+        print(f"   • {policy['name']}: {status}")
     
     # 2. Access Control Demonstration
     print(f"\n🔐 Access Control:")
