@@ -244,7 +244,7 @@ As governance needs grow beyond what the framework can handle alone, teams typic
 - ✅ [PostHog](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/posthog) (<a href="https://posthog.com/" target="_blank">↗</a>)
 - ✅ [Perplexity AI](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/perplexity) (<a href="https://www.perplexity.ai/" target="_blank">↗</a>)
 - ✅ [Together AI](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/together) (<a href="https://www.together.ai/" target="_blank">↗</a>)
-- ☐ Fireworks AI (<a href="https://fireworks.ai/" target="_blank">↗</a>)
+- ✅ [Fireworks AI](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/fireworks) (<a href="https://fireworks.ai/" target="_blank">↗</a>)
 - ☐ Haystack (<a href="https://haystack.deepset.ai/" target="_blank">↗</a>)
 - ☐ CrewAI (<a href="https://www.crewai.com/" target="_blank">↗</a>)
 - ☐ AutoGen (<a href="https://github.com/microsoft/autogen" target="_blank">↗</a>)
