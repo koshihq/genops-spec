@@ -219,11 +219,7 @@ class GenOpsFireworksAdapter:
         self.pricing_calc = FireworksPricingCalculator()
         
         # Initialize telemetry
-        self.telemetry = GenOpsTelemetry(
-            service_name=f"fireworks-{self.project}",
-            team=self.team,
-            environment=self.environment
-        )
+        self.telemetry = GenOpsTelemetry(tracer_name="fireworks")
         
         # Session tracking
         self.active_sessions: Dict[str, FireworksSessionContext] = {}
