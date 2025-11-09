@@ -889,16 +889,19 @@ def interactive_setup_wizard() -> Dict[str, Any]:
         print()
         print("adapter = GenOpsPerplexityAdapter(")
         for key, value in config.items():
-            # Security: Don't log sensitive information
-            if key.lower() in ('api_key', 'password', 'token', 'secret'):
-                if isinstance(value, str):
-                    print(f"    {key}=\"***REDACTED***\",")
+            # Security: Use comprehensive sanitization for all sensitive fields
+            sanitized_value = _sanitize_sensitive_field(key, value)
+            # Security: Verify sanitization was applied to prevent sensitive data leakage
+            if sanitized_value == "***REDACTED***" or key in {
+                'team', 'project', 'environment', 'daily_budget_limit',
+                'monthly_budget_limit', 'governance_policy', 'enable_cost_alerts',
+                'customer_id', 'cost_center', 'default_model', 'default_search_context',
+                'enable_caching', 'retry_attempts', 'timeout_seconds', 'tags'
+            }:
+                if isinstance(sanitized_value, str):
+                    print(f"    {key}=\"{sanitized_value}\",")
                 else:
-                    print(f"    {key}=\"***REDACTED***\",")
-            elif isinstance(value, str):
-                print(f"    {key}=\"{value}\",")
-            else:
-                print(f"    {key}={value},")
+                    print(f"    {key}={sanitized_value},")
         print(")")
         print("```")
         
@@ -906,6 +909,39 @@ def interactive_setup_wizard() -> Dict[str, Any]:
         print("❌ Configuration validation failed. Please check the issues above.")
     
     return config
+
+
+def _sanitize_sensitive_field(field_name: str, value: Any) -> Any:
+    """
+    Comprehensive sanitization for sensitive fields.
+    
+    Ensures no sensitive data can be logged regardless of type or content.
+    Uses allowlist approach - only explicitly safe fields pass through.
+    """
+    # Define comprehensive patterns for sensitive field detection
+    sensitive_patterns = {
+        'key', 'token', 'secret', 'password', 'credential', 'auth',
+        'private', 'secure', 'sensitive', 'confidential', 'restricted'
+    }
+    
+    # Check field name against all sensitive patterns
+    field_lower = field_name.lower()
+    if any(pattern in field_lower for pattern in sensitive_patterns):
+        return "***REDACTED***"
+    
+    # Allowlist of explicitly safe configuration fields
+    safe_fields = {
+        'team', 'project', 'environment', 'daily_budget_limit',
+        'monthly_budget_limit', 'governance_policy', 'enable_cost_alerts',
+        'customer_id', 'cost_center', 'default_model', 'default_search_context',
+        'enable_caching', 'retry_attempts', 'timeout_seconds', 'tags'
+    }
+    
+    if field_name in safe_fields:
+        return value
+    else:
+        # Any unknown field is treated as potentially sensitive
+        return "***REDACTED***"
 
 
 # Convenience exports

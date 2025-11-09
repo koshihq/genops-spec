@@ -462,13 +462,33 @@ GENOPS_RETRY_ATTEMPTS={self.config.retry_attempts}
 GENOPS_TIMEOUT_SECONDS={self.config.timeout_seconds}
 """
         
-        with open('.env.perplexity', 'w') as f:
-            f.write(env_content)
+        # Security: Verify env_content doesn't contain actual sensitive data before writing
+        if 'pplx-your-api-key-here' in env_content or not any(
+            line.startswith('PERPLEXITY_API_KEY=pplx-') and 'your-api-key-here' not in line 
+            for line in env_content.split('\n')
+        ):
+            with open('.env.perplexity', 'w') as f:
+                f.write(env_content)
+        else:
+            # This should not happen with current logic, but prevents any actual API keys from being written
+            raise ValueError("Security check failed: attempted to write actual API key to file")
         
         print(f"   ✅ Generated .env.perplexity")
         if self.config.api_key and self.config.api_key.startswith('pplx-'):
             print(f"   🔐 Security: API key not written to file - please set it manually")
             print(f"   💡 Run: export PERPLEXITY_API_KEY='your-actual-key'")
+    
+    def _get_optional_customer_id(self):
+        """Get optional customer_id for code generation."""
+        if self.config.customer_id:
+            return f'\n        customer_id="{self.config.customer_id}",'
+        return ""
+    
+    def _get_optional_cost_center(self):
+        """Get optional cost_center for code generation."""
+        if self.config.cost_center:
+            return f'\n        cost_center="{self.config.cost_center}",'
+        return ""
     
     def _generate_example_code(self):
         """Generate working example code."""
@@ -501,9 +521,7 @@ def main():
         daily_budget_limit={self.config.daily_budget_limit},
         monthly_budget_limit={self.config.monthly_budget_limit},
         governance_policy="{self.config.governance_policy}",
-        enable_cost_alerts={self.config.enable_cost_alerts},{f'''
-        customer_id="{self.config.customer_id}",''' if self.config.customer_id else ""}{f'''
-        cost_center="{self.config.cost_center}",''' if self.config.cost_center else ""}
+        enable_cost_alerts={self.config.enable_cost_alerts},{self._get_optional_customer_id()}{self._get_optional_cost_center()}
         tags={self.config.tags or {{}}}
     )
     
