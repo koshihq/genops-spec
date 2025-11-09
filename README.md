@@ -242,7 +242,7 @@ As governance needs grow beyond what the framework can handle alone, teams typic
 - ✅ [Weights & Biases](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/wandb) (<a href="https://wandb.ai/" target="_blank">↗</a>)
 - ✅ [Arize AI](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/arize) (<a href="https://arize.com/" target="_blank">↗</a>)
 - ✅ [PostHog](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/posthog) (<a href="https://posthog.com/" target="_blank">↗</a>)
-- ☐ Perplexity AI (<a href="https://www.perplexity.ai/" target="_blank">↗</a>)
+- ✅ [Perplexity AI](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/perplexity) (<a href="https://www.perplexity.ai/" target="_blank">↗</a>)
 - ☐ Together AI (<a href="https://www.together.ai/" target="_blank">↗</a>)
 - ☐ Fireworks AI (<a href="https://fireworks.ai/" target="_blank">↗</a>)
 - ☐ Haystack (<a href="https://haystack.deepset.ai/" target="_blank">↗</a>)
