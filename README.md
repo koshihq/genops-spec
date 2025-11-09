@@ -240,7 +240,7 @@ As governance needs grow beyond what the framework can handle alone, teams typic
 - ✅ [Traceloop + OpenLLMetry](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/traceloop) (<a href="https://traceloop.com/" target="_blank">↗</a>)
 - ✅ [PromptLayer](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/promptlayer) (<a href="https://promptlayer.com/" target="_blank">↗</a>)
 - ✅ [Weights & Biases](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/wandb) (<a href="https://wandb.ai/" target="_blank">↗</a>)
-- ☐ Arize AI (<a href="https://arize.com/" target="_blank">↗</a>)
+- ✅ [Arize AI](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/arize) (<a href="https://arize.com/" target="_blank">↗</a>)
 - ☐ PostHog (<a href="https://posthog.com/" target="_blank">↗</a>)
 - ☐ Perplexity AI (<a href="https://www.perplexity.ai/" target="_blank">↗</a>)
 - ☐ Together AI (<a href="https://www.together.ai/" target="_blank">↗</a>)
