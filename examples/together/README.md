@@ -1,5 +1,16 @@
 # Together AI Examples
 
+## What is GenOps?
+
+**GenOps AI** is a governance telemetry layer built on OpenTelemetry that provides cost tracking, budget enforcement, and compliance monitoring for AI systems. It extends your existing observability stack with AI-specific governance capabilities without replacing your current tools.
+
+**Key Benefits:**
+- **Cost Transparency**: Real-time cost tracking across all AI operations
+- **Budget Controls**: Configurable spending limits with enforcement policies
+- **Multi-tenant Governance**: Per-team, per-project, per-customer attribution
+- **Vendor Independence**: Works with 15+ observability platforms via OpenTelemetry
+- **Zero Code Changes**: Auto-instrumentation for existing applications
+
 This directory contains comprehensive examples demonstrating GenOps governance telemetry integration with Together AI's 200+ open-source models.
 
 ## 🚀 Quick Start
@@ -7,11 +18,11 @@ This directory contains comprehensive examples demonstrating GenOps governance t
 If you're new to GenOps + Together AI, start here:
 
 ```bash
-# Install dependencies
+# Install GenOps with Together AI support
 pip install genops-ai[together] together
 
 # Set up your API key
-export TOGETHER_API_KEY="your_together_key_here"
+export TOGETHER_API_KEY="your_together_api_key_here"
 
 # Run setup validation
 python setup_validation.py
@@ -85,7 +96,7 @@ Each example includes:
 pip install genops-ai[together] together
 
 # Set environment variables
-export TOGETHER_API_KEY="your_together_api_key"
+export TOGETHER_API_KEY="your_together_api_key_here"
 export OTEL_SERVICE_NAME="together-examples"
 export OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:4317"  # Optional
 ```

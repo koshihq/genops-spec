@@ -20,14 +20,11 @@ import os
 import sys
 from decimal import Decimal
 
-# Add project root to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
-
 try:
-    from src.genops.providers.together import GenOpsTogetherAdapter, TogetherModel
+    from genops.providers.together import GenOpsTogetherAdapter, TogetherModel
 except ImportError as e:
     print(f"❌ Import error: {e}")
-    print("Please run setup_validation.py first to verify your installation")
+    print("Please install GenOps: pip install genops-ai[together]")
     sys.exit(1)
 
 

@@ -19,16 +19,13 @@ import os
 import sys
 import asyncio
 
-# Add project root to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
-
 try:
-    from src.genops.providers.together import auto_instrument, TogetherModel
+    from genops.providers.together import auto_instrument, TogetherModel
     # Standard Together AI import (what users already have)
     from together import Together
 except ImportError as e:
     print(f"❌ Import error: {e}")
-    print("Please install: pip install together")
+    print("Please install: pip install genops-ai[together] together")
     print("Then run: python setup_validation.py")
     sys.exit(1)
 

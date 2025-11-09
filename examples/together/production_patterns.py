@@ -27,15 +27,13 @@ from decimal import Decimal
 from typing import Dict, List, Any, Optional, Generator
 from dataclasses import dataclass
 
-# Add project root to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
-
 try:
-    from src.genops.providers.together import GenOpsTogetherAdapter, TogetherModel, TogetherTaskType
-    from src.genops.core.exceptions import GenOpsBudgetExceededError, GenOpsConfigurationError
+    from genops.providers.together import GenOpsTogetherAdapter, TogetherModel
+    from genops.core.exceptions import GenOpsBudgetExceededError, GenOpsConfigurationError
 except ImportError as e:
     print(f"❌ Import error: {e}")
-    print("Please run setup_validation.py first")
+    print("Please install: pip install genops-ai[together]")
+    print("Then run: python setup_validation.py")
     sys.exit(1)
 
 # Configure logging for production patterns

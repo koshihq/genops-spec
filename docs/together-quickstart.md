@@ -1,5 +1,16 @@
 # Together AI Quickstart Guide
 
+## What is GenOps?
+
+**GenOps AI** is a governance telemetry layer built on OpenTelemetry that provides cost tracking, budget enforcement, and compliance monitoring for AI systems. It extends your existing observability stack with AI-specific governance capabilities without replacing your current tools.
+
+**Key Benefits:**
+- **Cost Transparency**: Real-time cost tracking across all AI operations
+- **Budget Controls**: Configurable spending limits with enforcement policies
+- **Multi-tenant Governance**: Per-team, per-project, per-customer attribution
+- **Vendor Independence**: Works with 15+ observability platforms via OpenTelemetry
+- **Zero Code Changes**: Auto-instrumentation for existing applications
+
 Get started with Together AI + GenOps governance in under 5 minutes. This guide provides the essential patterns for immediate productivity.
 
 ## ⚡ 5-Minute Quick Start
@@ -190,7 +201,7 @@ print(f"Budget utilization: {cost_summary['daily_budget_utilization']:.1f}%")
 ## 📚 Learn More
 
 - **[Complete Examples](../examples/together/)** - 7 comprehensive examples from basic to enterprise
-- **[Together AI Integration Guide](./integrations/together.md)** - Full documentation and advanced patterns
+- **[Together AI Integration Guide](integrations/together.md)** - Full documentation and advanced patterns
 - **[Cost Optimization Guide](../examples/together/cost_optimization.py)** - Multi-model cost analysis
 - **[Production Patterns](../examples/together/production_patterns.py)** - Enterprise deployment examples
 

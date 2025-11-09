@@ -21,16 +21,13 @@ import sys
 from datetime import datetime
 from typing import Dict, Any, Optional, List
 
-# Add project root to path for imports  
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
-
 try:
-    from src.genops.providers.together_validation import validate_together_setup
-    from src.genops.providers.together_pricing import TogetherPricingCalculator
-    from src.genops.providers.together import TogetherModel
+    from genops.providers.together_validation import validate_together_setup
+    from genops.providers.together_pricing import TogetherPricingCalculator
+    from genops.providers.together import TogetherModel
 except ImportError as e:
     print(f"❌ Import error: {e}")
-    print("Please ensure you're running from the project root directory")
+    print("Please install: pip install genops-ai[together]")
     sys.exit(1)
 
 
