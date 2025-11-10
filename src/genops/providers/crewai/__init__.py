@@ -37,14 +37,14 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-# Pre-import critical exports to ensure they're available for __all__
+# Define create_chain_cost_context at module level for CodeQL compliance
 try:
-    from genops.providers.crewai.cost_aggregator import create_chain_cost_context as _create_chain_cost_context
+    from genops.providers.crewai.cost_aggregator import create_chain_cost_context
 except ImportError:
-    def _create_chain_cost_context(chain_id: str):
+    def create_chain_cost_context(chain_id: str):
         """Fallback implementation if cost_aggregator is not available."""
-        from genops.providers.crewai.cost_aggregator import create_chain_cost_context
-        return create_chain_cost_context(chain_id)
+        from genops.providers.crewai.cost_aggregator import create_chain_cost_context as _real_func
+        return _real_func(chain_id)
 
 # Lazy import registry to avoid circular dependencies
 _import_cache = {}
@@ -421,11 +421,6 @@ def __getattr__(name: str) -> Any:
         return _import_cache[name]
     
     # Cost aggregator imports
-    elif name == 'create_chain_cost_context':
-        # Use pre-imported function to ensure it's always available
-        _import_cache['create_chain_cost_context'] = _create_chain_cost_context
-        return _create_chain_cost_context
-        
     elif name in ('CrewAICostAggregator', 'AgentCostEntry', 'CrewCostSummary',
                   'ProviderCostSummary', 'CostOptimizationRecommendation', 
                   'CostAnalysisResult', 'ProviderType', 'create_crewai_cost_context',
