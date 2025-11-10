@@ -37,7 +37,11 @@ import traceback
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from decimal import Decimal
-from typing import Any, Dict, List, Optional, Set, Callable, Union, Tuple
+from typing import Any, Dict, List, Optional, Set, Callable, Union, Tuple, TYPE_CHECKING
+
+# TYPE_CHECKING imports to avoid circular imports
+if TYPE_CHECKING:
+    from genops.providers.haystack_cost_aggregator import HaystackCostAggregator, ComponentCostEntry
 from datetime import datetime, timedelta
 import threading
 from collections import defaultdict, deque
@@ -52,7 +56,6 @@ from opentelemetry.metrics import Counter, Histogram, ObservableGauge
 
 # GenOps imports
 from genops.core.telemetry import GenOpsTelemetry
-from genops.providers.haystack_cost_aggregator import HaystackCostAggregator, ComponentCostEntry
 
 logger = logging.getLogger(__name__)
 
@@ -175,7 +178,7 @@ class AgentWorkflowMetrics:
 class ComponentMonitor:
     """Monitor for individual Haystack components."""
     
-    def __init__(self, telemetry: GenOpsTelemetry, cost_aggregator: HaystackCostAggregator):
+    def __init__(self, telemetry: GenOpsTelemetry, cost_aggregator: Optional['HaystackCostAggregator'] = None):
         self.telemetry = telemetry
         self.cost_aggregator = cost_aggregator
         
@@ -1128,8 +1131,9 @@ class HaystackMonitor:
         # Initialize telemetry
         self.telemetry = GenOpsTelemetry(tracer_name="haystack-monitor")
         
-        # Initialize cost aggregator
-        self.cost_aggregator = HaystackCostAggregator()
+        # Initialize cost aggregator with lazy import
+        self.cost_aggregator = None
+        self._lazy_init_cost_aggregator()
         
         # Initialize component monitor
         self.component_monitor = ComponentMonitor(self.telemetry, self.cost_aggregator)
@@ -1138,6 +1142,15 @@ class HaystackMonitor:
         self._execution_results: Dict[str, PipelineExecutionMetrics] = {}
         
         logger.info(f"Haystack monitor initialized for team '{team}', project '{project}'")
+    
+    def _lazy_init_cost_aggregator(self):
+        """Lazily initialize cost aggregator to avoid circular imports."""
+        try:
+            from genops.providers.haystack_cost_aggregator import HaystackCostAggregator
+            self.cost_aggregator = HaystackCostAggregator()
+        except ImportError as e:
+            logger.warning(f"Could not initialize cost aggregator: {e}")
+            self.cost_aggregator = None
     
     @contextmanager
     def monitor_pipeline(self, pipeline: Pipeline, pipeline_name: str, **governance_attrs):

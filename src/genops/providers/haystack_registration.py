@@ -34,13 +34,14 @@ import logging
 import sys
 import threading
 import weakref
-from typing import Any, Callable, Dict, List, Optional, Set, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Set, Type, Union, TYPE_CHECKING
 import inspect
 
-# GenOps imports
-from genops.providers.haystack_adapter import GenOpsHaystackAdapter
-from genops.providers.haystack_monitor import HaystackMonitor
-from genops.providers.haystack_cost_aggregator import HaystackCostAggregator
+# GenOps imports - using TYPE_CHECKING to avoid circular imports
+if TYPE_CHECKING:
+    from genops.providers.haystack_adapter import GenOpsHaystackAdapter
+    from genops.providers.haystack_monitor import HaystackMonitor
+    from genops.providers.haystack_cost_aggregator import HaystackCostAggregator
 
 logger = logging.getLogger(__name__)
 
@@ -69,9 +70,9 @@ class InstrumentationRegistry:
         self.is_instrumented = False
         self.instrumented_classes: Set[Type] = set()
         self.original_methods: Dict[str, Callable] = {}
-        self.adapter: Optional[GenOpsHaystackAdapter] = None
-        self.monitor: Optional[HaystackMonitor] = None
-        self.cost_aggregator: Optional[HaystackCostAggregator] = None
+        self.adapter: Optional['GenOpsHaystackAdapter'] = None
+        self.monitor: Optional['HaystackMonitor'] = None
+        self.cost_aggregator: Optional['HaystackCostAggregator'] = None
         self._lock = threading.RLock()
         
         # Configuration
@@ -120,6 +121,11 @@ class InstrumentationRegistry:
     
     def _initialize_components(self):
         """Initialize GenOps components with current configuration."""
+        # Import at runtime to avoid circular imports
+        from genops.providers.haystack_adapter import GenOpsHaystackAdapter
+        from genops.providers.haystack_monitor import HaystackMonitor
+        from genops.providers.haystack_cost_aggregator import HaystackCostAggregator
+        
         self.adapter = GenOpsHaystackAdapter(
             team=self.config["team"],
             project=self.config["project"], 
@@ -220,7 +226,7 @@ def _create_instrumented_pipeline_run():
                             if node:
                                 component_type = node.__class__.__name__
                                 
-                                # Create component result for tracking
+                                # Import at runtime to avoid circular imports
                                 from genops.providers.haystack_adapter import HaystackComponentResult
                                 from decimal import Decimal
                                 
@@ -545,12 +551,12 @@ def disable_auto_instrumentation():
             logger.error(f"Error disabling auto-instrumentation: {e}")
 
 
-def get_current_adapter() -> Optional[GenOpsHaystackAdapter]:
+def get_current_adapter() -> Optional['GenOpsHaystackAdapter']:
     """Get the current auto-instrumentation adapter."""
     return _registry.adapter
 
 
-def get_current_monitor() -> Optional[HaystackMonitor]:
+def get_current_monitor() -> Optional['HaystackMonitor']:
     """Get the current auto-instrumentation monitor."""
     return _registry.monitor
 

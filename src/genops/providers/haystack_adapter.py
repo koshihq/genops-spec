@@ -34,7 +34,12 @@ import uuid
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from decimal import Decimal
-from typing import Any, Dict, List, Optional, Set, Union
+from typing import Any, Dict, List, Optional, Set, Union, TYPE_CHECKING
+
+# TYPE_CHECKING imports to avoid circular imports
+if TYPE_CHECKING:
+    from genops.providers.haystack_cost_aggregator import HaystackCostAggregator
+    from genops.providers.haystack_monitor import HaystackMonitor
 from datetime import datetime
 import random
 from functools import wraps
@@ -339,43 +344,11 @@ class GenOpsHaystackAdapter:
         # Initialize error tracking
         self.initialization_errors = []
         
-        # Initialize cost aggregator and monitor
-        try:
-            from genops.providers.haystack_cost_aggregator import HaystackCostAggregator
-            from genops.providers.haystack_monitor import HaystackMonitor
-            self.cost_aggregator = HaystackCostAggregator()
-            self.monitor = HaystackMonitor(team=team, project=project)
-        except ImportError as e:
-            error_msg = (
-                f"❌ GenOps Haystack components not available: {e}\n\n"
-                "🔧 Quick Fix:\n"
-                "   pip install --upgrade genops-ai[haystack]\n\n"
-                "🔍 Validate installation:\n"
-                "   python scripts/validate_setup.py\n\n"
-                "📚 If issues persist, see: docs/troubleshooting.md"
-            )
-            logger.warning(error_msg)
-            
-            # Initialize with None but provide helpful context
-            self.cost_aggregator = None
-            self.monitor = None
-            
-            # Store error details for diagnostics
-            self.initialization_errors = [f"Cost aggregator/monitor: {e}"]
-        except Exception as e:
-            error_msg = (
-                f"❌ Unexpected error initializing GenOps components: {e}\n\n"
-                "🔧 Troubleshooting steps:\n"
-                "   1. python scripts/validate_setup.py --detailed\n"
-                "   2. pip install --force-reinstall genops-ai[haystack]\n"
-                "   3. Check OpenTelemetry configuration\n\n"
-                "📚 Documentation: docs/integrations/haystack.md#troubleshooting"
-            )
-            logger.error(error_msg)
-            
-            self.cost_aggregator = None
-            self.monitor = None
-            self.initialization_errors = [f"Unexpected error: {e}"]
+        # Initialize cost aggregator and monitor with lazy imports
+        self.cost_aggregator = None
+        self.monitor = None
+        self._lazy_init_components(team, project)
+        
         
         # Cost tracking
         self._daily_costs = Decimal("0.00")
@@ -412,6 +385,47 @@ class GenOpsHaystackAdapter:
         }
         
         logger.info(f"GenOps Haystack adapter initialized for team '{team}', project '{project}'")
+    
+    def _lazy_init_components(self, team: str, project: str):
+        """Lazily initialize components to avoid circular imports."""
+        try:
+            from genops.providers.haystack_cost_aggregator import HaystackCostAggregator
+            from genops.providers.haystack_monitor import HaystackMonitor
+            
+            self.cost_aggregator = HaystackCostAggregator()
+            self.monitor = HaystackMonitor(team=team, project=project)
+            
+        except ImportError as e:
+            error_msg = (
+                f"❌ GenOps Haystack components not available: {e}\n\n"
+                "🔧 Quick Fix:\n"
+                "   pip install --upgrade genops-ai[haystack]\n\n"
+                "🔍 Validate installation:\n"
+                "   python scripts/validate_setup.py\n\n"
+                "📚 If issues persist, see: docs/troubleshooting.md"
+            )
+            logger.warning(error_msg)
+            
+            # Store error details for diagnostics
+            self.initialization_errors = [f"Cost aggregator/monitor: {e}"]
+            
+        except Exception as e:
+            error_msg = (
+                f"❌ Unexpected error initializing GenOps components: {e}\n\n"
+                "🔧 Troubleshooting steps:\n"
+                "   1. python scripts/validate_setup.py --detailed\n"
+                "   2. pip install --force-reinstall genops-ai[haystack]\n"
+                "   3. Check OpenTelemetry configuration\n\n"
+                "📚 Documentation: docs/integrations/haystack.md#troubleshooting"
+            )
+            logger.error(error_msg)
+            
+            self.initialization_errors = [f"Unexpected error: {e}"]
+    
+    def _ensure_components_initialized(self):
+        """Ensure components are initialized before use."""
+        if self.cost_aggregator is None or self.monitor is None:
+            self._lazy_init_components(self.team, self.project)
     
     @contextmanager
     def track_pipeline(self, pipeline_name: str, **governance_attrs):
@@ -750,6 +764,7 @@ class GenOpsHaystackAdapter:
         Returns:
             Dictionary with cost breakdown, budget utilization, and error statistics
         """
+        self._ensure_components_initialized()
         daily_budget_utilization = (
             (float(self._daily_costs) / self.daily_budget_limit) * 100 
             if self.daily_budget_limit > 0 else 0
