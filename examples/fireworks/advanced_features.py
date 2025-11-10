@@ -26,7 +26,7 @@ import time
 
 try:
     from genops.providers.fireworks import FireworksModel, GenOpsFireworksAdapter
-    from genops.providers.fireworks_pricing import FireworksPricingCalculator
+    # FireworksPricingCalculator import removed as unused
 except ImportError as e:
     print(f"❌ Import error: {e}")
     print("Please install: pip install genops-ai[fireworks]")

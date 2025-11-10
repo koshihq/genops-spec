@@ -23,7 +23,8 @@ try:
     # Standard Fireworks AI import (what users already have)
     from fireworks.client import Fireworks
 
-    from genops.providers.fireworks import FireworksModel, auto_instrument
+    from genops.providers.fireworks import auto_instrument
+    # FireworksModel import removed as unused
 except ImportError as e:
     print(f"❌ Import error: {e}")
     print("Please install: pip install genops-ai[fireworks] fireworks-ai")

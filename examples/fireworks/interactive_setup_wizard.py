@@ -24,7 +24,8 @@ from dataclasses import asdict, dataclass
 from typing import Any, Dict, List
 
 try:
-    from genops.providers.fireworks import FireworksModel, GenOpsFireworksAdapter
+    # FireworksModel and GenOpsFireworksAdapter imports removed as unused
+    pass  # Placeholder for removed imports
     from genops.providers.fireworks_pricing import FireworksPricingCalculator
     from genops.providers.fireworks_validation import validate_fireworks_setup
 except ImportError as e:

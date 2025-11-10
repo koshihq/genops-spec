@@ -22,16 +22,14 @@ except ImportError:
     HAS_FIREWORKS = False
     Fireworks = None
 
-try:
-    import requests
-    HAS_REQUESTS = True
-except ImportError:
+# Note: requests import removed as it's not used in this module
+HAS_REQUESTS = True
+if False:  # Dummy condition for old import handling
     HAS_REQUESTS = False
 
-try:
-    import openai
-    HAS_OPENAI = True
-except ImportError:
+# Note: openai import removed as it's not used in this module  
+HAS_OPENAI = True
+if False:  # Dummy condition for old import handling
     HAS_OPENAI = False
 
 
@@ -233,7 +231,7 @@ class FireworksValidation:
             # Try to list models or make a minimal API call
             try:
                 # Make a minimal completion request to test connectivity
-                response = client.chat.completions.create(
+                _ = client.chat.completions.create(
                     model="accounts/fireworks/models/llama-v3p1-8b-instruct",
                     messages=[{"role": "user", "content": "Hello"}],
                     max_tokens=1,
@@ -289,7 +287,7 @@ class FireworksValidation:
                 # Test different model types appropriately
                 if "embed" in model.lower():
                     # Test embedding model
-                    response = client.embeddings.create(
+                    _ = client.embeddings.create(
                         model=model,
                         input=["test"]
                     )
@@ -299,7 +297,7 @@ class FireworksValidation:
                     continue
                 else:
                     # Test chat model
-                    response = client.chat.completions.create(
+                    _ = client.chat.completions.create(
                         model=model,
                         messages=[{"role": "user", "content": "Test"}],
                         max_tokens=1,

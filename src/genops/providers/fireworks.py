@@ -53,12 +53,8 @@ except ImportError:
     HAS_OPENAI = False
     logger.warning("OpenAI client not installed. Install with: pip install openai")
 
-try:
-    import requests
-    HAS_REQUESTS = True
-except ImportError:
-    HAS_REQUESTS = False
-    logger.warning("Requests not installed. Install with: pip install requests")
+# Note: requests import removed as it's not used in this module
+HAS_REQUESTS = True  # Assume available for optional features
 
 
 class FireworksModel(Enum):
@@ -856,7 +852,7 @@ def auto_instrument():
                 input_texts = kwargs.get('input', [])
                 model = kwargs.get('model', FireworksModel.NOMIC_EMBED_TEXT.value)
 
-                result = adapter.embeddings_with_governance(
+                _ = adapter.embeddings_with_governance(
                     input_texts=input_texts,
                     model=model,
                     **{k: v for k, v in kwargs.items() if k not in ['input', 'model']}

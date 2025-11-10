@@ -30,7 +30,7 @@ from typing import Any, Dict, List, Optional
 try:
     from genops.core.exceptions import (
         GenOpsBudgetExceededError,
-        GenOpsConfigurationError,
+        # GenOpsConfigurationError removed as unused
     )
     from genops.providers.together import GenOpsTogetherAdapter, TogetherModel
 except ImportError as e:

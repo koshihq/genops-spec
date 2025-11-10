@@ -21,7 +21,8 @@ from decimal import Decimal
 from typing import Any, Dict, List
 
 try:
-    from genops.providers.together import GenOpsTogetherAdapter, TogetherModel
+    from genops.providers.together import GenOpsTogetherAdapter
+    # TogetherModel import removed as unused
     from genops.providers.together_pricing import TogetherPricingCalculator
 except ImportError as e:
     print(f"❌ Import error: {e}")

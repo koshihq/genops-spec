@@ -28,7 +28,7 @@ from typing import Any, Dict
 try:
     from genops.providers.fireworks import FireworksModel, GenOpsFireworksAdapter
     from genops.providers.fireworks_pricing import FireworksPricingCalculator
-    from genops.providers.fireworks_validation import validate_fireworks_setup
+    # validate_fireworks_setup import removed as unused
 except ImportError as e:
     print(f"❌ Import error: {e}")
     print("Please install: pip install genops-ai[fireworks]")

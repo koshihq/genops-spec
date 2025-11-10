@@ -69,15 +69,9 @@ def demonstrate_multimodal_operations():
 
         try:
             # Note: In real usage, you'd include actual image data
-            messages = [
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": task['prompt']},
-                        # {"type": "image_url", "image_url": {"url": "your-image-url"}}
-                    ]
-                }
-            ]
+            # Note: messages variable removed as unused in current demo
+            # In real usage, you'd structure multimodal messages like this:
+            # messages = [{"role": "user", "content": [{"type": "text", "text": task['prompt']}]}]
 
             # For demo purposes, use text-only with multimodal model
             result = adapter.chat_with_governance(
