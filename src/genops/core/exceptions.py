@@ -3,6 +3,7 @@ GenOps Core Exceptions
 
 Custom exception classes for GenOps AI governance operations.
 """
+from typing import Optional
 
 
 class GenOpsError(Exception):
@@ -12,8 +13,8 @@ class GenOpsError(Exception):
 
 class GenOpsBudgetExceededError(GenOpsError):
     """Raised when operation would exceed budget limits."""
-    
-    def __init__(self, message, budget_limit=None, current_cost=None, operation_cost=None):
+
+    def __init__(self, message: str, budget_limit: Optional[float] = None, current_cost: Optional[float] = None, operation_cost: Optional[float] = None) -> None:
         super().__init__(message)
         self.budget_limit = budget_limit
         self.current_cost = current_cost

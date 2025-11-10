@@ -56,10 +56,8 @@ Dependencies:
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timedelta
 from enum import Enum
-from typing import Dict, List, Optional, Tuple, Union
-
+from typing import Any, Dict, List, Optional, Union
 
 logger = logging.getLogger(__name__)
 
@@ -113,16 +111,16 @@ class ComputePricing:
     currency: str = "USD"
     committed_discount: float = 0.0  # Percentage discount for committed use
     spot_discount: float = 0.0       # Percentage discount for spot instances
-    
+
     def get_effective_price(self, use_committed: bool = False, use_spot: bool = False) -> float:
         """Calculate effective price with discounts."""
         price = self.price_per_hour
-        
+
         if use_committed:
             price *= (1 - self.committed_discount / 100)
         elif use_spot:
             price *= (1 - self.spot_discount / 100)
-        
+
         return price
 
 
@@ -165,7 +163,7 @@ class WandbPricingCalculator:
     Provides accurate cost calculations across compute, storage, data transfer,
     and platform services with support for multiple cloud providers and regions.
     """
-    
+
     def __init__(self, default_provider: CloudProvider = CloudProvider.AWS, default_region: str = "us-east-1"):
         """
         Initialize the pricing calculator.
@@ -177,12 +175,12 @@ class WandbPricingCalculator:
         self.default_provider = default_provider
         self.default_region = default_region
         self._initialize_pricing_data()
-        
+
         logger.info(f"W&B pricing calculator initialized (provider={default_provider.value}, region={default_region})")
-    
+
     def _initialize_pricing_data(self) -> None:
         """Initialize pricing data for compute, storage, and services."""
-        
+
         # Compute pricing data (prices per hour in USD, as of 2025)
         self.compute_pricing = {
             # AWS pricing
@@ -214,7 +212,7 @@ class WandbPricingCalculator:
                 ResourceType.GPU_T4, CloudProvider.AWS, "us-east-1", 0.35,
                 committed_discount=20.0, spot_discount=60.0
             ),
-            
+
             # GCP pricing
             (CloudProvider.GCP, ResourceType.CPU_SMALL, "us-central1"): ComputePricing(
                 ResourceType.CPU_SMALL, CloudProvider.GCP, "us-central1", 0.0475,
@@ -244,7 +242,7 @@ class WandbPricingCalculator:
                 ResourceType.TPU_V4, CloudProvider.GCP, "us-central1", 2.40,
                 committed_discount=30.0, spot_discount=60.0
             ),
-            
+
             # Azure pricing
             (CloudProvider.AZURE, ResourceType.CPU_SMALL, "eastus"): ComputePricing(
                 ResourceType.CPU_SMALL, CloudProvider.AZURE, "eastus", 0.0496,
@@ -258,14 +256,14 @@ class WandbPricingCalculator:
                 ResourceType.GPU_A100, CloudProvider.AZURE, "eastus", 3.12,
                 committed_discount=25.0, spot_discount=40.0
             ),
-            
+
             # Local/on-premises (estimated costs)
             (CloudProvider.LOCAL, ResourceType.GPU_V100, "local"): ComputePricing(
                 ResourceType.GPU_V100, CloudProvider.LOCAL, "local", 0.50,  # Amortized hardware cost
                 committed_discount=0.0, spot_discount=0.0
             ),
         }
-        
+
         # Storage pricing data (prices per GB-month in USD)
         self.storage_pricing = {
             StorageTier.STANDARD: StoragePricing(
@@ -286,14 +284,14 @@ class WandbPricingCalculator:
                 StorageTier.NVME, AccessPattern.FREQUENT, 0.16
             ),
         }
-        
+
         # Data transfer pricing
         self.data_transfer_pricing = DataTransferPricing(
             ingress_cost_per_gb=0.0,      # Free ingress
             egress_cost_per_gb=0.09,       # Standard egress rate
             api_cost_per_request=0.0004    # API call cost
         )
-        
+
         # W&B platform pricing
         self.platform_pricing = {
             "free": PlatformPricing(
@@ -306,7 +304,7 @@ class WandbPricingCalculator:
                 "enterprise", 50.0, 0.002, 0.0002, 0.015, 0.00005
             )
         }
-    
+
     def calculate_compute_cost(
         self,
         resource_type: Union[ResourceType, str],
@@ -334,29 +332,29 @@ class WandbPricingCalculator:
         """
         if isinstance(resource_type, str):
             resource_type = ResourceType(resource_type)
-        
+
         provider = provider or self.default_provider
         region = region or self.default_region
-        
+
         # Get pricing for the resource
         pricing_key = (provider, resource_type, region)
         pricing = self.compute_pricing.get(pricing_key)
-        
+
         if not pricing:
             # Try to find pricing for similar region or fallback
             pricing = self._find_fallback_compute_pricing(provider, resource_type, region)
-        
+
         if not pricing:
             # Use default pricing based on resource type
             pricing = self._get_default_compute_pricing(resource_type)
-        
+
         effective_price = pricing.get_effective_price(use_committed, use_spot)
         total_cost = effective_price * hours * instance_count
-        
+
         logger.debug(f"Compute cost: {resource_type.value} x{instance_count} for {hours}h = ${total_cost:.4f}")
-        
+
         return total_cost
-    
+
     def calculate_storage_cost(
         self,
         size_gb: float,
@@ -384,27 +382,27 @@ class WandbPricingCalculator:
             tier = StorageTier(tier)
         if isinstance(access_pattern, str):
             access_pattern = AccessPattern(access_pattern)
-        
+
         pricing = self.storage_pricing.get(tier)
         if not pricing:
             pricing = self.storage_pricing[StorageTier.STANDARD]  # Fallback
-        
+
         # Calculate storage cost (GB-months)
         gb_months = (size_gb * days) / 30.0
         storage_cost = gb_months * pricing.price_per_gb_month
-        
+
         # Calculate retrieval cost
         retrieval_cost = retrieval_gb * pricing.retrieval_cost_per_gb
-        
+
         # Calculate API cost
         api_cost = api_requests * pricing.api_cost_per_request
-        
+
         total_cost = storage_cost + retrieval_cost + api_cost
-        
+
         logger.debug(f"Storage cost: {size_gb}GB for {days} days = ${total_cost:.4f}")
-        
+
         return total_cost
-    
+
     def calculate_data_transfer_cost(
         self,
         ingress_gb: float = 0.0,
@@ -423,17 +421,17 @@ class WandbPricingCalculator:
             Total data transfer cost in USD
         """
         pricing = self.data_transfer_pricing
-        
+
         ingress_cost = ingress_gb * pricing.ingress_cost_per_gb
         egress_cost = egress_gb * pricing.egress_cost_per_gb
         api_cost = api_requests * pricing.api_cost_per_request
-        
+
         total_cost = ingress_cost + egress_cost + api_cost
-        
+
         logger.debug(f"Data transfer cost: {ingress_gb}GB in + {egress_gb}GB out + {api_requests} API = ${total_cost:.4f}")
-        
+
         return total_cost
-    
+
     def calculate_platform_cost(
         self,
         plan_type: str = "team",
@@ -460,20 +458,20 @@ class WandbPricingCalculator:
             Total platform cost in USD
         """
         pricing = self.platform_pricing.get(plan_type, self.platform_pricing["team"])
-        
+
         monthly_cost = users * pricing.monthly_cost_per_user
         experiment_cost = experiments * pricing.experiment_tracking_cost
         artifact_cost = artifacts * pricing.artifact_storage_cost
         storage_cost = additional_storage_gb * pricing.additional_storage_cost
         api_cost = api_calls * pricing.api_call_cost
-        
+
         monthly_total = monthly_cost + experiment_cost + artifact_cost + storage_cost + api_cost
         total_cost = monthly_total * months
-        
+
         logger.debug(f"Platform cost ({plan_type}): {users} users, {experiments} experiments for {months} months = ${total_cost:.4f}")
-        
+
         return total_cost
-    
+
     def calculate_experiment_total_cost(
         self,
         compute_hours: float,
@@ -514,20 +512,20 @@ class WandbPricingCalculator:
             provider=provider,
             region=region
         )
-        
+
         storage_cost = self.calculate_storage_cost(
             size_gb=storage_gb,
             days=experiment_duration_days * 30,  # Convert to storage days
             retrieval_gb=data_download_gb,
             api_requests=api_calls // 2  # Assume half are storage API calls
         )
-        
+
         transfer_cost = self.calculate_data_transfer_cost(
             ingress_gb=data_upload_gb,
             egress_gb=data_download_gb,
             api_requests=api_calls
         )
-        
+
         platform_cost = self.calculate_platform_cost(
             plan_type=plan_type,
             users=1,
@@ -535,9 +533,9 @@ class WandbPricingCalculator:
             artifacts=artifacts_count,
             api_calls=api_calls
         )
-        
+
         total_cost = compute_cost + storage_cost + transfer_cost + platform_cost
-        
+
         cost_breakdown = {
             "compute_cost": compute_cost,
             "storage_cost": storage_cost,
@@ -545,11 +543,11 @@ class WandbPricingCalculator:
             "platform_cost": platform_cost,
             "total_cost": total_cost
         }
-        
+
         logger.info(f"Total experiment cost: ${total_cost:.4f} (compute: ${compute_cost:.4f}, storage: ${storage_cost:.4f}, transfer: ${transfer_cost:.4f}, platform: ${platform_cost:.4f})")
-        
+
         return cost_breakdown
-    
+
     def estimate_monthly_cost(
         self,
         experiments_per_month: int,
@@ -577,13 +575,13 @@ class WandbPricingCalculator:
             storage_gb=avg_storage_gb,
             plan_type=plan_type
         )
-        
+
         # Scale by number of experiments
         monthly_experiment_costs = {
-            key: value * experiments_per_month 
+            key: value * experiments_per_month
             for key, value in experiment_cost.items()
         }
-        
+
         # Add team subscription cost
         team_subscription_cost = self.calculate_platform_cost(
             plan_type=plan_type,
@@ -591,14 +589,14 @@ class WandbPricingCalculator:
             experiments=0,  # Already counted above
             months=1
         )
-        
+
         monthly_experiment_costs["team_subscription"] = team_subscription_cost
         monthly_experiment_costs["total_cost"] += team_subscription_cost
-        
+
         logger.info(f"Monthly cost estimate: ${monthly_experiment_costs['total_cost']:.2f} for {team_size} users, {experiments_per_month} experiments/month")
-        
+
         return monthly_experiment_costs
-    
+
     def get_cost_optimization_suggestions(
         self,
         current_cost_breakdown: Dict[str, float],
@@ -617,7 +615,7 @@ class WandbPricingCalculator:
         suggestions = []
         total_cost = current_cost_breakdown.get("total_cost", 0.0)
         compute_cost = current_cost_breakdown.get("compute_cost", 0.0)
-        
+
         # High compute cost suggestions
         if compute_cost > total_cost * 0.7:
             suggestions.append({
@@ -632,7 +630,7 @@ class WandbPricingCalculator:
                 ],
                 "potential_savings_percentage": 40.0
             })
-        
+
         # Storage optimization
         storage_cost = current_cost_breakdown.get("storage_cost", 0.0)
         if storage_cost > total_cost * 0.2:
@@ -648,7 +646,7 @@ class WandbPricingCalculator:
                 ],
                 "potential_savings_percentage": 50.0
             })
-        
+
         # Platform optimization
         platform_cost = current_cost_breakdown.get("platform_cost", 0.0)
         if platform_cost > total_cost * 0.3:
@@ -664,9 +662,9 @@ class WandbPricingCalculator:
                 ],
                 "potential_savings_percentage": 25.0
             })
-        
+
         return suggestions
-    
+
     def _find_fallback_compute_pricing(
         self,
         provider: CloudProvider,
@@ -688,9 +686,9 @@ class WandbPricingCalculator:
                     spot_discount=pricing.spot_discount
                 )
                 return fallback_pricing
-        
+
         return None
-    
+
     def _get_default_compute_pricing(self, resource_type: ResourceType) -> ComputePricing:
         """Get default pricing for resource type."""
         default_prices = {
@@ -705,9 +703,9 @@ class WandbPricingCalculator:
             ResourceType.TPU_V3: 1.55,
             ResourceType.TPU_V4: 2.40,
         }
-        
+
         price = default_prices.get(resource_type, 1.00)
-        
+
         return ComputePricing(
             resource_type=resource_type,
             provider=self.default_provider,
@@ -736,15 +734,15 @@ def calculate_simple_experiment_cost(
         Estimated total cost in USD
     """
     calculator = WandbPricingCalculator()
-    
+
     resource_type = ResourceType(f"gpu_{gpu_type.lower()}")
-    
+
     result = calculator.calculate_experiment_total_cost(
         compute_hours=compute_hours,
         resource_type=resource_type,
         storage_gb=storage_gb
     )
-    
+
     return result["total_cost"]
 
 
@@ -760,7 +758,7 @@ def get_resource_hourly_cost(resource_type: str, provider: str = "aws") -> float
         Hourly cost in USD
     """
     calculator = WandbPricingCalculator(CloudProvider(provider))
-    
+
     return calculator.calculate_compute_cost(
         resource_type=ResourceType(resource_type),
         hours=1.0

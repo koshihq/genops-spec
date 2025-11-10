@@ -1,10 +1,9 @@
 """Comprehensive pricing calculator for Cohere AI services."""
 
 import logging
-from typing import Dict, Tuple, Optional, Any
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from datetime import datetime
+from typing import Any, Dict, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -23,22 +22,22 @@ class CohereModelType(Enum):
 @dataclass
 class ModelPricing:
     """Pricing structure for a Cohere model."""
-    
+
     # Token-based pricing (per 1M tokens)
     input_token_price: float = 0.0
     output_token_price: float = 0.0
-    
+
     # Operation-based pricing
     search_price_per_1k: float = 0.0  # For rerank operations
     embedding_price_per_1k: float = 0.0  # For embedding operations
     image_token_price: float = 0.0  # For image tokens in embedding
-    
+
     # Model metadata
     model_type: CohereModelType = CohereModelType.COMMAND
     context_window: int = 4096
     max_output_tokens: int = 4096
     description: str = ""
-    
+
     # Billing metadata
     last_updated: str = ""
     pricing_tier: str = "standard"
@@ -47,38 +46,38 @@ class ModelPricing:
 @dataclass
 class CostBreakdown:
     """Detailed cost breakdown for an operation."""
-    
+
     # Token costs
     input_token_cost: float = 0.0
     output_token_cost: float = 0.0
-    
+
     # Operation costs
     embedding_cost: float = 0.0
     search_cost: float = 0.0
     image_token_cost: float = 0.0
-    
+
     # Totals
     total_cost: float = 0.0
-    
+
     # Usage metrics
     input_tokens: int = 0
     output_tokens: int = 0
     embedding_units: int = 0
     search_units: int = 0
     image_tokens: int = 0
-    
+
     # Metadata
     model: str = ""
     operation_type: str = ""
     currency: str = "USD"
-    
+
     def __post_init__(self):
         """Calculate total cost."""
         self.total_cost = (
-            self.input_token_cost + 
-            self.output_token_cost + 
-            self.embedding_cost + 
-            self.search_cost + 
+            self.input_token_cost +
+            self.output_token_cost +
+            self.embedding_cost +
+            self.search_cost +
             self.image_token_cost
         )
 
@@ -100,7 +99,7 @@ class CohereCalculator:
     - Currency conversion support
     - Enterprise pricing tier support
     """
-    
+
     def __init__(self, pricing_date: str = "2024-11-01"):
         """
         Initialize cost calculator with current pricing.
@@ -110,12 +109,12 @@ class CohereCalculator:
         """
         self.pricing_date = pricing_date
         self.currency = "USD"
-        
+
         # Initialize current Cohere pricing (as of November 2024)
         self.model_pricing = self._load_current_pricing()
-        
+
         logger.info(f"Cohere pricing calculator initialized with {len(self.model_pricing)} models")
-    
+
     def _load_current_pricing(self) -> Dict[str, ModelPricing]:
         """Load current Cohere model pricing."""
         return {
@@ -130,7 +129,7 @@ class CohereCalculator:
                 last_updated="2024-11-01",
                 pricing_tier="standard"
             ),
-            
+
             "command-light": ModelPricing(
                 input_token_price=0.30,    # $0.30 per 1M input tokens
                 output_token_price=0.60,   # $0.60 per 1M output tokens
@@ -141,7 +140,7 @@ class CohereCalculator:
                 last_updated="2024-11-01",
                 pricing_tier="standard"
             ),
-            
+
             "command-r-03-2024": ModelPricing(
                 input_token_price=0.50,    # $0.50 per 1M input tokens
                 output_token_price=1.50,   # $1.50 per 1M output tokens
@@ -152,7 +151,7 @@ class CohereCalculator:
                 last_updated="2024-11-01",
                 pricing_tier="standard"
             ),
-            
+
             "command-r-08-2024": ModelPricing(
                 input_token_price=0.50,    # $0.50 per 1M input tokens
                 output_token_price=1.50,   # $1.50 per 1M output tokens
@@ -163,7 +162,7 @@ class CohereCalculator:
                 last_updated="2024-11-01",
                 pricing_tier="standard"
             ),
-            
+
             "command-r-plus-04-2024": ModelPricing(
                 input_token_price=3.00,    # $3.00 per 1M input tokens
                 output_token_price=15.00,  # $15.00 per 1M output tokens
@@ -174,7 +173,7 @@ class CohereCalculator:
                 last_updated="2024-11-01",
                 pricing_tier="premium"
             ),
-            
+
             "command-r-plus-08-2024": ModelPricing(
                 input_token_price=2.50,    # $2.50 per 1M input tokens
                 output_token_price=10.00,  # $10.00 per 1M output tokens
@@ -185,7 +184,7 @@ class CohereCalculator:
                 last_updated="2024-11-01",
                 pricing_tier="premium"
             ),
-            
+
             # Aya Expanse series models
             "aya-expanse-8b": ModelPricing(
                 input_token_price=0.50,    # $0.50 per 1M input tokens
@@ -197,7 +196,7 @@ class CohereCalculator:
                 last_updated="2024-11-01",
                 pricing_tier="standard"
             ),
-            
+
             "aya-expanse-32b": ModelPricing(
                 input_token_price=0.50,    # $0.50 per 1M input tokens
                 output_token_price=1.50,   # $1.50 per 1M output tokens
@@ -208,7 +207,7 @@ class CohereCalculator:
                 last_updated="2024-11-01",
                 pricing_tier="standard"
             ),
-            
+
             # Embedding models
             "embed-english-v3.0": ModelPricing(
                 embedding_price_per_1k=0.12,  # $0.12 per 1K text tokens
@@ -218,7 +217,7 @@ class CohereCalculator:
                 last_updated="2024-11-01",
                 pricing_tier="standard"
             ),
-            
+
             "embed-multilingual-v3.0": ModelPricing(
                 embedding_price_per_1k=0.12,  # $0.12 per 1K text tokens
                 model_type=CohereModelType.EMBED,
@@ -227,7 +226,7 @@ class CohereCalculator:
                 last_updated="2024-11-01",
                 pricing_tier="standard"
             ),
-            
+
             "embed-english-v4.0": ModelPricing(
                 embedding_price_per_1k=0.12,  # $0.12 per 1K text tokens
                 image_token_price=0.47,       # $0.47 per 1K image tokens
@@ -237,7 +236,7 @@ class CohereCalculator:
                 last_updated="2024-11-01",
                 pricing_tier="standard"
             ),
-            
+
             # Rerank models
             "rerank-english-v3.0": ModelPricing(
                 search_price_per_1k=2.00,  # $2.00 per 1K search operations
@@ -246,7 +245,7 @@ class CohereCalculator:
                 last_updated="2024-11-01",
                 pricing_tier="standard"
             ),
-            
+
             "rerank-multilingual-v3.0": ModelPricing(
                 search_price_per_1k=2.00,  # $2.00 per 1K search operations
                 model_type=CohereModelType.RERANK,
@@ -255,7 +254,7 @@ class CohereCalculator:
                 pricing_tier="standard"
             ),
         }
-    
+
     def get_model_pricing(self, model: str) -> Optional[ModelPricing]:
         """
         Get pricing information for a specific model.
@@ -268,23 +267,23 @@ class CohereCalculator:
         """
         # Normalize model name
         model_normalized = model.lower().strip()
-        
+
         # Direct lookup
         if model_normalized in self.model_pricing:
             return self.model_pricing[model_normalized]
-        
+
         # Partial matching for model variants
         for model_key, pricing in self.model_pricing.items():
             if model_normalized.startswith(model_key) or model_key in model_normalized:
                 logger.debug(f"Using pricing for {model_key} for model {model}")
                 return pricing
-        
+
         logger.warning(f"No pricing found for model: {model}")
         return None
-    
+
     def calculate_cost(
-        self, 
-        model: str, 
+        self,
+        model: str,
         operation: str,
         input_tokens: int = 0,
         output_tokens: int = 0,
@@ -309,31 +308,31 @@ class CohereCalculator:
         if not pricing:
             logger.warning(f"Unknown model {model}, using default pricing")
             return 0.0, 0.0, 0.0
-        
+
         operation_normalized = operation.upper()
-        
+
         # Calculate token-based costs
         input_cost = (input_tokens / 1_000_000) * pricing.input_token_price
         output_cost = (output_tokens / 1_000_000) * pricing.output_token_price
-        
+
         # Calculate operation-based costs
         operation_cost = 0.0
-        
+
         if operation_normalized in ["EMBED", "EMBEDDING"]:
             # Embedding cost calculation
             operation_cost += (operation_units / 1000) * pricing.embedding_price_per_1k
             if image_tokens > 0:
                 operation_cost += (image_tokens / 1000) * pricing.image_token_price
-                
+
         elif operation_normalized in ["RERANK", "SEARCH"]:
             # Rerank/search cost calculation
             operation_cost = (operation_units / 1000) * pricing.search_price_per_1k
-            
+
         return input_cost, output_cost, operation_cost
-    
+
     def calculate_detailed_cost(
-        self, 
-        model: str, 
+        self,
+        model: str,
         operation: str,
         input_tokens: int = 0,
         output_tokens: int = 0,
@@ -362,22 +361,22 @@ class CohereCalculator:
             operation_units=operation_units,
             image_tokens=image_tokens
         )
-        
+
         # Break down operation cost by type
         embedding_cost = 0.0
         search_cost = 0.0
         image_token_cost = 0.0
-        
+
         if operation.upper() in ["EMBED", "EMBEDDING"]:
             pricing = self.get_model_pricing(model)
             if pricing:
                 embedding_cost = (operation_units / 1000) * pricing.embedding_price_per_1k
                 if image_tokens > 0:
                     image_token_cost = (image_tokens / 1000) * pricing.image_token_price
-                    
+
         elif operation.upper() in ["RERANK", "SEARCH"]:
             search_cost = operation_cost
-        
+
         return CostBreakdown(
             input_token_cost=input_cost,
             output_token_cost=output_cost,
@@ -393,7 +392,7 @@ class CohereCalculator:
             operation_type=operation,
             currency=self.currency
         )
-    
+
     def get_cost_per_token(self, model: str, token_type: str = "input") -> float:
         """
         Get cost per token for a specific model and token type.
@@ -408,16 +407,16 @@ class CohereCalculator:
         pricing = self.get_model_pricing(model)
         if not pricing:
             return 0.0
-        
+
         if token_type.lower() == "input":
             return pricing.input_token_price / 1_000_000
         elif token_type.lower() == "output":
             return pricing.output_token_price / 1_000_000
         else:
             return 0.0
-    
+
     def estimate_cost(
-        self, 
+        self,
         model: str,
         operation: str,
         input_text_length: int = 0,
@@ -440,7 +439,7 @@ class CohereCalculator:
         # Rough approximation: 4 characters per token on average
         estimated_input_tokens = max(1, input_text_length // 4)
         estimated_output_tokens = max(1, expected_output_length // 4)
-        
+
         input_cost, output_cost, operation_cost = self.calculate_cost(
             model=model,
             operation=operation,
@@ -448,12 +447,12 @@ class CohereCalculator:
             output_tokens=estimated_output_tokens,
             operation_units=operation_units
         )
-        
+
         return input_cost + output_cost + operation_cost
-    
+
     def compare_model_costs(
-        self, 
-        models: list[str], 
+        self,
+        models: list[str],
         operation: str,
         input_tokens: int = 100,
         output_tokens: int = 100,
@@ -473,7 +472,7 @@ class CohereCalculator:
             Dictionary mapping model names to their cost breakdowns
         """
         comparisons = {}
-        
+
         for model in models:
             try:
                 cost_breakdown = self.calculate_detailed_cost(
@@ -486,12 +485,12 @@ class CohereCalculator:
                 comparisons[model] = cost_breakdown
             except Exception as e:
                 logger.warning(f"Could not calculate cost for {model}: {e}")
-                
+
         return comparisons
-    
+
     def get_cheapest_model(
-        self, 
-        models: list[str], 
+        self,
+        models: list[str],
         operation: str,
         input_tokens: int = 100,
         output_tokens: int = 100,
@@ -517,14 +516,14 @@ class CohereCalculator:
             output_tokens=output_tokens,
             operation_units=operation_units
         )
-        
+
         if not comparisons:
             return None
-        
+
         # Find model with lowest total cost
         cheapest_model = min(comparisons.items(), key=lambda x: x[1].total_cost)
         return cheapest_model[0]
-    
+
     def get_pricing_summary(self) -> Dict[str, Any]:
         """
         Get summary of all available models and their pricing.
@@ -540,14 +539,14 @@ class CohereCalculator:
             "price_ranges": {},
             "models": {}
         }
-        
+
         # Categorize models
         for model_name, pricing in self.model_pricing.items():
             category = pricing.model_type.value
             if category not in summary["model_categories"]:
                 summary["model_categories"][category] = []
             summary["model_categories"][category].append(model_name)
-            
+
             # Add detailed model info
             summary["models"][model_name] = {
                 "input_price_per_1m": pricing.input_token_price,
@@ -558,25 +557,25 @@ class CohereCalculator:
                 "context_window": pricing.context_window,
                 "description": pricing.description
             }
-        
+
         # Calculate price ranges
         input_prices = [p.input_token_price for p in self.model_pricing.values() if p.input_token_price > 0]
         output_prices = [p.output_token_price for p in self.model_pricing.values() if p.output_token_price > 0]
-        
+
         if input_prices:
             summary["price_ranges"]["input_tokens"] = {
                 "min": min(input_prices),
                 "max": max(input_prices),
                 "unit": "per 1M tokens"
             }
-        
+
         if output_prices:
             summary["price_ranges"]["output_tokens"] = {
                 "min": min(output_prices),
                 "max": max(output_prices),
                 "unit": "per 1M tokens"
             }
-        
+
         return summary
 
 

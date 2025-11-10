@@ -29,16 +29,11 @@ Expected runtime: 15-20 minutes
 Expected output: Production deployment guidance and configuration examples
 """
 
-import os
-import sys
-import time
 import json
 import logging
-import threading
-from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional, Tuple
 from dataclasses import dataclass
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import List
+
 import pandas as pd
 
 
@@ -77,29 +72,29 @@ def setup_production_logging():
     """Set up production-grade logging configuration."""
     print("📝 Production Logging Configuration")
     print("-" * 38)
-    
+
     # Configure structured logging for production
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s | %(levelname)s | %(name)s | %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S'
     )
-    
+
     # Create application-specific logger
     logger = logging.getLogger('genops.arize.production')
-    
+
     # Add production-specific configuration
     logger.info("Production logging initialized")
     logger.info("Log level: INFO")
     logger.info("Structured logging enabled")
     logger.info("Timestamp format: ISO 8601")
-    
+
     print("  ✅ Structured logging configured")
     print("  ✅ Application-specific logger created")
     print("  ✅ Production log level set (INFO)")
     print("  ✅ JSON-compatible log formatting")
     print()
-    
+
     return logger
 
 
@@ -107,7 +102,7 @@ def demonstrate_enterprise_architecture():
     """Demonstrate enterprise deployment architecture patterns."""
     print("🏗️ Enterprise Architecture Patterns")
     print("-" * 38)
-    
+
     # Define enterprise deployment topology
     production_environments = {
         'production-primary': ProductionConfig(
@@ -141,11 +136,11 @@ def demonstrate_enterprise_architecture():
             compliance_requirements=['internal']
         )
     }
-    
+
     print("🌐 Multi-Region Enterprise Deployment:")
-    
+
     enterprise_adapters = {}
-    
+
     for env_name, config in production_environments.items():
         print(f"\n📍 {env_name.upper()} Configuration:")
         print(f"  🌍 Region: {config.region}")
@@ -154,10 +149,10 @@ def demonstrate_enterprise_architecture():
         print(f"  🔒 Governance: {config.governance_mode}")
         print(f"  📊 Monitoring: {config.monitoring_level}")
         print(f"  📋 Compliance: {', '.join(config.compliance_requirements)}")
-        
+
         # Create adapter with enterprise configuration
         from genops.providers.arize import GenOpsArizeAdapter
-        
+
         adapter = GenOpsArizeAdapter(
             team='enterprise-ml-platform',
             project=f'{env_name}-monitoring',
@@ -178,17 +173,17 @@ def demonstrate_enterprise_architecture():
                 'ha_enabled': 'true' if 'primary' in env_name else 'false'
             }
         )
-        
+
         enterprise_adapters[env_name] = adapter
-        print(f"  ✅ Adapter configured and ready")
-    
-    print(f"\n🏭 Enterprise Architecture Summary:")
-    print(f"  🌐 Total regions: 2")
+        print("  ✅ Adapter configured and ready")
+
+    print("\n🏭 Enterprise Architecture Summary:")
+    print("  🌐 Total regions: 2")
     print(f"  🖥️ Total instances: {sum(config.instance_count for config in production_environments.values())}")
     print(f"  💰 Total budget: ${sum(config.daily_budget for config in production_environments.values())}")
-    print(f"  🔒 Compliance coverage: SOX, GDPR, HIPAA, Internal")
+    print("  🔒 Compliance coverage: SOX, GDPR, HIPAA, Internal")
     print()
-    
+
     return enterprise_adapters
 
 
@@ -196,32 +191,32 @@ def demonstrate_high_availability_patterns(enterprise_adapters):
     """Demonstrate high-availability and disaster recovery patterns."""
     print("⚡ High-Availability & Disaster Recovery")
     print("-" * 42)
-    
+
     primary_adapter = enterprise_adapters['production-primary']
     secondary_adapter = enterprise_adapters['production-secondary']
-    
+
     print("🔄 Active-Passive HA Configuration:")
     print("  🟢 Primary: us-east-1 (active)")
     print("  🟡 Secondary: us-west-2 (standby)")
     print()
-    
+
     # Simulate failover scenario
     print("🎭 Disaster Recovery Simulation:")
-    
+
     # Test model monitoring with failover logic
     model_id = 'critical-fraud-model-v3'
     monitoring_successful = False
-    
+
     def monitor_with_failover(primary, secondary, model_id):
         """Demonstrate monitoring with automatic failover."""
         try:
             # Attempt primary monitoring
             print("  🎯 Attempting primary region monitoring...")
-            
+
             # Simulate primary region failure (for demonstration)
             import random
             primary_available = random.choice([True, False])  # Simulate intermittent failure
-            
+
             if primary_available:
                 with primary.track_model_monitoring_session(
                     model_id=model_id,
@@ -232,16 +227,16 @@ def demonstrate_high_availability_patterns(enterprise_adapters):
                     sample_data = pd.DataFrame({'prediction': [1, 0, 1, 1, 0] * 100})
                     session.log_prediction_batch(sample_data, cost_per_prediction=0.001)
                     session.log_data_quality_metrics({'accuracy': 0.94}, cost_estimate=0.05)
-                    
+
                     print(f"  ✅ Primary monitoring successful: {session.prediction_count} predictions")
                     return True, 'primary'
             else:
                 raise ConnectionError("Primary region unavailable")
-                
+
         except Exception as e:
             print(f"  ⚠️ Primary region failed: {e}")
             print("  🔄 Initiating failover to secondary region...")
-            
+
             try:
                 with secondary.track_model_monitoring_session(
                     model_id=model_id,
@@ -252,21 +247,21 @@ def demonstrate_high_availability_patterns(enterprise_adapters):
                     sample_data = pd.DataFrame({'prediction': [1, 0, 1, 1, 0] * 100})
                     session.log_prediction_batch(sample_data, cost_per_prediction=0.001)
                     session.log_data_quality_metrics({'accuracy': 0.94}, cost_estimate=0.05)
-                    
+
                     print(f"  ✅ Secondary monitoring successful: {session.prediction_count} predictions")
                     return True, 'secondary'
-                    
+
             except Exception as secondary_error:
                 print(f"  ❌ Secondary region also failed: {secondary_error}")
                 return False, 'none'
-    
+
     success, region = monitor_with_failover(primary_adapter, secondary_adapter, model_id)
-    
+
     if success:
         print(f"  🎉 Monitoring maintained via {region} region")
     else:
-        print(f"  ❌ Complete system failure - manual intervention required")
-    
+        print("  ❌ Complete system failure - manual intervention required")
+
     print("\n🔧 HA Best Practices Implemented:")
     print("  ✅ Multi-region deployment")
     print("  ✅ Automatic failover logic")
@@ -280,7 +275,7 @@ def demonstrate_scaling_patterns():
     """Demonstrate scaling patterns for high-volume monitoring."""
     print("📈 High-Volume Scaling Patterns")
     print("-" * 34)
-    
+
     # Define scaling scenarios
     scaling_scenarios = [
         {'name': 'Low Volume', 'daily_predictions': 10000, 'models': 5},
@@ -288,17 +283,17 @@ def demonstrate_scaling_patterns():
         {'name': 'High Volume', 'daily_predictions': 5000000, 'models': 100},
         {'name': 'Enterprise Scale', 'daily_predictions': 50000000, 'models': 500}
     ]
-    
+
     print("📊 Scaling Strategy Analysis:")
-    
+
     for scenario in scaling_scenarios:
         print(f"\n🎯 {scenario['name']} Scenario:")
         print(f"  📈 Daily predictions: {scenario['daily_predictions']:,}")
         print(f"  🏭 Active models: {scenario['models']}")
-        
+
         # Calculate resource requirements
         predictions_per_model = scenario['daily_predictions'] // scenario['models']
-        
+
         # Determine optimal configuration
         if scenario['daily_predictions'] < 100000:
             # Small scale - single adapter
@@ -324,26 +319,26 @@ def demonstrate_scaling_patterns():
             sampling_rate = 0.01  # 1% sampling
             batch_size = 50000
             budget_per_adapter = 500.0
-        
+
         effective_predictions = int(scenario['daily_predictions'] * sampling_rate)
         total_budget = adapter_count * budget_per_adapter
-        
-        print(f"  🏗️ Recommended architecture:")
+
+        print("  🏗️ Recommended architecture:")
         print(f"    • Adapter instances: {adapter_count}")
         print(f"    • Sampling rate: {sampling_rate*100:.1f}%")
         print(f"    • Batch size: {batch_size:,}")
         print(f"    • Effective predictions: {effective_predictions:,}")
         print(f"    • Total daily budget: ${total_budget}")
-        
+
         # Estimate costs
         cost_per_prediction = 0.001
         estimated_daily_cost = effective_predictions * cost_per_prediction
         cost_efficiency = (estimated_daily_cost / total_budget) * 100
-        
-        print(f"  💰 Cost analysis:")
+
+        print("  💰 Cost analysis:")
         print(f"    • Estimated daily cost: ${estimated_daily_cost:.2f}")
         print(f"    • Budget utilization: {cost_efficiency:.1f}%")
-        
+
         # Performance recommendations
         if cost_efficiency > 80:
             print("    ⚠️ High utilization - consider increasing budget or optimizing")
@@ -351,7 +346,7 @@ def demonstrate_scaling_patterns():
             print("    💡 Low utilization - consider reducing budget or increasing monitoring")
         else:
             print("    ✅ Optimal utilization range")
-    
+
     print("\n⚡ Scaling Best Practices:")
     print("  📊 Implement intelligent sampling for high-volume scenarios")
     print("  🔄 Use load balancing across multiple adapter instances")
@@ -365,7 +360,7 @@ def demonstrate_security_compliance():
     """Demonstrate security and compliance patterns."""
     print("🔒 Security & Compliance Patterns")
     print("-" * 36)
-    
+
     # SOX compliance configuration
     print("📋 SOX (Sarbanes-Oxley) Compliance:")
     sox_adapter = GenOpsArizeAdapter(
@@ -383,13 +378,13 @@ def demonstrate_security_compliance():
             'audit_trail': 'enabled'
         }
     )
-    
+
     print("  ✅ Financial data classification applied")
     print("  ✅ 7-year audit retention configured")
     print("  ✅ Strict access controls enforced")
     print("  ✅ Change approval workflow required")
     print("  ✅ Comprehensive audit trail enabled")
-    
+
     # GDPR compliance configuration
     print("\n🌍 GDPR (General Data Protection Regulation) Compliance:")
     gdpr_adapter = GenOpsArizeAdapter(
@@ -406,13 +401,13 @@ def demonstrate_security_compliance():
             'data_minimization': 'applied'
         }
     )
-    
+
     print("  ✅ EU data residency enforced")
     print("  ✅ PII anonymization applied")
     print("  ✅ Right to deletion supported")
     print("  ✅ Consent tracking enabled")
     print("  ✅ Data minimization principles applied")
-    
+
     # HIPAA compliance configuration
     print("\n🏥 HIPAA (Healthcare) Compliance:")
     hipaa_adapter = GenOpsArizeAdapter(
@@ -429,13 +424,13 @@ def demonstrate_security_compliance():
             'covered_entity': 'hospital_system'
         }
     )
-    
+
     print("  ✅ PHI data classification applied")
     print("  ✅ AES-256 encryption enforced")
     print("  ✅ Comprehensive access logging")
     print("  ✅ Minimum necessary principle enforced")
     print("  ✅ Covered entity designation set")
-    
+
     print("\n🛡️ Security Implementation Checklist:")
     security_checklist = [
         "✅ End-to-end encryption for data in transit",
@@ -449,10 +444,10 @@ def demonstrate_security_compliance():
         "✅ Regular security audits and penetration testing",
         "✅ Compliance monitoring and reporting"
     ]
-    
+
     for item in security_checklist:
         print(f"  {item}")
-    
+
     print()
 
 
@@ -460,7 +455,7 @@ def demonstrate_monitoring_alerting():
     """Demonstrate production monitoring and alerting strategies."""
     print("📊 Production Monitoring & Alerting")
     print("-" * 39)
-    
+
     # Define monitoring tiers
     monitoring_tiers = {
         'critical': {
@@ -485,9 +480,9 @@ def demonstrate_monitoring_alerting():
             'monitoring_frequency': '5_minutes'
         }
     }
-    
+
     print("🎯 Tiered Monitoring Strategy:")
-    
+
     for tier, config in monitoring_tiers.items():
         print(f"\n🏆 {tier.upper()} Tier:")
         print(f"  📊 Models: {', '.join(config['models'])}")
@@ -495,7 +490,7 @@ def demonstrate_monitoring_alerting():
         print(f"  ⏰ SLA response time: {config['response_time_sla']}")
         print(f"  📈 Escalation levels: {config['escalation_levels']}")
         print(f"  🔄 Monitoring frequency: {config['monitoring_frequency']}")
-        
+
         # Create monitoring adapter for this tier
         adapter = GenOpsArizeAdapter(
             team=f'{tier}-monitoring-team',
@@ -510,7 +505,7 @@ def demonstrate_monitoring_alerting():
                 'escalation_levels': str(config['escalation_levels'])
             }
         )
-        
+
         # Simulate monitoring with tier-appropriate alerts
         for model in config['models']:
             with adapter.track_model_monitoring_session(
@@ -524,14 +519,14 @@ def demonstrate_monitoring_alerting():
                     config['alert_threshold'],
                     0.20 if tier == 'critical' else 0.10
                 )
-                
+
                 if tier == 'critical':
                     # Additional monitoring for critical models
                     session.create_performance_alert('data_drift', 0.10, 0.15)
                     session.create_performance_alert('prediction_latency', 100, 0.12)
-        
+
         print(f"  ✅ {len(config['models'])} models configured for {tier} monitoring")
-    
+
     print("\n📈 Monitoring Dashboard Integration:")
     dashboard_integrations = [
         "Grafana - Real-time cost and performance dashboards",
@@ -541,10 +536,10 @@ def demonstrate_monitoring_alerting():
         "Slack - Real-time alerts and notifications",
         "JIRA - Automated ticket creation for issues"
     ]
-    
+
     for integration in dashboard_integrations:
         print(f"  ✅ {integration}")
-    
+
     print()
 
 
@@ -552,10 +547,10 @@ def demonstrate_operational_maintenance():
     """Demonstrate operational maintenance and troubleshooting patterns."""
     print("🔧 Operational Maintenance & Troubleshooting")
     print("-" * 48)
-    
+
     # Health check automation
     print("🏥 Automated Health Checks:")
-    
+
     def perform_system_health_check():
         """Perform comprehensive system health check."""
         health_status = {
@@ -566,17 +561,17 @@ def demonstrate_operational_maintenance():
             'telemetry_export_working': False,
             'budget_limits_enforced': False
         }
-        
+
         try:
             # Check Arize SDK availability
             from genops.providers.arize import ARIZE_AVAILABLE
             health_status['arize_sdk_available'] = ARIZE_AVAILABLE
-            
+
             # Check authentication
             from genops.providers.arize_validation import validate_setup
             result = validate_setup()
             health_status['authentication_valid'] = result.is_valid
-            
+
             # Check governance
             from genops.providers.arize import GenOpsArizeAdapter
             test_adapter = GenOpsArizeAdapter(
@@ -586,24 +581,24 @@ def demonstrate_operational_maintenance():
             health_status['governance_enabled'] = test_adapter.enable_governance
             health_status['cost_tracking_active'] = True
             health_status['budget_limits_enforced'] = test_adapter.enable_cost_alerts
-            
+
             # Simulate telemetry check
             health_status['telemetry_export_working'] = True
-            
+
         except Exception as e:
             print(f"    ⚠️ Health check error: {e}")
-        
+
         return health_status
-    
+
     # Perform health check
     health_results = perform_system_health_check()
-    
+
     print("  📋 System Health Status:")
     for check, status in health_results.items():
         status_icon = "✅" if status else "❌"
         check_name = check.replace('_', ' ').title()
         print(f"    {status_icon} {check_name}")
-    
+
     # Maintenance procedures
     print("\n🛠️ Routine Maintenance Procedures:")
     maintenance_tasks = [
@@ -632,12 +627,12 @@ def demonstrate_operational_maintenance():
             'automation': 'Audit trail reports + manual review'
         }
     ]
-    
+
     for task in maintenance_tasks:
         print(f"\n  📅 {task['task']} ({task['frequency']}):")
         print(f"    📝 {task['description']}")
         print(f"    🤖 {task['automation']}")
-    
+
     # Troubleshooting decision tree
     print("\n🔍 Common Troubleshooting Scenarios:")
     troubleshooting_scenarios = [
@@ -657,12 +652,12 @@ def demonstrate_operational_maintenance():
             'solutions': ['Increase budget limits', 'Implement cost controls', 'Optimize monitoring']
         }
     ]
-    
+
     for scenario in troubleshooting_scenarios:
         print(f"\n  ❗ {scenario['issue'].title()}:")
         print(f"    🔍 Diagnosis: {', '.join(scenario['diagnosis'])}")
         print(f"    💡 Solutions: {', '.join(scenario['solutions'])}")
-    
+
     print()
 
 
@@ -671,7 +666,7 @@ def print_production_deployment_summary():
     print("=" * 80)
     print("🎉 Production Deployment Patterns Complete!")
     print("=" * 80)
-    
+
     print("\n✅ Production patterns demonstrated:")
     print("  🏗️ Enterprise deployment architectures")
     print("  ⚡ High-availability and disaster recovery")
@@ -679,7 +674,7 @@ def print_production_deployment_summary():
     print("  🔒 Security and compliance implementation")
     print("  📊 Production monitoring and alerting strategies")
     print("  🔧 Operational maintenance and troubleshooting")
-    
+
     print("\n🏭 Production Deployment Checklist:")
     deployment_checklist = [
         "✅ Multi-region deployment configured",
@@ -693,58 +688,58 @@ def print_production_deployment_summary():
         "✅ Health checks automated",
         "✅ Incident response procedures defined"
     ]
-    
+
     for item in deployment_checklist:
         print(f"  {item}")
-    
+
     print("\n🚀 Ready for production deployment!")
-    
+
     print("\n🔗 Related resources:")
     print("  📖 Enterprise integration guide: docs/integrations/arize.md")
     print("  💰 Cost optimization: cost_optimization.py")
     print("  🔧 Advanced features: advanced_features.py")
     print("  🔍 Setup validation: setup_validation.py")
-    
+
     print("\n💬 Production support:")
     print("  📧 Enterprise support: support@genops.ai")
     print("  📞 24/7 production hotline: Available for enterprise customers")
     print("  🏥 Health check APIs: Available for monitoring integration")
     print("  📊 Production dashboards: Grafana/DataDog templates available")
-    
+
     print()
 
 
 def main():
     """Main production patterns demonstration."""
     print_header()
-    
+
     # Set up production logging
     logger = setup_production_logging()
-    
+
     try:
         # Demonstrate enterprise architecture
         enterprise_adapters = demonstrate_enterprise_architecture()
-        
+
         # Demonstrate high-availability patterns
         demonstrate_high_availability_patterns(enterprise_adapters)
-        
+
         # Demonstrate scaling patterns
         demonstrate_scaling_patterns()
-        
+
         # Demonstrate security and compliance
         demonstrate_security_compliance()
-        
+
         # Demonstrate monitoring and alerting
         demonstrate_monitoring_alerting()
-        
+
         # Demonstrate operational maintenance
         demonstrate_operational_maintenance()
-        
+
         # Print summary
         print_production_deployment_summary()
-        
+
         logger.info("Production patterns demonstration completed successfully")
-        
+
     except KeyboardInterrupt:
         print("\n\n⏹️ Production patterns demo interrupted by user.")
         logger.warning("Demo interrupted by user")

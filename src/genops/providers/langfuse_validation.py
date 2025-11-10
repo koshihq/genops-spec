@@ -11,8 +11,8 @@ import logging
 import os
 import time
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Any, Union
 from enum import Enum
+from typing import Any, Dict, List, Optional, Union
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +52,7 @@ class LangfuseValidationSuite:
 def validate_langfuse_installation() -> ValidationResult:
     """Validate that Langfuse is properly installed."""
     start_time = time.time()
-    
+
     if not HAS_LANGFUSE:
         return ValidationResult(
             test_name="Langfuse Installation",
@@ -61,12 +61,12 @@ def validate_langfuse_installation() -> ValidationResult:
             fix_suggestion="Install with: pip install 'genops[langfuse]' or pip install langfuse",
             duration_ms=(time.time() - start_time) * 1000
         )
-    
+
     try:
         # Try to import key components
-        from langfuse.decorators import observe
         from langfuse.client import StatefulClient
-        
+        from langfuse.decorators import observe
+
         return ValidationResult(
             test_name="Langfuse Installation",
             status=ValidationStatus.PASSED,
@@ -74,7 +74,7 @@ def validate_langfuse_installation() -> ValidationResult:
             details={"version": "2.0+", "components": ["Langfuse", "observe", "StatefulClient"]},
             duration_ms=(time.time() - start_time) * 1000
         )
-        
+
     except ImportError as e:
         return ValidationResult(
             test_name="Langfuse Installation",
@@ -87,17 +87,17 @@ def validate_langfuse_installation() -> ValidationResult:
 def validate_langfuse_configuration() -> ValidationResult:
     """Validate Langfuse API configuration."""
     start_time = time.time()
-    
+
     public_key = os.getenv("LANGFUSE_PUBLIC_KEY")
     secret_key = os.getenv("LANGFUSE_SECRET_KEY")
     base_url = os.getenv("LANGFUSE_BASE_URL", "https://cloud.langfuse.com")
-    
+
     missing_configs = []
     if not public_key:
         missing_configs.append("LANGFUSE_PUBLIC_KEY")
     if not secret_key:
         missing_configs.append("LANGFUSE_SECRET_KEY")
-    
+
     if missing_configs:
         return ValidationResult(
             test_name="Langfuse Configuration",
@@ -111,19 +111,19 @@ def validate_langfuse_configuration() -> ValidationResult:
             fix_suggestion="Set environment variables: export LANGFUSE_PUBLIC_KEY='pk-lf-...' && export LANGFUSE_SECRET_KEY='sk-lf-...'",
             duration_ms=(time.time() - start_time) * 1000
         )
-    
+
     # Validate key formats
     issues = []
     if not public_key.startswith("pk-lf-"):
         issues.append("Public key should start with 'pk-lf-'")
     if not secret_key.startswith("sk-lf-"):
         issues.append("Secret key should start with 'sk-lf-'")
-    
+
     status = ValidationStatus.WARNING if issues else ValidationStatus.PASSED
     message = "Configuration issues found: " + ", ".join(issues) if issues else "Langfuse configuration valid"
-    
+
     return ValidationResult(
-        test_name="Langfuse Configuration", 
+        test_name="Langfuse Configuration",
         status=status,
         message=message,
         details={
@@ -139,7 +139,7 @@ def validate_langfuse_configuration() -> ValidationResult:
 def validate_langfuse_connectivity() -> ValidationResult:
     """Test Langfuse API connectivity."""
     start_time = time.time()
-    
+
     if not HAS_LANGFUSE:
         return ValidationResult(
             test_name="Langfuse Connectivity",
@@ -147,13 +147,13 @@ def validate_langfuse_connectivity() -> ValidationResult:
             message="Langfuse not available for connectivity test",
             duration_ms=(time.time() - start_time) * 1000
         )
-    
+
     try:
         client = Langfuse()
-        
+
         # Test basic connectivity by creating a simple trace
         test_trace = client.trace(name="genops_validation_test")
-        
+
         # If we get here, connection is working
         return ValidationResult(
             test_name="Langfuse Connectivity",
@@ -165,17 +165,17 @@ def validate_langfuse_connectivity() -> ValidationResult:
             },
             duration_ms=(time.time() - start_time) * 1000
         )
-        
+
     except Exception as e:
         error_msg = str(e).lower()
-        
+
         if "unauthorized" in error_msg or "401" in error_msg:
             fix_suggestion = "Check your Langfuse API keys at https://cloud.langfuse.com"
         elif "connection" in error_msg or "network" in error_msg:
             fix_suggestion = "Check network connectivity and Langfuse service status"
         else:
             fix_suggestion = "Verify Langfuse configuration and try again"
-        
+
         return ValidationResult(
             test_name="Langfuse Connectivity",
             status=ValidationStatus.FAILED,
@@ -188,17 +188,17 @@ def validate_langfuse_connectivity() -> ValidationResult:
 def validate_genops_integration() -> ValidationResult:
     """Validate GenOps + Langfuse integration setup."""
     start_time = time.time()
-    
+
     try:
         from genops.providers.langfuse import GenOpsLangfuseAdapter, instrument_langfuse
-        
+
         # Test adapter creation
         adapter = GenOpsLangfuseAdapter(
             team="validation-test",
             project="setup-check",
             environment="test"
         )
-        
+
         return ValidationResult(
             test_name="GenOps Integration",
             status=ValidationStatus.PASSED,
@@ -211,7 +211,7 @@ def validate_genops_integration() -> ValidationResult:
             },
             duration_ms=(time.time() - start_time) * 1000
         )
-        
+
     except ImportError as e:
         return ValidationResult(
             test_name="GenOps Integration",
@@ -233,7 +233,7 @@ def validate_genops_integration() -> ValidationResult:
 def validate_performance_baseline() -> ValidationResult:
     """Test basic performance characteristics."""
     start_time = time.time()
-    
+
     if not HAS_LANGFUSE:
         return ValidationResult(
             test_name="Performance Baseline",
@@ -241,10 +241,10 @@ def validate_performance_baseline() -> ValidationResult:
             message="Langfuse not available for performance testing",
             duration_ms=(time.time() - start_time) * 1000
         )
-    
+
     try:
         from genops.providers.langfuse import GenOpsLangfuseAdapter
-        
+
         # Performance test: measure adapter initialization
         init_start = time.time()
         adapter = GenOpsLangfuseAdapter(
@@ -253,23 +253,23 @@ def validate_performance_baseline() -> ValidationResult:
             environment="test"
         )
         init_time = (time.time() - init_start) * 1000
-        
+
         # Performance test: measure trace creation
         trace_start = time.time()
         with adapter.trace_with_governance(name="performance_test") as trace:
             time.sleep(0.01)  # Simulate minimal work
         trace_time = (time.time() - trace_start) * 1000
-        
+
         # Evaluate performance
         performance_issues = []
         if init_time > 1000:  # > 1 second
             performance_issues.append(f"Slow initialization: {init_time:.1f}ms")
         if trace_time > 100:  # > 100ms
             performance_issues.append(f"Slow trace creation: {trace_time:.1f}ms")
-        
+
         status = ValidationStatus.WARNING if performance_issues else ValidationStatus.PASSED
         message = "Performance issues detected: " + ", ".join(performance_issues) if performance_issues else "Performance baseline acceptable"
-        
+
         return ValidationResult(
             test_name="Performance Baseline",
             status=status,
@@ -281,7 +281,7 @@ def validate_performance_baseline() -> ValidationResult:
             },
             duration_ms=(time.time() - start_time) * 1000
         )
-        
+
     except Exception as e:
         return ValidationResult(
             test_name="Performance Baseline",
@@ -307,25 +307,25 @@ def run_comprehensive_validation(
     """
     suite_start = time.time()
     results = []
-    
+
     # Core validation tests
     results.append(validate_langfuse_installation())
     results.append(validate_langfuse_configuration())
     results.append(validate_genops_integration())
-    
+
     # Optional tests
     if include_connectivity_tests:
         results.append(validate_langfuse_connectivity())
-    
+
     if include_performance_tests:
         results.append(validate_performance_baseline())
-    
+
     # Analyze results
     passed_count = sum(1 for r in results if r.status == ValidationStatus.PASSED)
     failed_count = sum(1 for r in results if r.status == ValidationStatus.FAILED)
     warning_count = sum(1 for r in results if r.status == ValidationStatus.WARNING)
     skipped_count = sum(1 for r in results if r.status == ValidationStatus.SKIPPED)
-    
+
     # Determine overall status
     if failed_count > 0:
         overall_status = ValidationStatus.FAILED
@@ -333,7 +333,7 @@ def run_comprehensive_validation(
         overall_status = ValidationStatus.WARNING
     else:
         overall_status = ValidationStatus.PASSED
-    
+
     # Generate recommendations
     recommendations = []
     if failed_count > 0:
@@ -342,9 +342,9 @@ def run_comprehensive_validation(
         recommendations.append("Review warnings to optimize Langfuse setup")
     if overall_status == ValidationStatus.PASSED:
         recommendations.append("Langfuse integration is ready - proceed with examples and production usage")
-    
+
     suite_duration = (time.time() - suite_start) * 1000
-    
+
     return LangfuseValidationSuite(
         overall_status=overall_status,
         test_results=results,
@@ -380,18 +380,18 @@ def _print_validation_suite(suite: LangfuseValidationSuite, detailed: bool) -> N
     """Print validation suite results."""
     print("\n🔍 GenOps + Langfuse Integration Validation")
     print("=" * 50)
-    
+
     # Overall status
     status_emoji = {
         ValidationStatus.PASSED: "✅",
-        ValidationStatus.FAILED: "❌", 
+        ValidationStatus.FAILED: "❌",
         ValidationStatus.WARNING: "⚠️"
     }
-    
+
     print(f"\n{status_emoji.get(suite.overall_status, '❓')} Overall Status: {suite.overall_status.value}")
-    
+
     # Summary
-    print(f"\n📊 Test Summary:")
+    print("\n📊 Test Summary:")
     print(f"   Total Tests: {suite.summary['total_tests']}")
     print(f"   ✅ Passed: {suite.summary['passed']}")
     print(f"   ❌ Failed: {suite.summary['failed']}")
@@ -399,27 +399,27 @@ def _print_validation_suite(suite: LangfuseValidationSuite, detailed: bool) -> N
     print(f"   ⏭️  Skipped: {suite.summary['skipped']}")
     print(f"   📈 Success Rate: {suite.summary['success_rate']:.1%}")
     print(f"   ⏱️  Total Duration: {suite.total_duration_ms:.0f}ms")
-    
+
     # Individual test results
-    print(f"\n📋 Detailed Results:")
+    print("\n📋 Detailed Results:")
     for result in suite.test_results:
         emoji = status_emoji.get(result.status, "❓")
         duration_str = f" ({result.duration_ms:.0f}ms)" if result.duration_ms else ""
         print(f"   {emoji} {result.test_name}: {result.message}{duration_str}")
-        
+
         if detailed and result.fix_suggestion:
             print(f"      💡 Fix: {result.fix_suggestion}")
-        
+
         if detailed and result.details:
             for key, value in result.details.items():
                 print(f"      📝 {key}: {value}")
-    
+
     # Recommendations
     if suite.recommendations:
-        print(f"\n💡 Recommendations:")
+        print("\n💡 Recommendations:")
         for i, rec in enumerate(suite.recommendations, 1):
             print(f"   {i}. {rec}")
-    
+
     print()
 
 def _print_single_validation(result: ValidationResult, detailed: bool) -> None:
@@ -430,15 +430,15 @@ def _print_single_validation(result: ValidationResult, detailed: bool) -> None:
         ValidationStatus.WARNING: "⚠️",
         ValidationStatus.SKIPPED: "⏭️"
     }
-    
+
     emoji = status_emoji.get(result.status, "❓")
     duration_str = f" ({result.duration_ms:.0f}ms)" if result.duration_ms else ""
-    
+
     print(f"{emoji} {result.test_name}: {result.message}{duration_str}")
-    
+
     if detailed and result.fix_suggestion:
         print(f"   💡 Fix: {result.fix_suggestion}")
-    
+
     if detailed and result.details:
         for key, value in result.details.items():
             print(f"   📝 {key}: {value}")

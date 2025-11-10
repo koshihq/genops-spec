@@ -62,14 +62,14 @@ Example usage:
 """
 
 import logging
+import os
 import time
 import uuid
-import json
-import os
+from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Union, Iterator, Callable
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -111,14 +111,14 @@ class PromptLayerUsage:
     total_tokens: int
     cost: float
     latency_ms: float
-    
+
     # GenOps governance attributes
     team: Optional[str] = None
     project: Optional[str] = None
     customer_id: Optional[str] = None
     cost_center: Optional[str] = None
     environment: str = "production"
-    
+
     # Budget and policy tracking
     budget_remaining: Optional[float] = None
     policy_violations: List[str] = field(default_factory=list)
@@ -138,22 +138,22 @@ class PromptLayerResponse:
 
 class MockPromptLayer:
     """Mock PromptLayer client for graceful degradation when PromptLayer is not available."""
-    
-    def __init__(self, *args, **kwargs):
+
+    def __init__(self, *args, **kwargs) -> None:
         self.config = kwargs
         logger.warning("Using MockPromptLayer - PromptLayer not installed")
-    
-    def run(self, *args, **kwargs):
+
+    def run(self, *args, **kwargs) -> dict:
         logger.warning("MockPromptLayer.run() called - install PromptLayer for full functionality")
         return {"error": "PromptLayer not installed", "mock": True}
-    
-    def track(self, *args, **kwargs):
+
+    def track(self, *args, **kwargs) -> dict:
         logger.warning("MockPromptLayer.track() called - install PromptLayer for full functionality")
         return {"error": "PromptLayer not installed", "mock": True}
 
 class EnhancedPromptLayerSpan:
     """Enhanced span for PromptLayer operations with GenOps governance capabilities."""
-    
+
     def __init__(
         self,
         operation_type: str,
@@ -178,7 +178,7 @@ class EnhancedPromptLayerSpan:
         self.cost_center = cost_center
         self.tags = tags or {}
         self.max_cost = max_cost
-        
+
         # Usage tracking
         self.start_time = time.time()
         self.end_time: Optional[float] = None
@@ -187,24 +187,24 @@ class EnhancedPromptLayerSpan:
         self.output_tokens = 0
         self.total_tokens = 0
         self.model: Optional[str] = None
-        
+
         # Governance tracking
         self.policy_violations: List[str] = []
         self.governance_tags: Dict[str, str] = {}
         self.metadata: Dict[str, Any] = {}
-        
+
         logger.info(f"Created PromptLayer span: {self.operation_name} (ID: {self.operation_id})")
-    
+
     def update_cost(self, cost: float) -> None:
         """Update the estimated cost for this operation."""
         self.estimated_cost = cost
-        
+
         # Check cost limits
         if self.max_cost and cost > self.max_cost:
             violation = f"Operation cost ${cost:.6f} exceeds maximum ${self.max_cost:.6f}"
             self.policy_violations.append(violation)
             logger.warning(f"Cost violation: {violation}")
-    
+
     def update_token_usage(self, input_tokens: int, output_tokens: int, model: Optional[str] = None) -> None:
         """Update token usage metrics."""
         self.input_tokens = input_tokens
@@ -212,7 +212,7 @@ class EnhancedPromptLayerSpan:
         self.total_tokens = input_tokens + output_tokens
         if model:
             self.model = model
-        
+
         # Estimate cost based on token usage (basic estimation)
         if model and "gpt-4" in model.lower():
             # GPT-4 pricing (approximate)
@@ -224,11 +224,11 @@ class EnhancedPromptLayerSpan:
             input_cost = (input_tokens / 1000) * 0.0015
             output_cost = (output_tokens / 1000) * 0.002
             self.update_cost(input_cost + output_cost)
-    
+
     def add_attributes(self, attributes: Dict[str, Any]) -> None:
         """Add custom attributes to the span."""
         self.metadata.update(attributes)
-        
+
         # Extract governance-relevant attributes
         if "team" in attributes:
             self.team = attributes["team"]
@@ -236,11 +236,11 @@ class EnhancedPromptLayerSpan:
             self.project = attributes["project"]
         if "customer_id" in attributes:
             self.customer_id = attributes["customer_id"]
-    
+
     def get_metrics(self) -> Dict[str, Any]:
         """Get comprehensive metrics for this span."""
         duration = (self.end_time or time.time()) - self.start_time
-        
+
         return {
             "operation_id": self.operation_id,
             "operation_type": self.operation_type,
@@ -261,12 +261,12 @@ class EnhancedPromptLayerSpan:
             "governance_tags": self.governance_tags,
             "metadata": self.metadata
         }
-    
+
     def finalize(self) -> None:
         """Finalize the span and perform cleanup."""
         self.end_time = time.time()
         duration = self.end_time - self.start_time
-        
+
         logger.info(
             f"Finalized PromptLayer span: {self.operation_name} "
             f"(Duration: {duration:.2f}s, Cost: ${self.estimated_cost:.6f})"
@@ -280,7 +280,7 @@ class GenOpsPromptLayerAdapter:
     governance features including cost attribution, budget enforcement, and
     policy compliance tracking for prompt engineering workflows.
     """
-    
+
     def __init__(
         self,
         promptlayer_api_key: Optional[str] = None,
@@ -326,14 +326,14 @@ class GenOpsPromptLayerAdapter:
         self.governance_policy = governance_policy
         self.enable_cost_alerts = enable_cost_alerts
         self.tags = tags or {}
-        
+
         # Validate required configuration
         if not self.promptlayer_api_key:
             logger.warning("PromptLayer API key not provided. Set PROMPTLAYER_API_KEY or pass promptlayer_api_key")
-        
+
         if not self.team:
             logger.warning("Team not specified. Set GENOPS_TEAM or pass team parameter for cost attribution")
-        
+
         # Initialize PromptLayer client
         if HAS_PROMPTLAYER and self.promptlayer_api_key:
             try:
@@ -344,14 +344,14 @@ class GenOpsPromptLayerAdapter:
                 self.client = MockPromptLayer()
         else:
             self.client = MockPromptLayer()
-        
+
         # Usage tracking
         self.daily_usage = 0.0
         self.operation_count = 0
         self.active_spans: Dict[str, EnhancedPromptLayerSpan] = {}
-        
+
         logger.info(f"GenOpsPromptLayerAdapter initialized for team: {self.team}, project: {self.project}")
-    
+
     @contextmanager
     def track_prompt_operation(
         self,
@@ -385,10 +385,10 @@ class GenOpsPromptLayerAdapter:
         final_cost_center = cost_center or self.cost_center
         final_max_cost = max_cost or self.max_operation_cost
         final_operation_name = operation_name or f"{prompt_name or 'prompt'}_{operation_type}"
-        
+
         # Merge tags
         final_tags = {**self.tags, **(tags or {})}
-        
+
         # Create enhanced span
         span = EnhancedPromptLayerSpan(
             operation_type=operation_type,
@@ -402,48 +402,48 @@ class GenOpsPromptLayerAdapter:
             tags=final_tags,
             max_cost=final_max_cost
         )
-        
+
         # Add to active spans
         self.active_spans[span.operation_id] = span
-        
+
         try:
             # Check budget before operation
             if self.enable_governance and self.daily_budget_limit:
                 if self.daily_usage >= self.daily_budget_limit:
                     violation = f"Daily budget limit ${self.daily_budget_limit} exceeded (current: ${self.daily_usage})"
                     span.policy_violations.append(violation)
-                    
+
                     if self.governance_policy == GovernancePolicy.ENFORCED:
                         raise ValueError(f"Operation blocked: {violation}")
                     else:
                         logger.warning(f"Budget warning: {violation}")
-            
+
             yield span
-            
+
         except Exception as e:
             span.add_attributes({"error": str(e), "error_type": type(e).__name__})
             logger.error(f"PromptLayer operation failed: {e}")
             raise
-        
+
         finally:
             # Finalize span
             span.finalize()
-            
+
             # Update usage tracking
             self.daily_usage += span.estimated_cost
             self.operation_count += 1
-            
+
             # Remove from active spans
             if span.operation_id in self.active_spans:
                 del self.active_spans[span.operation_id]
-            
+
             # Log governance summary
             if self.enable_governance and span.policy_violations:
                 logger.warning(
                     f"Operation {span.operation_name} had {len(span.policy_violations)} policy violations: "
                     f"{', '.join(span.policy_violations)}"
                 )
-    
+
     def run_prompt_with_governance(
         self,
         prompt_name: str,
@@ -474,7 +474,7 @@ class GenOpsPromptLayerAdapter:
                 pl_tags.append(f"project:{self.project}")
             if self.customer_id:
                 pl_tags.append(f"customer:{self.customer_id}")
-            
+
             # Execute PromptLayer request
             if hasattr(self.client, 'run') and callable(self.client.run):
                 response = self.client.run(
@@ -484,14 +484,14 @@ class GenOpsPromptLayerAdapter:
                     metadata=metadata,
                     tags=pl_tags
                 )
-                
+
                 # Extract cost and usage information if available
                 # Note: Actual cost extraction depends on PromptLayer's response format
                 if isinstance(response, dict) and "usage" in response:
                     usage_info = response["usage"]
                     # Update span with actual usage if available
                     # This would be implemented based on PromptLayer's actual response structure
-                
+
                 return {
                     "response": response,
                     "governance": {
@@ -513,17 +513,17 @@ class GenOpsPromptLayerAdapter:
                         "estimated_cost": 0.0
                     }
                 }
-                
+
         except Exception as e:
             logger.error(f"Failed to run prompt {prompt_name}: {e}")
             raise
-    
+
     def get_metrics(self) -> Dict[str, Any]:
         """Get current governance metrics."""
         budget_remaining = None
         if self.daily_budget_limit:
             budget_remaining = self.daily_budget_limit - self.daily_usage
-        
+
         return {
             "team": self.team,
             "project": self.project,
@@ -535,25 +535,25 @@ class GenOpsPromptLayerAdapter:
             "policy_level": self.governance_policy.value,
             "active_operations": len(self.active_spans)
         }
-    
+
     def _check_governance_policies(self, span: EnhancedPromptLayerSpan) -> None:
         """Check governance policies against operation."""
         if not self.enable_governance:
             return
-        
+
         violations = []
-        
+
         # Check cost limits
         if self.max_operation_cost and span.estimated_cost > self.max_operation_cost:
             violations.append(f"Operation cost ${span.estimated_cost:.6f} exceeds limit ${self.max_operation_cost:.6f}")
-        
+
         # Check daily budget
         if self.daily_budget_limit and (self.daily_usage + span.estimated_cost) > self.daily_budget_limit:
             violations.append(f"Operation would exceed daily budget ${self.daily_budget_limit:.2f}")
-        
+
         # Add violations to span
         span.policy_violations.extend(violations)
-        
+
         # Handle enforcement
         if violations and self.governance_policy == GovernancePolicy.ENFORCED:
             raise ValueError(f"Governance policy violations: {'; '.join(violations)}")
@@ -617,7 +617,7 @@ def auto_instrument(
         environment=environment,
         **kwargs
     )
-    
+
     logger.info(f"Auto-instrumentation enabled for PromptLayer with team: {team}, project: {project}")
 
 # Global adapter for auto-instrumentation

@@ -40,13 +40,14 @@ Example usage:
 """
 
 import logging
+import os
 import time
 import uuid
+from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Union, Iterator
-import os
 from enum import Enum
+from typing import Any, Dict, List, Optional, Union
 
 logger = logging.getLogger(__name__)
 
@@ -78,16 +79,16 @@ class CohereModel(Enum):
     COMMAND_R = "command-r-03-2024"
     COMMAND_R_PLUS = "command-r-plus-04-2024"
     COMMAND_R_PLUS_08 = "command-r-plus-08-2024"
-    
+
     # Aya Expanse series
     AYA_EXPANSE_8B = "aya-expanse-8b"
     AYA_EXPANSE_32B = "aya-expanse-32b"
-    
+
     # Embedding models
     EMBED_ENGLISH_V3 = "embed-english-v3.0"
     EMBED_MULTILINGUAL_V3 = "embed-multilingual-v3.0"
     EMBED_V4 = "embed-english-v4.0"
-    
+
     # Rerank models
     RERANK_V3 = "rerank-english-v3.0"
     RERANK_MULTILINGUAL_V3 = "rerank-multilingual-v3.0"
@@ -106,44 +107,44 @@ class CohereOperation(Enum):
 @dataclass
 class CohereUsageMetrics:
     """Comprehensive usage metrics for Cohere operations."""
-    
+
     # Request metadata
     operation_id: str
     operation_type: CohereOperation
     model: str
     timestamp: float
-    
+
     # Token usage
     input_tokens: int = 0
     output_tokens: int = 0
     total_tokens: int = 0
-    
+
     # Operation-specific metrics
     embedding_units: int = 0  # For embedding operations
     search_units: int = 0     # For rerank operations
-    
+
     # Cost information
     input_cost: float = 0.0
     output_cost: float = 0.0
     operation_cost: float = 0.0  # For non-token operations
     total_cost: float = 0.0
-    
+
     # Performance metrics
     latency_ms: float = 0.0
     tokens_per_second: float = 0.0
-    
+
     # Governance attributes
     team: Optional[str] = None
     project: Optional[str] = None
     environment: Optional[str] = None
     customer_id: Optional[str] = None
     tags: Dict[str, str] = field(default_factory=dict)
-    
+
     def __post_init__(self):
         """Calculate derived metrics."""
         self.total_tokens = self.input_tokens + self.output_tokens
         self.total_cost = self.input_cost + self.output_cost + self.operation_cost
-        
+
         if self.latency_ms > 0 and self.output_tokens > 0:
             self.tokens_per_second = (self.output_tokens / self.latency_ms) * 1000
 
@@ -151,23 +152,23 @@ class CohereUsageMetrics:
 @dataclass
 class CohereResponse:
     """Standardized response format for all Cohere operations."""
-    
+
     # Core response data
     content: str = ""
     usage: Optional[CohereUsageMetrics] = None
     model: str = ""
-    
+
     # Operation-specific data
     embeddings: Optional[List[List[float]]] = None
     rankings: Optional[List[Dict[str, Any]]] = None
     classifications: Optional[List[Dict[str, Any]]] = None
-    
+
     # Metadata
     operation_id: str = ""
     request_id: str = ""
     success: bool = True
     error_message: str = ""
-    
+
     # Raw response for advanced use cases
     raw_response: Optional[Any] = None
 
@@ -212,29 +213,29 @@ class GenOpsCohereAdapter:
             model="rerank-english-v3.0"
         )
     """
-    
+
     def __init__(
         self,
         api_key: Optional[str] = None,
         base_url: Optional[str] = None,
         timeout: float = 60.0,
         max_retries: int = 3,
-        
+
         # Cost tracking configuration
         cost_tracking_enabled: bool = True,
         budget_limit: Optional[float] = None,
         cost_alert_threshold: float = 0.8,
-        
+
         # Governance defaults
         default_team: Optional[str] = None,
         default_project: Optional[str] = None,
         default_environment: Optional[str] = None,
-        
+
         # Advanced settings
         enable_streaming: bool = True,
         enable_caching: bool = False,
         debug: bool = False,
-        
+
         **kwargs
     ):
         """
@@ -262,12 +263,12 @@ class GenOpsCohereAdapter:
             raise ImportError(
                 "Cohere package not found. Install with: pip install cohere"
             )
-        
+
         # Initialize API key from parameter or environment
         self.api_key = api_key or os.getenv("CO_API_KEY")
         if not self.api_key:
             logger.warning("No Cohere API key provided. Set CO_API_KEY environment variable or pass api_key parameter")
-        
+
         # Initialize Cohere client
         client_kwargs = {
             "api_key": self.api_key,
@@ -276,13 +277,13 @@ class GenOpsCohereAdapter:
         }
         if base_url:
             client_kwargs["base_url"] = base_url
-        
+
         try:
             self.client = ClientV2(**client_kwargs)
         except Exception as e:
             logger.error(f"Failed to initialize Cohere client: {e}")
             self.client = None
-        
+
         # Configuration
         self.timeout = timeout
         self.max_retries = max_retries
@@ -292,28 +293,28 @@ class GenOpsCohereAdapter:
         self.enable_streaming = enable_streaming
         self.enable_caching = enable_caching
         self.debug = debug
-        
+
         # Governance defaults
         self.default_team = default_team
         self.default_project = default_project
         self.default_environment = default_environment
-        
+
         # Internal state
         self._total_cost = 0.0
         self._operation_count = 0
         self._cache = {} if enable_caching else None
-        
+
         # Initialize telemetry
         self.tracer = None
         if HAS_OTEL:
             self.tracer = trace.get_tracer(__name__)
-        
+
         logger.info(f"GenOpsCohereAdapter initialized with cost tracking: {cost_tracking_enabled}")
-    
+
     def _create_operation_id(self) -> str:
         """Generate unique operation ID for tracking."""
         return f"cohere-{int(time.time() * 1000)}-{uuid.uuid4().hex[:8]}"
-    
+
     def _get_governance_attributes(self, **kwargs) -> Dict[str, str]:
         """Extract and standardize governance attributes."""
         return {
@@ -324,10 +325,10 @@ class GenOpsCohereAdapter:
             "feature": kwargs.get("feature"),
             "cost_center": kwargs.get("cost_center"),
         }
-    
+
     def _calculate_cost(
-        self, 
-        model: str, 
+        self,
+        model: str,
         operation: CohereOperation,
         input_tokens: int = 0,
         output_tokens: int = 0,
@@ -341,12 +342,12 @@ class GenOpsCohereAdapter:
         """
         if not self.cost_tracking_enabled:
             return 0.0, 0.0, 0.0
-        
+
         # Import pricing calculator
         try:
             from .cohere_pricing import CohereCalculator
             calculator = CohereCalculator()
-            
+
             return calculator.calculate_cost(
                 model=model,
                 operation=operation,
@@ -357,56 +358,56 @@ class GenOpsCohereAdapter:
         except ImportError:
             logger.warning("Cohere pricing calculator not available")
             return 0.0, 0.0, 0.0
-    
+
     def _check_budget_limit(self, estimated_cost: float) -> bool:
         """Check if operation would exceed budget limit."""
         if not self.budget_limit:
             return True
-        
+
         projected_total = self._total_cost + estimated_cost
-        
+
         if projected_total > self.budget_limit:
             logger.warning(f"Operation would exceed budget limit: ${projected_total:.6f} > ${self.budget_limit:.6f}")
             return False
-        
+
         # Cost alert threshold check
         if projected_total > (self.budget_limit * self.cost_alert_threshold):
             logger.warning(f"Approaching budget limit: ${projected_total:.6f} / ${self.budget_limit:.6f}")
-        
+
         return True
-    
+
     def _update_usage_stats(self, usage: CohereUsageMetrics):
         """Update internal usage statistics."""
         self._total_cost += usage.total_cost
         self._operation_count += 1
-        
+
         if self.debug:
             logger.debug(f"Operation {usage.operation_id}: {usage.operation_type.value} - ${usage.total_cost:.6f}")
-    
+
     @contextmanager
     def _create_span(self, operation: str, **attributes):
         """Create OpenTelemetry span for operation tracking."""
         if not self.tracer:
             yield None
             return
-        
+
         with self.tracer.start_as_current_span(f"genops.cohere.{operation}") as span:
             # Add standard attributes
             span.set_attribute("genops.provider", "cohere")
             span.set_attribute("genops.operation", operation)
-            
+
             # Add governance attributes
             for key, value in attributes.items():
                 if value is not None:
                     span.set_attribute(f"genops.{key}", str(value))
-            
+
             try:
                 yield span
             except Exception as e:
                 span.set_status(Status(StatusCode.ERROR, str(e)))
                 span.record_exception(e)
                 raise
-    
+
     def chat(
         self,
         message: str,
@@ -442,11 +443,11 @@ class GenOpsCohereAdapter:
         """
         if not self.client:
             raise RuntimeError("Cohere client not initialized")
-        
+
         operation_id = self._create_operation_id()
         governance_attrs = self._get_governance_attributes(**governance_kwargs)
         start_time = time.time()
-        
+
         with self._create_span("chat", **governance_attrs, model=model) as span:
             try:
                 # Prepare request parameters
@@ -454,21 +455,21 @@ class GenOpsCohereAdapter:
                     "model": model,
                     "messages": [{"role": "user", "content": message}]
                 }
-                
+
                 if temperature is not None:
                     request_params["temperature"] = temperature
                 if max_tokens is not None:
                     request_params["max_tokens"] = max_tokens
                 if stream and self.enable_streaming:
                     request_params["stream"] = True
-                
+
                 # Add conversation context if provided
                 if conversation_id:
                     request_params["conversation_id"] = conversation_id
-                
+
                 # Execute request
                 response = self.client.chat(**request_params)
-                
+
                 # Process response
                 if stream and self.enable_streaming:
                     return self._handle_streaming_response(
@@ -478,7 +479,7 @@ class GenOpsCohereAdapter:
                     return self._process_chat_response(
                         response, operation_id, model, governance_attrs, start_time
                     )
-            
+
             except Exception as e:
                 logger.error(f"Cohere chat operation failed: {e}")
                 return CohereResponse(
@@ -486,7 +487,7 @@ class GenOpsCohereAdapter:
                     success=False,
                     error_message=str(e)
                 )
-    
+
     def _process_chat_response(
         self,
         response: Any,
@@ -498,20 +499,20 @@ class GenOpsCohereAdapter:
         """Process non-streaming chat response."""
         end_time = time.time()
         latency_ms = (end_time - start_time) * 1000
-        
+
         # Extract response content
         content = ""
         if hasattr(response, 'message') and hasattr(response.message, 'content'):
             content = response.message.content[0].text if response.message.content else ""
-        
+
         # Extract usage information
         input_tokens = 0
         output_tokens = 0
-        
+
         if hasattr(response, 'usage'):
             input_tokens = getattr(response.usage, 'input_tokens', 0)
             output_tokens = getattr(response.usage, 'output_tokens', 0)
-        
+
         # Calculate costs
         input_cost, output_cost, operation_cost = self._calculate_cost(
             model=model,
@@ -519,7 +520,7 @@ class GenOpsCohereAdapter:
             input_tokens=input_tokens,
             output_tokens=output_tokens
         )
-        
+
         # Create usage metrics
         usage = CohereUsageMetrics(
             operation_id=operation_id,
@@ -534,10 +535,10 @@ class GenOpsCohereAdapter:
             latency_ms=latency_ms,
             **governance_attrs
         )
-        
+
         # Update statistics
         self._update_usage_stats(usage)
-        
+
         return CohereResponse(
             content=content,
             usage=usage,
@@ -546,7 +547,7 @@ class GenOpsCohereAdapter:
             success=True,
             raw_response=response
         )
-    
+
     def generate(
         self,
         prompt: str,
@@ -572,11 +573,11 @@ class GenOpsCohereAdapter:
         """
         if not self.client:
             raise RuntimeError("Cohere client not initialized")
-        
+
         operation_id = self._create_operation_id()
         governance_attrs = self._get_governance_attributes(**governance_kwargs)
         start_time = time.time()
-        
+
         with self._create_span("generate", **governance_attrs, model=model) as span:
             try:
                 # Prepare request parameters
@@ -584,14 +585,14 @@ class GenOpsCohereAdapter:
                     "model": model,
                     "prompt": prompt
                 }
-                
+
                 if temperature is not None:
                     request_params["temperature"] = temperature
                 if max_tokens is not None:
                     request_params["max_tokens"] = max_tokens
                 if stop_sequences:
                     request_params["stop_sequences"] = stop_sequences
-                
+
                 # Execute request (using legacy generate endpoint if available)
                 if hasattr(self.client, 'generate'):
                     response = self.client.generate(**request_params)
@@ -599,11 +600,11 @@ class GenOpsCohereAdapter:
                     # Fallback to chat endpoint with system message
                     messages = [{"role": "user", "content": prompt}]
                     response = self.client.chat(model=model, messages=messages)
-                
+
                 return self._process_generate_response(
                     response, operation_id, model, governance_attrs, start_time
                 )
-            
+
             except Exception as e:
                 logger.error(f"Cohere generate operation failed: {e}")
                 return CohereResponse(
@@ -611,7 +612,7 @@ class GenOpsCohereAdapter:
                     success=False,
                     error_message=str(e)
                 )
-    
+
     def _process_generate_response(
         self,
         response: Any,
@@ -623,7 +624,7 @@ class GenOpsCohereAdapter:
         """Process text generation response."""
         end_time = time.time()
         latency_ms = (end_time - start_time) * 1000
-        
+
         # Extract content based on response type
         content = ""
         if hasattr(response, 'generations'):
@@ -632,11 +633,11 @@ class GenOpsCohereAdapter:
         elif hasattr(response, 'message'):
             # Chat response used as fallback
             content = response.message.content[0].text if response.message.content else ""
-        
+
         # Extract usage information
         input_tokens = 0
         output_tokens = 0
-        
+
         if hasattr(response, 'meta') and hasattr(response.meta, 'billed_units'):
             # Legacy format
             input_tokens = getattr(response.meta.billed_units, 'input_tokens', 0)
@@ -645,7 +646,7 @@ class GenOpsCohereAdapter:
             # New format
             input_tokens = getattr(response.usage, 'input_tokens', 0)
             output_tokens = getattr(response.usage, 'output_tokens', 0)
-        
+
         # Calculate costs
         input_cost, output_cost, operation_cost = self._calculate_cost(
             model=model,
@@ -653,7 +654,7 @@ class GenOpsCohereAdapter:
             input_tokens=input_tokens,
             output_tokens=output_tokens
         )
-        
+
         # Create usage metrics
         usage = CohereUsageMetrics(
             operation_id=operation_id,
@@ -668,10 +669,10 @@ class GenOpsCohereAdapter:
             latency_ms=latency_ms,
             **governance_attrs
         )
-        
+
         # Update statistics
         self._update_usage_stats(usage)
-        
+
         return CohereResponse(
             content=content,
             usage=usage,
@@ -680,7 +681,7 @@ class GenOpsCohereAdapter:
             success=True,
             raw_response=response
         )
-    
+
     def embed(
         self,
         texts: Union[str, List[str]],
@@ -704,15 +705,15 @@ class GenOpsCohereAdapter:
         """
         if not self.client:
             raise RuntimeError("Cohere client not initialized")
-        
+
         # Normalize input
         if isinstance(texts, str):
             texts = [texts]
-        
+
         operation_id = self._create_operation_id()
         governance_attrs = self._get_governance_attributes(**governance_kwargs)
         start_time = time.time()
-        
+
         with self._create_span("embed", **governance_attrs, model=model, text_count=len(texts)) as span:
             try:
                 # Prepare request parameters
@@ -721,17 +722,17 @@ class GenOpsCohereAdapter:
                     "texts": texts,
                     "input_type": input_type
                 }
-                
+
                 if embedding_types:
                     request_params["embedding_types"] = embedding_types
-                
+
                 # Execute request
                 response = self.client.embed(**request_params)
-                
+
                 return self._process_embed_response(
                     response, operation_id, model, len(texts), governance_attrs, start_time
                 )
-            
+
             except Exception as e:
                 logger.error(f"Cohere embed operation failed: {e}")
                 return CohereResponse(
@@ -739,7 +740,7 @@ class GenOpsCohereAdapter:
                     success=False,
                     error_message=str(e)
                 )
-    
+
     def _process_embed_response(
         self,
         response: Any,
@@ -752,22 +753,22 @@ class GenOpsCohereAdapter:
         """Process embedding response."""
         end_time = time.time()
         latency_ms = (end_time - start_time) * 1000
-        
+
         # Extract embeddings
         embeddings = []
         if hasattr(response, 'embeddings'):
             embeddings = response.embeddings
-        
+
         # Calculate embedding units (typically 1 per text)
         embedding_units = text_count
-        
+
         # Extract usage information
         input_tokens = 0
         if hasattr(response, 'meta') and hasattr(response.meta, 'billed_units'):
             input_tokens = getattr(response.meta.billed_units, 'input_tokens', 0)
         elif hasattr(response, 'usage'):
             input_tokens = getattr(response.usage, 'input_tokens', 0)
-        
+
         # Calculate costs
         input_cost, output_cost, operation_cost = self._calculate_cost(
             model=model,
@@ -775,7 +776,7 @@ class GenOpsCohereAdapter:
             input_tokens=input_tokens,
             operation_units=embedding_units
         )
-        
+
         # Create usage metrics
         usage = CohereUsageMetrics(
             operation_id=operation_id,
@@ -790,10 +791,10 @@ class GenOpsCohereAdapter:
             latency_ms=latency_ms,
             **governance_attrs
         )
-        
+
         # Update statistics
         self._update_usage_stats(usage)
-        
+
         return CohereResponse(
             embeddings=embeddings,
             usage=usage,
@@ -802,7 +803,7 @@ class GenOpsCohereAdapter:
             success=True,
             raw_response=response
         )
-    
+
     def rerank(
         self,
         query: str,
@@ -828,11 +829,11 @@ class GenOpsCohereAdapter:
         """
         if not self.client:
             raise RuntimeError("Cohere client not initialized")
-        
+
         operation_id = self._create_operation_id()
         governance_attrs = self._get_governance_attributes(**governance_kwargs)
         start_time = time.time()
-        
+
         with self._create_span("rerank", **governance_attrs, model=model, document_count=len(documents)) as span:
             try:
                 # Prepare request parameters
@@ -842,17 +843,17 @@ class GenOpsCohereAdapter:
                     "documents": documents,
                     "return_documents": return_documents
                 }
-                
+
                 if top_n is not None:
                     request_params["top_n"] = top_n
-                
+
                 # Execute request
                 response = self.client.rerank(**request_params)
-                
+
                 return self._process_rerank_response(
                     response, operation_id, model, len(documents), governance_attrs, start_time
                 )
-            
+
             except Exception as e:
                 logger.error(f"Cohere rerank operation failed: {e}")
                 return CohereResponse(
@@ -860,7 +861,7 @@ class GenOpsCohereAdapter:
                     success=False,
                     error_message=str(e)
                 )
-    
+
     def _process_rerank_response(
         self,
         response: Any,
@@ -873,7 +874,7 @@ class GenOpsCohereAdapter:
         """Process rerank response."""
         end_time = time.time()
         latency_ms = (end_time - start_time) * 1000
-        
+
         # Extract rankings
         rankings = []
         if hasattr(response, 'results'):
@@ -885,21 +886,21 @@ class GenOpsCohereAdapter:
                 }
                 for result in response.results
             ]
-        
+
         # Calculate search units (typically 1 per search request)
         search_units = 1
-        
+
         # Extract usage information
         if hasattr(response, 'meta') and hasattr(response.meta, 'billed_units'):
             search_units = getattr(response.meta.billed_units, 'search_units', search_units)
-        
+
         # Calculate costs
         input_cost, output_cost, operation_cost = self._calculate_cost(
             model=model,
             operation=CohereOperation.RERANK,
             operation_units=search_units
         )
-        
+
         # Create usage metrics
         usage = CohereUsageMetrics(
             operation_id=operation_id,
@@ -913,10 +914,10 @@ class GenOpsCohereAdapter:
             latency_ms=latency_ms,
             **governance_attrs
         )
-        
+
         # Update statistics
         self._update_usage_stats(usage)
-        
+
         return CohereResponse(
             rankings=rankings,
             usage=usage,
@@ -925,7 +926,7 @@ class GenOpsCohereAdapter:
             success=True,
             raw_response=response
         )
-    
+
     def get_usage_summary(self) -> Dict[str, Any]:
         """
         Get comprehensive usage and cost summary.
@@ -941,7 +942,7 @@ class GenOpsCohereAdapter:
             "cost_tracking_enabled": self.cost_tracking_enabled,
             "budget_limit": self.budget_limit
         }
-    
+
     def reset_usage_stats(self):
         """Reset usage statistics."""
         self._total_cost = 0.0
@@ -1031,11 +1032,11 @@ def cohere_workflow_context(
         ... print(f"Workflow {workflow_id} total cost: ${ctx.get_total_cost():.6f}")
     """
     workflow_id = f"cohere-workflow-{uuid.uuid4().hex[:8]}"
-    
+
     # Use provided adapter or create new one
     if adapter is None:
         adapter = GenOpsCohereAdapter(**governance_attrs)
-    
+
     # Workflow tracking state
     workflow_context = WorkflowContext(
         workflow_id=workflow_id,
@@ -1043,9 +1044,9 @@ def cohere_workflow_context(
         adapter=adapter,
         governance_attrs=governance_attrs
     )
-    
+
     start_time = time.time()
-    
+
     try:
         # Create OpenTelemetry span for workflow
         if HAS_OTEL:
@@ -1054,20 +1055,20 @@ def cohere_workflow_context(
                 span.set_attribute("genops.workflow.id", workflow_id)
                 span.set_attribute("genops.workflow.name", workflow_name)
                 span.set_attribute("genops.provider", "cohere")
-                
+
                 # Add governance attributes to span
                 for key, value in governance_attrs.items():
                     span.set_attribute(f"genops.{key}", str(value))
-                
+
                 yield workflow_context, workflow_id
         else:
             yield workflow_context, workflow_id
-            
+
     except Exception as e:
         logger.error(f"Workflow {workflow_id} failed: {e}")
         workflow_context.mark_failed(str(e))
         raise
-        
+
     finally:
         # Finalize workflow metrics
         end_time = time.time()
@@ -1076,7 +1077,7 @@ def cohere_workflow_context(
 
 class WorkflowContext:
     """Context for tracking multi-operation workflows."""
-    
+
     def __init__(self, workflow_id: str, workflow_name: str, adapter: GenOpsCohereAdapter, governance_attrs: Dict[str, Any]):
         self.workflow_id = workflow_id
         self.workflow_name = workflow_name
@@ -1087,7 +1088,7 @@ class WorkflowContext:
         self.failed = False
         self.error_message = None
         self.start_time = time.time()
-    
+
     def chat(self, **kwargs) -> CohereResponse:
         """Execute chat operation within workflow context."""
         # Add workflow tracking to kwargs
@@ -1096,9 +1097,9 @@ class WorkflowContext:
             'workflow_name': self.workflow_name,
             **self.governance_attrs
         })
-        
+
         response = self.adapter.chat(**kwargs)
-        
+
         # Track operation
         self.operations.append({
             'operation': 'chat',
@@ -1107,12 +1108,12 @@ class WorkflowContext:
             'success': response.success,
             'timestamp': time.time()
         })
-        
+
         if response.usage:
             self.total_cost += response.usage.total_cost
-        
+
         return response
-    
+
     def embed(self, **kwargs) -> CohereResponse:
         """Execute embed operation within workflow context."""
         kwargs.update({
@@ -1120,9 +1121,9 @@ class WorkflowContext:
             'workflow_name': self.workflow_name,
             **self.governance_attrs
         })
-        
+
         response = self.adapter.embed(**kwargs)
-        
+
         # Track operation
         self.operations.append({
             'operation': 'embed',
@@ -1132,12 +1133,12 @@ class WorkflowContext:
             'texts_count': len(kwargs.get('texts', [])),
             'timestamp': time.time()
         })
-        
+
         if response.usage:
             self.total_cost += response.usage.total_cost
-        
+
         return response
-    
+
     def rerank(self, **kwargs) -> CohereResponse:
         """Execute rerank operation within workflow context."""
         kwargs.update({
@@ -1145,9 +1146,9 @@ class WorkflowContext:
             'workflow_name': self.workflow_name,
             **self.governance_attrs
         })
-        
+
         response = self.adapter.rerank(**kwargs)
-        
+
         # Track operation
         self.operations.append({
             'operation': 'rerank',
@@ -1157,20 +1158,20 @@ class WorkflowContext:
             'documents_count': len(kwargs.get('documents', [])),
             'timestamp': time.time()
         })
-        
+
         if response.usage:
             self.total_cost += response.usage.total_cost
-        
+
         return response
-    
+
     def get_total_cost(self) -> float:
         """Get total cost of all operations in the workflow."""
         return self.total_cost
-    
+
     def get_operation_count(self) -> int:
         """Get total number of operations in the workflow."""
         return len(self.operations)
-    
+
     def get_cost_breakdown(self) -> Dict[str, float]:
         """Get cost breakdown by operation type."""
         breakdown = {}
@@ -1178,12 +1179,12 @@ class WorkflowContext:
             op_type = op['operation']
             breakdown[op_type] = breakdown.get(op_type, 0.0) + op['cost']
         return breakdown
-    
+
     def mark_failed(self, error_message: str):
         """Mark workflow as failed."""
         self.failed = True
         self.error_message = error_message
-    
+
     def finalize(self, duration: float):
         """Finalize workflow tracking."""
         logger.info(f"Workflow {self.workflow_id} completed: "
@@ -1211,44 +1212,44 @@ def auto_instrument():
     if not HAS_COHERE:
         logger.warning("Cohere client not available for auto-instrumentation")
         return False
-    
+
     try:
         # Create global adapter instance
         global_adapter = GenOpsCohereAdapter()
-        
+
         # Store original methods
         original_client_init = ClientV2.__init__
-        
+
         def instrumented_client_init(self, *args, **kwargs):
             # Initialize original client
             original_client_init(self, *args, **kwargs)
-            
+
             # Store original methods
             self._genops_original_chat = self.chat
             self._genops_original_embed = self.embed
             self._genops_original_rerank = self.rerank
-            
+
             # Create instrumented methods
             def instrumented_chat(*args, **kwargs):
                 return global_adapter.chat(*args, **kwargs)
-            
+
             def instrumented_embed(*args, **kwargs):
                 return global_adapter.embed(*args, **kwargs)
-            
+
             def instrumented_rerank(*args, **kwargs):
                 return global_adapter.rerank(*args, **kwargs)
-            
+
             # Apply patches
             self.chat = instrumented_chat
-            self.embed = instrumented_embed  
+            self.embed = instrumented_embed
             self.rerank = instrumented_rerank
-        
+
         # Apply global patch
         ClientV2.__init__ = instrumented_client_init
-        
+
         logger.info("GenOps auto-instrumentation enabled for Cohere")
         return True
-        
+
     except Exception as e:
         logger.error(f"Failed to enable Cohere auto-instrumentation: {e}")
         return False

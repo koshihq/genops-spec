@@ -41,25 +41,25 @@ def main():
     # Quick environment check
     print("\\n🌍 Environment Check:")
     print("-" * 30)
-    
+
     public_key = os.getenv('LANGFUSE_PUBLIC_KEY')
     secret_key = os.getenv('LANGFUSE_SECRET_KEY')
     base_url = os.getenv('LANGFUSE_BASE_URL', 'https://cloud.langfuse.com')
-    
+
     if public_key:
         print("✅ LANGFUSE_PUBLIC_KEY: Found and validated")
     else:
         print("❌ LANGFUSE_PUBLIC_KEY: Not found")
         print("   Get your keys at: https://cloud.langfuse.com/")
-    
+
     if secret_key:
         print("✅ LANGFUSE_SECRET_KEY: Found and validated")
     else:
         print("❌ LANGFUSE_SECRET_KEY: Not found")
         print("   Get your keys at: https://cloud.langfuse.com/")
-    
+
     print(f"🌐 LANGFUSE_BASE_URL: {base_url}")
-    
+
     # Check LLM provider keys
     providers_found = []
     provider_keys = {
@@ -67,21 +67,21 @@ def main():
         'Anthropic': 'ANTHROPIC_API_KEY',
         'Groq': 'GROQ_API_KEY'
     }
-    
+
     for provider, env_var in provider_keys.items():
         if os.getenv(env_var):
             providers_found.append(provider)
             print(f"✅ {provider}: Found and validated")
         else:
             print(f"⚠️  {provider}: Not configured ({env_var})")
-    
+
     if not providers_found:
         print("\\n❌ No LLM provider API keys found! You need at least one.")
         print("   • OpenAI: https://platform.openai.com/api-keys")
         print("   • Anthropic: https://console.anthropic.com/")
         print("   • Groq: https://console.groq.com/ (free tier available)")
         return False
-    
+
     print(f"\\n✅ Found {len(providers_found)} configured providers: {', '.join(providers_found)}")
 
     # Run comprehensive validation
@@ -99,21 +99,21 @@ def main():
                 print("🎉 Success! Your Langfuse LLM Observability + GenOps setup is ready!")
                 print("\\n🔍 Enhanced Observability Active:")
                 print("   • Langfuse tracing ✅ Enhanced with GenOps governance")
-                print("   • Cost intelligence ✅ Integrated with observability traces")  
+                print("   • Cost intelligence ✅ Integrated with observability traces")
                 print("   • Team attribution ✅ Automatic cost and usage attribution")
                 print("   • Budget enforcement ✅ Policy compliance within traces")
                 for provider in providers_found:
                     print(f"   • {provider} ✅ Ready for governed LLM operations")
-                
+
                 print("\\n📚 Next steps:")
                 print("   • Run 'python basic_tracking.py' for enhanced tracing examples")
                 print("   • Run 'python evaluation_integration.py' for governance-aware evaluations")
                 print("   • Run 'python auto_instrumentation.py' for zero-code integration")
-                
+
                 print("\\n💡 Quick Test:")
                 print("   Try this command to test your enhanced observability:")
                 print("   python -c \\\"from genops.providers.langfuse import instrument_langfuse; print('Enhanced observability ready!')\\\"")
-                
+
             else:
                 print("⚠️  Setup validation completed with warnings.")
                 print("   Review the detailed output above for specific issues.")
@@ -141,10 +141,10 @@ def demonstrate_quick_integration():
     """Show a quick integration example."""
     print("\\n🚀 Quick Integration Demo")
     print("-" * 25)
-    
+
     try:
         from genops.providers.langfuse import instrument_langfuse
-        
+
         # Test basic adapter creation
         print("✅ Creating GenOps Langfuse adapter...")
         adapter = instrument_langfuse(
@@ -152,10 +152,10 @@ def demonstrate_quick_integration():
             project="setup-check",
             environment="development"
         )
-        
+
         print("✅ Enhanced Langfuse observability ready!")
         print("\\n🔍 Integration Features Available:")
-        
+
         integration_features = [
             "🔍 Enhanced Traces - Langfuse traces with GenOps governance attributes",
             "💰 Cost Intelligence - Real-time cost tracking integrated with observability",
@@ -165,12 +165,12 @@ def demonstrate_quick_integration():
             "⚡ Zero-Code Setup - Auto-instrumentation for existing Langfuse apps",
             "📈 Business Intelligence - Cost optimization insights and recommendations"
         ]
-        
+
         for feature in integration_features:
             print(f"   {feature}")
-            
+
         return True
-        
+
     except Exception as e:
         print(f"❌ Integration demo failed: {e}")
         return False
@@ -179,13 +179,13 @@ def demonstrate_quick_integration():
 if __name__ == "__main__":
     """Main entry point."""
     print(f"🕒 Started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    
+
     success = main()
-    
+
     if success:
         # Show quick integration demo
         demonstrate_quick_integration()
-        
+
         print("\\n" + "🌟" * 25)
         print("Your Langfuse + GenOps integration is ready!")
         print("Enhanced LLM observability with governance intelligence!")

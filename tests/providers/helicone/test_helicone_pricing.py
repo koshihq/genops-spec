@@ -9,19 +9,18 @@ Tests the pricing intelligence including:
 - Cost comparison utilities
 """
 
-import pytest
-from unittest.mock import Mock, patch
 from decimal import Decimal
-from typing import Dict, Any
+
+import pytest
 
 # Import the modules under test
 try:
     from genops.providers.helicone_pricing import (
         HeliconeProvider,
-        calculate_provider_cost,
         calculate_gateway_fees,
+        calculate_provider_cost,
+        compare_provider_costs,
         get_cost_optimized_provider,
-        compare_provider_costs
     )
     HELICONE_PRICING_AVAILABLE = True
 except ImportError:
@@ -40,7 +39,7 @@ class TestHeliconeProviderCosts:
             input_tokens=100,
             output_tokens=50
         )
-        
+
         assert isinstance(cost, (float, Decimal))
         assert cost > 0
 
@@ -52,7 +51,7 @@ class TestHeliconeProviderCosts:
             input_tokens=100,
             output_tokens=50
         )
-        
+
         assert isinstance(cost, (float, Decimal))
         assert cost > 0
 
@@ -79,7 +78,7 @@ class TestHeliconeGatewayFees:
             monthly_requests=1000,
             base_cost=10.00
         )
-        
+
         assert isinstance(fees, (float, Decimal))
         assert fees >= 0
 
@@ -102,7 +101,7 @@ class TestCostOptimization:
             providers=[HeliconeProvider.OPENAI, HeliconeProvider.GROQ],
             estimated_tokens={"input": 100, "output": 50}
         )
-        
+
         assert provider in [HeliconeProvider.OPENAI, HeliconeProvider.GROQ]
 
     def test_provider_cost_comparison(self):
@@ -112,7 +111,7 @@ class TestCostOptimization:
             input_tokens=100,
             output_tokens=50
         )
-        
+
         assert isinstance(comparison, dict)
         assert len(comparison) == 2
 

@@ -10,17 +10,19 @@ Tests the core adapter functionality including:
 - Performance monitoring
 """
 
-import pytest
 import json
-from unittest.mock import Mock, patch, MagicMock
-from datetime import datetime
-from typing import Dict, Any
+from unittest.mock import Mock, patch
+
+import pytest
 
 # Import the modules under test
 try:
-    from genops.providers.bedrock import GenOpsBedrockAdapter, BedrockOperationResult
-    from genops.providers.bedrock import instrument_bedrock
-    
+    from genops.providers.bedrock import (
+        BedrockOperationResult,
+        GenOpsBedrockAdapter,
+        instrument_bedrock,
+    )
+
     # Check if auto_instrument_bedrock exists, otherwise create a stub for testing
     try:
         from genops.providers.bedrock import auto_instrument_bedrock
@@ -28,8 +30,8 @@ try:
         def auto_instrument_bedrock():
             """Stub function for testing when not available."""
             pass
-    
-    # Alias for test compatibility 
+
+    # Alias for test compatibility
     BedrockResult = BedrockOperationResult
     BEDROCK_AVAILABLE = True
 except ImportError:
@@ -60,7 +62,7 @@ class TestGenOpsBedrockAdapter:
         adapter = GenOpsBedrockAdapter()
         assert adapter.region_name == 'us-east-1'
         assert adapter.default_model == 'anthropic.claude-3-haiku-20240307-v1:0'
-        
+
         # Test custom initialization
         adapter_custom = GenOpsBedrockAdapter(
             region_name='us-west-2',
@@ -81,7 +83,7 @@ class TestGenOpsBedrockAdapter:
                 'HTTPStatusCode': 200
             }
         }
-        
+
         # Mock the response body
         mock_body = Mock()
         mock_body.read.return_value = json.dumps({
@@ -93,11 +95,11 @@ class TestGenOpsBedrockAdapter:
             }
         }).encode('utf-8')
         mock_response['body'] = mock_body
-        
+
         mock_bedrock = Mock()
         mock_bedrock.invoke_model.return_value = mock_response
         mock_boto_client.return_value = mock_bedrock
-        
+
         # Test text generation
         result = self.adapter.text_generation(
             prompt="Hello, world!",
@@ -105,7 +107,7 @@ class TestGenOpsBedrockAdapter:
             max_tokens=50,
             **self.sample_governance_attrs
         )
-        
+
         # Verify result structure
         assert isinstance(result, BedrockResult)
         assert result.content == 'Test response from Claude'
@@ -113,7 +115,7 @@ class TestGenOpsBedrockAdapter:
         assert result.output_tokens == 25
         assert result.model_id == "anthropic.claude-3-haiku-20240307-v1:0"
         assert result.region == 'us-east-1'
-        
+
         # Verify governance attributes
         assert result.governance_attributes['team'] == 'test-team'
         assert result.governance_attributes['project'] == 'test-project'
@@ -127,7 +129,7 @@ class TestGenOpsBedrockAdapter:
             'body': Mock(),
             'contentType': 'application/json'
         }
-        
+
         mock_body = Mock()
         mock_body.read.return_value = json.dumps({
             'completion': 'Cost test response',
@@ -137,17 +139,17 @@ class TestGenOpsBedrockAdapter:
             }
         }).encode('utf-8')
         mock_response['body'] = mock_body
-        
+
         mock_bedrock = Mock()
         mock_bedrock.invoke_model.return_value = mock_response
         mock_boto_client.return_value = mock_bedrock
-        
+
         result = self.adapter.text_generation(
             prompt="Calculate costs for this operation",
             model_id="anthropic.claude-3-haiku-20240307-v1:0",
             **self.sample_governance_attrs
         )
-        
+
         # Verify cost calculations
         assert result.cost_usd > 0
         assert result.input_cost >= 0
@@ -166,7 +168,7 @@ class TestGenOpsBedrockAdapter:
             "ai21.j2-ultra-v1",
             "cohere.command-text-v14"
         ]
-        
+
         for model in supported_models:
             adapter = GenOpsBedrockAdapter(default_model=model)
             assert adapter.default_model == model
@@ -175,7 +177,7 @@ class TestGenOpsBedrockAdapter:
     def test_error_handling(self, mock_boto_client):
         """Test error handling for various failure scenarios."""
         mock_bedrock = Mock()
-        
+
         # Test AWS service error
         from botocore.exceptions import ClientError
         mock_bedrock.invoke_model.side_effect = ClientError(
@@ -183,13 +185,13 @@ class TestGenOpsBedrockAdapter:
             operation_name='InvokeModel'
         )
         mock_boto_client.return_value = mock_bedrock
-        
+
         with pytest.raises(Exception) as exc_info:
             self.adapter.text_generation(
                 prompt="Test prompt",
                 **self.sample_governance_attrs
             )
-        
+
         assert "AccessDeniedException" in str(exc_info.value) or "Access denied" in str(exc_info.value)
 
     @patch('boto3.client')
@@ -200,7 +202,7 @@ class TestGenOpsBedrockAdapter:
             'body': Mock(),
             'contentType': 'application/json'
         }
-        
+
         # Mock streaming body
         mock_body = Mock()
         mock_body.__iter__ = Mock(return_value=iter([
@@ -209,11 +211,11 @@ class TestGenOpsBedrockAdapter:
             b'{"completion": "test", "usage": {"output_tokens": 10}}'
         ]))
         mock_response['body'] = mock_body
-        
+
         mock_bedrock = Mock()
         mock_bedrock.invoke_model_with_response_stream.return_value = mock_response
         mock_boto_client.return_value = mock_bedrock
-        
+
         # Test with streaming enabled (if adapter supports it)
         try:
             result = self.adapter.text_generation(
@@ -233,22 +235,22 @@ class TestGenOpsBedrockAdapter:
         # Test with all governance attributes
         full_governance = {
             'team': 'full-team',
-            'project': 'full-project', 
+            'project': 'full-project',
             'customer_id': 'full-customer',
             'environment': 'production',
             'cost_center': 'engineering',
             'feature': 'ai-analysis'
         }
-        
+
         # Should not raise any errors with complete governance
         adapter = GenOpsBedrockAdapter()
         # The adapter should accept these attributes without error
-        
+
         # Test with minimal governance
         minimal_governance = {
             'team': 'minimal-team'
         }
-        
+
         # Should also work with minimal governance
         adapter_minimal = GenOpsBedrockAdapter()
 
@@ -260,23 +262,23 @@ class TestGenOpsBedrockAdapter:
             'body': Mock(),
             'contentType': 'application/json'
         }
-        
+
         mock_body = Mock()
         mock_body.read.return_value = json.dumps({
             'completion': 'Performance test',
             'usage': {'input_tokens': 20, 'output_tokens': 30}
         }).encode('utf-8')
         mock_response['body'] = mock_body
-        
+
         mock_bedrock = Mock()
         mock_bedrock.invoke_model.return_value = mock_response
         mock_boto_client.return_value = mock_bedrock
-        
+
         result = self.adapter.text_generation(
             prompt="Performance test prompt",
             **self.sample_governance_attrs
         )
-        
+
         # Verify performance metrics are captured
         assert hasattr(result, 'latency_ms')
         assert result.latency_ms >= 0
@@ -287,7 +289,7 @@ class TestGenOpsBedrockAdapter:
         """Test availability checking."""
         # Test that the adapter can check if Bedrock is available
         assert hasattr(self.adapter, 'is_available')
-        
+
         # The method should be callable
         try:
             availability = self.adapter.is_available()
@@ -316,7 +318,7 @@ class TestGenOpsBedrockAdapter:
             ]
         }
         mock_boto_client.return_value = mock_bedrock
-        
+
         if hasattr(self.adapter, 'get_supported_models'):
             models = self.adapter.get_supported_models()
             assert isinstance(models, list)
@@ -330,7 +332,7 @@ class TestGenOpsBedrockAdapter:
             'ai21': 'ai21.j2-mid-v1',
             'cohere': 'cohere.command-text-v14'
         }
-        
+
         for provider, model in providers_models.items():
             adapter = GenOpsBedrockAdapter(default_model=model)
             assert adapter.default_model == model
@@ -338,7 +340,7 @@ class TestGenOpsBedrockAdapter:
     def test_regional_configuration(self):
         """Test different AWS regions."""
         regions = ['us-east-1', 'us-west-2', 'eu-west-1', 'ap-southeast-1']
-        
+
         for region in regions:
             adapter = GenOpsBedrockAdapter(region_name=region)
             assert adapter.region_name == region
@@ -348,29 +350,29 @@ class TestGenOpsBedrockAdapter:
         """Test handling of large prompts."""
         # Create a large prompt (simulating real-world usage)
         large_prompt = "This is a test prompt. " * 1000  # ~25KB prompt
-        
+
         mock_response = {
             'body': Mock(),
             'contentType': 'application/json'
         }
-        
+
         mock_body = Mock()
         mock_body.read.return_value = json.dumps({
             'completion': 'Large prompt response',
             'usage': {'input_tokens': 5000, 'output_tokens': 100}
         }).encode('utf-8')
         mock_response['body'] = mock_body
-        
+
         mock_bedrock = Mock()
         mock_bedrock.invoke_model.return_value = mock_response
         mock_boto_client.return_value = mock_bedrock
-        
+
         result = self.adapter.text_generation(
             prompt=large_prompt,
             model_id="anthropic.claude-3-sonnet-20240229-v1:0",
             **self.sample_governance_attrs
         )
-        
+
         assert result.content == 'Large prompt response'
         assert result.input_tokens == 5000
         assert result.output_tokens == 100
@@ -403,7 +405,7 @@ class TestAutoInstrumentation:
         try:
             auto_instrument_bedrock()
             auto_instrument_bedrock()  # Second call should be safe
-        except Exception as e:
+        except Exception:
             # Expected in test environment without full AWS setup
             pass
 
@@ -428,7 +430,7 @@ class TestResultObject:
             'span_id': 'test-span-id',
             'trace_id': 'test-trace-id'
         }
-        
+
         # Test that BedrockResult can be created (adjust based on actual implementation)
         if hasattr(BedrockResult, '__init__'):
             try:
@@ -456,7 +458,7 @@ class TestResultObject:
                 'expected_total': 0.002
             }
         ]
-        
+
         for case in test_cases:
             total = case['input_cost'] + case['output_cost']
             assert abs(total - case['expected_total']) < 0.0001
@@ -475,24 +477,24 @@ class TestIntegrationPatterns:
         """Test usage in context managers."""
         if not BEDROCK_AVAILABLE:
             pytest.skip("Bedrock not available")
-            
+
         # Mock response
         mock_response = {
             'body': Mock(),
             'contentType': 'application/json'
         }
-        
+
         mock_body = Mock()
         mock_body.read.return_value = json.dumps({
             'completion': 'Context manager test',
             'usage': {'input_tokens': 5, 'output_tokens': 10}
         }).encode('utf-8')
         mock_response['body'] = mock_body
-        
+
         mock_bedrock = Mock()
         mock_bedrock.invoke_model.return_value = mock_response
         mock_boto_client.return_value = mock_bedrock
-        
+
         # Test adapter works in context manager
         try:
             with self.adapter as ctx_adapter:
@@ -509,13 +511,13 @@ class TestIntegrationPatterns:
         """Test concurrent usage of the adapter."""
         import threading
         import time
-        
+
         if not BEDROCK_AVAILABLE:
             pytest.skip("Bedrock not available")
-        
+
         results = []
         errors = []
-        
+
         def worker(worker_id):
             try:
                 adapter = GenOpsBedrockAdapter()
@@ -524,18 +526,18 @@ class TestIntegrationPatterns:
                 results.append(f"worker-{worker_id}-success")
             except Exception as e:
                 errors.append(f"worker-{worker_id}-{str(e)}")
-        
+
         # Create multiple threads
         threads = []
         for i in range(5):
             thread = threading.Thread(target=worker, args=(i,))
             threads.append(thread)
             thread.start()
-        
+
         # Wait for all threads
         for thread in threads:
             thread.join(timeout=5.0)
-        
+
         # At least some threads should complete successfully
         # (errors expected in test environment without AWS setup)
         assert len(results) + len(errors) == 5
@@ -544,26 +546,25 @@ class TestIntegrationPatterns:
         """Test memory usage doesn't grow excessively."""
         if not BEDROCK_AVAILABLE:
             pytest.skip("Bedrock not available")
-        
+
         import gc
-        import sys
-        
+
         # Get initial memory baseline
         gc.collect()
         initial_objects = len(gc.get_objects())
-        
+
         # Create and destroy multiple adapters
         adapters = []
         for _ in range(10):
             adapter = GenOpsBedrockAdapter()
             adapters.append(adapter)
-        
+
         # Clean up
         adapters.clear()
         gc.collect()
-        
+
         final_objects = len(gc.get_objects())
-        
+
         # Memory growth should be reasonable (not more than 50% increase)
         growth_ratio = final_objects / initial_objects
         assert growth_ratio < 1.5, f"Memory growth too high: {growth_ratio}"
@@ -576,10 +577,10 @@ class TestIntegration:
     def test_real_aws_connectivity(self):
         """Test real AWS connectivity (skipped if no credentials)."""
         pytest.skip("Integration test - requires real AWS credentials")
-        
+
         # This test would be enabled in CI/CD with proper AWS credentials
         adapter = GenOpsBedrockAdapter()
-        
+
         try:
             available = adapter.is_available()
             if available:
@@ -606,7 +607,7 @@ class TestEdgeCases:
         """Test handling of empty prompts."""
         if not BEDROCK_AVAILABLE:
             pytest.skip("Bedrock not available")
-        
+
         # Should handle empty prompts gracefully
         try:
             result = self.adapter.text_generation(
@@ -622,10 +623,10 @@ class TestEdgeCases:
         """Test handling of very long prompts."""
         if not BEDROCK_AVAILABLE:
             pytest.skip("Bedrock not available")
-        
+
         # Create extremely long prompt (beyond token limits)
         very_long_prompt = "This is a very long prompt. " * 10000  # ~250KB
-        
+
         try:
             result = self.adapter.text_generation(
                 prompt=very_long_prompt,
@@ -640,7 +641,7 @@ class TestEdgeCases:
         """Test handling of invalid model IDs."""
         if not BEDROCK_AVAILABLE:
             pytest.skip("Bedrock not available")
-        
+
         with pytest.raises(Exception):
             self.adapter.text_generation(
                 prompt="Test with invalid model",
@@ -652,13 +653,13 @@ class TestEdgeCases:
         """Test handling of special characters in governance attributes."""
         if not BEDROCK_AVAILABLE:
             pytest.skip("Bedrock not available")
-        
+
         special_governance = {
             'team': 'team-with-特殊字符',
             'project': 'project@#$%',
             'customer_id': 'customer_with_underscores_and_123'
         }
-        
+
         # Should handle special characters without errors
         adapter = GenOpsBedrockAdapter()
         # The adapter should accept these without error during initialization
@@ -667,14 +668,14 @@ class TestEdgeCases:
         """Test handling of None values in governance attributes."""
         if not BEDROCK_AVAILABLE:
             pytest.skip("Bedrock not available")
-        
+
         governance_with_nones = {
             'team': 'valid-team',
             'project': None,
             'customer_id': None,
             'environment': 'test'
         }
-        
+
         # Should handle None values gracefully
         try:
             result = self.adapter.text_generation(

@@ -30,15 +30,10 @@ Learning Objectives:
 Time Required: ~20 minutes
 """
 
+import logging
 import os
 import time
-import asyncio
-import logging
-from datetime import datetime, timezone, timedelta
-from typing import Dict, Any, List, Optional, Tuple
-import json
-from decimal import Decimal
-
+from typing import Any, Dict
 
 # Configure logging for production patterns
 logging.basicConfig(
@@ -61,34 +56,34 @@ def main():
     try:
         from genops.providers.perplexity import (
             GenOpsPerplexityAdapter,
-            PerplexityModel, 
-            SearchContext
+            PerplexityModel,
+            SearchContext,
         )
-        
+
         logger.info("Initializing production-grade Perplexity adapters")
-        
+
         # Create multiple adapters for different production scenarios
         adapters = create_production_adapters()
-        
+
         # Run production pattern demonstrations
         demonstrate_enterprise_governance(adapters['enterprise'])
         demonstrate_multi_tenant_architecture(adapters)
         demonstrate_error_handling_patterns(adapters['resilient'])
         demonstrate_performance_optimization(adapters['performance'])
         demonstrate_compliance_controls(adapters['compliance'])
-        
+
         # Show production analytics
         show_production_analytics(adapters)
-        
+
         print("\n🎉 Production patterns example completed!")
         logger.info("Production patterns demonstration completed successfully")
         return True
-        
+
     except ImportError as e:
         print(f"❌ GenOps Perplexity provider not available: {e}")
         print("   Fix: pip install genops[perplexity]")
         return False
-    
+
     except Exception as e:
         logger.error(f"Production patterns example failed: {e}")
         print(f"❌ Production example failed: {e}")
@@ -99,9 +94,9 @@ def create_production_adapters() -> Dict[str, Any]:
     """Create specialized adapters for different production scenarios."""
     print("🔧 Creating Production-Grade Adapters")
     print("=" * 45)
-    
+
     adapters = {}
-    
+
     # Enterprise governance adapter
     print("\n🏛️ Enterprise Governance Adapter:")
     adapters['enterprise'] = GenOpsPerplexityAdapter(
@@ -124,7 +119,7 @@ def create_production_adapters() -> Dict[str, Any]:
         }
     )
     print(f"   ✅ Strict governance | Budget: ${adapters['enterprise'].daily_budget_limit}/day")
-    
+
     # Multi-tenant adapter
     print("\n🏢 Multi-Tenant Adapter:")
     adapters['multitenant'] = GenOpsPerplexityAdapter(
@@ -142,7 +137,7 @@ def create_production_adapters() -> Dict[str, Any]:
         }
     )
     print(f"   ✅ Multi-tenant isolation | Budget: ${adapters['multitenant'].daily_budget_limit}/day")
-    
+
     # High-performance adapter
     print("\n⚡ Performance-Optimized Adapter:")
     adapters['performance'] = GenOpsPerplexityAdapter(
@@ -160,7 +155,7 @@ def create_production_adapters() -> Dict[str, Any]:
         }
     )
     print(f"   ✅ Performance optimized | Budget: ${adapters['performance'].daily_budget_limit}/day")
-    
+
     # Compliance-focused adapter
     print("\n🔐 Compliance-Focused Adapter:")
     adapters['compliance'] = GenOpsPerplexityAdapter(
@@ -179,7 +174,7 @@ def create_production_adapters() -> Dict[str, Any]:
         }
     )
     print(f"   ✅ Compliance controls | Budget: ${adapters['compliance'].daily_budget_limit}/day")
-    
+
     # Resilient error handling adapter
     print("\n🛡️ Resilient Error Handling Adapter:")
     adapters['resilient'] = GenOpsPerplexityAdapter(
@@ -196,7 +191,7 @@ def create_production_adapters() -> Dict[str, Any]:
         }
     )
     print(f"   ✅ Resilience patterns | Budget: ${adapters['resilient'].daily_budget_limit}/day")
-    
+
     return adapters
 
 
@@ -205,7 +200,7 @@ def demonstrate_enterprise_governance(adapter):
     print("\n🏛️ Enterprise Governance Patterns")
     print("=" * 40)
     print("Implementing strict governance with compliance controls...")
-    
+
     # Enterprise governance scenarios
     governance_scenarios = [
         {
@@ -245,12 +240,12 @@ def demonstrate_enterprise_governance(adapter):
             }
         }
     ]
-    
+
     with adapter.track_search_session("enterprise_governance") as session:
         for scenario in governance_scenarios:
             print(f"\n📋 {scenario['name']}:")
             print(f"   Query: {scenario['query'][:60]}...")
-            
+
             try:
                 result = adapter.search_with_governance(
                     query=scenario['query'],
@@ -262,12 +257,12 @@ def demonstrate_enterprise_governance(adapter):
                     compliance_mode=True,
                     audit_trail=True
                 )
-                
-                print(f"   ✅ Search completed with full governance")
+
+                print("   ✅ Search completed with full governance")
                 print(f"   💰 Cost: ${result.cost:.6f}")
                 print(f"   🏷️ Cost Attribution: {scenario['governance_tags'].get('cost_code', 'N/A')}")
                 print(f"   📊 Citations: {len(result.citations)}")
-                
+
                 # Log enterprise metrics
                 logger.info(f"Enterprise search completed: {scenario['name']}", extra={
                     'cost': float(result.cost),
@@ -275,16 +270,16 @@ def demonstrate_enterprise_governance(adapter):
                     'governance_tags': scenario['governance_tags'],
                     'session_id': session.session_id
                 })
-                
+
             except Exception as e:
                 print(f"   ❌ Governance scenario failed: {str(e)[:60]}")
                 logger.error(f"Enterprise governance scenario failed: {scenario['name']}: {e}")
-    
-    print(f"\n🏢 Enterprise Governance Benefits:")
-    print(f"   ✅ Full cost attribution and chargeback")
-    print(f"   ✅ Compliance audit trail")
-    print(f"   ✅ Department-level budget controls")
-    print(f"   ✅ Executive-level reporting")
+
+    print("\n🏢 Enterprise Governance Benefits:")
+    print("   ✅ Full cost attribution and chargeback")
+    print("   ✅ Compliance audit trail")
+    print("   ✅ Department-level budget controls")
+    print("   ✅ Executive-level reporting")
 
 
 def demonstrate_multi_tenant_architecture(adapters):
@@ -292,7 +287,7 @@ def demonstrate_multi_tenant_architecture(adapters):
     print("\n🏢 Multi-Tenant Architecture Patterns")
     print("=" * 45)
     print("Implementing tenant isolation with cost attribution...")
-    
+
     # Simulate different tenants
     tenants = [
         {
@@ -322,22 +317,22 @@ def demonstrate_multi_tenant_architecture(adapters):
             ]
         }
     ]
-    
+
     tenant_costs = {}
-    
+
     for tenant in tenants:
         print(f"\n🏢 Processing tenant: {tenant['tenant_id']}")
         print(f"   Tier: {tenant['tier']} | Budget: ${tenant['budget_limit']}")
-        
+
         # Create tenant-specific configuration
         tenant_adapter = create_tenant_adapter(adapters['multitenant'], tenant)
         tenant_cost = 0.0
-        
+
         with tenant_adapter.track_search_session(f"tenant_{tenant['tenant_id']}") as session:
             for search_query in tenant['searches']:
                 try:
                     print(f"   🔍 Search: {search_query[:50]}...")
-                    
+
                     result = tenant_adapter.search_with_governance(
                         query=search_query,
                         model=PerplexityModel.SONAR,
@@ -347,27 +342,27 @@ def demonstrate_multi_tenant_architecture(adapters):
                         tenant_id=tenant['tenant_id'],
                         tenant_tier=tenant['tier']
                     )
-                    
+
                     tenant_cost += float(result.cost)
                     print(f"      ✅ Cost: ${result.cost:.6f} | Running total: ${tenant_cost:.6f}")
-                    
+
                     # Tenant budget check
                     if tenant_cost > tenant['budget_limit']:
                         print(f"      ⚠️ Budget limit exceeded for {tenant['tenant_id']}")
                         break
-                        
+
                 except Exception as e:
                     print(f"      ❌ Search failed: {str(e)[:50]}")
-        
+
         tenant_costs[tenant['tenant_id']] = {
             'total_cost': tenant_cost,
             'budget_limit': tenant['budget_limit'],
             'utilization': (tenant_cost / tenant['budget_limit']) * 100,
             'tier': tenant['tier']
         }
-    
+
     # Multi-tenant cost summary
-    print(f"\n📊 Multi-Tenant Cost Summary:")
+    print("\n📊 Multi-Tenant Cost Summary:")
     total_platform_cost = 0.0
     for tenant_id, cost_data in tenant_costs.items():
         print(f"   🏢 {tenant_id}:")
@@ -375,7 +370,7 @@ def demonstrate_multi_tenant_architecture(adapters):
         print(f"      Budget Utilization: {cost_data['utilization']:.1f}%")
         print(f"      Tier: {cost_data['tier']}")
         total_platform_cost += cost_data['total_cost']
-    
+
     print(f"   💰 Total Platform Revenue: ${total_platform_cost:.6f}")
 
 
@@ -396,7 +391,7 @@ def demonstrate_error_handling_patterns(adapter):
     print("\n🛡️ Error Handling and Resilience Patterns")
     print("=" * 50)
     print("Implementing circuit breakers, retries, and graceful degradation...")
-    
+
     # Error handling scenarios
     error_scenarios = [
         {
@@ -418,21 +413,21 @@ def demonstrate_error_handling_patterns(adapter):
             'query': 'Blockchain applications in supply chain management'
         }
     ]
-    
+
     with adapter.track_search_session("error_handling_demo") as session:
         for scenario in error_scenarios:
             print(f"\n🔧 {scenario['name']}:")
             print(f"   Description: {scenario['description']}")
             print(f"   Test Query: {scenario['query'][:50]}...")
-            
+
             # Implement retry logic with exponential backoff
             max_retries = 3
             base_delay = 1.0
-            
+
             for attempt in range(max_retries):
                 try:
                     print(f"   🔄 Attempt {attempt + 1}/{max_retries}")
-                    
+
                     result = adapter.search_with_governance(
                         query=scenario['query'],
                         model=PerplexityModel.SONAR,
@@ -442,35 +437,35 @@ def demonstrate_error_handling_patterns(adapter):
                         error_scenario=scenario['simulate_error'],  # For demo purposes
                         retry_attempt=attempt
                     )
-                    
+
                     print(f"   ✅ Success on attempt {attempt + 1}")
                     print(f"   💰 Cost: ${result.cost:.6f}")
                     break
-                    
+
                 except Exception as e:
                     print(f"      ❌ Attempt {attempt + 1} failed: {str(e)[:50]}")
-                    
+
                     if attempt < max_retries - 1:
                         # Exponential backoff
                         delay = base_delay * (2 ** attempt)
                         print(f"      ⏳ Retrying in {delay} seconds...")
                         time.sleep(delay)
                     else:
-                        print(f"      🚨 All retries exhausted - implementing fallback")
+                        print("      🚨 All retries exhausted - implementing fallback")
                         implement_fallback_strategy(scenario)
-    
-    print(f"\n🛡️ Resilience Pattern Benefits:")
-    print(f"   ✅ Automatic retry with exponential backoff")
-    print(f"   ✅ Circuit breaker prevents cascade failures")
-    print(f"   ✅ Graceful degradation maintains service")
-    print(f"   ✅ Comprehensive error logging and alerting")
+
+    print("\n🛡️ Resilience Pattern Benefits:")
+    print("   ✅ Automatic retry with exponential backoff")
+    print("   ✅ Circuit breaker prevents cascade failures")
+    print("   ✅ Graceful degradation maintains service")
+    print("   ✅ Comprehensive error logging and alerting")
 
 
 def implement_fallback_strategy(scenario):
     """Implement fallback strategy when all retries fail."""
-    print(f"      🔄 Fallback: Using cached results or alternative source")
-    print(f"      📱 Fallback: Notifying administrators of service degradation")
-    print(f"      ⚠️ Fallback: Returning partial results with disclaimer")
+    print("      🔄 Fallback: Using cached results or alternative source")
+    print("      📱 Fallback: Notifying administrators of service degradation")
+    print("      ⚠️ Fallback: Returning partial results with disclaimer")
 
 
 def demonstrate_performance_optimization(adapter):
@@ -478,7 +473,7 @@ def demonstrate_performance_optimization(adapter):
     print("\n⚡ Performance Optimization Patterns")
     print("=" * 42)
     print("Implementing caching, batching, and performance optimization...")
-    
+
     # Performance test scenarios
     performance_scenarios = [
         {
@@ -511,16 +506,16 @@ def demonstrate_performance_optimization(adapter):
             'optimization': 'intelligent_caching'
         }
     ]
-    
+
     for scenario in performance_scenarios:
         print(f"\n🚀 {scenario['name']} Performance Test:")
-        
+
         start_time = time.time()
         total_cost = 0.0
         successful_queries = 0
-        
+
         with adapter.track_search_session(f"perf_{scenario['name'].lower().replace(' ', '_')}") as session:
-            
+
             if scenario['optimization'] == 'batch_processing':
                 # Demonstrate batch processing
                 try:
@@ -531,15 +526,15 @@ def demonstrate_performance_optimization(adapter):
                         batch_optimization=True,
                         session_id=session.session_id
                     )
-                    
+
                     successful_queries = len(results)
                     total_cost = sum(result.cost for result in results)
-                    
+
                     print(f"   ✅ Batch processed {len(results)} queries")
-                    
+
                 except Exception as e:
                     print(f"   ❌ Batch processing failed: {e}")
-                    
+
             else:
                 # Process queries individually with optimization
                 for query in scenario['queries']:
@@ -552,16 +547,16 @@ def demonstrate_performance_optimization(adapter):
                             max_tokens=150,
                             performance_optimization=scenario['optimization']
                         )
-                        
+
                         successful_queries += 1
                         total_cost += float(result.cost)
-                        
+
                     except Exception as e:
                         print(f"   ⚠️ Query failed: {str(e)[:40]}")
-        
+
         execution_time = time.time() - start_time
-        
-        print(f"   📊 Performance Results:")
+
+        print("   📊 Performance Results:")
         print(f"      Queries processed: {successful_queries}/{len(scenario['queries'])}")
         print(f"      Total time: {execution_time:.2f}s")
         print(f"      Avg time per query: {execution_time / max(successful_queries, 1):.2f}s")
@@ -574,7 +569,7 @@ def demonstrate_compliance_controls(adapter):
     print("\n🔐 Compliance and Audit Controls")
     print("=" * 40)
     print("Implementing compliance controls with full audit trails...")
-    
+
     compliance_searches = [
         {
             'query': 'GDPR compliance requirements for AI systems',
@@ -595,20 +590,20 @@ def demonstrate_compliance_controls(adapter):
             'approval_required': False
         }
     ]
-    
+
     with adapter.track_search_session("compliance_audit") as session:
         for search in compliance_searches:
             print(f"\n🔍 Compliance Search: {search['query'][:50]}...")
             print(f"   Classification: {search['classification']}")
             print(f"   Department: {search['department']}")
             print(f"   Approval Required: {search['approval_required']}")
-            
+
             # Simulate approval workflow
             if search['approval_required']:
-                print(f"   ⏳ Awaiting compliance approval...")
+                print("   ⏳ Awaiting compliance approval...")
                 time.sleep(0.5)  # Simulate approval delay
-                print(f"   ✅ Compliance approval granted")
-            
+                print("   ✅ Compliance approval granted")
+
             try:
                 result = adapter.search_with_governance(
                     query=search['query'],
@@ -621,11 +616,11 @@ def demonstrate_compliance_controls(adapter):
                     compliance_audit=True,
                     audit_trail_required=True
                 )
-                
-                print(f"   ✅ Search completed with full audit trail")
+
+                print("   ✅ Search completed with full audit trail")
                 print(f"   💰 Cost: ${result.cost:.6f}")
                 print(f"   📋 Audit ID: {session.session_id}-{hash(search['query']) % 10000}")
-                
+
                 # Log compliance event
                 logger.info("Compliance search executed", extra={
                     'session_id': session.session_id,
@@ -634,58 +629,58 @@ def demonstrate_compliance_controls(adapter):
                     'cost': float(result.cost),
                     'audit_required': True
                 })
-                
+
             except Exception as e:
                 print(f"   ❌ Compliance search failed: {str(e)[:50]}")
-    
-    print(f"\n🔐 Compliance Benefits:")
-    print(f"   ✅ Full audit trail for all searches")
-    print(f"   ✅ Data classification enforcement")
-    print(f"   ✅ Department-based access controls")
-    print(f"   ✅ Automated compliance reporting")
+
+    print("\n🔐 Compliance Benefits:")
+    print("   ✅ Full audit trail for all searches")
+    print("   ✅ Data classification enforcement")
+    print("   ✅ Department-based access controls")
+    print("   ✅ Automated compliance reporting")
 
 
 def show_production_analytics(adapters):
     """Show comprehensive production analytics across all adapters."""
     print("\n📊 Production Analytics Dashboard")
     print("=" * 40)
-    
+
     total_cost = 0.0
     total_queries = 0
-    
+
     for adapter_name, adapter in adapters.items():
         try:
             summary = adapter.get_cost_summary()
-            
+
             print(f"\n📈 {adapter_name.upper()} Adapter Analytics:")
             print(f"   Daily Spend: ${summary['daily_costs']:.6f}")
             print(f"   Budget Utilization: {summary['daily_budget_utilization']:.1f}%")
             print(f"   Active Sessions: {summary['active_sessions']}")
             print(f"   Environment: {summary['environment']}")
-            
+
             total_cost += summary['daily_costs']
-            
+
         except Exception as e:
             print(f"   ⚠️ Analytics unavailable for {adapter_name}: {str(e)[:30]}")
-    
-    print(f"\n💰 Platform-Wide Summary:")
+
+    print("\n💰 Platform-Wide Summary:")
     print(f"   Total Platform Cost: ${total_cost:.6f}")
     print(f"   Active Adapters: {len(adapters)}")
     print(f"   Cost per Adapter: ${total_cost / len(adapters):.6f}")
-    
-    print(f"\n🎯 Production Recommendations:")
-    print(f"   • Implement cost alerting at 80% budget utilization")
-    print(f"   • Set up automated scaling based on usage patterns")
-    print(f"   • Enable query result caching for repeated searches")
-    print(f"   • Configure circuit breakers for external dependencies")
-    print(f"   • Implement comprehensive monitoring and alerting")
-    
-    print(f"\n🏆 Production Pattern Benefits:")
-    print(f"   ✅ Enterprise-grade governance and compliance")
-    print(f"   ✅ Multi-tenant isolation with cost attribution")
-    print(f"   ✅ Production-ready error handling and resilience")
-    print(f"   ✅ High-performance optimization patterns")
-    print(f"   ✅ Comprehensive audit trails and reporting")
+
+    print("\n🎯 Production Recommendations:")
+    print("   • Implement cost alerting at 80% budget utilization")
+    print("   • Set up automated scaling based on usage patterns")
+    print("   • Enable query result caching for repeated searches")
+    print("   • Configure circuit breakers for external dependencies")
+    print("   • Implement comprehensive monitoring and alerting")
+
+    print("\n🏆 Production Pattern Benefits:")
+    print("   ✅ Enterprise-grade governance and compliance")
+    print("   ✅ Multi-tenant isolation with cost attribution")
+    print("   ✅ Production-ready error handling and resilience")
+    print("   ✅ High-performance optimization patterns")
+    print("   ✅ Comprehensive audit trails and reporting")
 
 
 if __name__ == "__main__":

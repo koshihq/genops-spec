@@ -30,16 +30,16 @@ Usage:
 
 import logging
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple, Any
-from enum import Enum
 from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
 class MistralPricingTier(Enum):
     """Mistral pricing tiers with different rate structures."""
     PAY_AS_YOU_GO = "pay_as_you_go"
-    ENTERPRISE = "enterprise" 
+    ENTERPRISE = "enterprise"
     VOLUME_DISCOUNT = "volume_discount"
 
 @dataclass
@@ -55,7 +55,7 @@ class ModelPricing:
     performance_tier: str = "standard"  # standard, premium, enterprise
     last_updated: str = field(default_factory=lambda: datetime.now().isoformat())
 
-@dataclass 
+@dataclass
 class CostBreakdown:
     """Detailed cost breakdown for transparency and optimization."""
     model: str
@@ -69,7 +69,7 @@ class CostBreakdown:
     cost_per_token: float
     pricing_tier: str
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
-    
+
     # Cost efficiency metrics
     tokens_per_dollar: float = 0.0
     cost_per_1k_tokens: float = 0.0
@@ -86,7 +86,7 @@ class PricingInsight:
 
 class MistralPricingCalculator:
     """Comprehensive pricing calculator for Mistral AI models."""
-    
+
     def __init__(self, pricing_tier: MistralPricingTier = MistralPricingTier.PAY_AS_YOU_GO):
         """
         Initialize pricing calculator with current rates.
@@ -97,7 +97,7 @@ class MistralPricingCalculator:
         self.pricing_tier = pricing_tier
         self.pricing_data = self._load_current_pricing()
         self.baseline_model = "mistral-small-latest"  # Reference for comparisons
-        
+
         logger.info(f"Mistral pricing calculator initialized with {len(self.pricing_data)} models")
 
     def _load_current_pricing(self) -> Dict[str, ModelPricing]:
@@ -112,14 +112,14 @@ class MistralPricingCalculator:
                 description="Flagship model with advanced reasoning",
                 model_family="mistral-large",
                 recommended_use_cases=[
-                    "Complex reasoning", "Code generation", "Analysis", 
+                    "Complex reasoning", "Code generation", "Analysis",
                     "Research", "Enterprise applications"
                 ],
                 performance_tier="premium"
             ),
-            
+
             "mistral-large-latest": ModelPricing(
-                model_name="mistral-large-latest", 
+                model_name="mistral-large-latest",
                 input_price_per_million=8.0,
                 output_price_per_million=24.0,
                 context_window=128000,
@@ -131,11 +131,11 @@ class MistralPricingCalculator:
                 ],
                 performance_tier="premium"
             ),
-            
+
             "mistral-medium-latest": ModelPricing(
                 model_name="mistral-medium-latest",
                 input_price_per_million=2.75,
-                output_price_per_million=8.10, 
+                output_price_per_million=8.10,
                 context_window=32000,
                 description="Balanced performance and cost",
                 model_family="mistral-medium",
@@ -145,12 +145,12 @@ class MistralPricingCalculator:
                 ],
                 performance_tier="standard"
             ),
-            
+
             "mistral-small-latest": ModelPricing(
                 model_name="mistral-small-latest",
                 input_price_per_million=1.0,
                 output_price_per_million=3.0,
-                context_window=32000, 
+                context_window=32000,
                 description="Cost-effective for most tasks",
                 model_family="mistral-small",
                 recommended_use_cases=[
@@ -159,13 +159,13 @@ class MistralPricingCalculator:
                 ],
                 performance_tier="standard"
             ),
-            
+
             "mistral-tiny-2312": ModelPricing(
                 model_name="mistral-tiny-2312",
                 input_price_per_million=0.25,
                 output_price_per_million=0.25,
                 context_window=32000,
-                description="Ultra-low cost for simple tasks", 
+                description="Ultra-low cost for simple tasks",
                 model_family="mistral-tiny",
                 recommended_use_cases=[
                     "Simple classification", "Basic Q&A", "Testing",
@@ -173,7 +173,7 @@ class MistralPricingCalculator:
                 ],
                 performance_tier="basic"
             ),
-            
+
             # Mixtral models
             "mixtral-8x7b-32768": ModelPricing(
                 model_name="mixtral-8x7b-32768",
@@ -188,36 +188,36 @@ class MistralPricingCalculator:
                 ],
                 performance_tier="standard"
             ),
-            
+
             "mixtral-8x22b-32768": ModelPricing(
-                model_name="mixtral-8x22b-32768", 
+                model_name="mixtral-8x22b-32768",
                 input_price_per_million=2.0,
                 output_price_per_million=6.0,
                 context_window=64000,
                 description="Large mixture of experts model",
                 model_family="mixtral",
                 recommended_use_cases=[
-                    "Advanced code generation", "Complex reasoning", 
+                    "Advanced code generation", "Complex reasoning",
                     "Multi-domain expertise", "Large context tasks"
                 ],
                 performance_tier="premium"
             ),
-            
+
             # Specialized models
             "mistral-nemo-2407": ModelPricing(
                 model_name="mistral-nemo-2407",
                 input_price_per_million=1.0,
-                output_price_per_million=1.0, 
+                output_price_per_million=1.0,
                 context_window=128000,
                 description="Long context specialized model",
                 model_family="mistral-nemo",
                 recommended_use_cases=[
-                    "Long document analysis", "Extended context", 
+                    "Long document analysis", "Extended context",
                     "Research", "Document processing", "Large context tasks"
                 ],
                 performance_tier="specialized"
             ),
-            
+
             "codestral-2405": ModelPricing(
                 model_name="codestral-2405",
                 input_price_per_million=3.0,
@@ -231,7 +231,7 @@ class MistralPricingCalculator:
                 ],
                 performance_tier="specialized"
             ),
-            
+
             # Embedding models
             "mistral-embed": ModelPricing(
                 model_name="mistral-embed",
@@ -241,13 +241,13 @@ class MistralPricingCalculator:
                 description="Text embedding model",
                 model_family="mistral-embed",
                 recommended_use_cases=[
-                    "Semantic search", "Document similarity", "Clustering", 
+                    "Semantic search", "Document similarity", "Clustering",
                     "Classification", "RAG applications"
                 ],
                 performance_tier="specialized"
             )
         }
-        
+
         return pricing
 
     def get_model_pricing(self, model: str) -> Optional[ModelPricing]:
@@ -255,9 +255,9 @@ class MistralPricingCalculator:
         return self.pricing_data.get(model)
 
     def calculate_cost(
-        self, 
+        self,
         model: str,
-        operation: str, 
+        operation: str,
         input_tokens: int = 0,
         output_tokens: int = 0,
         **kwargs
@@ -279,19 +279,19 @@ class MistralPricingCalculator:
         if not pricing:
             logger.warning(f"Pricing not available for model: {model}")
             return 0.0, 0.0, 0.0
-        
+
         # Calculate base costs
         input_cost = (input_tokens / 1_000_000) * pricing.input_price_per_million
         output_cost = (output_tokens / 1_000_000) * pricing.output_price_per_million
         total_cost = input_cost + output_cost
-        
+
         # Apply pricing tier adjustments
         tier_multiplier = self._get_tier_multiplier(kwargs.get('pricing_tier', self.pricing_tier))
-        
+
         input_cost *= tier_multiplier
         output_cost *= tier_multiplier
         total_cost *= tier_multiplier
-        
+
         return input_cost, output_cost, total_cost
 
     def _get_tier_multiplier(self, tier: MistralPricingTier) -> float:
@@ -304,7 +304,7 @@ class MistralPricingCalculator:
         return multipliers.get(tier, 1.0)
 
     def get_cost_breakdown(
-        self, 
+        self,
         model: str,
         operation: str,
         input_tokens: int,
@@ -315,18 +315,18 @@ class MistralPricingCalculator:
         input_cost, output_cost, total_cost = self.calculate_cost(
             model, operation, input_tokens, output_tokens, **kwargs
         )
-        
+
         total_tokens = input_tokens + output_tokens
         cost_per_token = total_cost / max(total_tokens, 1)
         tokens_per_dollar = max(total_tokens, 1) / max(total_cost, 0.000001)
         cost_per_1k_tokens = cost_per_token * 1000
-        
+
         # Calculate relative cost vs baseline
         baseline_cost = self.calculate_cost(
             self.baseline_model, operation, input_tokens, output_tokens, **kwargs
         )[2]
         relative_cost = total_cost / max(baseline_cost, 0.000001)
-        
+
         return CostBreakdown(
             model=model,
             operation=operation,
@@ -363,11 +363,11 @@ class MistralPricingCalculator:
             List of model comparisons sorted by cost efficiency
         """
         comparisons = []
-        
+
         for model in models:
             breakdown = self.get_cost_breakdown(model, operation, input_tokens, output_tokens)
             pricing = self.get_model_pricing(model)
-            
+
             if pricing:
                 comparisons.append({
                     "model": model,
@@ -380,10 +380,10 @@ class MistralPricingCalculator:
                     "model_family": pricing.model_family,
                     "recommended_use_cases": pricing.recommended_use_cases
                 })
-        
+
         # Sort by cost efficiency (tokens per dollar)
         comparisons.sort(key=lambda x: x["tokens_per_dollar"], reverse=True)
-        
+
         return comparisons
 
     def get_optimization_insights(
@@ -409,20 +409,20 @@ class MistralPricingCalculator:
         """
         insights = []
         current_breakdown = self.get_cost_breakdown(current_model, operation, input_tokens, output_tokens)
-        
+
         # Model selection insights
         all_models = list(self.pricing_data.keys())
         comparisons = self.compare_models(all_models, operation, input_tokens, output_tokens)
-        
+
         # Find more cost-effective alternatives
         current_cost = current_breakdown.total_cost
         for comp in comparisons:
-            if (comp["model"] != current_model and 
+            if (comp["model"] != current_model and
                 comp["total_cost"] < current_cost * 0.8):  # 20%+ savings
-                
+
                 savings = current_cost - comp["total_cost"]
                 savings_percent = (savings / current_cost) * 100
-                
+
                 insight = PricingInsight(
                     category="model_selection",
                     insight=f"Switch from {current_model} to {comp['model']} could save ${savings:.6f} ({savings_percent:.1f}%) per operation",
@@ -432,39 +432,39 @@ class MistralPricingCalculator:
                 )
                 insights.append(insight)
                 break  # Only suggest the best alternative
-        
+
         # Token optimization insights
         if output_tokens > input_tokens * 2:  # High output ratio
             potential_savings = current_breakdown.output_cost * 0.3  # 30% reduction potential
             insights.append(PricingInsight(
-                category="token_optimization", 
+                category="token_optimization",
                 insight=f"High output token ratio ({output_tokens}/{input_tokens}). Reducing output length could save ~${potential_savings:.6f}",
                 potential_savings=potential_savings,
                 recommended_action="Use max_tokens parameter to limit response length for simple tasks",
                 confidence="high"
             ))
-        
+
         # European AI provider advantages
         if current_breakdown.total_cost > 0.001:  # For significant costs
             insights.append(PricingInsight(
                 category="cost_efficiency",
-                insight=f"Mistral provides GDPR-compliant EU-based AI at competitive rates vs US providers",
+                insight="Mistral provides GDPR-compliant EU-based AI at competitive rates vs US providers",
                 potential_savings=current_breakdown.total_cost * 0.2,  # Estimated 20% vs OpenAI equivalent
                 recommended_action="Leverage Mistral's European data residency and cost advantages for compliance",
                 confidence="high"
             ))
-        
+
         # Volume pricing insights
         if current_breakdown.total_cost > 0.01:  # For high-volume usage
             volume_savings = current_breakdown.total_cost * 0.25  # 25% volume discount
             insights.append(PricingInsight(
                 category="cost_efficiency",
-                insight=f"Volume discounts available for enterprise usage",
+                insight="Volume discounts available for enterprise usage",
                 potential_savings=volume_savings,
                 recommended_action="Contact Mistral for enterprise pricing on high-volume workloads",
                 confidence="medium"
             ))
-        
+
         return insights
 
     def estimate_monthly_cost(
@@ -489,17 +489,17 @@ class MistralPricingCalculator:
             Monthly cost estimate with breakdown
         """
         daily_cost = self.calculate_cost(
-            model, operation, 
+            model, operation,
             avg_input_tokens * operations_per_day,
             avg_output_tokens * operations_per_day
         )[2]
-        
+
         monthly_cost = daily_cost * 30
         annual_cost = daily_cost * 365
-        
+
         # Get efficiency metrics
         breakdown = self.get_cost_breakdown(model, operation, avg_input_tokens, avg_output_tokens)
-        
+
         return {
             "model": model,
             "daily_cost": daily_cost,
@@ -527,18 +527,18 @@ class MistralPricingCalculator:
         """
         recommendations = []
         use_case_lower = use_case.lower()
-        
+
         # Analyze use case and match to models
         for model_name, pricing in self.pricing_data.items():
             relevance_score = 0
             rationale = []
-            
+
             # Check use case alignment
             for rec_use_case in pricing.recommended_use_cases:
                 if any(keyword in use_case_lower for keyword in rec_use_case.lower().split()):
                     relevance_score += 2
                     rationale.append(f"Optimized for {rec_use_case}")
-            
+
             # Performance tier matching
             if "complex" in use_case_lower or "advanced" in use_case_lower:
                 if pricing.performance_tier in ["premium", "specialized"]:
@@ -548,17 +548,17 @@ class MistralPricingCalculator:
                 if pricing.performance_tier == "basic":
                     relevance_score += 2
                     rationale.append("Cost-optimized for simple tasks")
-            
+
             # Context window requirements
             if "long" in use_case_lower or "document" in use_case_lower:
                 if pricing.context_window >= 64000:
                     relevance_score += 1
                     rationale.append("Large context window support")
-            
+
             if relevance_score > 0:
                 # Calculate cost efficiency for typical use case
                 breakdown = self.get_cost_breakdown(model_name, "chat", 500, 200)  # Typical tokens
-                
+
                 recommendations.append({
                     "model": model_name,
                     "relevance_score": relevance_score,
@@ -568,10 +568,10 @@ class MistralPricingCalculator:
                     "context_window": pricing.context_window,
                     "model_family": pricing.model_family
                 })
-        
+
         # Sort by relevance score, then by cost efficiency
         recommendations.sort(key=lambda x: (x["relevance_score"], -x["cost_per_operation"]), reverse=True)
-        
+
         return recommendations[:5]  # Top 5 recommendations
 
     def export_pricing_data(self) -> Dict[str, Any]:
@@ -581,7 +581,7 @@ class MistralPricingCalculator:
             "last_updated": datetime.now().isoformat(),
             "models": {}
         }
-        
+
         for model_name, pricing in self.pricing_data.items():
             exported["models"][model_name] = {
                 "input_price_per_million": pricing.input_price_per_million,
@@ -592,7 +592,7 @@ class MistralPricingCalculator:
                 "performance_tier": pricing.performance_tier,
                 "recommended_use_cases": pricing.recommended_use_cases
             }
-        
+
         return exported
 
 # Convenience functions
@@ -615,31 +615,31 @@ if __name__ == "__main__":
     # Demo and testing
     print("Mistral AI Pricing Calculator Demo")
     print("=" * 40)
-    
+
     calc = MistralPricingCalculator()
-    
+
     # Test cost calculation
     model = "mistral-small-latest"
     input_tokens, output_tokens = 1000, 500
-    
+
     input_cost, output_cost, total_cost = calc.calculate_cost(model, "chat", input_tokens, output_tokens)
     print(f"Cost for {model}:")
     print(f"  Input: ${input_cost:.6f}")
     print(f"  Output: ${output_cost:.6f}")
     print(f"  Total: ${total_cost:.6f}")
-    
+
     # Test model comparison
     models = ["mistral-tiny-2312", "mistral-small-latest", "mistral-medium-latest"]
     comparisons = calc.compare_models(models)
-    
-    print(f"\nModel Comparison (1000 in, 500 out tokens):")
+
+    print("\nModel Comparison (1000 in, 500 out tokens):")
     for comp in comparisons:
         print(f"  {comp['model']}: ${comp['total_cost']:.6f} ({comp['cost_per_1k_tokens']:.4f}/1k tokens)")
-    
+
     # Test insights
     insights = calc.get_optimization_insights("mistral-large-latest", "chat", 1000, 500)
     if insights:
-        print(f"\nOptimization Insights:")
+        print("\nOptimization Insights:")
         for insight in insights[:2]:  # Top 2
             print(f"  • {insight.insight}")
             print(f"    Action: {insight.recommended_action}")

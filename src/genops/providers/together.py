@@ -11,25 +11,25 @@ Provides comprehensive governance for Together AI operations including:
 
 from __future__ import annotations
 
-import asyncio
 import logging
 import os
 import time
 import uuid
-from contextlib import asynccontextmanager, contextmanager
-from dataclasses import dataclass, asdict
+from collections.abc import Iterator
+from contextlib import contextmanager
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from decimal import Decimal
-from typing import Any, Dict, List, Optional, Union, Tuple, AsyncIterator, Iterator
 from enum import Enum
+from typing import Any, Dict, List, Optional, Union
+
+from genops.core.exceptions import (
+    GenOpsBudgetExceededError,
+    GenOpsConfigurationError,
+)
 
 # Core GenOps imports
 from genops.core.telemetry import GenOpsTelemetry
-from genops.core.exceptions import (
-    GenOpsConfigurationError,
-    GenOpsBudgetExceededError,
-    GenOpsValidationError
-)
 
 # Import Together pricing calculator
 from .together_pricing import TogetherPricingCalculator
@@ -55,24 +55,24 @@ except ImportError:
 
 class TogetherModel(Enum):
     """Popular Together AI models with their characteristics."""
-    
+
     # Chat Models
     LLAMA_3_1_8B_INSTRUCT = "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo"
     LLAMA_3_1_70B_INSTRUCT = "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo"
     LLAMA_3_1_405B_INSTRUCT = "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo"
-    
+
     # Reasoning Models
     DEEPSEEK_R1 = "deepseek-ai/DeepSeek-R1"
     DEEPSEEK_R1_DISTILL = "deepseek-ai/DeepSeek-R1-Distill-Llama-8B"
-    
+
     # Multimodal Models
     QWEN_VL_72B = "Qwen/Qwen2.5-VL-72B-Instruct"
     LLAMA_VISION_11B = "meta-llama/Llama-Vision-Free"
-    
+
     # Code Models
     DEEPSEEK_CODER_V2 = "deepseek-ai/DeepSeek-Coder-V2-Instruct"
     QWEN_CODER_32B = "Qwen/Qwen2.5-Coder-32B-Instruct"
-    
+
     # Language Models
     MIXTRAL_8X7B = "mistralai/Mixtral-8x7B-Instruct-v0.1"
     MIXTRAL_8X22B = "mistralai/Mixtral-8x22B-Instruct-v0.1"
@@ -115,7 +115,7 @@ class TogetherSession:
     total_cost: Decimal = Decimal('0')
     governance_attributes: Dict[str, Any] = None
     results: List[TogetherResult] = None
-    
+
     def __post_init__(self):
         if self.governance_attributes is None:
             self.governance_attributes = {}
@@ -134,7 +134,7 @@ class GenOpsTogetherAdapter:
     - Multi-tenant operations with governance controls
     - Zero-code auto-instrumentation for existing integrations
     """
-    
+
     def __init__(
         self,
         together_api_key: Optional[str] = None,
@@ -185,33 +185,33 @@ class GenOpsTogetherAdapter:
         self.governance_policy = governance_policy
         self.default_model = default_model
         self.tags = tags or {}
-        
+
         # Cost tracking
         self.pricing_calculator = TogetherPricingCalculator()
         self.daily_costs = Decimal('0')
         self.monthly_costs = Decimal('0')
-        
+
         # Telemetry
         self.telemetry = GenOpsTelemetry(tracer_name="together")
-        
+
         # Active sessions
         self._active_sessions: Dict[str, TogetherSession] = {}
-        
+
         # Validation
         if not self.together_api_key:
             raise GenOpsConfigurationError(
                 "Together API key required. Set TOGETHER_API_KEY environment variable or pass together_api_key parameter."
             )
-        
+
         # Initialize Together client
         if HAS_TOGETHER:
             self.client = Together(api_key=self.together_api_key)
         else:
             self.client = None
             logger.warning("Together client not available. Some features may be limited.")
-        
+
         logger.info(f"GenOps Together adapter initialized for team='{self.team}', project='{self.project}'")
-    
+
     def _build_base_tags(self, additional_tags: Optional[Dict[str, str]] = None) -> Dict[str, str]:
         """Build base governance tags for telemetry."""
         base_tags = {
@@ -222,24 +222,24 @@ class GenOpsTogetherAdapter:
             'governance_enabled': str(self.enable_governance),
             'governance_policy': self.governance_policy
         }
-        
+
         if self.customer_id:
             base_tags['customer_id'] = self.customer_id
         if self.cost_center:
             base_tags['cost_center'] = self.cost_center
-        
+
         # Merge with instance tags and additional tags
         base_tags.update(self.tags)
         if additional_tags:
             base_tags.update(additional_tags)
-        
+
         return base_tags
-    
+
     def _check_budget_limits(self, estimated_cost: Decimal) -> None:
         """Check if operation would exceed budget limits."""
         if not self.enable_governance or self.governance_policy == "advisory":
             return
-        
+
         projected_daily = self.daily_costs + estimated_cost
         if projected_daily > self.daily_budget_limit:
             if self.governance_policy in ["enforced", "strict"]:
@@ -247,7 +247,7 @@ class GenOpsTogetherAdapter:
                     f"Operation would exceed daily budget limit. "
                     f"Projected: ${projected_daily:.4f}, Limit: ${self.daily_budget_limit:.4f}"
                 )
-        
+
         if self.monthly_budget_limit:
             projected_monthly = self.monthly_costs + estimated_cost
             if projected_monthly > self.monthly_budget_limit:
@@ -256,12 +256,12 @@ class GenOpsTogetherAdapter:
                         f"Operation would exceed monthly budget limit. "
                         f"Projected: ${projected_monthly:.4f}, Limit: ${self.monthly_budget_limit:.4f}"
                     )
-    
+
     def _update_costs(self, cost: Decimal) -> None:
         """Update cost tracking."""
         self.daily_costs += cost
         self.monthly_costs += cost
-        
+
         # Cost alerting
         if self.enable_cost_alerts:
             daily_utilization = (self.daily_costs / self.daily_budget_limit) * 100
@@ -270,7 +270,7 @@ class GenOpsTogetherAdapter:
                     f"Together costs approaching daily limit: {daily_utilization:.1f}% "
                     f"(${self.daily_costs:.4f}/${self.daily_budget_limit:.4f})"
                 )
-    
+
     @contextmanager
     def track_session(
         self,
@@ -301,7 +301,7 @@ class GenOpsTogetherAdapter:
                 )
         """
         session_id = str(uuid.uuid4())
-        
+
         # Build governance attributes
         governance_attrs = self._build_base_tags()
         governance_attrs.update({
@@ -311,7 +311,7 @@ class GenOpsTogetherAdapter:
             'environment': environment or self.environment,
         })
         governance_attrs.update(governance_attributes)
-        
+
         # Create session
         session = TogetherSession(
             session_id=session_id,
@@ -319,9 +319,9 @@ class GenOpsTogetherAdapter:
             start_time=datetime.now(timezone.utc),
             governance_attributes=governance_attrs
         )
-        
+
         self._active_sessions[session_id] = session
-        
+
         try:
             logger.info(f"Starting Together AI session '{session_name}' ({session_id})")
             yield session
@@ -329,17 +329,17 @@ class GenOpsTogetherAdapter:
             # Finalize session
             session.end_time = datetime.now(timezone.utc)
             session_duration = (session.end_time - session.start_time).total_seconds()
-            
+
             logger.info(
                 f"Completed Together AI session '{session_name}': "
                 f"{session.total_operations} operations, ${session.total_cost:.4f} cost, "
                 f"{session_duration:.1f}s duration"
             )
-            
+
             # Remove from active sessions
             if session_id in self._active_sessions:
                 del self._active_sessions[session_id]
-    
+
     def chat_with_governance(
         self,
         messages: List[Dict[str, Any]],
@@ -381,9 +381,9 @@ class GenOpsTogetherAdapter:
         """
         if not HAS_TOGETHER:
             raise GenOpsConfigurationError("Together client required for Together AI integration")
-        
+
         start_time = time.time()
-        
+
         # Normalize model
         if isinstance(model, TogetherModel):
             model_name = model.value
@@ -391,16 +391,16 @@ class GenOpsTogetherAdapter:
             model_name = str(model)
         else:
             model_name = self.default_model.value
-        
+
         # Estimate cost before operation
         estimated_cost = self.pricing_calculator.estimate_chat_cost(
             model=model_name,
             estimated_tokens=max_tokens
         )
-        
+
         # Budget check
         self._check_budget_limits(estimated_cost)
-        
+
         # Build governance attributes
         operation_attrs = self._build_base_tags()
         operation_attrs.update(governance_attributes)
@@ -412,7 +412,7 @@ class GenOpsTogetherAdapter:
             'estimated_cost': str(estimated_cost),
             'message_count': len(messages)
         })
-        
+
         try:
             # Execute chat completion with telemetry
             with self.telemetry.trace_operation("together.chat_completion", **operation_attrs) as span:
@@ -424,28 +424,28 @@ class GenOpsTogetherAdapter:
                     top_p=top_p,
                     stream=stream
                 )
-                
+
                 # Extract response data
                 response_text = response.choices[0].message.content
                 tokens_used = response.usage.total_tokens if hasattr(response, 'usage') else max_tokens
-                
+
                 # Calculate actual cost
                 actual_cost = self.pricing_calculator.calculate_chat_cost(
                     model=model_name,
                     input_tokens=response.usage.prompt_tokens if hasattr(response, 'usage') else 0,
                     output_tokens=response.usage.completion_tokens if hasattr(response, 'usage') else tokens_used
                 )
-                
+
                 # Update cost tracking
                 self._update_costs(actual_cost)
-                
+
                 # Update telemetry
                 span.set_attributes({
                     'together.tokens_used': tokens_used,
                     'together.actual_cost': str(actual_cost),
                     'together.execution_time_seconds': time.time() - start_time
                 })
-                
+
                 # Create result
                 result = TogetherResult(
                     prompt=str(messages),
@@ -458,28 +458,28 @@ class GenOpsTogetherAdapter:
                     governance_metadata=operation_attrs,
                     session_id=session_id
                 )
-                
+
                 # Update session if provided
                 if session_id and session_id in self._active_sessions:
                     session = self._active_sessions[session_id]
                     session.total_operations += 1
                     session.total_cost += actual_cost
                     session.results.append(result)
-                
+
                 logger.info(
                     f"Together chat completion: {tokens_used} tokens, "
                     f"${actual_cost:.4f} cost, {model_name}"
                 )
-                
+
                 return result
-                
+
         except Exception as e:
             logger.error(f"Together chat completion failed: {e}")
             # Update telemetry with error
             if 'span' in locals():
                 span.set_status(trace.Status(trace.StatusCode.ERROR, str(e)))
             raise
-    
+
     def complete_with_governance(
         self,
         prompt: str,
@@ -505,9 +505,9 @@ class GenOpsTogetherAdapter:
         """
         if not HAS_TOGETHER:
             raise GenOpsConfigurationError("Together client required for Together AI integration")
-        
+
         start_time = time.time()
-        
+
         # Normalize model
         if isinstance(model, TogetherModel):
             model_name = model.value
@@ -515,16 +515,16 @@ class GenOpsTogetherAdapter:
             model_name = str(model)
         else:
             model_name = self.default_model.value
-        
+
         # Estimate cost
         estimated_cost = self.pricing_calculator.estimate_completion_cost(
             model=model_name,
             estimated_tokens=max_tokens
         )
-        
+
         # Budget check
         self._check_budget_limits(estimated_cost)
-        
+
         # Build governance attributes
         operation_attrs = self._build_base_tags()
         operation_attrs.update(governance_attributes)
@@ -536,7 +536,7 @@ class GenOpsTogetherAdapter:
             'estimated_cost': str(estimated_cost),
             'prompt_length': len(prompt)
         })
-        
+
         try:
             # Execute completion with telemetry
             with self.telemetry.trace_operation("together.completion", **operation_attrs) as span:
@@ -546,27 +546,27 @@ class GenOpsTogetherAdapter:
                     max_tokens=max_tokens,
                     temperature=temperature
                 )
-                
+
                 # Extract response data
                 response_text = response.choices[0].text
                 tokens_used = response.usage.total_tokens if hasattr(response, 'usage') else max_tokens
-                
+
                 # Calculate actual cost
                 actual_cost = self.pricing_calculator.calculate_completion_cost(
                     model=model_name,
                     tokens_used=tokens_used
                 )
-                
+
                 # Update cost tracking
                 self._update_costs(actual_cost)
-                
+
                 # Update telemetry
                 span.set_attributes({
                     'together.tokens_used': tokens_used,
                     'together.actual_cost': str(actual_cost),
                     'together.execution_time_seconds': time.time() - start_time
                 })
-                
+
                 # Create result
                 result = TogetherResult(
                     prompt=prompt,
@@ -579,22 +579,22 @@ class GenOpsTogetherAdapter:
                     governance_metadata=operation_attrs,
                     session_id=session_id
                 )
-                
+
                 # Update session if provided
                 if session_id and session_id in self._active_sessions:
                     session = self._active_sessions[session_id]
                     session.total_operations += 1
                     session.total_cost += actual_cost
                     session.results.append(result)
-                
+
                 return result
-                
+
         except Exception as e:
             logger.error(f"Together completion failed: {e}")
             if 'span' in locals():
                 span.set_status(trace.Status(trace.StatusCode.ERROR, str(e)))
             raise
-    
+
     def get_cost_summary(self) -> Dict[str, Any]:
         """
         Get comprehensive cost summary and analytics.
@@ -609,7 +609,7 @@ class GenOpsTogetherAdapter:
             'monthly_budget_limit': float(self.monthly_budget_limit) if self.monthly_budget_limit else None,
             'daily_budget_utilization': (self.daily_costs / self.daily_budget_limit * 100) if self.daily_budget_limit > 0 else 0,
             'monthly_budget_utilization': (
-                (self.monthly_costs / self.monthly_budget_limit * 100) 
+                (self.monthly_costs / self.monthly_budget_limit * 100)
                 if self.monthly_budget_limit and self.monthly_budget_limit > 0 else 0
             ),
             'governance_enabled': self.enable_governance,
@@ -619,9 +619,9 @@ class GenOpsTogetherAdapter:
             'project': self.project,
             'environment': self.environment
         }
-        
+
         return summary
-    
+
     def list_available_models(self) -> List[Dict[str, Any]]:
         """
         List all available Together AI models with metadata.
@@ -631,7 +631,7 @@ class GenOpsTogetherAdapter:
         """
         if not HAS_TOGETHER:
             raise GenOpsConfigurationError("Together client required")
-        
+
         try:
             models = self.client.models.list()
             return [
@@ -686,14 +686,14 @@ def auto_instrument(
         )
     """
     global _current_adapter
-    
+
     _current_adapter = GenOpsTogetherAdapter(
         together_api_key=together_api_key,
         team=team,
         project=project,
         **adapter_kwargs
     )
-    
+
     logger.info("Together AI auto-instrumentation enabled")
     return _current_adapter
 
@@ -735,7 +735,7 @@ def get_current_adapter() -> Optional[GenOpsTogetherAdapter]:
 # Export key classes and functions
 __all__ = [
     'GenOpsTogetherAdapter',
-    'TogetherSession', 
+    'TogetherSession',
     'TogetherResult',
     'TogetherModel',
     'TogetherTaskType',

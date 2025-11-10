@@ -38,14 +38,14 @@ class GenOpsInstrumentor:
         from genops.providers.anthropic import patch_anthropic, unpatch_anthropic
         from genops.providers.openai import patch_openai, unpatch_openai
         from genops.providers.openrouter import patch_openrouter, unpatch_openrouter
-        
+
         # Import Bedrock provider with error handling
         try:
             from genops.providers.bedrock import instrument_bedrock
             _bedrock_patch_available = True
         except ImportError:
             _bedrock_patch_available = False
-        
+
         # Import Arize AI provider with error handling
         try:
             from genops.providers.arize import auto_instrument as arize_auto_instrument
@@ -76,7 +76,7 @@ class GenOpsInstrumentor:
                 "framework_type": "inference",
             },
         }
-        
+
         # Add Bedrock to registry if available
         if _bedrock_patch_available:
             self.provider_patches["bedrock"] = {
@@ -86,7 +86,7 @@ class GenOpsInstrumentor:
                 "provider_type": "llm_api",
                 "framework_type": "inference",
             }
-        
+
         # Add Arize AI to registry if available
         if _arize_patch_available:
             self.provider_patches["arize"] = {

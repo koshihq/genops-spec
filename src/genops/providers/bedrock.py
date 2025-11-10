@@ -41,31 +41,33 @@ Example usage:
 import json
 import logging
 import time
-from contextlib import contextmanager
-from dataclasses import dataclass, asdict
-from typing import Dict, List, Optional, Any, Union, Iterator, Tuple
 import uuid
+from collections.abc import Iterator
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 try:
     import boto3
-    from botocore.exceptions import ClientError, NoCredentialsError, BotoCoreError
+    from botocore.exceptions import BotoCoreError, ClientError, NoCredentialsError
     BEDROCK_AVAILABLE = True
 except ImportError:
     BEDROCK_AVAILABLE = False
 
 try:
-    from genops.core.telemetry import GenOpsTelemetry
     from genops.core.base_provider import BaseProvider, OperationContext
+    from genops.core.telemetry import GenOpsTelemetry
     from genops.providers.bedrock_pricing import (
+        BEDROCK_MODELS,
         calculate_bedrock_cost,
-        get_bedrock_model_info,
         compare_bedrock_models,
-        BEDROCK_MODELS
+        get_bedrock_model_info,
     )
     from genops.providers.bedrock_validation import (
+        BedrockValidationResult,
         validate_bedrock_setup,
+    )
+    from genops.providers.bedrock_validation import (
         print_validation_result as _print_validation_result,
-        BedrockValidationResult
     )
     GENOPS_AVAILABLE = True
 except ImportError:
@@ -97,7 +99,7 @@ class GenOpsBedrockAdapter(BaseProvider):
     while maintaining the native AWS SDK experience. It automatically
     captures costs, performance metrics, and governance attributes.
     """
-    
+
     def __init__(
         self,
         region_name: str = "us-east-1",
@@ -125,33 +127,33 @@ class GenOpsBedrockAdapter(BaseProvider):
             **kwargs: Additional arguments passed to boto3 client
         """
         super().__init__()
-        
+
         if not BEDROCK_AVAILABLE:
             raise ImportError(
                 "AWS Bedrock dependencies not available. Install with: "
                 "pip install boto3 botocore"
             )
-        
+
         if not GENOPS_AVAILABLE:
             logger.warning("GenOps core not available, running in basic mode")
-        
+
         self.region_name = region_name
         self.profile_name = profile_name
         self.enable_streaming = enable_streaming
         self.default_model = default_model
-        
+
         # Initialize AWS session and clients
         session_kwargs = {}
         if profile_name:
             session_kwargs['profile_name'] = profile_name
-        
+
         self.session = boto3.Session(**session_kwargs)
-        
+
         client_kwargs = {
             'region_name': region_name,
             **kwargs
         }
-        
+
         if aws_access_key_id:
             client_kwargs['aws_access_key_id'] = aws_access_key_id
         if aws_secret_access_key:
@@ -160,27 +162,27 @@ class GenOpsBedrockAdapter(BaseProvider):
             client_kwargs['aws_session_token'] = aws_session_token
         if endpoint_url:
             client_kwargs['endpoint_url'] = endpoint_url
-        
+
         try:
             self.bedrock_runtime = self.session.client('bedrock-runtime', **client_kwargs)
             self.bedrock_client = self.session.client('bedrock', **client_kwargs)
         except Exception as e:
             logger.error(f"Failed to initialize Bedrock clients: {e}")
             raise
-        
+
         # Initialize telemetry
         if GENOPS_AVAILABLE:
             self.telemetry = GenOpsTelemetry()
         else:
             self.telemetry = None
-        
+
         logger.info(f"GenOps Bedrock adapter initialized for region: {region_name}")
 
     def is_available(self) -> bool:
         """Check if Bedrock is available and accessible."""
         if not BEDROCK_AVAILABLE:
             return False
-        
+
         try:
             # Try to list foundation models as availability check
             response = self.bedrock_client.list_foundation_models()
@@ -213,7 +215,7 @@ class GenOpsBedrockAdapter(BaseProvider):
     def detect_model_provider(self, model_id: str) -> str:
         """Detect the underlying provider for a Bedrock model ID."""
         model_id_lower = model_id.lower()
-        
+
         if "anthropic" in model_id_lower or "claude" in model_id_lower:
             return "anthropic"
         elif "amazon" in model_id_lower or "titan" in model_id_lower:
@@ -237,7 +239,7 @@ class GenOpsBedrockAdapter(BaseProvider):
     ) -> OperationContext:
         """Create operation context with Bedrock-specific attributes."""
         operation_id = str(uuid.uuid4())
-        
+
         context = OperationContext(
             operation_id=operation_id,
             operation_name=operation_name,
@@ -246,7 +248,7 @@ class GenOpsBedrockAdapter(BaseProvider):
             region=self.region_name,
             **governance_attrs
         )
-        
+
         return context
 
     def _calculate_tokens(self, text: str) -> int:
@@ -269,9 +271,9 @@ class GenOpsBedrockAdapter(BaseProvider):
             response_body = json.loads(response['body'].read())
         except Exception:
             response_body = response.get('body', {})
-        
+
         provider = self.detect_model_provider(model_id)
-        
+
         if provider == "anthropic":
             # Claude models
             content = response_body.get('completion', '')
@@ -299,7 +301,7 @@ class GenOpsBedrockAdapter(BaseProvider):
             # Generic handling
             content = str(response_body)
             output_tokens = self._calculate_tokens(content)
-        
+
         return content, output_tokens
 
     def text_generation(
@@ -331,14 +333,14 @@ class GenOpsBedrockAdapter(BaseProvider):
         """
         model_id = model_id or self.default_model
         operation_start = time.time()
-        
+
         # Create operation context
         context = self._create_operation_context(
             "bedrock.text_generation",
             model_id,
             **governance_attrs
         )
-        
+
         if self.telemetry:
             with self.telemetry.trace_operation(
                 operation_name=f"bedrock.text_generation.{model_id}",
@@ -368,13 +370,13 @@ class GenOpsBedrockAdapter(BaseProvider):
         operation_start: float
     ) -> Union[BedrockOperationResult, Iterator[str]]:
         """Execute text generation with telemetry."""
-        
+
         try:
             # Prepare model-specific request body
             request_body = self._prepare_text_generation_body(
                 prompt, model_id, max_tokens, temperature, top_p, stop_sequences
             )
-            
+
             # Set telemetry attributes
             if span:
                 span.set_attribute("bedrock.model_id", model_id)
@@ -382,9 +384,9 @@ class GenOpsBedrockAdapter(BaseProvider):
                 span.set_attribute("bedrock.max_tokens", max_tokens)
                 span.set_attribute("bedrock.temperature", temperature)
                 span.set_attribute("bedrock.stream", stream)
-            
+
             input_tokens = self._calculate_tokens(prompt)
-            
+
             if stream and self.enable_streaming:
                 return self._stream_text_generation(
                     span, context, model_id, request_body, input_tokens, operation_start
@@ -393,7 +395,7 @@ class GenOpsBedrockAdapter(BaseProvider):
                 return self._invoke_text_generation(
                     span, context, model_id, request_body, input_tokens, operation_start
                 )
-                
+
         except Exception as e:
             if span:
                 span.set_attribute("error", True)
@@ -411,9 +413,9 @@ class GenOpsBedrockAdapter(BaseProvider):
         stop_sequences: Optional[List[str]]
     ) -> str:
         """Prepare model-specific request body."""
-        
+
         provider = self.detect_model_provider(model_id)
-        
+
         if provider == "anthropic":
             # Claude models
             body = {
@@ -424,7 +426,7 @@ class GenOpsBedrockAdapter(BaseProvider):
             }
             if stop_sequences:
                 body["stop_sequences"] = stop_sequences
-                
+
         elif provider == "amazon":
             # Titan models
             body = {
@@ -437,7 +439,7 @@ class GenOpsBedrockAdapter(BaseProvider):
             }
             if stop_sequences:
                 body["textGenerationConfig"]["stopSequences"] = stop_sequences
-                
+
         elif provider == "ai21":
             # Jurassic models
             body = {
@@ -448,7 +450,7 @@ class GenOpsBedrockAdapter(BaseProvider):
             }
             if stop_sequences:
                 body["stopSequences"] = stop_sequences
-                
+
         elif provider == "cohere":
             # Command models
             body = {
@@ -459,7 +461,7 @@ class GenOpsBedrockAdapter(BaseProvider):
             }
             if stop_sequences:
                 body["stop_sequences"] = stop_sequences
-                
+
         elif provider == "meta":
             # Llama models
             body = {
@@ -468,7 +470,7 @@ class GenOpsBedrockAdapter(BaseProvider):
                 "temperature": temperature,
                 "top_p": top_p
             }
-            
+
         else:
             # Generic fallback
             body = {
@@ -477,7 +479,7 @@ class GenOpsBedrockAdapter(BaseProvider):
                 "temperature": temperature,
                 "top_p": top_p
             }
-        
+
         return json.dumps(body)
 
     def _invoke_text_generation(
@@ -490,7 +492,7 @@ class GenOpsBedrockAdapter(BaseProvider):
         operation_start: float
     ) -> BedrockOperationResult:
         """Invoke non-streaming text generation."""
-        
+
         try:
             response = self.bedrock_runtime.invoke_model(
                 modelId=model_id,
@@ -498,10 +500,10 @@ class GenOpsBedrockAdapter(BaseProvider):
                 contentType="application/json",
                 accept="application/json"
             )
-            
+
             # Extract response content and tokens
             content, output_tokens = self._extract_response_content(response, model_id)
-            
+
             # Calculate metrics
             latency_ms = (time.time() - operation_start) * 1000
             cost_usd = calculate_bedrock_cost(
@@ -510,7 +512,7 @@ class GenOpsBedrockAdapter(BaseProvider):
                 output_tokens=output_tokens,
                 region=self.region_name
             )
-            
+
             # Set telemetry metrics
             if span:
                 span.set_attribute("bedrock.input_tokens", input_tokens)
@@ -518,7 +520,7 @@ class GenOpsBedrockAdapter(BaseProvider):
                 span.set_attribute("bedrock.latency_ms", latency_ms)
                 span.set_attribute("bedrock.cost_usd", cost_usd)
                 span.set_attribute("bedrock.success", True)
-            
+
             # Create result
             result = BedrockOperationResult(
                 content=content,
@@ -532,18 +534,18 @@ class GenOpsBedrockAdapter(BaseProvider):
                 governance_attributes=context.governance_attributes,
                 raw_response=response
             )
-            
+
             return result
-            
+
         except ClientError as e:
             error_code = e.response.get('Error', {}).get('Code', 'Unknown')
             error_message = e.response.get('Error', {}).get('Message', str(e))
-            
+
             if span:
                 span.set_attribute("error", True)
                 span.set_attribute("error.type", error_code)
                 span.set_attribute("error.message", error_message)
-            
+
             logger.error(f"Bedrock API error [{error_code}]: {error_message}")
             raise
 
@@ -557,7 +559,7 @@ class GenOpsBedrockAdapter(BaseProvider):
         operation_start: float
     ) -> Iterator[str]:
         """Stream text generation with telemetry tracking."""
-        
+
         try:
             response = self.bedrock_runtime.invoke_model_with_response_stream(
                 modelId=model_id,
@@ -565,22 +567,22 @@ class GenOpsBedrockAdapter(BaseProvider):
                 contentType="application/json",
                 accept="application/json"
             )
-            
+
             output_tokens = 0
             full_content = ""
-            
+
             for event in response['body']:
                 if 'chunk' in event:
                     chunk_data = json.loads(event['chunk']['bytes'])
-                    
+
                     # Extract chunk content based on provider
                     chunk_text = self._extract_chunk_content(chunk_data, model_id)
-                    
+
                     if chunk_text:
                         full_content += chunk_text
                         output_tokens += self._calculate_tokens(chunk_text)
                         yield chunk_text
-            
+
             # Final telemetry update
             latency_ms = (time.time() - operation_start) * 1000
             cost_usd = calculate_bedrock_cost(
@@ -589,7 +591,7 @@ class GenOpsBedrockAdapter(BaseProvider):
                 output_tokens=output_tokens,
                 region=self.region_name
             )
-            
+
             if span:
                 span.set_attribute("bedrock.input_tokens", input_tokens)
                 span.set_attribute("bedrock.output_tokens", output_tokens)
@@ -597,7 +599,7 @@ class GenOpsBedrockAdapter(BaseProvider):
                 span.set_attribute("bedrock.cost_usd", cost_usd)
                 span.set_attribute("bedrock.success", True)
                 span.set_attribute("bedrock.streaming", True)
-            
+
         except Exception as e:
             if span:
                 span.set_attribute("error", True)
@@ -608,7 +610,7 @@ class GenOpsBedrockAdapter(BaseProvider):
     def _extract_chunk_content(self, chunk_data: Dict, model_id: str) -> str:
         """Extract content from streaming chunk based on model provider."""
         provider = self.detect_model_provider(model_id)
-        
+
         if provider == "anthropic":
             return chunk_data.get('completion', '')
         elif provider == "amazon":
@@ -634,10 +636,10 @@ class GenOpsBedrockAdapter(BaseProvider):
         Converts chat messages to appropriate prompt format for each model.
         """
         model_id = model_id or self.default_model
-        
+
         # Convert messages to prompt format
         prompt = self._messages_to_prompt(messages, model_id)
-        
+
         return self.text_generation(
             prompt=prompt,
             model_id=model_id,
@@ -649,23 +651,23 @@ class GenOpsBedrockAdapter(BaseProvider):
     def _messages_to_prompt(self, messages: List[Dict[str, str]], model_id: str) -> str:
         """Convert chat messages to model-specific prompt format."""
         provider = self.detect_model_provider(model_id)
-        
+
         if provider == "anthropic":
             # Claude format
             prompt_parts = []
             for msg in messages:
                 role = msg.get('role', 'user')
                 content = msg.get('content', '')
-                
+
                 if role == 'system':
                     prompt_parts.append(f"System: {content}")
                 elif role == 'user':
                     prompt_parts.append(f"Human: {content}")
                 elif role == 'assistant':
                     prompt_parts.append(f"Assistant: {content}")
-            
+
             return "\n\n" + "\n\n".join(prompt_parts) + "\n\nAssistant:"
-        
+
         else:
             # Generic format for other models
             conversation = []
@@ -673,7 +675,7 @@ class GenOpsBedrockAdapter(BaseProvider):
                 role = msg.get('role', 'user').title()
                 content = msg.get('content', '')
                 conversation.append(f"{role}: {content}")
-            
+
             return "\n".join(conversation) + "\nAssistant:"
 
     def get_performance_config(self) -> Dict[str, Any]:
@@ -686,7 +688,7 @@ class GenOpsBedrockAdapter(BaseProvider):
             "telemetry_enabled": self.telemetry is not None,
             "profile_name": self.profile_name
         }
-    
+
     def validate_setup(self) -> Dict[str, Any]:
         """
         Validate that the Bedrock adapter is properly configured.
@@ -705,11 +707,11 @@ class GenOpsBedrockAdapter(BaseProvider):
                 'warnings': [],
                 'recommendations': ["Run: pip install genops-ai[bedrock]"]
             }
-        
+
         try:
             # Use the module-level validation function
             result = validate_bedrock_setup()
-            
+
             # Convert to the expected format
             return {
                 'valid': result.success,
@@ -749,34 +751,34 @@ def instrument_bedrock():
         response = bedrock.invoke_model(...)  # Automatically tracked!
     """
     global _instrumentation_enabled, _original_invoke_model, _original_invoke_model_with_response_stream
-    
+
     if _instrumentation_enabled:
         logger.info("Bedrock auto-instrumentation already enabled")
         return
-    
+
     if not BEDROCK_AVAILABLE:
         logger.warning("Cannot enable Bedrock instrumentation - boto3 not available")
         return
-    
+
     try:
         import boto3.session
-        
+
         # Store original methods
         original_client = boto3.session.Session.client
-        
+
         def instrumented_client(self, service_name, *args, **kwargs):
             """Instrumented client factory that adds GenOps tracking."""
             client = original_client(self, service_name, *args, **kwargs)
-            
+
             if service_name == 'bedrock-runtime':
                 # Wrap the invoke_model method
                 original_invoke = client.invoke_model
                 original_invoke_stream = client.invoke_model_with_response_stream
-                
+
                 def instrumented_invoke_model(*args, **kwargs):
                     # Extract basic info for telemetry
                     model_id = kwargs.get('modelId', args[0] if args else 'unknown')
-                    
+
                     if GENOPS_AVAILABLE:
                         telemetry = GenOpsTelemetry()
                         with telemetry.trace_operation(
@@ -788,11 +790,11 @@ def instrument_bedrock():
                             return original_invoke(*args, **kwargs)
                     else:
                         return original_invoke(*args, **kwargs)
-                
+
                 def instrumented_invoke_model_stream(*args, **kwargs):
                     # Extract basic info for telemetry
                     model_id = kwargs.get('modelId', args[0] if args else 'unknown')
-                    
+
                     if GENOPS_AVAILABLE:
                         telemetry = GenOpsTelemetry()
                         with telemetry.trace_operation(
@@ -805,19 +807,19 @@ def instrument_bedrock():
                             return original_invoke_stream(*args, **kwargs)
                     else:
                         return original_invoke_stream(*args, **kwargs)
-                
+
                 client.invoke_model = instrumented_invoke_model
                 client.invoke_model_with_response_stream = instrumented_invoke_model_stream
-            
+
             return client
-        
+
         # Apply instrumentation
         boto3.session.Session.client = instrumented_client
         _instrumentation_enabled = True
-        
+
         logger.info("✅ Bedrock auto-instrumentation enabled successfully")
         logger.info("   All boto3 bedrock-runtime client calls will now include GenOps telemetry")
-        
+
     except Exception as e:
         logger.error(f"Failed to enable Bedrock auto-instrumentation: {e}")
         raise
@@ -846,7 +848,7 @@ def validate_setup() -> 'BedrockValidationResult':
             warnings=[],
             recommendations=["Run: pip install genops-ai[bedrock]"]
         )
-    
+
     return validate_bedrock_setup()
 
 

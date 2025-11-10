@@ -2,18 +2,18 @@
 Pytest configuration and fixtures for Fireworks AI provider tests.
 """
 
-import pytest
-import os
-from unittest.mock import Mock, patch, MagicMock
-from typing import Dict, Any, Optional
 from decimal import Decimal
+from unittest.mock import Mock
+
+import pytest
+
 
 # Mock Fireworks AI client
 @pytest.fixture
 def mock_fireworks_client():
     """Mock Fireworks AI client for testing."""
     mock_client = Mock()
-    
+
     # Mock chat completions
     mock_response = Mock()
     mock_response.choices = [Mock()]
@@ -22,9 +22,9 @@ def mock_fireworks_client():
     mock_response.usage.completion_tokens = 25
     mock_response.usage.total_tokens = 75
     mock_response.model = "accounts/fireworks/models/llama-v3p1-8b-instruct"
-    
+
     mock_client.chat.completions.create.return_value = mock_response
-    
+
     # Mock embeddings
     mock_embedding_response = Mock()
     mock_embedding_response.data = [
@@ -33,9 +33,9 @@ def mock_fireworks_client():
     ]
     mock_embedding_response.usage.total_tokens = 100
     mock_embedding_response.model = "accounts/fireworks/models/nomic-embed-text-v1p5"
-    
+
     mock_client.embeddings.create.return_value = mock_embedding_response
-    
+
     return mock_client
 
 
@@ -43,7 +43,7 @@ def mock_fireworks_client():
 def mock_fireworks_models():
     """Mock Fireworks model enums and pricing data."""
     from genops.providers.fireworks import FireworksModel
-    
+
     # Ensure all test models are available
     test_models = {
         FireworksModel.LLAMA_3_2_1B_INSTRUCT: {
@@ -77,7 +77,7 @@ def mock_fireworks_models():
             "tier": "embedding"
         }
     }
-    
+
     return test_models
 
 
@@ -120,7 +120,7 @@ def sample_embedding_texts():
 def mock_validation_result():
     """Mock validation result for testing."""
     from genops.providers.fireworks_validation import ValidationResult
-    
+
     return ValidationResult(
         is_valid=True,
         api_key_valid=True,
@@ -234,7 +234,7 @@ def create_mock_pricing_recommendation(
             "tier": "tiny"
         },
         {
-            "model": "accounts/fireworks/models/llama-v3p1-70b-instruct", 
+            "model": "accounts/fireworks/models/llama-v3p1-70b-instruct",
             "cost": Decimal("0.002"),
             "tier": "large"
         }

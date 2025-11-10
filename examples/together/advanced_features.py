@@ -17,11 +17,9 @@ Features:
     - Complex reasoning tasks with specialized models
 """
 
-import os
-import sys
 import asyncio
+import sys
 import time
-from typing import List, Dict, Any
 
 try:
     from genops.providers.together import GenOpsTogetherAdapter, TogetherModel
@@ -37,7 +35,7 @@ def demonstrate_multimodal_operations():
     """Demonstrate multimodal operations with vision-language models."""
     print("🎨 Multimodal Operations (Vision + Language)")
     print("=" * 50)
-    
+
     adapter = GenOpsTogetherAdapter(
         team="advanced-features",
         project="multimodal-demo",
@@ -45,9 +43,9 @@ def demonstrate_multimodal_operations():
         daily_budget_limit=20.0,
         governance_policy="advisory"
     )
-    
+
     print("🔍 Testing multimodal capabilities...")
-    
+
     # Example with image analysis (simulated - normally you'd use real images)
     multimodal_tasks = [
         {
@@ -63,24 +61,24 @@ def demonstrate_multimodal_operations():
             "context": "Educational content analysis"
         }
     ]
-    
+
     multimodal_results = []
-    
+
     for task in multimodal_tasks:
         print(f"\n🎯 {task['name']} with {task['model'].value}")
-        
+
         try:
             # Note: In real usage, you'd include actual image data
             messages = [
                 {
-                    "role": "user", 
+                    "role": "user",
                     "content": [
                         {"type": "text", "text": task['prompt']},
                         # {"type": "image_url", "image_url": {"url": "your-image-url"}}
                     ]
                 }
             ]
-            
+
             # For demo purposes, use text-only with multimodal model
             result = adapter.chat_with_governance(
                 messages=[{"role": "user", "content": f"{task['prompt']} [Note: This is a multimodal model demo without actual image]"}],
@@ -90,7 +88,7 @@ def demonstrate_multimodal_operations():
                 task_type="multimodal_analysis",
                 feature=task['name'].lower().replace(' ', '_')
             )
-            
+
             multimodal_results.append({
                 'task': task['name'],
                 'model': result.model_used,
@@ -98,17 +96,17 @@ def demonstrate_multimodal_operations():
                 'tokens': result.tokens_used,
                 'response_length': len(result.response)
             })
-            
+
             print(f"   ✅ Response generated ({result.tokens_used} tokens)")
             print(f"   💰 Cost: ${result.cost:.6f}")
             print(f"   📝 Response preview: {result.response[:100]}...")
-            
+
         except Exception as e:
             print(f"   ❌ Multimodal task failed: {e}")
-    
+
     if multimodal_results:
         total_multimodal_cost = sum(r['cost'] for r in multimodal_results)
-        print(f"\n📊 Multimodal Operations Summary:")
+        print("\n📊 Multimodal Operations Summary:")
         print(f"   Tasks completed: {len(multimodal_results)}")
         print(f"   Total cost: ${total_multimodal_cost:.6f}")
         print(f"   Average cost per task: ${total_multimodal_cost / len(multimodal_results):.6f}")
@@ -118,7 +116,7 @@ def demonstrate_code_generation():
     """Demonstrate specialized code generation and completion."""
     print("\n💻 Code Generation & Completion")
     print("=" * 50)
-    
+
     adapter = GenOpsTogetherAdapter(
         team="development",
         project="code-generation",
@@ -126,7 +124,7 @@ def demonstrate_code_generation():
         daily_budget_limit=15.0,
         default_model=TogetherModel.DEEPSEEK_CODER_V2
     )
-    
+
     # Different types of code generation tasks
     coding_tasks = [
         {
@@ -148,15 +146,15 @@ def demonstrate_code_generation():
             "complexity": "moderate"
         }
     ]
-    
+
     print("🔧 Testing specialized code generation models...")
-    
+
     code_results = []
-    
+
     with adapter.track_session("code-generation-session") as session:
         for task in coding_tasks:
             print(f"\n📝 {task['name']} ({task['language']})")
-            
+
             try:
                 result = adapter.chat_with_governance(
                     messages=[
@@ -171,7 +169,7 @@ def demonstrate_code_generation():
                     language=task['language'],
                     complexity=task['complexity']
                 )
-                
+
                 code_results.append({
                     'task': task['name'],
                     'language': task['language'],
@@ -180,26 +178,26 @@ def demonstrate_code_generation():
                     'lines_of_code': result.response.count('\n'),
                     'execution_time': result.execution_time_seconds
                 })
-                
+
                 line_count = result.response.count('\n')
                 print(f"   ✅ Generated {line_count} lines of code")
                 print(f"   💰 Cost: ${result.cost:.6f}")
                 print(f"   ⏱️  Time: {result.execution_time_seconds:.2f}s")
-                
+
                 # Show a preview of the generated code
                 code_preview = '\n'.join(result.response.split('\n')[:3])
                 newline = '\n'
                 indent = '      '
                 formatted_preview = code_preview.replace(newline, newline + indent)
                 print(f"   📄 Preview:{newline}{indent}{formatted_preview}")
-                
+
             except Exception as e:
                 print(f"   ❌ Code generation failed: {e}")
-        
-        print(f"\n📊 Code Generation Session Summary:")
+
+        print("\n📊 Code Generation Session Summary:")
         print(f"   Total operations: {session.total_operations}")
         print(f"   Session cost: ${session.total_cost:.6f}")
-        
+
         if code_results:
             avg_cost = sum(r['cost'] for r in code_results) / len(code_results)
             avg_lines = sum(r['lines_of_code'] for r in code_results) / len(code_results)
@@ -211,28 +209,28 @@ def demonstrate_streaming_responses():
     """Demonstrate streaming responses with real-time cost tracking."""
     print("\n⚡ Streaming Responses")
     print("=" * 50)
-    
+
     print("🌊 Testing streaming capabilities...")
     print("Note: This demo shows streaming concept - actual streaming requires Together client integration")
-    
+
     adapter = GenOpsTogetherAdapter(
         team="streaming-demo",
         project="real-time-responses",
         environment="development",
         daily_budget_limit=10.0
     )
-    
+
     streaming_tasks = [
         "Explain the concept of distributed systems in detail, covering architecture, challenges, and benefits.",
         "Write a comprehensive guide to machine learning for beginners, including key concepts and practical examples.",
     ]
-    
+
     total_streaming_cost = 0
-    
+
     for i, task in enumerate(streaming_tasks, 1):
         print(f"\n📡 Streaming Task {i}")
         start_time = time.time()
-        
+
         try:
             # Simulate streaming by processing in chunks
             # In real implementation, this would use Together's streaming API
@@ -244,26 +242,26 @@ def demonstrate_streaming_responses():
                 streaming_simulation=True,
                 chunk_processing=True
             )
-            
+
             # Simulate real-time token processing
             response_chunks = [result.response[i:i+50] for i in range(0, len(result.response), 50)]
-            
+
             print("   🔄 Streaming response:")
             for chunk_idx, chunk in enumerate(response_chunks[:5]):  # Show first 5 chunks
                 print(f"      Chunk {chunk_idx + 1}: {chunk}...")
                 time.sleep(0.1)  # Simulate streaming delay
-            
+
             total_streaming_cost += float(result.cost)
-            
-            print(f"\n   ✅ Streaming complete")
+
+            print("\n   ✅ Streaming complete")
             print(f"   📊 Total tokens: {result.tokens_used}")
             print(f"   💰 Final cost: ${result.cost:.6f}")
             print(f"   ⏱️  Total time: {time.time() - start_time:.2f}s")
-            
+
         except Exception as e:
             print(f"   ❌ Streaming failed: {e}")
-    
-    print(f"\n📊 Streaming Summary:")
+
+    print("\n📊 Streaming Summary:")
     print(f"   Tasks streamed: {len(streaming_tasks)}")
     print(f"   Total streaming cost: ${total_streaming_cost:.6f}")
 
@@ -272,7 +270,7 @@ async def demonstrate_async_batch_processing():
     """Demonstrate async batch processing for high-throughput scenarios."""
     print("\n🚀 Async Batch Processing")
     print("=" * 50)
-    
+
     adapter = GenOpsTogetherAdapter(
         team="async-processing",
         project="batch-operations",
@@ -280,15 +278,15 @@ async def demonstrate_async_batch_processing():
         daily_budget_limit=25.0,
         governance_policy="advisory"
     )
-    
+
     # Create a batch of tasks to process concurrently
     batch_tasks = [
         f"Summarize the key benefits of task {i}: artificial intelligence in healthcare"
         for i in range(1, 6)
     ]
-    
+
     print(f"⚡ Processing {len(batch_tasks)} tasks concurrently...")
-    
+
     async def process_task(task_id: int, prompt: str):
         """Process a single task asynchronously."""
         try:
@@ -302,7 +300,7 @@ async def demonstrate_async_batch_processing():
                 task_id=task_id,
                 processing_type="concurrent"
             )
-            
+
             return {
                 'task_id': task_id,
                 'cost': float(result.cost),
@@ -310,34 +308,34 @@ async def demonstrate_async_batch_processing():
                 'time': result.execution_time_seconds,
                 'success': True
             }
-        
+
         except Exception as e:
             return {
                 'task_id': task_id,
                 'error': str(e),
                 'success': False
             }
-    
+
     start_time = time.time()
-    
+
     # Process all tasks (simulated async)
     batch_results = []
     for task_id, prompt in enumerate(batch_tasks, 1):
         result = await process_task(task_id, prompt)
         batch_results.append(result)
-    
+
     total_batch_time = time.time() - start_time
-    
+
     # Analyze batch results
     successful_tasks = [r for r in batch_results if r['success']]
     failed_tasks = [r for r in batch_results if not r['success']]
-    
+
     if successful_tasks:
         total_cost = sum(r['cost'] for r in successful_tasks)
         avg_time = sum(r['time'] for r in successful_tasks) / len(successful_tasks)
         total_tokens = sum(r['tokens'] for r in successful_tasks)
-        
-        print(f"\n📊 Batch Processing Results:")
+
+        print("\n📊 Batch Processing Results:")
         print(f"   ✅ Successful tasks: {len(successful_tasks)}")
         print(f"   ❌ Failed tasks: {len(failed_tasks)}")
         print(f"   💰 Total cost: ${total_cost:.6f}")
@@ -351,14 +349,14 @@ def demonstrate_reasoning_models():
     """Demonstrate advanced reasoning capabilities with specialized models."""
     print("\n🧠 Advanced Reasoning Models")
     print("=" * 50)
-    
+
     adapter = GenOpsTogetherAdapter(
         team="reasoning-demo",
         project="complex-analysis",
         environment="development",
         daily_budget_limit=30.0
     )
-    
+
     reasoning_tasks = [
         {
             "name": "Mathematical Problem Solving",
@@ -379,16 +377,16 @@ def demonstrate_reasoning_models():
             "expected_features": ["multi-factor analysis", "domain expertise"]
         }
     ]
-    
+
     print("🔍 Testing reasoning capabilities across specialized models...")
-    
+
     reasoning_results = []
-    
+
     with adapter.track_session("reasoning-analysis") as session:
         for task in reasoning_tasks:
             print(f"\n🎯 {task['name']}")
             print(f"   Model: {task['model'].value}")
-            
+
             try:
                 result = adapter.chat_with_governance(
                     messages=[
@@ -402,7 +400,7 @@ def demonstrate_reasoning_models():
                     reasoning_task=task['name'],
                     expected_features=",".join(task['expected_features'])
                 )
-                
+
                 reasoning_results.append({
                     'task': task['name'],
                     'model': result.model_used,
@@ -411,17 +409,17 @@ def demonstrate_reasoning_models():
                     'reasoning_depth': result.response.count('step') + result.response.count('because') + result.response.count('therefore'),
                     'response_length': len(result.response)
                 })
-                
+
                 print(f"   ✅ Analysis completed ({result.tokens_used} tokens)")
                 print(f"   💰 Cost: ${result.cost:.6f}")
                 print(f"   🧮 Reasoning indicators: {reasoning_results[-1]['reasoning_depth']}")
                 print(f"   📝 Preview: {result.response[:120]}...")
-                
+
             except Exception as e:
                 print(f"   ❌ Reasoning task failed: {e}")
-    
+
     if reasoning_results:
-        print(f"\n📊 Reasoning Analysis Summary:")
+        print("\n📊 Reasoning Analysis Summary:")
         print(f"   Tasks completed: {len(reasoning_results)}")
         total_reasoning_cost = sum(r['cost'] for r in reasoning_results)
         avg_reasoning_depth = sum(r['reasoning_depth'] for r in reasoning_results) / len(reasoning_results)
@@ -434,9 +432,9 @@ def demonstrate_fine_tuning_cost_estimation():
     """Demonstrate fine-tuning cost estimation and planning."""
     print("\n🎛️ Fine-Tuning Cost Estimation")
     print("=" * 50)
-    
+
     pricing_calc = TogetherPricingCalculator()
-    
+
     # Different fine-tuning scenarios
     fine_tuning_scenarios = [
         {
@@ -447,7 +445,7 @@ def demonstrate_fine_tuning_cost_estimation():
             "epochs": 3
         },
         {
-            "name": "Medium Dataset Training", 
+            "name": "Medium Dataset Training",
             "base_model": "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
             "training_tokens": 500_000,
             "validation_tokens": 50_000,
@@ -461,12 +459,12 @@ def demonstrate_fine_tuning_cost_estimation():
             "epochs": 2
         }
     ]
-    
+
     print("💡 Fine-tuning cost analysis:")
-    
+
     for scenario in fine_tuning_scenarios:
         print(f"\n📋 {scenario['name']}:")
-        
+
         try:
             cost = pricing_calc.calculate_fine_tuning_cost(
                 model=scenario['base_model'],
@@ -474,9 +472,9 @@ def demonstrate_fine_tuning_cost_estimation():
                 validation_tokens=scenario['validation_tokens'],
                 epochs=scenario['epochs']
             )
-            
+
             total_tokens = (scenario['training_tokens'] * scenario['epochs']) + scenario['validation_tokens']
-            
+
             print(f"   Base model: {scenario['base_model']}")
             print(f"   Training tokens: {scenario['training_tokens']:,}")
             print(f"   Validation tokens: {scenario['validation_tokens']:,}")
@@ -484,7 +482,7 @@ def demonstrate_fine_tuning_cost_estimation():
             print(f"   Total tokens processed: {total_tokens:,}")
             print(f"   💰 Estimated cost: ${cost:.2f}")
             print(f"   📊 Cost per million tokens: ${float(cost) * 1_000_000 / total_tokens:.2f}")
-            
+
         except Exception as e:
             print(f"   ❌ Cost calculation failed: {e}")
 
@@ -493,25 +491,25 @@ def main():
     """Run all advanced feature demonstrations."""
     print("🚀 Together AI Advanced Features with GenOps")
     print("=" * 60)
-    
+
     try:
         # Run all advanced demonstrations
         demonstrate_multimodal_operations()
         demonstrate_code_generation()
         demonstrate_streaming_responses()
-        
+
         # Run async demo
         print("\n" + "=" * 60)
         asyncio.run(demonstrate_async_batch_processing())
-        
+
         demonstrate_reasoning_models()
         demonstrate_fine_tuning_cost_estimation()
-        
+
         # Final summary
         print("\n" + "=" * 60)
         print("🎯 Advanced Features Summary")
         print("=" * 60)
-        
+
         print("✅ Advanced capabilities demonstrated:")
         print("   • Multimodal operations with vision-language models")
         print("   • Specialized code generation and completion")
@@ -519,22 +517,22 @@ def main():
         print("   • Async batch processing for high throughput")
         print("   • Advanced reasoning with specialized models")
         print("   • Fine-tuning cost estimation and planning")
-        
+
         print("\n🚀 Key Insights:")
         print("   ✅ Specialized models excel at domain-specific tasks")
         print("   ✅ Cost-effective streaming maintains responsiveness")
         print("   ✅ Batch processing maximizes throughput efficiency")
         print("   ✅ Reasoning models provide step-by-step analysis")
         print("   ✅ Fine-tuning costs are predictable and manageable")
-        
+
         print("\n📚 Next Steps:")
         print("   • Implement streaming for real-time applications")
         print("   • Use specialized models for domain-specific tasks")
         print("   • Consider fine-tuning for custom use cases")
         print("   • Leverage async processing for high-volume operations")
-        
+
         return 0
-        
+
     except Exception as e:
         print(f"❌ Advanced features demo failed: {e}")
         return 1

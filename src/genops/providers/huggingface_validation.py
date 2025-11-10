@@ -136,10 +136,10 @@ def check_huggingface_connectivity() -> list[ValidationIssue]:
 
     try:
         from huggingface_hub import InferenceClient
-        
+
         # Test basic connectivity with a simple model
         client = InferenceClient()
-        
+
         # Try a very lightweight test - just checking if we can create the client
         # We avoid making actual API calls to prevent hitting rate limits during validation
         if hasattr(client, 'text_generation'):
@@ -156,7 +156,7 @@ def check_huggingface_connectivity() -> list[ValidationIssue]:
                 message="Hugging Face client created but text_generation method not available",
                 fix_suggestion="Update huggingface_hub to latest version: pip install --upgrade huggingface_hub"
             ))
-            
+
     except ImportError:
         issues.append(ValidationIssue(
             level="error",
@@ -181,11 +181,11 @@ def check_genops_integration() -> list[ValidationIssue]:
 
     try:
         from genops.providers.huggingface import GenOpsHuggingFaceAdapter
-        
+
         # Test adapter creation
         try:
             adapter = GenOpsHuggingFaceAdapter()
-            
+
             # Test basic methods
             if hasattr(adapter, 'get_supported_tasks'):
                 supported_tasks = adapter.get_supported_tasks()
@@ -203,7 +203,7 @@ def check_genops_integration() -> list[ValidationIssue]:
                         message="GenOps adapter created but no supported tasks found",
                         fix_suggestion="Check GenOps installation and Hugging Face integration"
                     ))
-                    
+
             # Test provider detection
             if hasattr(adapter, 'detect_provider_for_model'):
                 test_providers = {
@@ -211,13 +211,13 @@ def check_genops_integration() -> list[ValidationIssue]:
                     "claude-3-sonnet": "anthropic",
                     "microsoft/DialoGPT-medium": "huggingface_hub"
                 }
-                
+
                 correct_detections = 0
                 for model, expected_provider in test_providers.items():
                     detected = adapter.detect_provider_for_model(model)
                     if detected == expected_provider:
                         correct_detections += 1
-                
+
                 if correct_detections == len(test_providers):
                     issues.append(ValidationIssue(
                         level="info",
@@ -232,7 +232,7 @@ def check_genops_integration() -> list[ValidationIssue]:
                         message=f"Provider detection working for {correct_detections}/{len(test_providers)} test models",
                         fix_suggestion="Check model name patterns and provider detection logic"
                     ))
-                    
+
         except Exception as e:
             issues.append(ValidationIssue(
                 level="error",
@@ -240,7 +240,7 @@ def check_genops_integration() -> list[ValidationIssue]:
                 message=f"Failed to create GenOps Hugging Face adapter: {e}",
                 fix_suggestion="Check GenOps installation: pip install --upgrade genops-ai"
             ))
-            
+
     except ImportError:
         issues.append(ValidationIssue(
             level="error",
@@ -258,11 +258,11 @@ def check_cost_calculation() -> list[ValidationIssue]:
 
     try:
         from genops.providers.huggingface_pricing import (
-            detect_model_provider,
             calculate_huggingface_cost,
-            get_provider_info
+            detect_model_provider,
+            get_provider_info,
         )
-        
+
         # Test provider detection
         test_cases = [
             ("gpt-4", "openai"),
@@ -270,13 +270,13 @@ def check_cost_calculation() -> list[ValidationIssue]:
             ("microsoft/DialoGPT-medium", "huggingface_hub"),
             ("mistral-7b-instruct", "mistral")
         ]
-        
+
         detection_success = 0
         for model, expected in test_cases:
             detected = detect_model_provider(model)
             if detected == expected:
                 detection_success += 1
-        
+
         if detection_success == len(test_cases):
             issues.append(ValidationIssue(
                 level="info",
@@ -291,7 +291,7 @@ def check_cost_calculation() -> list[ValidationIssue]:
                 message=f"Provider detection working for {detection_success}/{len(test_cases)} models",
                 fix_suggestion="Check provider detection patterns in pricing module"
             ))
-        
+
         # Test cost calculation
         try:
             test_cost = calculate_huggingface_cost(
@@ -300,7 +300,7 @@ def check_cost_calculation() -> list[ValidationIssue]:
                 input_tokens=100,
                 output_tokens=50
             )
-            
+
             if isinstance(test_cost, (int, float)) and test_cost >= 0:
                 issues.append(ValidationIssue(
                     level="info",
@@ -315,7 +315,7 @@ def check_cost_calculation() -> list[ValidationIssue]:
                     message="Cost calculation returned unexpected result",
                     fix_suggestion="Check pricing data and calculation logic"
                 ))
-                
+
         except Exception as e:
             issues.append(ValidationIssue(
                 level="warning",
@@ -323,7 +323,7 @@ def check_cost_calculation() -> list[ValidationIssue]:
                 message=f"Cost calculation test failed: {e}",
                 fix_suggestion="Check pricing module installation and data"
             ))
-            
+
         # Test provider info
         try:
             provider_info = get_provider_info("gpt-3.5-turbo")
@@ -348,7 +348,7 @@ def check_cost_calculation() -> list[ValidationIssue]:
                 message=f"Provider info test failed: {e}",
                 fix_suggestion="Check pricing module provider info functionality"
             ))
-            
+
     except ImportError:
         issues.append(ValidationIssue(
             level="error",
@@ -368,7 +368,7 @@ def validate_huggingface_setup() -> ValidationResult:
         ValidationResult with overall status and detailed issues
     """
     all_issues = []
-    
+
     # Run all validation checks
     validation_functions = [
         check_environment_variables,
@@ -377,7 +377,7 @@ def validate_huggingface_setup() -> ValidationResult:
         check_genops_integration,
         check_cost_calculation,
     ]
-    
+
     for check_func in validation_functions:
         try:
             issues = check_func()
@@ -389,11 +389,11 @@ def validate_huggingface_setup() -> ValidationResult:
                 message=f"Validation check {check_func.__name__} failed: {e}",
                 fix_suggestion="Contact support or check GenOps installation"
             ))
-    
+
     # Determine overall validity
     has_errors = any(issue.level == "error" for issue in all_issues)
     is_valid = not has_errors
-    
+
     # Create summary
     summary = {
         "total_issues": len(all_issues),
@@ -402,7 +402,7 @@ def validate_huggingface_setup() -> ValidationResult:
         "info": len([i for i in all_issues if i.level == "info"]),
         "components_checked": len(validation_functions),
     }
-    
+
     return ValidationResult(
         is_valid=is_valid,
         issues=all_issues,
@@ -415,47 +415,47 @@ def print_huggingface_validation_result(result: ValidationResult) -> None:
     print("\n" + "="*60)
     print("🤗 GenOps Hugging Face Setup Validation")
     print("="*60)
-    
+
     # Overall status
     if result.is_valid:
         print("✅ Overall Status: VALID - Ready to use!")
     else:
         print("❌ Overall Status: ISSUES FOUND - See details below")
-    
+
     # Summary
     summary = result.summary
-    print(f"\n📊 Summary:")
+    print("\n📊 Summary:")
     print(f"   • Components checked: {summary['components_checked']}")
     print(f"   • Total issues found: {summary['total_issues']}")
     if summary['errors'] > 0:
         print(f"   • ❌ Errors: {summary['errors']} (must fix)")
     if summary['warnings'] > 0:
-        print(f"   • ⚠️  Warnings: {summary['warnings']} (recommended to fix)")  
+        print(f"   • ⚠️  Warnings: {summary['warnings']} (recommended to fix)")
     if summary['info'] > 0:
         print(f"   • ℹ️  Info: {summary['info']} (informational)")
-    
+
     # Group issues by component
     if result.issues:
-        print(f"\n🔍 Detailed Issues:")
-        
+        print("\n🔍 Detailed Issues:")
+
         by_component = {}
         for issue in result.issues:
             if issue.component not in by_component:
                 by_component[issue.component] = []
             by_component[issue.component].append(issue)
-        
+
         for component, issues in by_component.items():
             print(f"\n   📂 {component.upper()}:")
-            
+
             for issue in issues:
                 icon = {"error": "❌", "warning": "⚠️", "info": "ℹ️"}[issue.level]
                 print(f"      {icon} {issue.message}")
                 if issue.fix_suggestion:
                     print(f"         💡 Fix: {issue.fix_suggestion}")
-    
+
     # Next steps
-    print(f"\n🚀 Next Steps:")
-    
+    print("\n🚀 Next Steps:")
+
     if result.is_valid:
         print("   1. Your setup looks good! Try running the examples:")
         print("      python examples/huggingface/basic_usage.py")
@@ -471,13 +471,13 @@ def print_huggingface_validation_result(result: ValidationResult) -> None:
             print("   1. Review warnings (⚠️) - they may affect functionality")
             print("   2. Try running basic examples to test your setup")
             print("   3. Consider fixing warnings for optimal experience")
-    
-    print(f"\n📖 Documentation:")
+
+    print("\n📖 Documentation:")
     print("   • Quickstart: docs/huggingface-quickstart.md")
     print("   • Integration Guide: docs/integrations/huggingface.md")
     print("   • Examples: examples/huggingface/")
     print("   • Support: https://github.com/KoshiHQ/GenOps-AI/issues")
-    
+
     print("\n" + "="*60 + "\n")
 
 

@@ -38,14 +38,12 @@ Example usage:
     )
 """
 
-import json
 import logging
 import os
 import time
-from contextlib import contextmanager
-from dataclasses import dataclass, asdict
-from typing import Dict, List, Optional, Any, Union, Iterator, Tuple
 import uuid
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional, Tuple
 
 try:
     import google.genai as genai
@@ -57,18 +55,20 @@ except ImportError:
     types = None
 
 try:
-    from genops.core.telemetry import GenOpsTelemetry
     from genops.core.base_provider import BaseProvider, OperationContext
+    from genops.core.telemetry import GenOpsTelemetry
     from genops.providers.gemini_pricing import (
+        GEMINI_MODELS,
         calculate_gemini_cost,
-        get_gemini_model_info,
         compare_gemini_models,
-        GEMINI_MODELS
+        get_gemini_model_info,
     )
     from genops.providers.gemini_validation import (
+        GeminiValidationResult,
         validate_gemini_setup,
+    )
+    from genops.providers.gemini_validation import (
         print_validation_result as _print_validation_result,
-        GeminiValidationResult
     )
     GENOPS_AVAILABLE = True
 except ImportError:
@@ -99,7 +99,7 @@ class GenOpsGeminiAdapter(BaseProvider):
     while maintaining the native Google AI SDK experience. It automatically
     captures costs, performance metrics, and governance attributes.
     """
-    
+
     def __init__(
         self,
         api_key: Optional[str] = None,
@@ -117,16 +117,16 @@ class GenOpsGeminiAdapter(BaseProvider):
             **kwargs: Additional arguments passed to genai.Client
         """
         super().__init__()
-        
+
         if not GEMINI_AVAILABLE:
             raise ImportError(
                 "Google Gemini dependencies not available. Install with: "
                 "pip install google-generativeai"
             )
-        
+
         if not GENOPS_AVAILABLE:
             logger.warning("GenOps core not available, running in basic mode")
-        
+
         # Handle API key from environment if not provided
         self.api_key = api_key or os.getenv("GEMINI_API_KEY")
         if not self.api_key:
@@ -134,30 +134,30 @@ class GenOpsGeminiAdapter(BaseProvider):
                 "Gemini API key required. Set GEMINI_API_KEY environment variable "
                 "or pass api_key parameter. Get your API key at: https://ai.google.dev/"
             )
-        
+
         self.default_model = default_model
         self.enable_streaming = enable_streaming
-        
+
         # Initialize Google AI client
         try:
             self.client = genai.Client(api_key=self.api_key, **kwargs)
         except Exception as e:
             logger.error(f"Failed to initialize Gemini client: {e}")
             raise
-        
+
         # Initialize telemetry
         if GENOPS_AVAILABLE:
             self.telemetry = GenOpsTelemetry()
         else:
             self.telemetry = None
-        
+
         logger.info("GenOps Gemini adapter initialized")
 
     def is_available(self) -> bool:
         """Check if Gemini API is available and accessible."""
         if not GEMINI_AVAILABLE:
             return False
-        
+
         try:
             # Try a minimal API call to check availability
             response = self.client.models.generate_content(
@@ -179,7 +179,7 @@ class GenOpsGeminiAdapter(BaseProvider):
             logger.warning(f"Failed to fetch supported models: {e}")
             return [
                 "gemini-2.5-pro",
-                "gemini-2.5-flash", 
+                "gemini-2.5-flash",
                 "gemini-2.5-flash-lite",
                 "gemini-1.5-pro",
                 "gemini-1.5-flash"
@@ -189,7 +189,7 @@ class GenOpsGeminiAdapter(BaseProvider):
         """Get list of supported AI tasks."""
         return [
             "text-generation",
-            "chat-completion", 
+            "chat-completion",
             "content-generation",
             "code-generation",
             "text-analysis",
@@ -206,7 +206,7 @@ class GenOpsGeminiAdapter(BaseProvider):
     ) -> OperationContext:
         """Create operation context with Gemini-specific attributes."""
         operation_id = str(uuid.uuid4())
-        
+
         context = OperationContext(
             operation_id=operation_id,
             operation_name=operation_name,
@@ -214,7 +214,7 @@ class GenOpsGeminiAdapter(BaseProvider):
             model=model_id,
             **governance_attrs
         )
-        
+
         return context
 
     def _calculate_tokens(self, text: str) -> int:
@@ -233,14 +233,14 @@ class GenOpsGeminiAdapter(BaseProvider):
         """
         try:
             content = response.text if hasattr(response, 'text') else str(response)
-            
+
             # Try to get actual token counts if available
             output_tokens = (
-                response.usage_metadata.candidates_token_count 
+                response.usage_metadata.candidates_token_count
                 if hasattr(response, 'usage_metadata') and hasattr(response.usage_metadata, 'candidates_token_count')
                 else self._calculate_tokens(content)
             )
-            
+
             return content, output_tokens
         except Exception as e:
             logger.warning(f"Failed to extract response content: {e}")
@@ -275,17 +275,17 @@ class GenOpsGeminiAdapter(BaseProvider):
         """
         model_id = model or self.default_model
         start_time = time.time()
-        
+
         # Create operation context
         context = self._create_operation_context(
             "gemini.text_generation",
             model_id,
             **governance_attrs
         )
-        
+
         # Prepare request parameters
         request_params = {"model": model_id, "contents": prompt}
-        
+
         if max_tokens:
             request_params["generation_config"] = request_params.get("generation_config", {})
             request_params["generation_config"]["max_output_tokens"] = max_tokens
@@ -298,7 +298,7 @@ class GenOpsGeminiAdapter(BaseProvider):
         if top_k is not None:
             request_params["generation_config"] = request_params.get("generation_config", {})
             request_params["generation_config"]["top_k"] = top_k
-        
+
         if GENOPS_AVAILABLE and self.telemetry:
             # Create span for the operation
             with self.telemetry.trace_operation(
@@ -310,12 +310,12 @@ class GenOpsGeminiAdapter(BaseProvider):
                 try:
                     # Perform the API call
                     response = self.client.models.generate_content(**request_params)
-                    
+
                     # Extract response details
                     content, output_tokens = self._extract_response_content(response, model_id)
                     latency_ms = (time.time() - start_time) * 1000
                     input_tokens = self._calculate_tokens(prompt)
-                    
+
                     # Get actual token counts if available
                     if hasattr(response, 'usage_metadata'):
                         usage = response.usage_metadata
@@ -323,14 +323,14 @@ class GenOpsGeminiAdapter(BaseProvider):
                             input_tokens = usage.prompt_token_count
                         if hasattr(usage, 'candidates_token_count'):
                             output_tokens = usage.candidates_token_count
-                    
+
                     # Calculate cost
                     cost_usd = calculate_gemini_cost(
                         model_id=model_id,
                         input_tokens=input_tokens,
                         output_tokens=output_tokens
                     ) if 'calculate_gemini_cost' in globals() else 0.0
-                    
+
                     # Record telemetry
                     span.set_attributes({
                         "genops.provider": "gemini",
@@ -343,11 +343,11 @@ class GenOpsGeminiAdapter(BaseProvider):
                         "genops.latency_ms": latency_ms,
                         "genops.operation_id": context.operation_id
                     })
-                    
+
                     # Add governance attributes to span
                     for key, value in governance_attrs.items():
                         span.set_attribute(f"genops.{key}", str(value))
-                    
+
                     return GeminiOperationResult(
                         content=content,
                         model_id=model_id,
@@ -359,7 +359,7 @@ class GenOpsGeminiAdapter(BaseProvider):
                         governance_attributes=governance_attrs,
                         raw_response=response.__dict__ if hasattr(response, '__dict__') else None
                     )
-                    
+
                 except Exception as e:
                     span.set_status(status="ERROR", description=str(e))
                     raise
@@ -370,7 +370,7 @@ class GenOpsGeminiAdapter(BaseProvider):
                 content, output_tokens = self._extract_response_content(response, model_id)
                 latency_ms = (time.time() - start_time) * 1000
                 input_tokens = self._calculate_tokens(prompt)
-                
+
                 return GeminiOperationResult(
                     content=content,
                     model_id=model_id,
@@ -419,9 +419,9 @@ class GenOpsGeminiAdapter(BaseProvider):
                 prompt_parts.append(f"User: {content}")
             elif role == 'assistant':
                 prompt_parts.append(f"Assistant: {content}")
-        
+
         combined_prompt = "\n\n".join(prompt_parts)
-        
+
         return self.text_generation(
             prompt=combined_prompt,
             model=model,
@@ -449,51 +449,51 @@ def instrument_gemini(**config) -> bool:
     if not GEMINI_AVAILABLE:
         logger.warning("Google Gemini SDK not available for instrumentation")
         return False
-    
+
     if not GENOPS_AVAILABLE:
         logger.warning("GenOps core not available for instrumentation")
         return False
-    
+
     try:
         # Patch the generate_content method
         original_generate_content = genai.Client.models.generate_content
-        
+
         def instrumented_generate_content(self, **kwargs):
             # Extract governance attributes from kwargs
             governance_attrs = {}
             api_kwargs = kwargs.copy()
-            
+
             governance_keys = {
                 'team', 'project', 'customer_id', 'environment', 'cost_center'
             }
-            
+
             for key in governance_keys:
                 if key in kwargs:
                     governance_attrs[key] = kwargs[key]
                     api_kwargs.pop(key)
-            
+
             # Create GenOps adapter for tracking
             adapter = GenOpsGeminiAdapter()
-            
+
             # Use the adapter's text_generation method
             prompt = api_kwargs.get('contents', '')
             model = api_kwargs.get('model', adapter.default_model)
-            
+
             result = adapter.text_generation(
                 prompt=prompt,
                 model=model,
                 **governance_attrs
             )
-            
+
             # Return the raw response for compatibility
             return result.raw_response or original_generate_content(self, **api_kwargs)
-        
+
         # Apply the patch
         genai.Client.models.generate_content = instrumented_generate_content
-        
+
         logger.info("Google Gemini auto-instrumentation enabled")
         return True
-        
+
     except Exception as e:
         logger.error(f"Failed to instrument Gemini: {e}")
         return False
@@ -530,35 +530,35 @@ def validate_setup() -> 'GeminiValidationResult':
     """
     if 'validate_gemini_setup' in globals():
         return validate_gemini_setup()
-    
+
     # Fallback validation
     from dataclasses import dataclass
-    
+
     @dataclass
     class BasicValidationResult:
         success: bool
         errors: List[str]
         warnings: List[str]
         recommendations: List[str]
-    
+
     errors = []
     warnings = []
     recommendations = []
-    
+
     # Check if Gemini SDK is available
     if not GEMINI_AVAILABLE:
         errors.append("Google Gemini SDK not installed. Run: pip install google-generativeai")
-    
+
     # Check API key
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
         errors.append("GEMINI_API_KEY environment variable not set")
         recommendations.append("Set GEMINI_API_KEY environment variable with your API key from https://ai.google.dev/")
-    
+
     # Check GenOps availability
     if not GENOPS_AVAILABLE:
         warnings.append("GenOps core not available - running in basic mode")
-    
+
     return BasicValidationResult(
         success=len(errors) == 0,
         errors=errors,
@@ -580,17 +580,17 @@ def print_validation_result(result: Any, detailed: bool = False) -> None:
             print("✅ Google Gemini setup validation passed!")
         else:
             print("❌ Google Gemini setup validation failed:")
-            
+
         if hasattr(result, 'errors') and result.errors:
             print("\nErrors:")
             for error in result.errors:
                 print(f"  - {error}")
-                
+
         if hasattr(result, 'warnings') and result.warnings:
-            print("\nWarnings:")  
+            print("\nWarnings:")
             for warning in result.warnings:
                 print(f"  - {warning}")
-                
+
         if hasattr(result, 'recommendations') and result.recommendations:
             print("\nRecommendations:")
             for rec in result.recommendations:
@@ -602,7 +602,7 @@ def print_validation_result(result: Any, detailed: bool = False) -> None:
 # Export main classes and functions
 __all__ = [
     'GenOpsGeminiAdapter',
-    'GeminiOperationResult', 
+    'GeminiOperationResult',
     'instrument_gemini',
     'auto_instrument_gemini',
     'auto_instrument',  # Universal CLAUDE.md standard function

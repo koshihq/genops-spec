@@ -40,13 +40,13 @@ Example usage:
 """
 
 import logging
+import os
 import time
 import uuid
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Union, Iterator
-import os
 from enum import Enum
+from typing import Any, Dict, List, Optional, Union
 
 logger = logging.getLogger(__name__)
 
@@ -56,9 +56,9 @@ try:
     from mistralai.models import (
         ChatCompletionRequest,
         ChatCompletionResponse,
+        ChatMessage,
         EmbeddingRequest,
         EmbeddingResponse,
-        ChatMessage,
     )
     HAS_MISTRAL = True
 except ImportError:
@@ -89,15 +89,15 @@ class MistralModel(Enum):
     MISTRAL_MEDIUM = "mistral-medium-latest"
     MISTRAL_LARGE = "mistral-large-latest"
     MISTRAL_LARGE_2407 = "mistral-large-2407"
-    
+
     # Mixtral models
     MIXTRAL_8X7B = "mixtral-8x7b-32768"
     MIXTRAL_8X22B = "mixtral-8x22b-32768"
-    
+
     # Specialized models
     MISTRAL_NEMO = "mistral-nemo-2407"
     CODESTRAL = "codestral-2405"
-    
+
     # Embedding models
     MISTRAL_EMBED = "mistral-embed"
 
@@ -136,11 +136,11 @@ class MistralResponse:
     request_id: str = ""
     model: str = ""
     operation: str = ""
-    
+
     # Chat-specific fields
     role: str = "assistant"
     finish_reason: str = ""
-    
+
     # Embedding-specific fields
     embeddings: List[List[float]] = field(default_factory=list)
     embedding_dimension: int = 0
@@ -160,7 +160,7 @@ class GenOpsMistralAdapter:
     - Streaming support with real-time cost tracking
     - European AI provider benefits (GDPR, cost efficiency)
     """
-    
+
     def __init__(
         self,
         api_key: Optional[str] = None,
@@ -197,7 +197,7 @@ class GenOpsMistralAdapter:
             raise ImportError(
                 "Mistral AI client not installed. Install with: pip install mistralai"
             )
-        
+
         # API configuration
         self.api_key = api_key or os.getenv("MISTRAL_API_KEY")
         if not self.api_key:
@@ -205,42 +205,42 @@ class GenOpsMistralAdapter:
                 "Mistral API key is required. Set MISTRAL_API_KEY environment variable "
                 "or pass api_key parameter"
             )
-        
+
         # Initialize Mistral client
         try:
             self.client = Mistral(api_key=self.api_key)
         except Exception as e:
             raise ValueError(f"Failed to initialize Mistral client: {e}")
-        
+
         # Cost tracking configuration
         self.cost_tracking_enabled = cost_tracking_enabled
         self.budget_limit = budget_limit
         self.cost_alert_threshold = cost_alert_threshold
-        
+
         # Governance defaults
         self.default_team = default_team
-        self.default_project = default_project  
+        self.default_project = default_project
         self.default_environment = default_environment
         self.default_customer_id = default_customer_id
-        
+
         # Performance configuration
         self.timeout = timeout
         self.max_retries = max_retries
         self.enable_streaming = enable_streaming
-        
+
         # Internal state
         self._total_cost = 0.0
         self._operation_count = 0
         self._session_id = str(uuid.uuid4())
-        
+
         # Initialize pricing calculator
         self._init_pricing_calculator()
-        
+
         # Setup OpenTelemetry tracing
         self.tracer = None
         if HAS_OTEL:
             self.tracer = trace.get_tracer(__name__)
-        
+
         logger.info(f"GenOps Mistral adapter initialized with session: {self._session_id}")
 
     def _init_pricing_calculator(self):
@@ -253,17 +253,17 @@ class GenOpsMistralAdapter:
             self.pricing_calculator = None
 
     def _calculate_cost(
-        self, 
-        model: str, 
+        self,
+        model: str,
         operation: str,
-        input_tokens: int = 0, 
+        input_tokens: int = 0,
         output_tokens: int = 0,
         **kwargs
     ) -> tuple[float, float, float]:
         """Calculate costs for a Mistral operation."""
         if not self.cost_tracking_enabled or not self.pricing_calculator:
             return 0.0, 0.0, 0.0
-        
+
         try:
             return self.pricing_calculator.calculate_cost(
                 model=model,
@@ -290,10 +290,10 @@ class GenOpsMistralAdapter:
         input_cost, output_cost, total_cost = self._calculate_cost(
             model, operation, input_tokens, output_tokens, **kwargs
         )
-        
+
         tokens_per_second = total_tokens / max(request_time, 0.001)
         cost_per_token = total_cost / max(total_tokens, 1)
-        
+
         return MistralUsage(
             input_tokens=input_tokens,
             output_tokens=output_tokens,
@@ -312,9 +312,9 @@ class GenOpsMistralAdapter:
         """Update session-level statistics."""
         self._total_cost += usage.total_cost
         self._operation_count += 1
-        
+
         # Check budget limits
-        if (self.budget_limit and 
+        if (self.budget_limit and
             self._total_cost >= self.budget_limit * self.cost_alert_threshold):
             logger.warning(
                 f"Cost alert: ${self._total_cost:.6f} / ${self.budget_limit:.2f} "
@@ -359,20 +359,20 @@ class GenOpsMistralAdapter:
         """
         start_time = time.time()
         governance_attrs = self._extract_governance_attrs(**kwargs)
-        
+
         # Create span for OpenTelemetry tracing
         span_name = f"mistral.chat.{model}"
         span = None
         if self.tracer:
             span = self.tracer.start_span(span_name)
-            
+
         try:
             # Prepare messages
             messages = []
             if system_prompt:
                 messages.append({"role": "system", "content": system_prompt})
             messages.append({"role": "user", "content": message})
-            
+
             # Make API call
             response = self.client.chat.complete(
                 model=model,
@@ -380,12 +380,12 @@ class GenOpsMistralAdapter:
                 temperature=temperature,
                 max_tokens=max_tokens,
                 stream=stream,
-                **{k: v for k, v in kwargs.items() 
+                **{k: v for k, v in kwargs.items()
                    if k not in ["team", "project", "environment", "customer_id"]}
             )
-            
+
             request_time = time.time() - start_time
-            
+
             # Extract response data
             if hasattr(response, 'choices') and response.choices:
                 choice = response.choices[0]
@@ -394,11 +394,11 @@ class GenOpsMistralAdapter:
             else:
                 content = str(response)
                 finish_reason = "completed"
-            
+
             # Extract token usage
             input_tokens = getattr(response.usage, 'prompt_tokens', 0) if hasattr(response, 'usage') else 0
             output_tokens = getattr(response.usage, 'completion_tokens', 0) if hasattr(response, 'usage') else 0
-            
+
             # Create usage statistics
             usage = self._create_usage_stats(
                 model=model,
@@ -407,10 +407,10 @@ class GenOpsMistralAdapter:
                 output_tokens=output_tokens,
                 request_time=request_time
             )
-            
+
             # Update session statistics
             self._update_session_stats(usage)
-            
+
             # Create response object
             mistral_response = MistralResponse(
                 content=content,
@@ -422,7 +422,7 @@ class GenOpsMistralAdapter:
                 operation=MistralOperation.CHAT.value,
                 finish_reason=finish_reason
             )
-            
+
             # Add span attributes
             if span:
                 span.set_attributes({
@@ -435,20 +435,20 @@ class GenOpsMistralAdapter:
                     **{f"genops.{k}": v for k, v in governance_attrs.items() if v}
                 })
                 span.set_status(Status(StatusCode.OK))
-            
+
             return mistral_response
-            
+
         except Exception as e:
             request_time = time.time() - start_time
             error_msg = str(e)
-            
+
             logger.error(f"Mistral chat error: {error_msg}")
-            
+
             # Set span error status
             if span:
                 span.record_exception(e)
                 span.set_status(Status(StatusCode.ERROR, error_msg))
-            
+
             return MistralResponse(
                 success=False,
                 error_message=error_msg,
@@ -460,7 +460,7 @@ class GenOpsMistralAdapter:
                 model=model,
                 operation=MistralOperation.CHAT.value
             )
-            
+
         finally:
             if span:
                 span.end()
@@ -484,37 +484,37 @@ class GenOpsMistralAdapter:
         """
         start_time = time.time()
         governance_attrs = self._extract_governance_attrs(**kwargs)
-        
+
         # Normalize texts to list
         if isinstance(texts, str):
             texts = [texts]
-        
+
         # Create span for OpenTelemetry tracing
         span_name = f"mistral.embed.{model}"
         span = None
         if self.tracer:
             span = self.tracer.start_span(span_name)
-            
+
         try:
             # Make API call
             response = self.client.embeddings.create(
                 model=model,
                 inputs=texts,
-                **{k: v for k, v in kwargs.items() 
+                **{k: v for k, v in kwargs.items()
                    if k not in ["team", "project", "environment", "customer_id"]}
             )
-            
+
             request_time = time.time() - start_time
-            
+
             # Extract embeddings
             embeddings = []
             if hasattr(response, 'data') and response.data:
                 embeddings = [item.embedding for item in response.data]
-            
+
             # Calculate token usage (approximate for embeddings)
             total_chars = sum(len(text) for text in texts)
             estimated_tokens = max(1, total_chars // 4)  # Rough estimation
-            
+
             # Create usage statistics
             usage = self._create_usage_stats(
                 model=model,
@@ -523,10 +523,10 @@ class GenOpsMistralAdapter:
                 output_tokens=0,
                 request_time=request_time
             )
-            
+
             # Update session statistics
             self._update_session_stats(usage)
-            
+
             # Create response object
             mistral_response = MistralResponse(
                 content=f"Generated {len(embeddings)} embeddings",
@@ -539,7 +539,7 @@ class GenOpsMistralAdapter:
                 embeddings=embeddings,
                 embedding_dimension=len(embeddings[0]) if embeddings else 0
             )
-            
+
             # Add span attributes
             if span:
                 span.set_attributes({
@@ -553,20 +553,20 @@ class GenOpsMistralAdapter:
                     **{f"genops.{k}": v for k, v in governance_attrs.items() if v}
                 })
                 span.set_status(Status(StatusCode.OK))
-            
+
             return mistral_response
-            
+
         except Exception as e:
             request_time = time.time() - start_time
             error_msg = str(e)
-            
+
             logger.error(f"Mistral embed error: {error_msg}")
-            
+
             # Set span error status
             if span:
                 span.record_exception(e)
                 span.set_status(Status(StatusCode.ERROR, error_msg))
-            
+
             return MistralResponse(
                 success=False,
                 error_message=error_msg,
@@ -578,7 +578,7 @@ class GenOpsMistralAdapter:
                 model=model,
                 operation=MistralOperation.EMBED.value
             )
-            
+
         finally:
             if span:
                 span.end()
@@ -586,7 +586,7 @@ class GenOpsMistralAdapter:
     def generate(
         self,
         prompt: str,
-        model: str = "mistral-small-latest", 
+        model: str = "mistral-small-latest",
         **kwargs
     ) -> MistralResponse:
         """
@@ -654,25 +654,25 @@ def mistral_workflow_context(
             # Automatic cost aggregation and cleanup
     """
     workflow_id = f"{workflow_name}-{uuid.uuid4().hex[:8]}"
-    
+
     adapter = GenOpsMistralAdapter(
         default_team=team,
         default_project=project,
         default_customer_id=customer_id,
         default_environment=environment
     )
-    
+
     start_time = time.time()
     logger.info(f"Starting Mistral workflow: {workflow_id}")
-    
+
     try:
         yield adapter, workflow_id
-        
+
     finally:
         end_time = time.time()
         duration = end_time - start_time
         summary = adapter.get_usage_summary()
-        
+
         logger.info(
             f"Mistral workflow completed: {workflow_id}, "
             f"duration: {duration:.2f}s, cost: ${summary['total_cost']:.6f}, "
@@ -682,7 +682,7 @@ def mistral_workflow_context(
 
 def instrument_mistral(
     team: Optional[str] = None,
-    project: Optional[str] = None, 
+    project: Optional[str] = None,
     customer_id: Optional[str] = None,
     environment: str = "development",
     **adapter_kwargs
@@ -737,7 +737,7 @@ def embed(texts: Union[str, List[str]], model: str = "mistral-embed", **kwargs) 
 # Export main classes and functions
 __all__ = [
     "GenOpsMistralAdapter",
-    "MistralResponse", 
+    "MistralResponse",
     "MistralUsage",
     "MistralModel",
     "MistralOperation",
@@ -751,13 +751,13 @@ if __name__ == "__main__":
     # Quick test/demo
     print("GenOps Mistral Provider Integration")
     print("=" * 50)
-    
+
     if not HAS_MISTRAL:
         print("❌ Mistral AI client not installed")
         print("   Install with: pip install mistralai")
     else:
         print("✅ Mistral AI client available")
-        
+
     try:
         adapter = instrument_mistral(team="demo-team", project="test")
         print("✅ GenOps Mistral adapter initialized")

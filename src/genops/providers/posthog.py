@@ -58,25 +58,24 @@ Author: GenOps AI Team
 License: Apache 2.0
 """
 
-import os
-import time
 import logging
+import os
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Union, Tuple, Set
 from decimal import Decimal
+from typing import Any, Dict, List, Optional, Tuple
 from uuid import uuid4
+
+from genops.core.cost_tracking import BaseCostCalculator
+from genops.core.exceptions import (
+    GenOpsBudgetExceededError,
+    GenOpsConfigurationError,
+)
+from genops.core.governance import GovernanceProvider
 
 # Core GenOps imports
 from genops.core.telemetry import GenOpsTelemetry
-from genops.core.cost_tracking import BaseCostCalculator
-from genops.core.governance import GovernanceProvider
-from genops.core.exceptions import (
-    GenOpsConfigurationError,
-    GenOpsBudgetExceededError,
-    GenOpsProviderError
-)
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +85,7 @@ POSTHOG_COSTS = {
         'free_tier': 1_000_000,  # 1M free events per month
         'tiers': [
             (2_000_000, 0.00005),    # 1M-2M: $0.00005 per event
-            (10_000_000, 0.000025),  # 2M-10M: $0.000025 per event  
+            (10_000_000, 0.000025),  # 2M-10M: $0.000025 per event
             (50_000_000, 0.000015),  # 10M-50M: $0.000015 per event
             (float('inf'), 0.000009) # 50M+: $0.000009 per event
         ]
@@ -100,7 +99,7 @@ POSTHOG_COSTS = {
         'base_cost': 0.000005    # $0.000005 per request above free tier
     },
     'session_recordings': {
-        'free_tier': 5_000,      # 5K free recordings per month  
+        'free_tier': 5_000,      # 5K free recordings per month
         'base_cost': 0.000071    # $0.000071 per recording above free tier
     },
     'llm_analytics': {
@@ -121,12 +120,12 @@ class PostHogEventCost:
     cost_breakdown: Dict[str, Decimal] = field(default_factory=dict)
     cost_per_event: Decimal = Decimal('0')
     free_tier_usage: Dict[str, int] = field(default_factory=dict)
-    
+
     def __post_init__(self):
         if self.event_count > 0:
             self.cost_per_event = self.total_cost / self.event_count
 
-@dataclass 
+@dataclass
 class PostHogAnalyticsSession:
     """PostHog analytics session with governance tracking."""
     session_id: str
@@ -144,11 +143,11 @@ class PostHogAnalyticsSession:
     total_cost: Decimal = Decimal('0')
     governance_attributes: Dict[str, Any] = field(default_factory=dict)
     end_time: Optional[datetime] = None
-    
+
     def finalize_session(self) -> PostHogEventCost:
         """Calculate final session costs and return cost summary."""
         self.end_time = datetime.now(timezone.utc)
-        
+
         calculator = PostHogCostCalculator()
         cost_result = calculator.calculate_session_cost(
             event_count=self.events_captured,
@@ -157,71 +156,71 @@ class PostHogAnalyticsSession:
             session_recordings=self.recordings_created,
             llm_events=self.llm_events_tracked
         )
-        
+
         self.total_cost = cost_result.total_cost
         return cost_result
 
 class PostHogCostCalculator(BaseCostCalculator):
     """PostHog-specific cost calculation engine."""
-    
+
     def __init__(self):
         super().__init__()
         self.costs = POSTHOG_COSTS
-        
+
     def calculate_event_cost(self, event_count: int, is_identified: bool = False) -> Decimal:
         """Calculate cost for PostHog events based on tiered pricing."""
         if event_count <= 0:
             return Decimal('0')
-            
+
         # Regular events with tiered pricing
         total_cost = Decimal('0')
         remaining_events = event_count
-        
+
         # Apply free tier
         free_events = min(remaining_events, self.costs['events']['free_tier'])
         remaining_events -= free_events
-        
+
         # Apply tiered pricing for remaining events
         for tier_limit, cost_per_event in self.costs['events']['tiers']:
             if remaining_events <= 0:
                 break
-                
+
             tier_events = min(remaining_events, tier_limit - sum(t[0] for t in self.costs['events']['tiers'][:self.costs['events']['tiers'].index((tier_limit, cost_per_event))]))
             if tier_events > 0:
                 total_cost += Decimal(str(tier_events)) * Decimal(str(cost_per_event))
                 remaining_events -= tier_events
-        
+
         # Add cost for identified events (charged separately)
         if is_identified:
             identified_cost = Decimal(str(event_count)) * Decimal(str(self.costs['identified_events']['base_cost']))
             total_cost += identified_cost
-            
+
         return total_cost
-    
+
     def calculate_feature_flag_cost(self, request_count: int) -> Decimal:
         """Calculate cost for feature flag evaluations."""
         if request_count <= self.costs['feature_flags']['free_tier']:
             return Decimal('0')
-            
+
         billable_requests = request_count - self.costs['feature_flags']['free_tier']
         return Decimal(str(billable_requests)) * Decimal(str(self.costs['feature_flags']['base_cost']))
-    
+
     def calculate_session_recording_cost(self, recording_count: int) -> Decimal:
         """Calculate cost for session recordings."""
         if recording_count <= self.costs['session_recordings']['free_tier']:
             return Decimal('0')
-            
+
         billable_recordings = recording_count - self.costs['session_recordings']['free_tier']
         return Decimal(str(billable_recordings)) * Decimal(str(self.costs['session_recordings']['base_cost']))
-    
+
     def calculate_llm_analytics_cost(self, llm_event_count: int) -> Decimal:
         """Calculate cost for LLM analytics events."""
         if llm_event_count <= self.costs['llm_analytics']['free_tier']:
             return Decimal('0')
-            
+
         billable_events = llm_event_count - self.costs['llm_analytics']['free_tier']
         return Decimal(str(billable_events)) * Decimal(str(self.costs['llm_analytics']['base_cost']))
-    
+
     def calculate_session_cost(
         self,
         event_count: int,
@@ -231,16 +230,16 @@ class PostHogCostCalculator(BaseCostCalculator):
         llm_events: int = 0
     ) -> PostHogEventCost:
         """Calculate comprehensive session cost breakdown."""
-        
+
         # Calculate individual cost components
         event_cost = self.calculate_event_cost(event_count)
         identified_cost = self.calculate_event_cost(identified_events, is_identified=True)
         flag_cost = self.calculate_feature_flag_cost(feature_flag_requests)
         recording_cost = self.calculate_session_recording_cost(session_recordings)
         llm_cost = self.calculate_llm_analytics_cost(llm_events)
-        
+
         total_cost = event_cost + identified_cost + flag_cost + recording_cost + llm_cost
-        
+
         cost_breakdown = {
             'events': event_cost,
             'identified_events': identified_cost,
@@ -248,14 +247,14 @@ class PostHogCostCalculator(BaseCostCalculator):
             'session_recordings': recording_cost,
             'llm_analytics': llm_cost
         }
-        
+
         free_tier_usage = {
             'events': min(event_count, self.costs['events']['free_tier']),
             'feature_flags': min(feature_flag_requests, self.costs['feature_flags']['free_tier']),
             'session_recordings': min(session_recordings, self.costs['session_recordings']['free_tier']),
             'llm_analytics': min(llm_events, self.costs['llm_analytics']['free_tier'])
         }
-        
+
         return PostHogEventCost(
             event_count=event_count,
             identified_events=identified_events,
@@ -266,13 +265,13 @@ class PostHogCostCalculator(BaseCostCalculator):
             cost_breakdown=cost_breakdown,
             free_tier_usage=free_tier_usage
         )
-    
+
     def get_volume_discount_recommendations(self, monthly_events: int) -> List[Dict[str, Any]]:
         """Generate volume discount recommendations for cost optimization."""
         recommendations = []
-        
+
         current_cost = self.calculate_event_cost(monthly_events)
-        
+
         # Analyze tier positioning
         for i, (tier_limit, cost_per_event) in enumerate(self.costs['events']['tiers']):
             if monthly_events < tier_limit:
@@ -280,7 +279,7 @@ class PostHogCostCalculator(BaseCostCalculator):
                 next_tier_cost = self.calculate_event_cost(next_tier_events)
                 cost_per_event_current = current_cost / monthly_events if monthly_events > 0 else Decimal('0')
                 cost_per_event_next = next_tier_cost / next_tier_events if next_tier_events > 0 else Decimal('0')
-                
+
                 if cost_per_event_next < cost_per_event_current:
                     potential_savings = (cost_per_event_current - cost_per_event_next) * monthly_events
                     recommendations.append({
@@ -293,12 +292,12 @@ class PostHogCostCalculator(BaseCostCalculator):
                         'priority_score': 85.0 if potential_savings > 10 else 60.0
                     })
                 break
-        
+
         return recommendations
 
 class GenOpsPostHogAdapter(GovernanceProvider):
     """GenOps PostHog adapter for product analytics with governance."""
-    
+
     def __init__(
         self,
         posthog_api_key: Optional[str] = None,
@@ -335,7 +334,7 @@ class GenOpsPostHogAdapter(GovernanceProvider):
             tags: Additional tags for telemetry
         """
         super().__init__()
-        
+
         # Configuration
         self.posthog_api_key = posthog_api_key or os.getenv('POSTHOG_API_KEY')
         self.posthog_host = posthog_host or os.getenv('POSTHOG_HOST', 'https://app.posthog.com')
@@ -344,33 +343,33 @@ class GenOpsPostHogAdapter(GovernanceProvider):
         self.environment = environment
         self.customer_id = customer_id
         self.cost_center = cost_center
-        
+
         # Budget and governance
         self.daily_budget_limit = Decimal(str(daily_budget_limit))
         self.monthly_budget_limit = Decimal(str(monthly_budget_limit)) if monthly_budget_limit else None
         self.enable_governance = enable_governance
         self.enable_cost_alerts = enable_cost_alerts
         self.governance_policy = governance_policy
-        
+
         # Cost tracking
         self.cost_calculator = PostHogCostCalculator()
         self.daily_costs = Decimal('0')
         self.monthly_costs = Decimal('0')
-        
+
         # Telemetry
         self.telemetry = GenOpsTelemetry(tracer_name="posthog")
-        
+
         # Active sessions
         self._active_sessions: Dict[str, PostHogAnalyticsSession] = {}
-        
+
         # Validation
         if not self.posthog_api_key:
             raise GenOpsConfigurationError(
                 "PostHog API key required. Set POSTHOG_API_KEY environment variable or pass posthog_api_key parameter."
             )
-        
+
         logger.info(f"Initialized GenOps PostHog adapter for team '{self.team}', project '{self.project}'")
-    
+
     def _build_base_tags(self, additional_tags: Dict[str, str]) -> Dict[str, str]:
         """Build base telemetry tags."""
         base_tags = {
@@ -383,22 +382,22 @@ class GenOpsPostHogAdapter(GovernanceProvider):
             'genops.governance.enabled': str(self.enable_governance),
             'genops.cost.tracking': 'enabled'
         }
-        
+
         if self.customer_id:
             base_tags['genops.customer_id'] = self.customer_id
         if self.cost_center:
             base_tags['genops.cost_center'] = self.cost_center
-            
+
         base_tags.update(additional_tags)
         return base_tags
-    
+
     def _check_budget_constraints(self, estimated_cost: Decimal) -> None:
         """Check if operation would exceed budget limits."""
         if not self.enable_governance:
             return
-            
+
         total_estimated_daily = self.daily_costs + estimated_cost
-        
+
         if total_estimated_daily > self.daily_budget_limit:
             if self.governance_policy == "enforced":
                 raise GenOpsBudgetExceededError(
@@ -410,7 +409,7 @@ class GenOpsPostHogAdapter(GovernanceProvider):
                 logger.warning(
                     f"PostHog operation approaches daily budget limit: ${total_estimated_daily}/${self.daily_budget_limit}"
                 )
-        
+
         if self.monthly_budget_limit:
             total_estimated_monthly = self.monthly_costs + estimated_cost
             if total_estimated_monthly > self.monthly_budget_limit:
@@ -424,7 +423,7 @@ class GenOpsPostHogAdapter(GovernanceProvider):
                     logger.warning(
                         f"PostHog operation approaches monthly budget limit: ${total_estimated_monthly}/${self.monthly_budget_limit}"
                     )
-    
+
     @contextmanager
     def track_analytics_session(
         self,
@@ -449,7 +448,7 @@ class GenOpsPostHogAdapter(GovernanceProvider):
         """
         session_id = str(uuid4())
         start_time = datetime.now(timezone.utc)
-        
+
         # Create session
         session = PostHogAnalyticsSession(
             session_id=session_id,
@@ -462,9 +461,9 @@ class GenOpsPostHogAdapter(GovernanceProvider):
             environment=environment or self.environment,
             governance_attributes=governance_attributes
         )
-        
+
         self._active_sessions[session_id] = session
-        
+
         # Start telemetry span
         span_attributes = {
             'genops.posthog.session.id': session_id,
@@ -473,29 +472,29 @@ class GenOpsPostHogAdapter(GovernanceProvider):
             **self.telemetry.tags,
             **governance_attributes
         }
-        
+
         with self.telemetry.trace_operation(
             operation_name="posthog_analytics_session",
             attributes=span_attributes
         ) as span:
-            
+
             try:
                 logger.info(f"Started PostHog analytics session: {session_name} ({session_id})")
                 yield session
-                
+
             except Exception as e:
                 logger.error(f"Error in PostHog analytics session {session_name}: {e}")
                 span.set_status({"status_code": "ERROR", "description": str(e)})
                 raise
-                
+
             finally:
                 # Finalize session and calculate costs
                 cost_summary = session.finalize_session()
-                
+
                 # Update running costs
                 self.daily_costs += cost_summary.total_cost
                 self.monthly_costs += cost_summary.total_cost
-                
+
                 # Update span with final metrics
                 span.set_attributes({
                     'genops.posthog.session.events_captured': session.events_captured,
@@ -510,15 +509,15 @@ class GenOpsPostHogAdapter(GovernanceProvider):
                     ).total_seconds() if session.end_time else 0,
                     'genops.posthog.session.end_time': session.end_time.isoformat() if session.end_time else ''
                 })
-                
+
                 # Clean up session
                 self._active_sessions.pop(session_id, None)
-                
+
                 logger.info(
                     f"Completed PostHog analytics session {session_name}: "
                     f"{session.events_captured} events, ${cost_summary.total_cost:.4f} cost"
                 )
-    
+
     def capture_event_with_governance(
         self,
         event_name: str,
@@ -543,7 +542,7 @@ class GenOpsPostHogAdapter(GovernanceProvider):
         # Cost estimation and budget check
         estimated_cost = self.cost_calculator.calculate_event_cost(1, is_identified=is_identified)
         self._check_budget_constraints(estimated_cost)
-        
+
         # Build enhanced properties with governance
         enhanced_properties = {
             'genops_team': self.team,
@@ -552,20 +551,20 @@ class GenOpsPostHogAdapter(GovernanceProvider):
             'genops_timestamp': datetime.now(timezone.utc).isoformat(),
             'genops_cost_estimated': float(estimated_cost)
         }
-        
+
         if self.customer_id:
             enhanced_properties['genops_customer_id'] = self.customer_id
         if self.cost_center:
             enhanced_properties['genops_cost_center'] = self.cost_center
         if properties:
             enhanced_properties.update(properties)
-        
+
         # Update session if provided
         if session_id and session_id in self._active_sessions:
             session = self._active_sessions[session_id]
             session.events_captured += 1
             session.total_cost += estimated_cost
-        
+
         # Telemetry tracking
         event_attributes = {
             'genops.posthog.event.name': event_name,
@@ -574,10 +573,10 @@ class GenOpsPostHogAdapter(GovernanceProvider):
             'genops.cost.estimated': float(estimated_cost),
             'genops.cost.currency': 'USD'
         }
-        
+
         if session_id:
             event_attributes['genops.posthog.session.id'] = session_id
-        
+
         with self.telemetry.trace_operation(
             operation_name="posthog_capture_event",
             attributes=event_attributes
@@ -585,7 +584,7 @@ class GenOpsPostHogAdapter(GovernanceProvider):
             # In a real implementation, this would call the actual PostHog client
             # posthog.capture(distinct_id=distinct_id, event=event_name, properties=enhanced_properties)
             pass
-        
+
         result = {
             'event_name': event_name,
             'distinct_id': distinct_id,
@@ -595,10 +594,10 @@ class GenOpsPostHogAdapter(GovernanceProvider):
             'properties_count': len(enhanced_properties),
             'is_identified': is_identified
         }
-        
+
         logger.debug(f"Captured PostHog event '{event_name}' with cost ${estimated_cost:.6f}")
         return result
-    
+
     def evaluate_feature_flag_with_governance(
         self,
         flag_key: str,
@@ -621,13 +620,13 @@ class GenOpsPostHogAdapter(GovernanceProvider):
         # Cost estimation and budget check
         estimated_cost = self.cost_calculator.calculate_feature_flag_cost(1)
         self._check_budget_constraints(estimated_cost)
-        
+
         # Update session if provided
         if session_id and session_id in self._active_sessions:
             session = self._active_sessions[session_id]
             session.flags_evaluated += 1
             session.total_cost += estimated_cost
-        
+
         # Telemetry tracking
         flag_attributes = {
             'genops.posthog.flag.key': flag_key,
@@ -635,10 +634,10 @@ class GenOpsPostHogAdapter(GovernanceProvider):
             'genops.cost.estimated': float(estimated_cost),
             'genops.cost.currency': 'USD'
         }
-        
+
         if session_id:
             flag_attributes['genops.posthog.session.id'] = session_id
-        
+
         with self.telemetry.trace_operation(
             operation_name="posthog_evaluate_feature_flag",
             attributes=flag_attributes
@@ -646,7 +645,7 @@ class GenOpsPostHogAdapter(GovernanceProvider):
             # In a real implementation, this would call the actual PostHog client
             # flag_value = posthog.feature_enabled(flag_key, distinct_id, person_properties=properties)
             flag_value = False  # Mock value
-        
+
         metadata = {
             'flag_key': flag_key,
             'distinct_id': distinct_id,
@@ -655,14 +654,14 @@ class GenOpsPostHogAdapter(GovernanceProvider):
             'timestamp': datetime.now(timezone.utc).isoformat(),
             'evaluation_context': len(properties) if properties else 0
         }
-        
+
         logger.debug(f"Evaluated PostHog feature flag '{flag_key}' with cost ${estimated_cost:.6f}")
         return flag_value, metadata
-    
+
     def get_cost_summary(self) -> Dict[str, Any]:
         """Get current cost summary and usage statistics."""
         active_sessions = len(self._active_sessions)
-        
+
         return {
             'daily_costs': float(self.daily_costs),
             'monthly_costs': float(self.monthly_costs),
@@ -677,12 +676,12 @@ class GenOpsPostHogAdapter(GovernanceProvider):
             'governance_policy': self.governance_policy,
             'cost_alerts_enabled': self.enable_cost_alerts
         }
-    
+
     def get_volume_discount_analysis(self, projected_monthly_events: int) -> Dict[str, Any]:
         """Generate volume discount analysis and cost optimization recommendations."""
         recommendations = self.cost_calculator.get_volume_discount_recommendations(projected_monthly_events)
         current_cost = self.cost_calculator.calculate_event_cost(projected_monthly_events)
-        
+
         return {
             'projected_monthly_events': projected_monthly_events,
             'projected_monthly_cost': float(current_cost),
@@ -722,10 +721,10 @@ def auto_instrument(
         project=project,
         **adapter_kwargs
     )
-    
+
     # TODO: In a real implementation, this would patch the PostHog client
     # to automatically apply governance to all PostHog operations
-    
+
     logger.info("PostHog auto-instrumentation activated with GenOps governance")
     return adapter
 
@@ -762,7 +761,7 @@ def get_current_adapter() -> Optional[GenOpsPostHogAdapter]:
 # Export key classes and functions
 __all__ = [
     'GenOpsPostHogAdapter',
-    'PostHogCostCalculator', 
+    'PostHogCostCalculator',
     'PostHogEventCost',
     'PostHogAnalyticsSession',
     'auto_instrument',

@@ -10,23 +10,23 @@ Tests the setup validation functionality including:
 - Diagnostic information and fix suggestions
 """
 
-import pytest
 import os
-from unittest.mock import Mock, patch, MagicMock
-from typing import Dict, List
+from unittest.mock import Mock, patch
+
+import pytest
 
 # Import the modules under test
 try:
     from genops.providers.bedrock_validation import (
-        validate_bedrock_setup,
-        print_validation_result,
-        ValidationResult,
         ValidationCheck,
+        ValidationResult,
+        get_available_models,
+        print_validation_result,
         validate_aws_credentials,
         validate_bedrock_access,
+        validate_bedrock_setup,
+        validate_environment_setup,
         validate_model_access,
-        get_available_models,
-        validate_environment_setup
     )
     VALIDATION_AVAILABLE = True
 except ImportError:
@@ -48,7 +48,7 @@ class TestValidationResult:
             total_checks=6,
             detailed_checks={}
         )
-        
+
         assert result.success is True
         assert result.errors == []
         assert result.warnings == ["Test warning"]
@@ -66,7 +66,7 @@ class TestValidationResult:
             total_checks=6,
             detailed_checks={}
         )
-        
+
         assert result.success is False
         assert len(result.errors) == 2
         assert result.checks_passed < result.total_checks
@@ -80,7 +80,7 @@ class TestValidationResult:
             fix_suggestion="Credentials are properly configured",
             documentation_link="https://docs.aws.amazon.com/credentials/"
         )
-        
+
         assert check.name == "aws_credentials"
         assert check.passed is True
         assert check.error is None
@@ -102,9 +102,9 @@ class TestAWSCredentialsValidation:
                 'Arn': 'arn:aws:iam::123456789012:user/testuser'
             }
             mock_boto_client.return_value = mock_sts
-            
+
             result = validate_aws_credentials()
-            
+
             assert result.passed is True
             assert result.error is None
 
@@ -112,13 +112,13 @@ class TestAWSCredentialsValidation:
         """Test failed AWS credentials validation."""
         with patch('boto3.client') as mock_boto_client:
             from botocore.exceptions import NoCredentialsError
-            
+
             mock_sts = Mock()
             mock_sts.get_caller_identity.side_effect = NoCredentialsError()
             mock_boto_client.return_value = mock_sts
-            
+
             result = validate_aws_credentials()
-            
+
             assert result.passed is False
             assert result.error is not None
             assert "credentials" in result.error.lower()
@@ -128,16 +128,16 @@ class TestAWSCredentialsValidation:
         """Test AWS credentials validation with access denied."""
         with patch('boto3.client') as mock_boto_client:
             from botocore.exceptions import ClientError
-            
+
             mock_sts = Mock()
             mock_sts.get_caller_identity.side_effect = ClientError(
                 error_response={'Error': {'Code': 'AccessDenied', 'Message': 'Access denied'}},
                 operation_name='GetCallerIdentity'
             )
             mock_boto_client.return_value = mock_sts
-            
+
             result = validate_aws_credentials()
-            
+
             assert result.passed is False
             assert "access" in result.error.lower()
 
@@ -145,16 +145,16 @@ class TestAWSCredentialsValidation:
         """Test AWS credentials validation with invalid region."""
         with patch('boto3.client') as mock_boto_client:
             from botocore.exceptions import ClientError
-            
+
             mock_sts = Mock()
             mock_sts.get_caller_identity.side_effect = ClientError(
                 error_response={'Error': {'Code': 'InvalidRegion', 'Message': 'Invalid region'}},
                 operation_name='GetCallerIdentity'
             )
             mock_boto_client.return_value = mock_sts
-            
+
             result = validate_aws_credentials()
-            
+
             assert result.passed is False
             assert "region" in result.error.lower()
 
@@ -177,9 +177,9 @@ class TestBedrockAccessValidation:
                 ]
             }
             mock_boto_client.return_value = mock_bedrock
-            
+
             result = validate_bedrock_access(region='us-east-1')
-            
+
             assert result.passed is True
             assert result.error is None
 
@@ -187,16 +187,16 @@ class TestBedrockAccessValidation:
         """Test Bedrock access validation when service is unavailable."""
         with patch('boto3.client') as mock_boto_client:
             from botocore.exceptions import ClientError
-            
+
             mock_bedrock = Mock()
             mock_bedrock.list_foundation_models.side_effect = ClientError(
                 error_response={'Error': {'Code': 'ServiceUnavailable', 'Message': 'Service unavailable'}},
                 operation_name='ListFoundationModels'
             )
             mock_boto_client.return_value = mock_bedrock
-            
+
             result = validate_bedrock_access(region='us-east-1')
-            
+
             assert result.passed is False
             assert "service" in result.error.lower()
 
@@ -204,16 +204,16 @@ class TestBedrockAccessValidation:
         """Test Bedrock access validation in unsupported region."""
         with patch('boto3.client') as mock_boto_client:
             from botocore.exceptions import ClientError
-            
+
             mock_bedrock = Mock()
             mock_bedrock.list_foundation_models.side_effect = ClientError(
                 error_response={'Error': {'Code': 'UnknownEndpoint', 'Message': 'Unknown endpoint'}},
                 operation_name='ListFoundationModels'
             )
             mock_boto_client.return_value = mock_bedrock
-            
+
             result = validate_bedrock_access(region='unsupported-region')
-            
+
             assert result.passed is False
             assert "region" in result.error.lower() or "endpoint" in result.error.lower()
             assert "us-east-1" in result.fix_suggestion
@@ -222,16 +222,16 @@ class TestBedrockAccessValidation:
         """Test Bedrock access validation with insufficient permissions."""
         with patch('boto3.client') as mock_boto_client:
             from botocore.exceptions import ClientError
-            
+
             mock_bedrock = Mock()
             mock_bedrock.list_foundation_models.side_effect = ClientError(
                 error_response={'Error': {'Code': 'AccessDeniedException', 'Message': 'Access denied'}},
                 operation_name='ListFoundationModels'
             )
             mock_boto_client.return_value = mock_bedrock
-            
+
             result = validate_bedrock_access(region='us-east-1')
-            
+
             assert result.passed is False
             assert "access" in result.error.lower()
             assert "permission" in result.fix_suggestion.lower()
@@ -245,7 +245,7 @@ class TestModelAccessValidation:
         """Test successful model access validation."""
         with patch('boto3.client') as mock_boto_client:
             mock_bedrock = Mock()
-            
+
             # Mock successful model invocation
             mock_response = {
                 'body': Mock(),
@@ -254,15 +254,15 @@ class TestModelAccessValidation:
             mock_body = Mock()
             mock_body.read.return_value = b'{"completion": "Test response"}'
             mock_response['body'] = mock_body
-            
+
             mock_bedrock.invoke_model.return_value = mock_response
             mock_boto_client.return_value = mock_bedrock
-            
+
             result = validate_model_access(
                 model_id='anthropic.claude-3-haiku-20240307-v1:0',
                 region='us-east-1'
             )
-            
+
             assert result.passed is True
             assert result.error is None
 
@@ -270,19 +270,19 @@ class TestModelAccessValidation:
         """Test model access validation when model is not enabled."""
         with patch('boto3.client') as mock_boto_client:
             from botocore.exceptions import ClientError
-            
+
             mock_bedrock = Mock()
             mock_bedrock.invoke_model.side_effect = ClientError(
                 error_response={'Error': {'Code': 'AccessDeniedException', 'Message': 'Model access not enabled'}},
                 operation_name='InvokeModel'
             )
             mock_boto_client.return_value = mock_bedrock
-            
+
             result = validate_model_access(
                 model_id='anthropic.claude-3-haiku-20240307-v1:0',
                 region='us-east-1'
             )
-            
+
             assert result.passed is False
             assert "access" in result.error.lower()
             assert "console" in result.fix_suggestion.lower()
@@ -291,19 +291,19 @@ class TestModelAccessValidation:
         """Test model access validation with invalid model ID."""
         with patch('boto3.client') as mock_boto_client:
             from botocore.exceptions import ClientError
-            
+
             mock_bedrock = Mock()
             mock_bedrock.invoke_model.side_effect = ClientError(
                 error_response={'Error': {'Code': 'ValidationException', 'Message': 'Model not found'}},
                 operation_name='InvokeModel'
             )
             mock_boto_client.return_value = mock_bedrock
-            
+
             result = validate_model_access(
                 model_id='invalid-model-id',
                 region='us-east-1'
             )
-            
+
             assert result.passed is False
             assert "model" in result.error.lower()
 
@@ -311,19 +311,19 @@ class TestModelAccessValidation:
         """Test model access validation with throttling."""
         with patch('boto3.client') as mock_boto_client:
             from botocore.exceptions import ClientError
-            
+
             mock_bedrock = Mock()
             mock_bedrock.invoke_model.side_effect = ClientError(
                 error_response={'Error': {'Code': 'ThrottlingException', 'Message': 'Rate exceeded'}},
                 operation_name='InvokeModel'
             )
             mock_boto_client.return_value = mock_bedrock
-            
+
             result = validate_model_access(
                 model_id='anthropic.claude-3-haiku-20240307-v1:0',
                 region='us-east-1'
             )
-            
+
             # Throttling should be treated as success (model is accessible, just rate limited)
             assert result.passed is True or "throttl" in result.error.lower()
 
@@ -351,9 +351,9 @@ class TestAvailableModels:
                 ]
             }
             mock_boto_client.return_value = mock_bedrock
-            
+
             models = get_available_models(region='us-east-1')
-            
+
             assert isinstance(models, list)
             assert len(models) == 2
             assert 'anthropic.claude-3-haiku-20240307-v1:0' in models
@@ -367,9 +367,9 @@ class TestAvailableModels:
                 'modelSummaries': []
             }
             mock_boto_client.return_value = mock_bedrock
-            
+
             models = get_available_models(region='us-east-1')
-            
+
             assert isinstance(models, list)
             assert len(models) == 0
 
@@ -377,14 +377,14 @@ class TestAvailableModels:
         """Test retrieval of available models with error."""
         with patch('boto3.client') as mock_boto_client:
             from botocore.exceptions import ClientError
-            
+
             mock_bedrock = Mock()
             mock_bedrock.list_foundation_models.side_effect = ClientError(
                 error_response={'Error': {'Code': 'AccessDeniedException', 'Message': 'Access denied'}},
                 operation_name='ListFoundationModels'
             )
             mock_boto_client.return_value = mock_bedrock
-            
+
             with pytest.raises((ClientError, Exception)):
                 get_available_models(region='us-east-1')
 
@@ -400,14 +400,14 @@ class TestEnvironmentValidation:
             'AWS_DEFAULT_REGION': 'us-east-1'
         }):
             result = validate_environment_setup()
-            
+
             assert result.passed is True or len(result.error or '') == 0
 
     def test_validate_environment_setup_missing_region(self):
         """Test environment validation with missing region."""
         with patch.dict(os.environ, {}, clear=True):
             result = validate_environment_setup()
-            
+
             # Should either pass (using defaults) or suggest setting region
             if not result.passed:
                 assert "region" in result.error.lower()
@@ -421,7 +421,7 @@ class TestEnvironmentValidation:
             'OTEL_SERVICE_NAME': 'bedrock-service'
         }):
             result = validate_environment_setup()
-            
+
             # Should pass with proper GenOps configuration
             assert result.passed is True or result.error is None
 
@@ -432,7 +432,7 @@ class TestEnvironmentValidation:
             'OTEL_SERVICE_NAME': 'bedrock-ai-service'
         }):
             result = validate_environment_setup()
-            
+
             # Should recognize OTEL configuration
             assert result.passed is True or result.error is None
 
@@ -449,7 +449,7 @@ class TestComprehensiveValidation:
             mock_sts.get_caller_identity.return_value = {
                 'Account': '123456789012'
             }
-            
+
             # Mock Bedrock client
             mock_bedrock = Mock()
             mock_bedrock.list_foundation_models.return_value = {
@@ -461,7 +461,7 @@ class TestComprehensiveValidation:
                     }
                 ]
             }
-            
+
             def client_factory(service_name, **kwargs):
                 if service_name == 'sts':
                     return mock_sts
@@ -469,12 +469,12 @@ class TestComprehensiveValidation:
                     return mock_bedrock
                 else:
                     return Mock()
-            
+
             mock_boto_client.side_effect = client_factory
-            
+
             with patch.dict(os.environ, {'AWS_REGION': 'us-east-1'}):
                 result = validate_bedrock_setup()
-            
+
             assert isinstance(result, ValidationResult)
             assert result.total_checks > 0
             assert result.checks_passed >= 0
@@ -482,16 +482,16 @@ class TestComprehensiveValidation:
     def test_validate_bedrock_setup_partial_failure(self):
         """Test validation with some checks failing."""
         with patch('boto3.client') as mock_boto_client:
-            from botocore.exceptions import NoCredentialsError, ClientError
-            
+            from botocore.exceptions import NoCredentialsError
+
             # Mock STS client to fail (no credentials)
             mock_sts = Mock()
             mock_sts.get_caller_identity.side_effect = NoCredentialsError()
-            
+
             # Mock Bedrock client to succeed
             mock_bedrock = Mock()
             mock_bedrock.list_foundation_models.return_value = {'modelSummaries': []}
-            
+
             def client_factory(service_name, **kwargs):
                 if service_name == 'sts':
                     return mock_sts
@@ -499,11 +499,11 @@ class TestComprehensiveValidation:
                     return mock_bedrock
                 else:
                     return Mock()
-            
+
             mock_boto_client.side_effect = client_factory
-            
+
             result = validate_bedrock_setup()
-            
+
             assert result.success is False
             assert len(result.errors) > 0
             assert result.checks_passed < result.total_checks
@@ -512,15 +512,15 @@ class TestComprehensiveValidation:
         """Test validation with all checks failing."""
         with patch('boto3.client') as mock_boto_client:
             from botocore.exceptions import NoCredentialsError
-            
+
             # Mock all clients to fail
             mock_client = Mock()
             mock_client.get_caller_identity.side_effect = NoCredentialsError()
             mock_client.list_foundation_models.side_effect = NoCredentialsError()
             mock_boto_client.return_value = mock_client
-            
+
             result = validate_bedrock_setup()
-            
+
             assert result.success is False
             assert len(result.errors) > 0
             assert result.checks_passed == 0
@@ -529,7 +529,7 @@ class TestComprehensiveValidation:
         """Test validation with verbose output."""
         with patch('boto3.client'):
             result = validate_bedrock_setup(verbose=True)
-            
+
             assert isinstance(result, ValidationResult)
             assert isinstance(result.detailed_checks, dict)
             assert len(result.detailed_checks) > 0
@@ -538,14 +538,14 @@ class TestComprehensiveValidation:
         """Test validation for specific region."""
         with patch('boto3.client'):
             result = validate_bedrock_setup(region='eu-west-1')
-            
+
             assert isinstance(result, ValidationResult)
 
     def test_validate_bedrock_setup_model_checking(self):
         """Test validation that includes model access checking."""
         with patch('boto3.client') as mock_boto_client:
             mock_bedrock = Mock()
-            
+
             # Mock list_foundation_models
             mock_bedrock.list_foundation_models.return_value = {
                 'modelSummaries': [
@@ -555,7 +555,7 @@ class TestComprehensiveValidation:
                     }
                 ]
             }
-            
+
             # Mock model invocation
             mock_response = {
                 'body': Mock(),
@@ -565,11 +565,11 @@ class TestComprehensiveValidation:
             mock_body.read.return_value = b'{"completion": "test"}'
             mock_response['body'] = mock_body
             mock_bedrock.invoke_model.return_value = mock_response
-            
+
             mock_boto_client.return_value = mock_bedrock
-            
+
             result = validate_bedrock_setup(check_model_access=True)
-            
+
             assert isinstance(result, ValidationResult)
 
 
@@ -587,10 +587,10 @@ class TestValidationOutput:
             total_checks=5,
             detailed_checks={}
         )
-        
+
         print_validation_result(result)
         captured = capsys.readouterr()
-        
+
         assert "✅" in captured.out or "success" in captured.out.lower()
         assert "5/5" in captured.out
 
@@ -604,10 +604,10 @@ class TestValidationOutput:
             total_checks=5,
             detailed_checks={}
         )
-        
+
         print_validation_result(result)
         captured = capsys.readouterr()
-        
+
         assert "❌" in captured.out or "failed" in captured.out.lower()
         assert "1/5" in captured.out
         assert "Credentials not found" in captured.out
@@ -623,10 +623,10 @@ class TestValidationOutput:
             total_checks=5,
             detailed_checks={}
         )
-        
+
         print_validation_result(result)
         captured = capsys.readouterr()
-        
+
         assert "⚠️" in captured.out or "warning" in captured.out.lower()
         assert "Environment variable not set" in captured.out
 
@@ -648,7 +648,7 @@ class TestValidationOutput:
                 documentation_link="https://docs.aws.amazon.com/bedrock/"
             )
         }
-        
+
         result = ValidationResult(
             success=False,
             errors=["Access denied to Bedrock service"],
@@ -657,10 +657,10 @@ class TestValidationOutput:
             total_checks=2,
             detailed_checks=detailed_checks
         )
-        
+
         print_validation_result(result)
         captured = capsys.readouterr()
-        
+
         assert "aws_credentials" in captured.out
         assert "bedrock_access" in captured.out
         assert "Check IAM permissions" in captured.out
@@ -686,16 +686,16 @@ class TestValidationEdgeCases:
         """Test validation with invalid region."""
         with patch('boto3.client') as mock_boto_client:
             from botocore.exceptions import ClientError
-            
+
             mock_client = Mock()
             mock_client.list_foundation_models.side_effect = ClientError(
                 error_response={'Error': {'Code': 'UnknownEndpoint', 'Message': 'Unknown endpoint'}},
                 operation_name='ListFoundationModels'
             )
             mock_boto_client.return_value = mock_client
-            
+
             result = validate_bedrock_setup(region='invalid-region-12345')
-            
+
             assert result.success is False
             assert any("region" in error.lower() for error in result.errors)
 
@@ -703,13 +703,13 @@ class TestValidationEdgeCases:
         """Test validation with network timeouts."""
         with patch('boto3.client') as mock_boto_client:
             from botocore.exceptions import ConnectTimeoutError
-            
+
             mock_client = Mock()
             mock_client.get_caller_identity.side_effect = ConnectTimeoutError(endpoint_url='test')
             mock_boto_client.return_value = mock_client
-            
+
             result = validate_bedrock_setup()
-            
+
             assert result.success is False
             assert any("timeout" in error.lower() or "network" in error.lower() for error in result.errors)
 
@@ -726,26 +726,25 @@ class TestValidationEdgeCases:
     def test_concurrent_validation_calls(self):
         """Test that concurrent validation calls work correctly."""
         import threading
-        import time
-        
+
         results = []
-        
+
         def validate_worker():
             with patch('boto3.client'):
                 result = validate_bedrock_setup()
                 results.append(result)
-        
+
         # Start multiple validation threads
         threads = []
         for _ in range(3):
             thread = threading.Thread(target=validate_worker)
             threads.append(thread)
             thread.start()
-        
+
         # Wait for all threads
         for thread in threads:
             thread.join(timeout=10)
-        
+
         # All validations should complete
         assert len(results) == 3
         for result in results:
@@ -759,14 +758,14 @@ class TestIntegrationValidation:
     def test_real_aws_validation(self):
         """Test validation against real AWS (requires credentials)."""
         pytest.skip("Integration test - requires real AWS credentials")
-        
+
         # This would test against real AWS services
         result = validate_bedrock_setup()
-        
+
         # With real credentials, should get meaningful results
         assert isinstance(result, ValidationResult)
         assert result.total_checks > 0
-        
+
         if result.success:
             assert result.checks_passed == result.total_checks
             assert len(result.errors) == 0

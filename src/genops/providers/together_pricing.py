@@ -8,10 +8,10 @@ with real-time pricing data and intelligent model selection recommendations.
 from __future__ import annotations
 
 import logging
-from decimal import Decimal, ROUND_HALF_UP
-from typing import Dict, List, Optional, Tuple, Any, Union
-from enum import Enum
 from dataclasses import dataclass
+from decimal import ROUND_HALF_UP, Decimal
+from enum import Enum
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -43,8 +43,8 @@ class TogetherPricingCalculator:
     Provides accurate cost calculation, model comparison, and optimization
     recommendations for Together AI's 200+ model catalog.
     """
-    
-    def __init__(self):
+
+    def __init__(self) -> None:
         """Initialize pricing calculator with current Together AI rates."""
         self.pricing_data = self._initialize_pricing_data()
         self.default_fallback_pricing = ModelPricing(
@@ -54,11 +54,11 @@ class TogetherPricingCalculator:
             tier=TogetherModelTier.STANDARD,
             context_length=8192
         )
-    
+
     def _initialize_pricing_data(self) -> Dict[str, ModelPricing]:
         """Initialize pricing data for Together AI models (2024 rates)."""
         pricing = {}
-        
+
         # Llama 3.1 Models
         pricing["meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo"] = ModelPricing(
             model_id="meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
@@ -68,7 +68,7 @@ class TogetherPricingCalculator:
             context_length=131072,
             fine_tuning_cost_per_million=Decimal("0.80")
         )
-        
+
         pricing["meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo"] = ModelPricing(
             model_id="meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
             input_cost_per_million=Decimal("0.88"),
@@ -77,7 +77,7 @@ class TogetherPricingCalculator:
             context_length=131072,
             fine_tuning_cost_per_million=Decimal("3.20")
         )
-        
+
         pricing["meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo"] = ModelPricing(
             model_id="meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",
             input_cost_per_million=Decimal("5.00"),
@@ -86,7 +86,7 @@ class TogetherPricingCalculator:
             context_length=131072,
             fine_tuning_cost_per_million=Decimal("12.00")
         )
-        
+
         # DeepSeek Models
         pricing["deepseek-ai/DeepSeek-R1"] = ModelPricing(
             model_id="deepseek-ai/DeepSeek-R1",
@@ -95,7 +95,7 @@ class TogetherPricingCalculator:
             tier=TogetherModelTier.STANDARD,
             context_length=65536
         )
-        
+
         pricing["deepseek-ai/DeepSeek-R1-Distill-Llama-8B"] = ModelPricing(
             model_id="deepseek-ai/DeepSeek-R1-Distill-Llama-8B",
             input_cost_per_million=Decimal("0.10"),
@@ -103,7 +103,7 @@ class TogetherPricingCalculator:
             tier=TogetherModelTier.LITE,
             context_length=32768
         )
-        
+
         pricing["deepseek-ai/DeepSeek-Coder-V2-Instruct"] = ModelPricing(
             model_id="deepseek-ai/DeepSeek-Coder-V2-Instruct",
             input_cost_per_million=Decimal("0.14"),
@@ -111,7 +111,7 @@ class TogetherPricingCalculator:
             tier=TogetherModelTier.LITE,
             context_length=65536
         )
-        
+
         # Multimodal Models
         pricing["Qwen/Qwen2.5-VL-72B-Instruct"] = ModelPricing(
             model_id="Qwen/Qwen2.5-VL-72B-Instruct",
@@ -121,7 +121,7 @@ class TogetherPricingCalculator:
             context_length=32768,
             cost_per_image=Decimal("0.001")  # $0.001 per image
         )
-        
+
         pricing["meta-llama/Llama-Vision-Free"] = ModelPricing(
             model_id="meta-llama/Llama-Vision-Free",
             input_cost_per_million=Decimal("0.18"),
@@ -130,7 +130,7 @@ class TogetherPricingCalculator:
             context_length=131072,
             cost_per_image=Decimal("0.0005")
         )
-        
+
         # Code Models
         pricing["Qwen/Qwen2.5-Coder-32B-Instruct"] = ModelPricing(
             model_id="Qwen/Qwen2.5-Coder-32B-Instruct",
@@ -139,7 +139,7 @@ class TogetherPricingCalculator:
             tier=TogetherModelTier.STANDARD,
             context_length=32768
         )
-        
+
         # Mixtral Models
         pricing["mistralai/Mixtral-8x7B-Instruct-v0.1"] = ModelPricing(
             model_id="mistralai/Mixtral-8x7B-Instruct-v0.1",
@@ -148,7 +148,7 @@ class TogetherPricingCalculator:
             tier=TogetherModelTier.STANDARD,
             context_length=32768
         )
-        
+
         pricing["mistralai/Mixtral-8x22B-Instruct-v0.1"] = ModelPricing(
             model_id="mistralai/Mixtral-8x22B-Instruct-v0.1",
             input_cost_per_million=Decimal("1.20"),
@@ -156,9 +156,9 @@ class TogetherPricingCalculator:
             tier=TogetherModelTier.LARGE,
             context_length=65536
         )
-        
+
         return pricing
-    
+
     def get_model_pricing(self, model_id: str) -> ModelPricing:
         """
         Get pricing information for a specific model.
@@ -172,7 +172,7 @@ class TogetherPricingCalculator:
         # Try exact match first
         if model_id in self.pricing_data:
             return self.pricing_data[model_id]
-        
+
         # Try partial matches for model families
         for known_model in self.pricing_data:
             if model_id.lower() in known_model.lower() or known_model.lower() in model_id.lower():
@@ -187,7 +187,7 @@ class TogetherPricingCalculator:
                     cost_per_image=pricing.cost_per_image,
                     fine_tuning_cost_per_million=pricing.fine_tuning_cost_per_million
                 )
-        
+
         # Fallback to conservative estimate
         logger.warning(f"Unknown model '{model_id}', using fallback pricing")
         return ModelPricing(
@@ -197,7 +197,7 @@ class TogetherPricingCalculator:
             tier=self.default_fallback_pricing.tier,
             context_length=self.default_fallback_pricing.context_length
         )
-    
+
     def calculate_chat_cost(
         self,
         model: str,
@@ -218,19 +218,19 @@ class TogetherPricingCalculator:
             Decimal: Total cost in USD
         """
         pricing = self.get_model_pricing(model)
-        
+
         # Calculate token costs
         input_cost = (Decimal(input_tokens) / Decimal(1_000_000)) * pricing.input_cost_per_million
         output_cost = (Decimal(output_tokens) / Decimal(1_000_000)) * pricing.output_cost_per_million
-        
+
         # Add image costs if applicable
         image_cost = Decimal('0')
         if images > 0 and pricing.cost_per_image:
             image_cost = Decimal(images) * pricing.cost_per_image
-        
+
         total_cost = input_cost + output_cost + image_cost
         return total_cost.quantize(Decimal('0.000001'), rounding=ROUND_HALF_UP)
-    
+
     def calculate_completion_cost(
         self,
         model: str,
@@ -247,11 +247,11 @@ class TogetherPricingCalculator:
             Decimal: Total cost in USD
         """
         pricing = self.get_model_pricing(model)
-        
+
         # For completions, use output token pricing (more conservative)
         cost = (Decimal(tokens_used) / Decimal(1_000_000)) * pricing.output_cost_per_million
         return cost.quantize(Decimal('0.000001'), rounding=ROUND_HALF_UP)
-    
+
     def estimate_chat_cost(
         self,
         model: str,
@@ -271,13 +271,13 @@ class TogetherPricingCalculator:
         """
         estimated_input = int(estimated_tokens * input_output_ratio)
         estimated_output = int(estimated_tokens * (1 - input_output_ratio))
-        
+
         return self.calculate_chat_cost(
             model=model,
             input_tokens=estimated_input,
             output_tokens=estimated_output
         )
-    
+
     def estimate_completion_cost(
         self,
         model: str,
@@ -294,7 +294,7 @@ class TogetherPricingCalculator:
             Decimal: Estimated cost in USD
         """
         return self.calculate_completion_cost(model, estimated_tokens)
-    
+
     def calculate_fine_tuning_cost(
         self,
         model: str,
@@ -315,20 +315,20 @@ class TogetherPricingCalculator:
             Decimal: Total fine-tuning cost in USD
         """
         pricing = self.get_model_pricing(model)
-        
+
         if not pricing.fine_tuning_cost_per_million:
             logger.warning(f"Fine-tuning pricing not available for {model}, using estimate")
             # Use 4x the input token price as estimate
             ft_cost_per_million = pricing.input_cost_per_million * 4
         else:
             ft_cost_per_million = pricing.fine_tuning_cost_per_million
-        
+
         # Calculate total tokens processed during training
         total_tokens = (training_tokens * epochs) + validation_tokens
-        
+
         cost = (Decimal(total_tokens) / Decimal(1_000_000)) * ft_cost_per_million
         return cost.quantize(Decimal('0.000001'), rounding=ROUND_HALF_UP)
-    
+
     def compare_models(
         self,
         models: List[str],
@@ -347,11 +347,11 @@ class TogetherPricingCalculator:
             List of model comparisons sorted by cost
         """
         comparisons = []
-        
+
         for model in models:
             pricing = self.get_model_pricing(model)
             estimated_cost = self.estimate_chat_cost(model, estimated_tokens)
-            
+
             comparison = {
                 'model': model,
                 'tier': pricing.tier.value,
@@ -360,24 +360,24 @@ class TogetherPricingCalculator:
                 'estimated_cost': float(estimated_cost),
                 'cost_per_1k_tokens': float(estimated_cost * 1000 / estimated_tokens),
             }
-            
+
             if include_context_length:
                 comparison['context_length'] = pricing.context_length
                 comparison['cost_per_context_token'] = float(
                     pricing.input_cost_per_million / Decimal(pricing.context_length)
                 )
-            
+
             if pricing.cost_per_image:
                 comparison['cost_per_image'] = float(pricing.cost_per_image)
-            
+
             if pricing.fine_tuning_cost_per_million:
                 comparison['fine_tuning_cost_per_million'] = float(pricing.fine_tuning_cost_per_million)
-            
+
             comparisons.append(comparison)
-        
+
         # Sort by estimated cost
         return sorted(comparisons, key=lambda x: x['estimated_cost'])
-    
+
     def recommend_model(
         self,
         task_complexity: str,  # "simple", "moderate", "complex"
@@ -401,39 +401,39 @@ class TogetherPricingCalculator:
         """
         # Filter models based on requirements
         candidate_models = []
-        
+
         for model_id, pricing in self.pricing_data.items():
             # Context length filter
             if pricing.context_length < min_context_length:
                 continue
-            
+
             # Multimodal filter
             if require_multimodal and not pricing.cost_per_image:
                 continue
-            
+
             # Code model filter
             if require_code and "code" not in model_id.lower() and "deepseek" not in model_id.lower():
                 continue
-            
+
             candidate_models.append(model_id)
-        
+
         if not candidate_models:
             return {
                 'recommended_model': None,
                 'reason': 'No models match the specified requirements',
                 'alternatives': []
             }
-        
+
         # Compare candidates for 1000 token operation
         comparisons = self.compare_models(candidate_models, 1000)
-        
+
         # Apply task complexity and budget filters
         filtered_comparisons = []
         for comp in comparisons:
             # Budget filter
             if budget_per_operation and comp['estimated_cost'] > budget_per_operation:
                 continue
-            
+
             # Complexity-based tier filtering
             tier = TogetherModelTier(comp['tier'])
             if task_complexity == "simple" and tier in [TogetherModelTier.LITE, TogetherModelTier.STANDARD]:
@@ -444,13 +444,13 @@ class TogetherPricingCalculator:
                 filtered_comparisons.append(comp)
             else:
                 filtered_comparisons.append(comp)  # Include all if no specific match
-        
+
         if not filtered_comparisons:
             filtered_comparisons = comparisons[:3]  # Fallback to cheapest options
-        
+
         # Select best option (lowest cost with appropriate capability)
         recommended = filtered_comparisons[0]
-        
+
         return {
             'recommended_model': recommended['model'],
             'estimated_cost': recommended['estimated_cost'],
@@ -461,7 +461,7 @@ class TogetherPricingCalculator:
             'all_candidates': len(candidate_models),
             'budget_compliant': budget_per_operation is None or recommended['estimated_cost'] <= budget_per_operation
         }
-    
+
     def analyze_costs(
         self,
         operations_per_day: int,
@@ -483,15 +483,15 @@ class TogetherPricingCalculator:
         """
         pricing = self.get_model_pricing(model)
         cost_per_operation = self.estimate_chat_cost(model, avg_tokens_per_operation)
-        
+
         daily_cost = cost_per_operation * operations_per_day
         monthly_cost = daily_cost * days_to_analyze
         yearly_cost = daily_cost * 365
-        
+
         # Find more cost-effective alternatives
         all_models = list(self.pricing_data.keys())
         comparisons = self.compare_models(all_models, avg_tokens_per_operation)
-        
+
         # Find models with similar context length but lower cost
         current_context = pricing.context_length
         cheaper_alternatives = [
@@ -499,7 +499,7 @@ class TogetherPricingCalculator:
             if (comp['estimated_cost'] < float(cost_per_operation) and
                 comp.get('context_length', 0) >= current_context * 0.8)  # At least 80% of current context
         ]
-        
+
         return {
             'current_model': model,
             'cost_per_operation': float(cost_per_operation),
@@ -521,7 +521,7 @@ class TogetherPricingCalculator:
                 ) if comparisons else 0
             }
         }
-    
+
     def get_all_models_by_tier(self) -> Dict[str, List[str]]:
         """
         Get all available models grouped by pricing tier.
@@ -535,8 +535,8 @@ class TogetherPricingCalculator:
             'large': [],
             'premium': []
         }
-        
+
         for model_id, pricing in self.pricing_data.items():
             tiers[pricing.tier.value].append(model_id)
-        
+
         return tiers

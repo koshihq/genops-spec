@@ -4,15 +4,15 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import Any, Dict, Optional, Union
+from typing import Any, Union
 
 from genops.core.telemetry import GenOpsTelemetry
 
 logger = logging.getLogger(__name__)
 
 try:
-    from huggingface_hub import InferenceClient
     import huggingface_hub
+    from huggingface_hub import InferenceClient
 
     HAS_HUGGINGFACE = True
 except ImportError:
@@ -28,7 +28,7 @@ class GenOpsHuggingFaceAdapter:
     # Supported AI tasks
     SUPPORTED_TASKS = {
         "text-generation",
-        "chat-completion", 
+        "chat-completion",
         "text-to-image",
         "feature-extraction",
         "speech-to-text",
@@ -71,12 +71,12 @@ class GenOpsHuggingFaceAdapter:
         self.async_export = os.getenv('GENOPS_ASYNC_EXPORT', 'true').lower() == 'true'
         self.batch_size = int(os.getenv('GENOPS_BATCH_SIZE', '100'))
         self.export_timeout = int(os.getenv('GENOPS_EXPORT_TIMEOUT', '5'))
-        
-        # Circuit breaker configuration  
+
+        # Circuit breaker configuration
         self.circuit_breaker_enabled = os.getenv('GENOPS_CIRCUIT_BREAKER', 'true').lower() == 'true'
         self.circuit_breaker_threshold = int(os.getenv('GENOPS_CB_THRESHOLD', '5'))
         self.circuit_breaker_window = int(os.getenv('GENOPS_CB_WINDOW', '60'))
-        
+
         # Circuit breaker state
         self._circuit_breaker_failures = 0
         self._circuit_breaker_last_failure = 0
@@ -88,7 +88,7 @@ class GenOpsHuggingFaceAdapter:
             'environment', 'cost_center', 'user_id', 'experiment_id',
             'model_version', 'dataset_id'
         }
-        
+
         self.REQUEST_ATTRIBUTES = {
             'temperature', 'max_tokens', 'max_new_tokens', 'top_p', 'top_k',
             'repetition_penalty', 'frequency_penalty', 'presence_penalty',
@@ -107,7 +107,7 @@ class GenOpsHuggingFaceAdapter:
                 governance_attrs[attr] = kwargs[attr]
                 api_kwargs.pop(attr)
 
-        # Extract request attributes  
+        # Extract request attributes
         for attr in self.REQUEST_ATTRIBUTES:
             if attr in kwargs:
                 request_attrs[attr] = kwargs[attr]
@@ -120,7 +120,7 @@ class GenOpsHuggingFaceAdapter:
             return True
         if self.sampling_rate <= 0.0:
             return False
-        
+
         import random
         return random.random() < self.sampling_rate
 
@@ -128,10 +128,10 @@ class GenOpsHuggingFaceAdapter:
         """Check if circuit breaker is open and should block operations."""
         if not self.circuit_breaker_enabled:
             return False
-        
+
         import time
         current_time = time.time()
-        
+
         # If circuit breaker is open, check if enough time has passed to retry
         if self._circuit_breaker_open:
             if current_time - self._circuit_breaker_last_failure > self.circuit_breaker_window:
@@ -143,20 +143,20 @@ class GenOpsHuggingFaceAdapter:
             else:
                 # Circuit breaker still open
                 return True
-        
+
         return False
 
     def _record_circuit_breaker_failure(self):
         """Record a circuit breaker failure."""
         if not self.circuit_breaker_enabled:
             return
-        
+
         import time
         current_time = time.time()
-        
+
         self._circuit_breaker_failures += 1
         self._circuit_breaker_last_failure = current_time
-        
+
         if self._circuit_breaker_failures >= self.circuit_breaker_threshold:
             self._circuit_breaker_open = True
             logger.warning(f"Circuit breaker opened after {self._circuit_breaker_failures} failures")
@@ -165,7 +165,7 @@ class GenOpsHuggingFaceAdapter:
         """Record a successful operation for circuit breaker."""
         if not self.circuit_breaker_enabled:
             return
-        
+
         # Reset failure count on successful operation
         if self._circuit_breaker_failures > 0:
             logger.debug("Circuit breaker - resetting failure count after successful operation")
@@ -175,9 +175,9 @@ class GenOpsHuggingFaceAdapter:
         """Export telemetry data asynchronously if configured."""
         if not self.async_export:
             return
-        
+
         import threading
-        
+
         def export_worker():
             try:
                 # This would integrate with actual async telemetry export
@@ -187,7 +187,7 @@ class GenOpsHuggingFaceAdapter:
                     logger.debug(f"Async cost data: {cost_data}")
             except Exception as e:
                 logger.warning(f"Async telemetry export failed: {e}")
-        
+
         thread = threading.Thread(target=export_worker, daemon=True)
         thread.start()
 
@@ -209,13 +209,13 @@ class GenOpsHuggingFaceAdapter:
         """Detect the underlying provider based on model name."""
         if not model:
             return "unknown"
-            
+
         model_lower = model.lower()
-        
+
         for provider, pattern in self.PROVIDER_PATTERNS.items():
             if re.search(pattern, model_lower):
                 return provider
-                
+
         # Default to huggingface_hub for unrecognized patterns
         return "huggingface_hub"
 
@@ -227,10 +227,10 @@ class GenOpsHuggingFaceAdapter:
         return len(text) // 4
 
     def _calculate_cost(
-        self, 
-        provider: str, 
-        model: str, 
-        input_tokens: int = 0, 
+        self,
+        provider: str,
+        model: str,
+        input_tokens: int = 0,
         output_tokens: int = 0,
         task: str = "text-generation"
     ) -> float:
@@ -239,7 +239,7 @@ class GenOpsHuggingFaceAdapter:
             from genops.providers.huggingface_pricing import calculate_huggingface_cost
             return calculate_huggingface_cost(
                 provider=provider,
-                model=model, 
+                model=model,
                 input_tokens=input_tokens,
                 output_tokens=output_tokens,
                 task=task
@@ -260,7 +260,7 @@ class GenOpsHuggingFaceAdapter:
 
         input_cost = (input_tokens / 1000) * cost_per_1k_tokens["input"]
         output_cost = (output_tokens / 1000) * cost_per_1k_tokens["output"]
-        
+
         return input_cost + output_cost
 
     def text_generation(self, prompt: str, **kwargs) -> Any:
@@ -268,23 +268,23 @@ class GenOpsHuggingFaceAdapter:
         # Check circuit breaker first
         if self._check_circuit_breaker():
             raise Exception("Circuit breaker is open - operation blocked")
-        
+
         # Check sampling decision
         if not self._should_sample():
             logger.debug("Operation skipped due to sampling configuration")
             # Still make the API call but skip telemetry
             return self.client.text_generation(prompt, **kwargs)
-        
+
         governance_attrs, request_attrs, api_kwargs = self._extract_attributes(kwargs)
 
         model = api_kwargs.get("model") or getattr(self.client, "model", "unknown")
         provider = self._detect_provider(model)
-        
+
         # Estimate input tokens
         input_tokens = self._estimate_tokens(prompt)
-        
+
         operation_name = "huggingface.text_generation"
-        
+
         with self.telemetry.trace_operation(
             operation_name=operation_name,
             operation_type="ai.inference",
@@ -296,7 +296,7 @@ class GenOpsHuggingFaceAdapter:
                 # Add request attributes to span
                 for attr, value in request_attrs.items():
                     span.set_attribute(f"genops.request.{attr}", value)
-                
+
                 # Set provider and task attributes
                 span.set_attribute("genops.provider.detected", provider)
                 span.set_attribute("genops.task.type", "text-generation")
@@ -311,7 +311,7 @@ class GenOpsHuggingFaceAdapter:
                     # Record failure for circuit breaker
                     self._record_circuit_breaker_failure()
                     raise api_error
-                
+
                 # Estimate output tokens from response
                 if hasattr(response, 'generated_text'):
                     output_text = response.generated_text
@@ -319,10 +319,10 @@ class GenOpsHuggingFaceAdapter:
                     output_text = response
                 else:
                     output_text = str(response)
-                
+
                 output_tokens = self._estimate_tokens(output_text)
                 span.set_attribute("genops.tokens.output", output_tokens)
-                
+
                 # Calculate and record cost
                 cost = self._calculate_cost(
                     provider=provider,
@@ -331,7 +331,7 @@ class GenOpsHuggingFaceAdapter:
                     output_tokens=output_tokens,
                     task="text-generation"
                 )
-                
+
                 if cost > 0:
                     self.telemetry.record_cost(
                         span=span,
@@ -364,11 +364,11 @@ class GenOpsHuggingFaceAdapter:
                 span.set_attribute("genops.error.message", str(e))
                 span.set_attribute("genops.error.type", type(e).__name__)
                 logger.error(f"Hugging Face text generation failed: {e}")
-                
+
                 # Record circuit breaker failure if it's an API error
                 if "circuit breaker" not in str(e).lower():
                     self._record_circuit_breaker_failure()
-                
+
                 raise
 
     def chat_completion(self, messages: list, **kwargs) -> Any:
@@ -376,31 +376,31 @@ class GenOpsHuggingFaceAdapter:
         # Check circuit breaker first
         if self._check_circuit_breaker():
             raise Exception("Circuit breaker is open - operation blocked")
-        
+
         # Check sampling decision
         if not self._should_sample():
             logger.debug("Operation skipped due to sampling configuration")
             # Still make the API call but skip telemetry
             return self.client.chat.completions.create(messages=messages, **kwargs)
-        
+
         governance_attrs, request_attrs, api_kwargs = self._extract_attributes(kwargs)
 
         model = api_kwargs.get("model") or getattr(self.client, "model", "unknown")
         provider = self._detect_provider(model)
-        
+
         # Estimate input tokens from messages
         input_text = " ".join([
-            msg.get("content", "") for msg in messages 
+            msg.get("content", "") for msg in messages
             if isinstance(msg, dict) and msg.get("content")
         ])
         input_tokens = self._estimate_tokens(input_text)
-        
+
         operation_name = "huggingface.chat.completion"
-        
+
         with self.telemetry.trace_operation(
             operation_name=operation_name,
             operation_type="ai.inference",
-            provider="huggingface", 
+            provider="huggingface",
             model=model,
             **governance_attrs
         ) as span:
@@ -408,7 +408,7 @@ class GenOpsHuggingFaceAdapter:
                 # Add request attributes to span
                 for attr, value in request_attrs.items():
                     span.set_attribute(f"genops.request.{attr}", value)
-                
+
                 # Set provider and task attributes
                 span.set_attribute("genops.provider.detected", provider)
                 span.set_attribute("genops.task.type", "chat-completion")
@@ -427,7 +427,7 @@ class GenOpsHuggingFaceAdapter:
                     # Record failure for circuit breaker
                     self._record_circuit_breaker_failure()
                     raise api_error
-                
+
                 # Extract output tokens from response
                 output_tokens = 0
                 if hasattr(response, 'choices') and response.choices:
@@ -437,9 +437,9 @@ class GenOpsHuggingFaceAdapter:
                         output_tokens = self._estimate_tokens(output_text)
                 elif hasattr(response, 'generated_text'):
                     output_tokens = self._estimate_tokens(response.generated_text)
-                
+
                 span.set_attribute("genops.tokens.output", output_tokens)
-                
+
                 # Calculate and record cost
                 cost = self._calculate_cost(
                     provider=provider,
@@ -448,7 +448,7 @@ class GenOpsHuggingFaceAdapter:
                     output_tokens=output_tokens,
                     task="chat-completion"
                 )
-                
+
                 if cost > 0:
                     self.telemetry.record_cost(
                         span=span,
@@ -481,11 +481,11 @@ class GenOpsHuggingFaceAdapter:
                 span.set_attribute("genops.error.message", str(e))
                 span.set_attribute("genops.error.type", type(e).__name__)
                 logger.error(f"Hugging Face chat completion failed: {e}")
-                
+
                 # Record circuit breaker failure if it's an API error
                 if "circuit breaker" not in str(e).lower():
                     self._record_circuit_breaker_failure()
-                
+
                 raise
 
     def feature_extraction(self, inputs: Union[str, list], **kwargs) -> Any:
@@ -493,18 +493,18 @@ class GenOpsHuggingFaceAdapter:
         # Check circuit breaker first
         if self._check_circuit_breaker():
             raise Exception("Circuit breaker is open - operation blocked")
-        
+
         # Check sampling decision
         if not self._should_sample():
             logger.debug("Operation skipped due to sampling configuration")
             # Still make the API call but skip telemetry
             return self.client.feature_extraction(inputs, **kwargs)
-        
+
         governance_attrs, request_attrs, api_kwargs = self._extract_attributes(kwargs)
 
         model = api_kwargs.get("model") or getattr(self.client, "model", "unknown")
         provider = self._detect_provider(model)
-        
+
         # Estimate input tokens
         if isinstance(inputs, str):
             input_tokens = self._estimate_tokens(inputs)
@@ -513,9 +513,9 @@ class GenOpsHuggingFaceAdapter:
             input_tokens = self._estimate_tokens(total_text)
         else:
             input_tokens = 0
-        
+
         operation_name = "huggingface.feature_extraction"
-        
+
         with self.telemetry.trace_operation(
             operation_name=operation_name,
             operation_type="ai.inference",
@@ -527,7 +527,7 @@ class GenOpsHuggingFaceAdapter:
                 # Add request attributes to span
                 for attr, value in request_attrs.items():
                     span.set_attribute(f"genops.request.{attr}", value)
-                
+
                 # Set provider and task attributes
                 span.set_attribute("genops.provider.detected", provider)
                 span.set_attribute("genops.task.type", "feature-extraction")
@@ -542,12 +542,12 @@ class GenOpsHuggingFaceAdapter:
                     # Record failure for circuit breaker
                     self._record_circuit_breaker_failure()
                     raise api_error
-                
+
                 # For embeddings, output "tokens" could be embedding dimensions
                 if hasattr(response, 'shape') and len(response.shape) > 1:
                     embedding_dims = response.shape[-1]
                     span.set_attribute("genops.embedding.dimensions", embedding_dims)
-                
+
                 # Calculate cost (typically lower for embeddings)
                 cost = self._calculate_cost(
                     provider=provider,
@@ -556,7 +556,7 @@ class GenOpsHuggingFaceAdapter:
                     output_tokens=0,  # Embeddings don't generate text tokens
                     task="feature-extraction"
                 )
-                
+
                 if cost > 0:
                     self.telemetry.record_cost(
                         span=span,
@@ -589,11 +589,11 @@ class GenOpsHuggingFaceAdapter:
                 span.set_attribute("genops.error.message", str(e))
                 span.set_attribute("genops.error.type", type(e).__name__)
                 logger.error(f"Hugging Face feature extraction failed: {e}")
-                
+
                 # Record circuit breaker failure if it's an API error
                 if "circuit breaker" not in str(e).lower():
                     self._record_circuit_breaker_failure()
-                
+
                 raise
 
     def text_to_image(self, prompt: str, **kwargs) -> Any:
@@ -601,22 +601,22 @@ class GenOpsHuggingFaceAdapter:
         # Check circuit breaker first
         if self._check_circuit_breaker():
             raise Exception("Circuit breaker is open - operation blocked")
-        
+
         # Check sampling decision
         if not self._should_sample():
             logger.debug("Operation skipped due to sampling configuration")
             # Still make the API call but skip telemetry
             return self.client.text_to_image(prompt, **kwargs)
-        
+
         governance_attrs, request_attrs, api_kwargs = self._extract_attributes(kwargs)
 
         model = api_kwargs.get("model") or getattr(self.client, "model", "unknown")
         provider = self._detect_provider(model)
-        
+
         input_tokens = self._estimate_tokens(prompt)
-        
+
         operation_name = "huggingface.text_to_image"
-        
+
         with self.telemetry.trace_operation(
             operation_name=operation_name,
             operation_type="ai.inference",
@@ -628,7 +628,7 @@ class GenOpsHuggingFaceAdapter:
                 # Add request attributes to span
                 for attr, value in request_attrs.items():
                     span.set_attribute(f"genops.request.{attr}", value)
-                
+
                 # Set provider and task attributes
                 span.set_attribute("genops.provider.detected", provider)
                 span.set_attribute("genops.task.type", "text-to-image")
@@ -643,13 +643,13 @@ class GenOpsHuggingFaceAdapter:
                     # Record failure for circuit breaker
                     self._record_circuit_breaker_failure()
                     raise api_error
-                
+
                 # For images, we track generation count instead of output tokens
                 image_count = 1
                 if hasattr(response, '__len__'):
                     image_count = len(response)
                 span.set_attribute("genops.images.generated", image_count)
-                
+
                 # Calculate cost for image generation
                 cost = self._calculate_cost(
                     provider=provider,
@@ -658,7 +658,7 @@ class GenOpsHuggingFaceAdapter:
                     output_tokens=0,
                     task="text-to-image"
                 )
-                
+
                 if cost > 0:
                     self.telemetry.record_cost(
                         span=span,
@@ -693,11 +693,11 @@ class GenOpsHuggingFaceAdapter:
                 span.set_attribute("genops.error.message", str(e))
                 span.set_attribute("genops.error.type", type(e).__name__)
                 logger.error(f"Hugging Face text-to-image failed: {e}")
-                
+
                 # Record circuit breaker failure if it's an API error
                 if "circuit breaker" not in str(e).lower():
                     self._record_circuit_breaker_failure()
-                
+
                 raise
 
     def get_supported_tasks(self) -> list[str]:
@@ -719,55 +719,55 @@ def instrument_huggingface(**config):
     if not HAS_HUGGINGFACE:
         logger.warning("Hugging Face Hub not available for instrumentation")
         return False
-    
+
     try:
         # Store original methods
         original_text_generation = InferenceClient.text_generation
         original_chat_completions_create = None
         original_feature_extraction = InferenceClient.feature_extraction
         original_text_to_image = InferenceClient.text_to_image
-        
+
         # Try to get chat completions method (may not exist in all versions)
         if hasattr(InferenceClient, 'chat') and hasattr(InferenceClient.chat, 'completions'):
             original_chat_completions_create = InferenceClient.chat.completions.create
-        
+
         def wrapped_text_generation(self, *args, **kwargs):
             adapter = GenOpsHuggingFaceAdapter(client=self)
             if args:
                 return adapter.text_generation(args[0], **kwargs)
             return adapter.text_generation("", **kwargs)
-        
+
         def wrapped_chat_completions_create(self, *args, **kwargs):
             adapter = GenOpsHuggingFaceAdapter(client=self._client if hasattr(self, '_client') else None)
             messages = kwargs.get('messages', args[0] if args else [])
             return adapter.chat_completion(messages, **kwargs)
-        
+
         def wrapped_feature_extraction(self, *args, **kwargs):
             adapter = GenOpsHuggingFaceAdapter(client=self)
             inputs = args[0] if args else kwargs.get('inputs', "")
             return adapter.feature_extraction(inputs, **kwargs)
-        
+
         def wrapped_text_to_image(self, *args, **kwargs):
             adapter = GenOpsHuggingFaceAdapter(client=self)
             prompt = args[0] if args else kwargs.get('prompt', "")
             return adapter.text_to_image(prompt, **kwargs)
-        
+
         # Apply instrumentation
         InferenceClient.text_generation = wrapped_text_generation
         if original_chat_completions_create:
             InferenceClient.chat.completions.create = wrapped_chat_completions_create
         InferenceClient.feature_extraction = wrapped_feature_extraction
         InferenceClient.text_to_image = wrapped_text_to_image
-        
+
         # Store original methods for potential restoration
         InferenceClient._genops_original_text_generation = original_text_generation
         InferenceClient._genops_original_chat_completions_create = original_chat_completions_create
         InferenceClient._genops_original_feature_extraction = original_feature_extraction
         InferenceClient._genops_original_text_to_image = original_text_to_image
-        
+
         logger.info("Successfully instrumented Hugging Face InferenceClient")
         return True
-        
+
     except Exception as e:
         logger.error(f"Failed to instrument Hugging Face: {e}")
         return False
@@ -777,29 +777,29 @@ def uninstrument_huggingface():
     """Remove GenOps instrumentation from Hugging Face InferenceClient."""
     if not HAS_HUGGINGFACE:
         return False
-    
+
     try:
         # Restore original methods if they exist
         if hasattr(InferenceClient, '_genops_original_text_generation'):
             InferenceClient.text_generation = InferenceClient._genops_original_text_generation
             delattr(InferenceClient, '_genops_original_text_generation')
-        
+
         if hasattr(InferenceClient, '_genops_original_chat_completions_create'):
             if hasattr(InferenceClient, 'chat') and hasattr(InferenceClient.chat, 'completions'):
                 InferenceClient.chat.completions.create = InferenceClient._genops_original_chat_completions_create
             delattr(InferenceClient, '_genops_original_chat_completions_create')
-        
+
         if hasattr(InferenceClient, '_genops_original_feature_extraction'):
             InferenceClient.feature_extraction = InferenceClient._genops_original_feature_extraction
             delattr(InferenceClient, '_genops_original_feature_extraction')
-        
+
         if hasattr(InferenceClient, '_genops_original_text_to_image'):
             InferenceClient.text_to_image = InferenceClient._genops_original_text_to_image
             delattr(InferenceClient, '_genops_original_text_to_image')
-        
+
         logger.info("Successfully removed Hugging Face instrumentation")
         return True
-        
+
     except Exception as e:
         logger.error(f"Failed to uninstrument Hugging Face: {e}")
         return False
@@ -815,23 +815,22 @@ def create_instrumented_client(**client_kwargs) -> GenOpsHuggingFaceAdapter:
 try:
     from genops.providers.huggingface_cost_aggregator import (
         HuggingFaceCallCost,
-        HuggingFaceCostSummary,
         HuggingFaceCostAggregator,
         HuggingFaceCostContext,
+        HuggingFaceCostSummary,
         create_huggingface_cost_context,
         get_cost_aggregator,
     )
-    
     from genops.providers.huggingface_workflow import (
-        production_workflow_context,
         ProductionWorkflowSpan,
+        production_workflow_context,
     )
-    
+
     # Export all the components
     __all__ = [
         'GenOpsHuggingFaceAdapter',
         'instrument_huggingface',
-        'uninstrument_huggingface', 
+        'uninstrument_huggingface',
         'create_instrumented_client',
         'HuggingFaceCallCost',
         'HuggingFaceCostSummary',
@@ -842,7 +841,7 @@ try:
         'production_workflow_context',
         'ProductionWorkflowSpan',
     ]
-    
+
 except ImportError as e:
     logger.debug(f"Advanced components not available: {e}")
     __all__ = [

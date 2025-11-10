@@ -49,14 +49,12 @@ Example usage:
 """
 
 import logging
-import time
-import uuid
-import json
 import os
+import time
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Union, Iterator, Callable
 from enum import Enum
+from typing import Any, Dict, List, Optional, Union
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +75,7 @@ except ImportError:
 # Import Traceloop SDK with graceful failure (optional commercial platform)
 try:
     from traceloop.sdk import Traceloop
-    from traceloop.sdk.decorators import workflow, aworkflow
+    from traceloop.sdk.decorators import aworkflow, workflow
     HAS_TRACELOOP_SDK = True
     logger.info("Traceloop SDK loaded for commercial platform features")
 except ImportError:
@@ -89,9 +87,9 @@ except ImportError:
 
 # Import OpenTelemetry for enhanced tracing
 try:
-    from opentelemetry import trace, context
-    from opentelemetry.trace import Status, StatusCode
+    from opentelemetry import context, trace
     from opentelemetry.semconv.ai import SpanAttributes
+    from opentelemetry.trace import Status, StatusCode
     HAS_OTEL = True
 except ImportError:
     HAS_OTEL = False
@@ -101,7 +99,7 @@ except ImportError:
 class TraceloopOperationType(Enum):
     """Operation types for OpenLLMetry + GenOps tracking."""
     LLM_GENERATION = "llm_generation"
-    CHAT_COMPLETION = "chat_completion"  
+    CHAT_COMPLETION = "chat_completion"
     EMBEDDING = "embedding"
     FUNCTION_CALLING = "function_calling"
     WORKFLOW = "workflow"
@@ -127,25 +125,25 @@ class TraceloopUsage:
     total_tokens: int
     estimated_cost: float
     latency_ms: float
-    
+
     # GenOps governance attributes
     team: Optional[str] = None
     project: Optional[str] = None
     customer_id: Optional[str] = None
     cost_center: Optional[str] = None
     environment: str = "development"
-    
+
     # Budget and policy tracking
     budget_remaining: Optional[float] = None
     policy_violations: List[str] = field(default_factory=list)
     governance_tags: Dict[str, str] = field(default_factory=dict)
-    
+
     # OpenTelemetry integration
     trace_id: Optional[str] = None
     span_id: Optional[str] = None
 
 
-@dataclass  
+@dataclass
 class TraceloopResponse:
     """Standardized response from OpenLLMetry operations with governance."""
     content: Any  # Response content (varies by operation type)
@@ -165,7 +163,7 @@ class GenOpsTraceloopAdapter:
     governance features including cost attribution, budget enforcement, and
     policy compliance tracking. Optionally integrates with Traceloop commercial platform.
     """
-    
+
     def __init__(
         self,
         team: Optional[str] = None,
@@ -173,21 +171,21 @@ class GenOpsTraceloopAdapter:
         environment: str = "development",
         customer_id: Optional[str] = None,
         cost_center: Optional[str] = None,
-        
+
         # Budget and policy settings
         enable_governance: bool = True,
         daily_budget_limit: Optional[float] = None,
         max_operation_cost: Optional[float] = None,
         governance_policy: GovernancePolicy = GovernancePolicy.ADVISORY,
-        
+
         # OpenLLMetry settings
         enable_auto_instrumentation: bool = True,
-        
+
         # Traceloop platform settings (optional)
         traceloop_api_key: Optional[str] = None,
         traceloop_base_url: str = "https://app.traceloop.com",
         enable_traceloop_platform: bool = None,
-        
+
         # Advanced settings
         enable_cost_alerts: bool = True,
         cost_alert_threshold: float = 1.0,
@@ -213,14 +211,14 @@ class GenOpsTraceloopAdapter:
             enable_cost_alerts: Enable cost-based alerting
             cost_alert_threshold: Cost threshold for alerts
         """
-        
+
         # Core governance attributes
         self.team = team or os.getenv('GENOPS_TEAM', 'default-team')
         self.project = project or os.getenv('GENOPS_PROJECT', 'default-project')
         self.environment = environment
         self.customer_id = customer_id
         self.cost_center = cost_center
-        
+
         # Governance settings
         self.enable_governance = enable_governance
         self.daily_budget_limit = daily_budget_limit
@@ -228,64 +226,64 @@ class GenOpsTraceloopAdapter:
         self.governance_policy = governance_policy
         self.enable_cost_alerts = enable_cost_alerts
         self.cost_alert_threshold = cost_alert_threshold
-        
+
         # Initialize OpenLLMetry
         self._initialize_openllmetry(enable_auto_instrumentation)
-        
+
         # Initialize Traceloop platform (optional)
         self.enable_traceloop_platform = enable_traceloop_platform
         if enable_traceloop_platform or traceloop_api_key:
             self._initialize_traceloop_platform(traceloop_api_key, traceloop_base_url)
-        
+
         # Governance state tracking
         self._daily_usage = 0.0
         self._operation_count = 0
         self._policy_violations = []
-        
+
         logger.info(f"GenOps Traceloop adapter initialized: team={self.team}, project={self.project}")
-        
+
     def _initialize_openllmetry(self, enable_auto: bool):
         """Initialize OpenLLMetry instrumentation."""
         if not HAS_OPENLLMETRY:
             logger.error("OpenLLMetry not available. Install with: pip install openllmetry")
             return
-            
+
         try:
             if enable_auto and AutoInstrumentor:
                 # Enable automatic instrumentation for all supported providers
                 AutoInstrumentor().instrument()
                 logger.info("OpenLLMetry auto-instrumentation enabled")
-            
+
             # Get enhanced tracer with GenOps attributes
             self.tracer = tracer
             logger.info("OpenLLMetry tracer initialized")
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize OpenLLMetry: {e}")
-            
+
     def _initialize_traceloop_platform(self, api_key: Optional[str], base_url: str):
         """Initialize Traceloop commercial platform integration."""
         if not HAS_TRACELOOP_SDK:
             logger.warning("Traceloop SDK not available. Install with: pip install traceloop-sdk")
             return
-            
+
         try:
             api_key = api_key or os.getenv('TRACELOOP_API_KEY')
             if not api_key:
                 logger.info("No Traceloop API key provided, commercial features disabled")
                 return
-                
+
             # Initialize Traceloop platform
             Traceloop.init(
                 api_key=api_key,
                 api_endpoint=base_url,
                 disable_batch=False,  # Enable batching for better performance
             )
-            
+
             self.traceloop_client = Traceloop
             self.enable_traceloop_platform = True
             logger.info("Traceloop commercial platform initialized")
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize Traceloop platform: {e}")
             self.enable_traceloop_platform = False
@@ -316,48 +314,48 @@ class GenOpsTraceloopAdapter:
             logger.warning("OpenLLMetry not available, basic tracking only")
             yield MockSpan()
             return
-            
+
         operation_type_str = operation_type.value if isinstance(operation_type, TraceloopOperationType) else operation_type
-        
+
         # Create enhanced span with governance attributes
         with self.tracer.start_span(
             operation_name,
             kind=trace.SpanKind.CLIENT if HAS_OTEL else None
         ) as span:
-            
+
             # Add GenOps governance attributes
             if HAS_OTEL and span:
                 span.set_attribute("genops.team", self.team)
                 span.set_attribute("genops.project", self.project)
                 span.set_attribute("genops.environment", self.environment)
                 span.set_attribute("genops.operation_type", operation_type_str)
-                
+
                 if self.customer_id:
                     span.set_attribute("genops.customer_id", self.customer_id)
                 if self.cost_center:
                     span.set_attribute("genops.cost_center", self.cost_center)
-                
+
                 # Add custom tags
                 if tags:
                     for key, value in tags.items():
                         span.set_attribute(f"genops.tag.{key}", str(value))
-            
+
             # Create enhanced span wrapper
             enhanced_span = EnhancedSpan(span, self, operation_type_str, max_cost)
-            
+
             try:
                 yield enhanced_span
-                
+
                 # Finalize governance tracking
                 self._finalize_operation(enhanced_span)
-                
+
             except Exception as e:
                 if HAS_OTEL and span:
                     span.record_exception(e)
                     span.set_status(Status(StatusCode.ERROR))
                 logger.error(f"Operation {operation_name} failed: {e}")
                 raise
-                
+
     def _finalize_operation(self, enhanced_span):
         """Finalize governance tracking for completed operation."""
         try:
@@ -366,39 +364,39 @@ class GenOpsTraceloopAdapter:
             cost = enhanced_span.estimated_cost
             if cost:
                 self._daily_usage += cost
-                
+
             # Check governance policies
             self._check_governance_policies(enhanced_span)
-            
+
             # Send to Traceloop platform if enabled
             if self.enable_traceloop_platform:
                 self._send_to_traceloop_platform(enhanced_span)
-                
+
         except Exception as e:
             logger.error(f"Failed to finalize operation governance: {e}")
-            
+
     def _check_governance_policies(self, enhanced_span):
         """Check governance policies and handle violations."""
         violations = []
-        
+
         # Check operation cost limits
         if self.max_operation_cost and enhanced_span.estimated_cost > self.max_operation_cost:
             violations.append(f"Operation cost ${enhanced_span.estimated_cost:.6f} exceeds limit ${self.max_operation_cost}")
-            
+
         # Check daily budget limits
         if self.daily_budget_limit and self._daily_usage > self.daily_budget_limit:
             violations.append(f"Daily usage ${self._daily_usage:.2f} exceeds budget ${self.daily_budget_limit}")
-            
+
         # Handle policy violations
         if violations:
             enhanced_span.policy_violations.extend(violations)
             self._policy_violations.extend(violations)
-            
+
             if self.governance_policy == GovernancePolicy.ENFORCED:
                 raise ValueError(f"Governance policy violation: {violations[0]}")
             elif self.governance_policy == GovernancePolicy.ADVISORY:
                 logger.warning(f"Governance policy advisory: {violations}")
-                
+
     def _send_to_traceloop_platform(self, enhanced_span):
         """Send governance data to Traceloop commercial platform."""
         try:
@@ -407,7 +405,7 @@ class GenOpsTraceloopAdapter:
             logger.debug("Governance data sent to Traceloop platform")
         except Exception as e:
             logger.error(f"Failed to send data to Traceloop platform: {e}")
-            
+
     def get_metrics(self) -> Dict[str, Any]:
         """Get current governance metrics."""
         return {
@@ -423,14 +421,14 @@ class GenOpsTraceloopAdapter:
 
 class EnhancedSpan:
     """Enhanced span wrapper with GenOps governance capabilities."""
-    
+
     def __init__(self, otel_span, adapter: GenOpsTraceloopAdapter, operation_type: str, max_cost: Optional[float]):
         self.otel_span = otel_span
         self.adapter = adapter
         self.operation_type = operation_type
         self.max_cost = max_cost
         self.start_time = time.time()
-        
+
         # Tracking attributes
         self.estimated_cost = 0.0
         self.input_tokens = 0
@@ -438,31 +436,31 @@ class EnhancedSpan:
         self.total_tokens = 0
         self.policy_violations = []
         self.metadata = {}
-        
+
     def add_attributes(self, attributes: Dict[str, Any]):
         """Add attributes to the span."""
         if HAS_OTEL and self.otel_span:
             for key, value in attributes.items():
                 self.otel_span.set_attribute(key, value)
-                
+
     def update_cost(self, cost: float):
         """Update the estimated cost for this operation."""
         self.estimated_cost = cost
         if HAS_OTEL and self.otel_span:
             self.otel_span.set_attribute("genops.cost.amount", cost)
             self.otel_span.set_attribute("genops.cost.currency", "USD")
-            
+
     def update_token_usage(self, input_tokens: int, output_tokens: int):
         """Update token usage for this operation."""
         self.input_tokens = input_tokens
         self.output_tokens = output_tokens
         self.total_tokens = input_tokens + output_tokens
-        
+
         if HAS_OTEL and self.otel_span:
             self.otel_span.set_attribute("genops.tokens.input", input_tokens)
             self.otel_span.set_attribute("genops.tokens.output", output_tokens)
             self.otel_span.set_attribute("genops.tokens.total", self.total_tokens)
-            
+
     def get_metrics(self) -> Dict[str, Any]:
         """Get metrics for this span."""
         return {
@@ -480,20 +478,20 @@ class EnhancedSpan:
 
 class MockSpan:
     """Mock span for when OpenLLMetry is not available."""
-    
+
     def __init__(self):
         self.estimated_cost = 0.0
         self.policy_violations = []
-        
+
     def add_attributes(self, attributes):
         pass
-        
+
     def update_cost(self, cost):
         self.estimated_cost = cost
-        
+
     def update_token_usage(self, input_tokens, output_tokens):
         pass
-        
+
     def get_metrics(self):
         return {"estimated_cost": self.estimated_cost}
 
@@ -533,7 +531,7 @@ def auto_instrument(
     if not HAS_OPENLLMETRY:
         logger.error("Cannot auto-instrument: OpenLLMetry not available")
         return
-        
+
     # Create global adapter instance
     global _global_adapter
     _global_adapter = GenOpsTraceloopAdapter(
@@ -543,7 +541,7 @@ def auto_instrument(
         enable_auto_instrumentation=True,
         **kwargs
     )
-    
+
     logger.info(f"Auto-instrumentation enabled for team={team}, project={project}")
 
 
@@ -628,7 +626,7 @@ def multi_provider_cost_tracking(
     if not HAS_OPENLLMETRY:
         logger.error("Cannot enable multi-provider tracking: OpenLLMetry not available")
         return {}
-    
+
     # Create unified adapter for all providers
     adapter = GenOpsTraceloopAdapter(
         team=team,
@@ -637,17 +635,17 @@ def multi_provider_cost_tracking(
         enable_auto_instrumentation=True,
         **kwargs
     )
-    
+
     cost_summary = {}
     for provider in providers:
         cost_summary[provider] = 0.0
-    
+
     # Store provider configuration
     adapter._multi_provider_config = {
         "providers": providers,
         "cost_summary": cost_summary
     }
-    
+
     logger.info(f"Multi-provider cost tracking enabled for: {', '.join(providers)}")
     return cost_summary
 

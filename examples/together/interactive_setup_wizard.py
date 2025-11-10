@@ -18,13 +18,11 @@ Features:
 
 import os
 import sys
-from datetime import datetime
-from typing import Dict, Any, Optional, List
 
 try:
-    from genops.providers.together_validation import validate_together_setup
-    from genops.providers.together_pricing import TogetherPricingCalculator
     from genops.providers.together import TogetherModel
+    from genops.providers.together_pricing import TogetherPricingCalculator
+    from genops.providers.together_validation import validate_together_setup
 except ImportError as e:
     print(f"❌ Import error: {e}")
     print("Please install: pip install genops-ai[together]")
@@ -33,11 +31,11 @@ except ImportError as e:
 
 class TogetherSetupWizard:
     """Interactive setup wizard for Together AI + GenOps configuration."""
-    
+
     def __init__(self):
         self.config = {}
         self.pricing_calc = TogetherPricingCalculator()
-    
+
     def welcome(self):
         """Display welcome message and overview."""
         print("🧙‍♂️ Together AI + GenOps Setup Wizard")
@@ -49,62 +47,62 @@ class TogetherSetupWizard:
         print("  ✅ Generate environment files and example code")
         print("  ✅ Test your configuration")
         print()
-    
+
     def gather_api_credentials(self):
         """Gather and validate API credentials."""
         print("🔐 API Credentials Setup")
         print("-" * 30)
-        
+
         # Check for existing API key
         existing_key = os.getenv('TOGETHER_API_KEY')
         if existing_key:
-            print(f"✅ Found existing TOGETHER_API_KEY environment variable")
+            print("✅ Found existing TOGETHER_API_KEY environment variable")
             use_existing = input("Use existing API key? (Y/n): ").lower()
             if use_existing != 'n':
                 self.config['api_key'] = existing_key
                 return
-        
+
         print("\n📝 Please provide your Together AI credentials:")
         print("   Get your API key from: https://api.together.xyz/settings/api-keys")
-        
+
         while True:
             api_key = input("\nTogether AI API Key: ").strip()
             if not api_key:
                 print("❌ API key is required")
                 continue
-            
+
             if not api_key.startswith(('sk-', 'pk-')):
                 print("⚠️ Warning: API key format may be incorrect (should start with 'sk-' or 'pk-')")
                 confirm = input("Continue anyway? (y/N): ").lower()
                 if confirm != 'y':
                     continue
-            
+
             self.config['api_key'] = api_key
             print("✅ API key configured")
             break
-    
+
     def gather_governance_config(self):
         """Gather governance and cost tracking configuration."""
         print("\n🛡️ Governance Configuration")
         print("-" * 30)
-        
+
         # Team information
         default_team = os.getenv('GENOPS_TEAM', '')
         self.config['team'] = input(f"Team name [{default_team or 'my-team'}]: ").strip() or default_team or 'my-team'
-        
+
         # Project information
         default_project = os.getenv('GENOPS_PROJECT', '')
         self.config['project'] = input(f"Project name [{default_project or 'together-ai-project'}]: ").strip() or default_project or 'together-ai-project'
-        
+
         # Environment
         default_env = os.getenv('GENOPS_ENVIRONMENT', 'development')
-        print(f"\nEnvironment options: development, staging, production")
+        print("\nEnvironment options: development, staging, production")
         self.config['environment'] = input(f"Environment [{default_env}]: ").strip() or default_env
-        
+
         # Budget configuration
-        print(f"\n💰 Budget Configuration")
+        print("\n💰 Budget Configuration")
         print("   Set budget limits to control AI spending")
-        
+
         while True:
             try:
                 daily_budget = input("Daily budget limit (USD) [50.0]: ").strip()
@@ -112,7 +110,7 @@ class TogetherSetupWizard:
                 break
             except ValueError:
                 print("❌ Please enter a valid number")
-        
+
         while True:
             try:
                 monthly_budget = input("Monthly budget limit (USD) [1000.0]: ").strip()
@@ -120,13 +118,13 @@ class TogetherSetupWizard:
                 break
             except ValueError:
                 print("❌ Please enter a valid number")
-        
+
         # Governance policy
-        print(f"\n🛡️ Governance Policy Options:")
+        print("\n🛡️ Governance Policy Options:")
         print("   advisory  - Monitor costs, provide warnings")
         print("   enforced - Block operations that exceed budget")
         print("   strict   - Strict enforcement with detailed auditing")
-        
+
         policy_options = ['advisory', 'enforced', 'strict']
         while True:
             policy = input("Governance policy [advisory]: ").strip().lower() or 'advisory'
@@ -134,22 +132,22 @@ class TogetherSetupWizard:
                 self.config['governance_policy'] = policy
                 break
             print(f"❌ Please choose from: {', '.join(policy_options)}")
-        
+
         # Optional enterprise features
-        print(f"\n🏢 Optional Enterprise Features")
+        print("\n🏢 Optional Enterprise Features")
         customer_id = input("Customer ID (optional): ").strip()
         if customer_id:
             self.config['customer_id'] = customer_id
-        
+
         cost_center = input("Cost center (optional): ").strip()
         if cost_center:
             self.config['cost_center'] = cost_center
-    
+
     def gather_preferences(self):
         """Gather user preferences and model selection."""
-        print(f"\n⚙️ Preferences & Model Selection")
+        print("\n⚙️ Preferences & Model Selection")
         print("-" * 30)
-        
+
         # Default model selection
         print("🤖 Default Model Selection:")
         print("   Available tiers:")
@@ -158,7 +156,7 @@ class TogetherSetupWizard:
         print("   3. Large (405B)        - Maximum capability")
         print("   4. Reasoning (R1)      - Advanced reasoning")
         print("   5. Code (DeepSeek)     - Code generation")
-        
+
         model_choices = {
             '1': TogetherModel.LLAMA_3_1_8B_INSTRUCT,
             '2': TogetherModel.LLAMA_3_1_70B_INSTRUCT,
@@ -166,20 +164,20 @@ class TogetherSetupWizard:
             '4': TogetherModel.DEEPSEEK_R1,
             '5': TogetherModel.DEEPSEEK_CODER_V2
         }
-        
+
         while True:
             choice = input("Select default model tier [1]: ").strip() or '1'
             if choice in model_choices:
                 self.config['default_model'] = model_choices[choice]
                 break
             print("❌ Please choose 1-5")
-        
+
         # Performance preferences
-        print(f"\n⚡ Performance Preferences:")
-        
+        print("\n⚡ Performance Preferences:")
+
         enable_caching = input("Enable response caching? [y/N]: ").lower() == 'y'
         self.config['enable_caching'] = enable_caching
-        
+
         while True:
             try:
                 retry_attempts = input("Retry attempts for failed requests [3]: ").strip()
@@ -187,7 +185,7 @@ class TogetherSetupWizard:
                 break
             except ValueError:
                 print("❌ Please enter a valid number")
-        
+
         while True:
             try:
                 timeout = input("Request timeout (seconds) [30]: ").strip()
@@ -195,37 +193,37 @@ class TogetherSetupWizard:
                 break
             except ValueError:
                 print("❌ Please enter a valid number")
-        
+
         # Cost alerts
         enable_alerts = input("Enable cost alerts? [Y/n]: ").lower() != 'n'
         self.config['enable_cost_alerts'] = enable_alerts
-    
+
     def validate_configuration(self):
         """Validate the complete configuration."""
-        print(f"\n✅ Configuration Validation")
+        print("\n✅ Configuration Validation")
         print("-" * 30)
-        
+
         print("🔍 Validating your configuration...")
-        
+
         # Run comprehensive validation
         result = validate_together_setup(
             together_api_key=self.config['api_key'],
             config=self.config,
             print_results=False  # We'll format our own output
         )
-        
+
         if result.is_valid:
             print("✅ Configuration validation successful!")
-            
+
             if result.model_access:
                 print(f"🎯 Model Access: {len(result.model_access)} models available")
-                
+
                 # Show cost estimates for the user's default model
                 if hasattr(self.config['default_model'], 'value'):
                     model_name = self.config['default_model'].value
                     cost_est = self.pricing_calc.estimate_chat_cost(model_name, 1000)
                     print(f"💰 Default model cost: ~${cost_est:.6f} per 1000 tokens")
-            
+
             return True
         else:
             print("❌ Configuration validation failed:")
@@ -233,28 +231,28 @@ class TogetherSetupWizard:
                 print(f"   • {error.message}")
                 print(f"     Fix: {error.remediation}")
             return False
-    
+
     def generate_files(self):
         """Generate environment and example files."""
-        print(f"\n📁 Generating Configuration Files")
+        print("\n📁 Generating Configuration Files")
         print("-" * 30)
-        
+
         # Generate environment file
         self._generate_env_file()
-        
+
         # Generate example code
         self._generate_example_code()
-        
-        print(f"\n✅ Files generated successfully!")
-        print(f"\nNext steps:")
-        print(f"   1. Review generated files")
-        print(f"   2. Run: python together_example.py")
-        print(f"   3. Explore examples/together/ for more patterns")
-    
+
+        print("\n✅ Files generated successfully!")
+        print("\nNext steps:")
+        print("   1. Review generated files")
+        print("   2. Run: python together_example.py")
+        print("   3. Explore examples/together/ for more patterns")
+
     def _generate_env_file(self):
         """Generate environment variables file."""
         # Security: Write only static safe content to prevent sensitive data exposure
-        static_safe_content = f"""# Together AI + GenOps Configuration
+        static_safe_content = """# Together AI + GenOps Configuration
 # Generated by setup wizard - TEMPLATE FILE
 # SECURITY: Replace placeholders with your actual values
 
@@ -280,12 +278,12 @@ GENOPS_TIMEOUT_SECONDS=30
 """
         with open('.env.together', 'w') as f:
             f.write(static_safe_content)
-        
-        print(f"   ✅ Generated .env.together")
+
+        print("   ✅ Generated .env.together")
         if self.config.get('api_key') and self.config['api_key'].startswith(('sk-', 'pk-')):
-            print(f"   🔐 Security: API key not written to file - please set it manually")
-            print(f"   💡 Run: export TOGETHER_API_KEY='your-actual-key'")
-    
+            print("   🔐 Security: API key not written to file - please set it manually")
+            print("   💡 Run: export TOGETHER_API_KEY='your-actual-key'")
+
     def _generate_example_code(self):
         """Generate working example code."""
         # Security: Use static template to prevent sensitive data exposure
@@ -353,17 +351,17 @@ def main():
 if __name__ == "__main__":
     main()
 '''
-        
+
         with open('together_example.py', 'w') as f:
             f.write(example_code)
-        
-        print(f"   ✅ Generated together_example.py")
-    
+
+        print("   ✅ Generated together_example.py")
+
     def _generate_config_summary(self):
         """Generate configuration summary."""
-        print(f"\n📋 Configuration Summary")
+        print("\n📋 Configuration Summary")
         print("-" * 30)
-        
+
         # Security: Display configuration safely
         print("Configuration validated and files generated:")
         print("  ✅ API credentials configured")
@@ -371,7 +369,7 @@ if __name__ == "__main__":
         print("  ✅ Budget controls enabled")
         print("  ✅ Model preferences set")
         print("  ✅ Environment files created")
-    
+
     def run_wizard(self):
         """Run the complete setup wizard."""
         try:
@@ -379,24 +377,24 @@ if __name__ == "__main__":
             self.gather_api_credentials()
             self.gather_governance_config()
             self.gather_preferences()
-            
+
             if self.validate_configuration():
                 self.generate_files()
                 self._generate_config_summary()
-                
-                print(f"\n🎉 Setup completed successfully!")
-                print(f"\n🚀 Quick Start:")
-                print(f"   1. export TOGETHER_API_KEY='your-actual-key'")
-                print(f"   2. python together_example.py")
-                print(f"   3. explore examples/together/ for more examples")
-                
+
+                print("\n🎉 Setup completed successfully!")
+                print("\n🚀 Quick Start:")
+                print("   1. export TOGETHER_API_KEY='your-actual-key'")
+                print("   2. python together_example.py")
+                print("   3. explore examples/together/ for more examples")
+
                 return True
             else:
-                print(f"\n❌ Setup failed - please fix the issues above and try again")
+                print("\n❌ Setup failed - please fix the issues above and try again")
                 return False
-        
+
         except KeyboardInterrupt:
-            print(f"\n\n⚠️ Setup wizard interrupted by user")
+            print("\n\n⚠️ Setup wizard interrupted by user")
             return False
         except Exception as e:
             print(f"\n❌ Setup wizard failed: {e}")
@@ -415,5 +413,5 @@ if __name__ == "__main__":
         exit_code = main()
         sys.exit(exit_code)
     except KeyboardInterrupt:
-        print(f"\n\n⚠️ Wizard interrupted")
+        print("\n\n⚠️ Wizard interrupted")
         sys.exit(1)

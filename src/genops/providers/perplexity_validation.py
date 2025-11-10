@@ -17,8 +17,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import List, Optional, Dict, Any, Callable
-import json
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -79,17 +78,17 @@ class ValidationResult:
     timestamp: str
     validation_duration_seconds: float
     configuration_tested: Dict[str, Any]
-    
+
     @property
     def error_count(self) -> int:
         """Count of error-level issues."""
         return sum(1 for issue in self.issues if issue.level == ValidationLevel.ERROR)
-    
+
     @property
     def warning_count(self) -> int:
         """Count of warning-level issues."""
         return sum(1 for issue in self.issues if issue.level == ValidationLevel.WARNING)
-    
+
     @property
     def success_count(self) -> int:
         """Count of successful validations."""
@@ -107,10 +106,10 @@ class PerplexitySetupValidator:
     - Governance configuration and cost controls
     - Search-specific features (citations, contexts)
     """
-    
+
     def __init__(self):
         self.issues: List[ValidationIssue] = []
-        
+
     def validate_complete_setup(
         self,
         perplexity_api_key: Optional[str] = None,
@@ -185,10 +184,10 @@ class PerplexitySetupValidator:
         )
 
         return result
-    
+
     def _validate_dependencies(self) -> None:
         """Validate required dependencies are installed."""
-        
+
         # Check OpenAI client (required for Perplexity)
         if HAS_OPENAI:
             self.issues.append(ValidationIssue(
@@ -220,7 +219,7 @@ class PerplexitySetupValidator:
                     "https://pypi.org/project/openai/"
                 ]
             ))
-        
+
         # Check requests library (helpful for direct API calls)
         if HAS_REQUESTS:
             self.issues.append(ValidationIssue(
@@ -246,7 +245,7 @@ class PerplexitySetupValidator:
                     "Direct API endpoint testing"
                 ]
             ))
-        
+
         # Check GenOps core
         try:
             from genops.core.telemetry import GenOpsTelemetry
@@ -274,12 +273,12 @@ class PerplexitySetupValidator:
                     "Team and project attribution"
                 ]
             ))
-    
+
     def _validate_authentication(self, perplexity_api_key: Optional[str]) -> None:
         """Validate Perplexity API authentication."""
-        
+
         api_key = perplexity_api_key or os.getenv('PERPLEXITY_API_KEY')
-        
+
         if not api_key:
             self.issues.append(ValidationIssue(
                 category=ValidationCategory.AUTHENTICATION,
@@ -301,7 +300,7 @@ class PerplexitySetupValidator:
                 ]
             ))
             return
-        
+
         # Validate API key format
         if not api_key.startswith('pplx-'):
             self.issues.append(ValidationIssue(
@@ -327,17 +326,17 @@ class PerplexitySetupValidator:
                 fix_suggestions=[],
                 affected_functionality=[]
             ))
-    
+
     def _validate_environment_configuration(self) -> None:
         """Validate environment variables and configuration."""
-        
+
         # Check for GenOps environment variables
         genops_vars = {
             'GENOPS_TEAM': 'Team name for cost attribution and governance',
             'GENOPS_PROJECT': 'Project name for cost tracking',
             'GENOPS_ENVIRONMENT': 'Environment (production, staging, development)'
         }
-        
+
         for var_name, description in genops_vars.items():
             value = os.getenv(var_name)
             if value:
@@ -364,17 +363,17 @@ class PerplexitySetupValidator:
                         "Governance policy enforcement"
                     ]
                 ))
-    
+
     def _validate_governance_configuration(
         self,
         team: Optional[str],
         project: Optional[str]
     ) -> None:
         """Validate GenOps governance configuration."""
-        
+
         team = team or os.getenv('GENOPS_TEAM')
         project = project or os.getenv('GENOPS_PROJECT')
-        
+
         if not team:
             self.issues.append(ValidationIssue(
                 category=ValidationCategory.GOVERNANCE,
@@ -401,7 +400,7 @@ class PerplexitySetupValidator:
                 fix_suggestions=[],
                 affected_functionality=[]
             ))
-        
+
         if not project:
             self.issues.append(ValidationIssue(
                 category=ValidationCategory.GOVERNANCE,
@@ -428,13 +427,13 @@ class PerplexitySetupValidator:
                 fix_suggestions=[],
                 affected_functionality=[]
             ))
-    
+
     def _validate_cost_configuration(self, **kwargs) -> None:
         """Validate cost management configuration."""
-        
+
         daily_budget_limit = kwargs.get('daily_budget_limit')
         monthly_budget_limit = kwargs.get('monthly_budget_limit')
-        
+
         if daily_budget_limit is not None and daily_budget_limit <= 0:
             self.issues.append(ValidationIssue(
                 category=ValidationCategory.COST_MANAGEMENT,
@@ -459,7 +458,7 @@ class PerplexitySetupValidator:
                 fix_suggestions=[],
                 affected_functionality=[]
             ))
-        
+
         if monthly_budget_limit is not None and monthly_budget_limit <= 0:
             self.issues.append(ValidationIssue(
                 category=ValidationCategory.COST_MANAGEMENT,
@@ -475,12 +474,12 @@ class PerplexitySetupValidator:
                     "Long-term cost planning"
                 ]
             ))
-    
+
     def _validate_connectivity_and_models(self, perplexity_api_key: Optional[str]) -> None:
         """Validate API connectivity and model access."""
-        
+
         api_key = perplexity_api_key or os.getenv('PERPLEXITY_API_KEY')
-        
+
         if not api_key or not HAS_OPENAI:
             self.issues.append(ValidationIssue(
                 category=ValidationCategory.CONNECTIVITY,
@@ -497,21 +496,21 @@ class PerplexitySetupValidator:
                 ]
             ))
             return
-        
+
         try:
             # Test basic connectivity with a simple request
             client = openai.OpenAI(
                 api_key=api_key,
                 base_url="https://api.perplexity.ai"
             )
-            
+
             # Make a minimal test request
             response = client.chat.completions.create(
                 model="sonar",
                 messages=[{"role": "user", "content": "test"}],
                 max_tokens=10
             )
-            
+
             self.issues.append(ValidationIssue(
                 category=ValidationCategory.CONNECTIVITY,
                 level=ValidationLevel.SUCCESS,
@@ -520,7 +519,7 @@ class PerplexitySetupValidator:
                 fix_suggestions=[],
                 affected_functionality=[]
             ))
-            
+
             # Test model access
             if hasattr(response, 'model') or hasattr(response, 'choices'):
                 self.issues.append(ValidationIssue(
@@ -531,10 +530,10 @@ class PerplexitySetupValidator:
                     fix_suggestions=[],
                     affected_functionality=[]
                 ))
-            
+
         except Exception as e:
             error_msg = str(e).lower()
-            
+
             if 'authentication' in error_msg or 'api key' in error_msg or '401' in error_msg:
                 self.issues.append(ValidationIssue(
                     category=ValidationCategory.AUTHENTICATION,
@@ -552,7 +551,7 @@ class PerplexitySetupValidator:
                     ],
                     technical_details=str(e)
                 ))
-            
+
             elif 'rate limit' in error_msg or '429' in error_msg:
                 self.issues.append(ValidationIssue(
                     category=ValidationCategory.CONNECTIVITY,
@@ -569,7 +568,7 @@ class PerplexitySetupValidator:
                     ],
                     technical_details=str(e)
                 ))
-            
+
             elif 'network' in error_msg or 'connection' in error_msg:
                 self.issues.append(ValidationIssue(
                     category=ValidationCategory.CONNECTIVITY,
@@ -587,7 +586,7 @@ class PerplexitySetupValidator:
                     ],
                     technical_details=str(e)
                 ))
-            
+
             else:
                 self.issues.append(ValidationIssue(
                     category=ValidationCategory.CONNECTIVITY,
@@ -605,12 +604,12 @@ class PerplexitySetupValidator:
                     ],
                     technical_details=str(e)
                 ))
-    
+
     def _validate_search_features(self, perplexity_api_key: Optional[str]) -> None:
         """Validate Perplexity-specific search features."""
-        
+
         api_key = perplexity_api_key or os.getenv('PERPLEXITY_API_KEY')
-        
+
         if not api_key or not HAS_OPENAI:
             self.issues.append(ValidationIssue(
                 category=ValidationCategory.SEARCH_FEATURES,
@@ -627,24 +626,24 @@ class PerplexitySetupValidator:
                 ]
             ))
             return
-        
+
         try:
             # Test search with citation
             client = openai.OpenAI(
                 api_key=api_key,
                 base_url="https://api.perplexity.ai"
             )
-            
+
             response = client.chat.completions.create(
                 model="sonar",
                 messages=[{"role": "user", "content": "What is AI?"}],
                 max_tokens=50
             )
-            
+
             # Check for search-specific features in response
             if hasattr(response, 'choices') and response.choices:
                 content = response.choices[0].message.content
-                
+
                 if content and len(content) > 0:
                     self.issues.append(ValidationIssue(
                         category=ValidationCategory.SEARCH_FEATURES,
@@ -654,7 +653,7 @@ class PerplexitySetupValidator:
                         fix_suggestions=[],
                         affected_functionality=[]
                     ))
-                
+
                 # Check for citation indicators (URLs, references)
                 if 'http' in content or '[' in content or 'source:' in content.lower():
                     self.issues.append(ValidationIssue(
@@ -681,7 +680,7 @@ class PerplexitySetupValidator:
                             "Source attribution"
                         ]
                     ))
-            
+
         except Exception as e:
             self.issues.append(ValidationIssue(
                 category=ValidationCategory.SEARCH_FEATURES,
@@ -699,12 +698,12 @@ class PerplexitySetupValidator:
                 ],
                 technical_details=str(e)
             ))
-    
+
     def print_validation_result(self, result: ValidationResult, show_details: bool = True) -> None:
         """Print formatted validation result."""
         print("\n🔍 Perplexity AI Setup Validation Report")
         print("=" * 55)
-        
+
         # Overall status
         status_emoji = {
             ValidationLevel.SUCCESS: "✅",
@@ -712,22 +711,22 @@ class PerplexitySetupValidator:
             ValidationLevel.ERROR: "❌",
             ValidationLevel.INFO: "ℹ️"
         }
-        
+
         print(f"\n📊 Overall Status: {status_emoji[result.overall_status]} {result.overall_status.value.upper()}")
         print(f"🔧 Setup Valid: {'Yes' if result.is_valid else 'No'}")
         print(f"⏱️ Validation Time: {result.validation_duration_seconds:.2f} seconds")
         print(f"📅 Timestamp: {result.timestamp}")
-        
+
         # Summary
-        print(f"\n📋 Summary:")
+        print("\n📋 Summary:")
         print(f"   ✅ Successes: {result.success_count}")
         print(f"   ⚠️ Warnings: {result.warning_count}")
         print(f"   ❌ Errors: {result.error_count}")
         print(f"   ℹ️ Info: {len([i for i in result.issues if i.level == ValidationLevel.INFO])}")
-        
+
         if show_details and result.issues:
-            print(f"\n📝 Detailed Results:")
-            
+            print("\n📝 Detailed Results:")
+
             # Group by category
             categories = {}
             for issue in result.issues:
@@ -735,47 +734,47 @@ class PerplexitySetupValidator:
                 if category not in categories:
                     categories[category] = []
                 categories[category].append(issue)
-            
+
             for category, issues in categories.items():
                 print(f"\n📂 {category.upper().replace('_', ' ')}")
                 print("-" * 40)
-                
+
                 for issue in issues:
                     emoji = status_emoji[issue.level]
                     print(f"   {emoji} {issue.title}")
-                    
+
                     if issue.level in [ValidationLevel.ERROR, ValidationLevel.WARNING]:
                         print(f"      Description: {issue.description}")
-                        
+
                         if issue.fix_suggestions:
-                            print(f"      Fix suggestions:")
+                            print("      Fix suggestions:")
                             for suggestion in issue.fix_suggestions[:3]:  # Show top 3
                                 print(f"      • {suggestion}")
-                        
+
                         if issue.affected_functionality:
                             print(f"      Affects: {', '.join(issue.affected_functionality[:2])}")
-                        
+
                         print()
-        
+
         # Next steps
         if result.error_count > 0:
             print("\n🚨 Next Steps (Errors Found):")
             print("1. Fix the error-level issues above")
             print("2. Re-run validation to confirm fixes")
             print("3. Address warnings for optimal performance")
-            
+
         elif result.warning_count > 0:
             print("\n⚠️ Next Steps (Warnings Found):")
             print("1. Basic functionality should work")
             print("2. Address warnings for optimal performance")
             print("3. Consider governance configuration")
-            
+
         else:
             print("\n🎉 Next Steps (All Good!):")
             print("1. Your Perplexity setup is fully configured")
             print("2. Try the examples in examples/perplexity/")
             print("3. Read the complete integration guide")
-        
+
         print("\n📚 Resources:")
         print("   • Quickstart: docs/perplexity-quickstart.md")
         print("   • Examples: examples/perplexity/")
@@ -834,9 +833,9 @@ def interactive_setup_wizard() -> Dict[str, Any]:
     print("=" * 55)
     print("This wizard will help you configure Perplexity AI with GenOps governance.")
     print()
-    
+
     config = {}
-    
+
     # API Key
     print("🔑 Step 1: API Key Configuration")
     api_key = input("Enter your Perplexity API key (or press Enter to use PERPLEXITY_API_KEY env var): ").strip()
@@ -844,23 +843,23 @@ def interactive_setup_wizard() -> Dict[str, Any]:
         config['perplexity_api_key'] = api_key
     elif not os.getenv('PERPLEXITY_API_KEY'):
         print("⚠️ No API key provided. Set PERPLEXITY_API_KEY environment variable.")
-    
+
     # Team and Project
     print("\n👥 Step 2: Team & Project Attribution")
     team = input("Enter team name (for cost attribution): ").strip()
     if team:
         config['team'] = team
-    
+
     project = input("Enter project name (for cost tracking): ").strip()
     if project:
         config['project'] = project
-    
+
     # Environment
     print("\n🌍 Step 3: Environment Configuration")
     print("Environments: production, staging, development, testing")
     environment = input("Enter environment [production]: ").strip() or "production"
     config['environment'] = environment
-    
+
     # Budget Configuration
     print("\n💰 Step 4: Budget Configuration")
     try:
@@ -868,20 +867,20 @@ def interactive_setup_wizard() -> Dict[str, Any]:
         config['daily_budget_limit'] = float(daily_budget) if daily_budget else 100.0
     except ValueError:
         config['daily_budget_limit'] = 100.0
-    
+
     # Governance Policy
     print("\n🛡️ Step 5: Governance Policy")
     print("Policies: advisory (warnings), enforced (blocks on budget), strict (maximum control)")
     policy = input("Enter governance policy [advisory]: ").strip() or "advisory"
     config['governance_policy'] = policy
-    
+
     # Validation
     print("\n🔍 Step 6: Validating Configuration...")
     result = validate_setup(**config)
-    
+
     if result.is_valid:
         print("✅ Configuration validated successfully!")
-        
+
         # Generate code example
         print("\n💻 Your Configuration:")
         print("```python")
@@ -894,10 +893,10 @@ def interactive_setup_wizard() -> Dict[str, Any]:
         print("    # All sensitive values like API keys are properly secured")
         print(")")
         print("```")
-        
+
     else:
         print("❌ Configuration validation failed. Please check the issues above.")
-    
+
     return config
 
 
@@ -913,12 +912,12 @@ def _sanitize_sensitive_field(field_name: str, value: Any) -> Any:
         'key', 'token', 'secret', 'password', 'credential', 'auth',
         'private', 'secure', 'sensitive', 'confidential', 'restricted'
     }
-    
+
     # Check field name against all sensitive patterns
     field_lower = field_name.lower()
     if any(pattern in field_lower for pattern in sensitive_patterns):
         return "***REDACTED***"
-    
+
     # Allowlist of explicitly safe configuration fields
     safe_fields = {
         'team', 'project', 'environment', 'daily_budget_limit',
@@ -926,7 +925,7 @@ def _sanitize_sensitive_field(field_name: str, value: Any) -> Any:
         'customer_id', 'cost_center', 'default_model', 'default_search_context',
         'enable_caching', 'retry_attempts', 'timeout_seconds', 'tags'
     }
-    
+
     if field_name in safe_fields:
         return value
     else:

@@ -20,22 +20,21 @@ Note: This example shows Lambda deployment patterns. For actual Lambda deploymen
 package the functions and deploy using AWS SAM, Serverless Framework, or CDK.
 """
 
-import sys
-import os
 import json
-import time
+import os
+import sys
 
 # Add src to path for development
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
 def create_lambda_handler_example():
     """Create example Lambda handler with GenOps Bedrock integration."""
-    
+
     print("⚡ AWS Lambda Handler with GenOps Bedrock")
     print("=" * 45)
     print("Serverless AI processing with automatic governance and cost tracking:")
     print()
-    
+
     # Lambda handler code example
     lambda_handler_code = '''
 import json
@@ -159,7 +158,7 @@ def lambda_handler(event: Dict[str, Any], context) -> Dict[str, Any]:
             })
         }
 '''
-    
+
     print("📄 Lambda Handler Code Generated:")
     print("   ✅ GenOps auto-instrumentation enabled")
     print("   ✅ Connection reuse for performance")
@@ -168,21 +167,21 @@ def lambda_handler(event: Dict[str, Any], context) -> Dict[str, Any]:
     print("   ✅ Comprehensive error handling")
     print("   ✅ Cost and performance metrics")
     print()
-    
+
     return lambda_handler_code
 
 
 def create_sam_template():
     """Create AWS SAM template for deployment."""
-    
+
     print("📦 AWS SAM Deployment Template")
     print("=" * 35)
-    
+
     sam_template = {
         "AWSTemplateFormatVersion": "2010-09-09",
         "Transform": "AWS::Serverless-2016-10-31",
         "Description": "GenOps Bedrock Lambda Integration",
-        
+
         "Globals": {
             "Function": {
                 "Runtime": "python3.9",
@@ -199,7 +198,7 @@ def create_sam_template():
                 }
             }
         },
-        
+
         "Resources": {
             "DocumentAnalysisFunction": {
                 "Type": "AWS::Serverless::Function",
@@ -251,7 +250,7 @@ def create_sam_template():
                     ]
                 }
             },
-            
+
             "BatchProcessingFunction": {
                 "Type": "AWS::Serverless::Function",
                 "Properties": {
@@ -282,7 +281,7 @@ def create_sam_template():
                     }
                 }
             },
-            
+
             "DocumentsBucket": {
                 "Type": "AWS::S3::Bucket",
                 "Properties": {
@@ -296,7 +295,7 @@ def create_sam_template():
                 }
             }
         },
-        
+
         "Outputs": {
             "DocumentAnalysisApi": {
                 "Description": "API Gateway endpoint URL for document analysis",
@@ -308,7 +307,7 @@ def create_sam_template():
             }
         }
     }
-    
+
     print("🏗️ SAM Template Features:")
     print("   ✅ Two Lambda functions (API + Batch processing)")
     print("   ✅ API Gateway integration")
@@ -317,18 +316,18 @@ def create_sam_template():
     print("   ✅ GenOps environment configuration")
     print("   ✅ CloudTrail integration")
     print()
-    
+
     return sam_template
 
 
 def create_step_functions_integration():
     """Create Step Functions workflow with GenOps Bedrock."""
-    
+
     print("🔄 AWS Step Functions Integration")
     print("=" * 38)
     print("Complex AI workflow orchestration with state management:")
     print()
-    
+
     step_functions_code = '''
 import json
 import boto3
@@ -430,7 +429,7 @@ def compliance_validation_handler(event, context):
         'workflow_complete': True
     }
 '''
-    
+
     step_functions_definition = {
         "Comment": "GenOps Bedrock Document Processing Workflow",
         "StartAt": "DocumentClassification",
@@ -455,7 +454,7 @@ def compliance_validation_handler(event, context):
                 ]
             },
             "ContentExtraction": {
-                "Type": "Task", 
+                "Type": "Task",
                 "Resource": "arn:aws:lambda:us-east-1:ACCOUNT:function:ContentExtractionFunction",
                 "Next": "ComplianceValidation",
                 "Retry": [
@@ -498,7 +497,7 @@ def compliance_validation_handler(event, context):
             }
         }
     }
-    
+
     print("🔄 Step Functions Workflow Features:")
     print("   ✅ Multi-step AI processing pipeline")
     print("   ✅ Intelligent model selection based on content")
@@ -507,18 +506,18 @@ def compliance_validation_handler(event, context):
     print("   ✅ Cost tracking across workflow steps")
     print("   ✅ Conditional workflow paths based on AI analysis")
     print()
-    
+
     return step_functions_code, step_functions_definition
 
 
 def demonstrate_api_gateway_integration():
     """Demonstrate API Gateway patterns with GenOps Bedrock."""
-    
+
     print("🌐 API Gateway Integration Patterns")
     print("=" * 40)
     print("RESTful API for AI services with comprehensive governance:")
     print()
-    
+
     # API Gateway configuration
     api_patterns = [
         {
@@ -529,14 +528,14 @@ def demonstrate_api_gateway_integration():
         },
         {
             "endpoint": "POST /analyze/batch",
-            "description": "Batch document processing", 
+            "description": "Batch document processing",
             "lambda": "BatchProcessingFunction",
             "features": ["Async processing", "Cost optimization", "Progress tracking"]
         },
         {
             "endpoint": "GET /workflows/{workflow_id}",
             "description": "Workflow status and costs",
-            "lambda": "WorkflowStatusFunction", 
+            "lambda": "WorkflowStatusFunction",
             "features": ["Real-time status", "Cost breakdown", "Performance metrics"]
         },
         {
@@ -546,7 +545,7 @@ def demonstrate_api_gateway_integration():
             "features": ["Cost trends", "Model recommendations", "Budget alerts"]
         }
     ]
-    
+
     print("🔗 API Endpoints:")
     for pattern in api_patterns:
         print(f"   📍 {pattern['endpoint']}")
@@ -555,10 +554,10 @@ def demonstrate_api_gateway_integration():
         for feature in pattern['features']:
             print(f"      ✅ {feature}")
         print()
-    
+
     # Request/Response examples
     print("📨 Example Request/Response:")
-    
+
     example_request = {
         "document_text": "QUARTERLY FINANCIAL REPORT Q3 2024...",
         "analysis_type": "financial",
@@ -569,7 +568,7 @@ def demonstrate_api_gateway_integration():
             "priority": "high"
         }
     }
-    
+
     example_response = {
         "workflow_id": "wf_bedrock_20241104_001",
         "classification": "Financial quarterly report",
@@ -589,7 +588,7 @@ def demonstrate_api_gateway_integration():
             "audit_trail_id": "audit_20241104_001"
         }
     }
-    
+
     print(f"📤 Request: {json.dumps(example_request, indent=2)}")
     print()
     print(f"📥 Response: {json.dumps(example_response, indent=2)}")
@@ -598,19 +597,19 @@ def demonstrate_api_gateway_integration():
 
 def demonstrate_cost_optimization_patterns():
     """Demonstrate Lambda-specific cost optimization patterns."""
-    
+
     print("💰 Lambda Cost Optimization Patterns")
     print("=" * 42)
     print("Serverless-specific strategies for minimizing costs:")
     print()
-    
+
     optimization_strategies = [
         {
             "strategy": "Cold Start Optimization",
             "description": "Minimize initialization overhead",
             "techniques": [
                 "Connection pooling outside handler",
-                "Lazy loading of GenOps components", 
+                "Lazy loading of GenOps components",
                 "Provisioned concurrency for critical functions",
                 "Smaller deployment packages"
             ]
@@ -646,40 +645,40 @@ def demonstrate_cost_optimization_patterns():
             ]
         }
     ]
-    
+
     for strategy in optimization_strategies:
         print(f"🎯 {strategy['strategy']}:")
         print(f"   {strategy['description']}")
         for technique in strategy['techniques']:
             print(f"   ✅ {technique}")
         print()
-    
+
     # Cost comparison example
     print("📊 Lambda Cost Scenarios:")
-    
+
     cost_scenarios = [
         {"scenario": "Single document (128MB)", "cost": "$0.0001", "ai_cost": "$0.002", "total": "$0.0021"},
         {"scenario": "Single document (1024MB)", "cost": "$0.0005", "ai_cost": "$0.002", "total": "$0.0025"},
         {"scenario": "Batch 10 docs (2048MB)", "cost": "$0.0020", "ai_cost": "$0.015", "total": "$0.017"},
         {"scenario": "Complex analysis (1024MB)", "cost": "$0.0008", "ai_cost": "$0.008", "total": "$0.0088"}
     ]
-    
+
     for scenario in cost_scenarios:
         print(f"   💳 {scenario['scenario']}: {scenario['total']} total")
         print(f"      (Lambda: {scenario['cost']}, AI: {scenario['ai_cost']})")
-    
+
     print()
 
 
 def main():
     """Main demonstration function."""
-    
+
     print("⚡ Welcome to GenOps Bedrock Lambda Integration!")
     print()
     print("This example demonstrates serverless deployment patterns")
     print("for AWS Bedrock with GenOps governance and cost optimization.")
     print()
-    
+
     demos = [
         ("Lambda Handler Example", create_lambda_handler_example),
         ("SAM Deployment Template", create_sam_template),
@@ -687,24 +686,24 @@ def main():
         ("API Gateway Patterns", demonstrate_api_gateway_integration),
         ("Cost Optimization", demonstrate_cost_optimization_patterns)
     ]
-    
+
     results = {}
-    
+
     for demo_name, demo_func in demos:
         print(f"🚀 {demo_name}")
         print("=" * (len(demo_name) + 3))
-        
+
         try:
             result = demo_func()
             results[demo_name] = result
             print(f"✅ {demo_name} completed successfully\n")
         except Exception as e:
             print(f"❌ {demo_name} failed: {e}\n")
-    
+
     # Summary
     print("🎉 Lambda Integration Demo Summary")
     print("=" * 40)
-    
+
     print("🏆 Serverless AI Features Demonstrated:")
     print("   ⚡ Lambda-optimized GenOps integration")
     print("   🔄 Step Functions workflow orchestration")
@@ -713,7 +712,7 @@ def main():
     print("   💰 Serverless cost optimization strategies")
     print("   🛡️ Enterprise governance in serverless architecture")
     print()
-    
+
     print("🚀 Deployment Instructions:")
     print("   1. Save the Lambda handler code to src/lambda_handler.py")
     print("   2. Create requirements.txt with: genops-ai[bedrock]")
@@ -721,13 +720,13 @@ def main():
     print("   4. Configure API Gateway endpoints")
     print("   5. Set up monitoring with CloudWatch")
     print()
-    
+
     print("🎯 Next Steps:")
     print("   → Container deployment: python ecs_integration.py")
     print("   → ML pipelines: python sagemaker_integration.py")
     print("   → Set up CloudWatch dashboards for serverless monitoring")
     print("   → Implement API throttling and rate limiting")
-    
+
     return True
 
 

@@ -102,7 +102,7 @@ def manual_check():
     # Check OpenTelemetry (optional)
     try:
         import opentelemetry
-        opentelemetry.__name__  # Reference to avoid unused import warning
+        _ = opentelemetry.__name__  # Reference to avoid unused import warning
         print("✅ OpenTelemetry is available")
 
         # Check if OTLP endpoint is configured

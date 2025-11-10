@@ -3,9 +3,9 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
-from tests.utils.mock_providers import MockOpenAIClient, MockProviderFactory
 
 from genops.providers.openai import GenOpsOpenAIAdapter
+from tests.utils.mock_providers import MockOpenAIClient, MockProviderFactory
 
 
 class TestGenOpsOpenAIAdapter:

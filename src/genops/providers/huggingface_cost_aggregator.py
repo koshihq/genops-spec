@@ -39,7 +39,7 @@ class HuggingFaceCostSummary:
     unique_providers: Set[str] = field(default_factory=set)
     total_time: float = 0.0
     governance_attributes: Dict[str, str] = field(default_factory=dict)
-    
+
     # Hugging Face specific attributes
     hf_calls: list[HuggingFaceCallCost] = field(default_factory=list)
     total_tokens_input: int = 0
@@ -68,11 +68,11 @@ class HuggingFaceCostSummary:
             self.cost_by_provider[call.provider] += call.cost
             self.cost_by_model[call.model] += call.cost
             self.total_cost += call.cost
-            
+
             # Aggregate tokens
             self.total_tokens_input += call.tokens_input
             self.total_tokens_output += call.tokens_output
-            
+
             # Track unique values
             self.unique_providers.add(call.provider)
             self.unique_models.add(call.model)
@@ -163,7 +163,7 @@ class HuggingFaceCostAggregator:
         provider = kwargs.get('provider', 'huggingface_hub')
         tokens_input = kwargs.get('input_tokens', 0)
         tokens_output = kwargs.get('output_tokens', 0)
-        
+
         # Basic fallback pricing
         generic_pricing = {
             "openai": {"input": 0.0015 / 1000, "output": 0.002 / 1000},
@@ -174,11 +174,11 @@ class HuggingFaceCostAggregator:
             "mistral": {"input": 0.0004 / 1000, "output": 0.0004 / 1000},
             "google": {"input": 0.0001 / 1000, "output": 0.0003 / 1000},
         }
-        
+
         pricing = generic_pricing.get(provider, generic_pricing["huggingface_hub"])
         input_cost = tokens_input * pricing["input"]
         output_cost = tokens_output * pricing["output"]
-        
+
         return input_cost + output_cost
 
     def start_operation_tracking(self, operation_id: str, governance_attributes: dict[str, str] = None) -> None:
@@ -186,7 +186,7 @@ class HuggingFaceCostAggregator:
         summary = HuggingFaceCostSummary()
         if governance_attributes:
             summary.governance_attributes = governance_attributes.copy()
-        
+
         self.active_operations[operation_id] = summary
         logger.debug(f"Started cost tracking for Hugging Face operation: {operation_id}")
 

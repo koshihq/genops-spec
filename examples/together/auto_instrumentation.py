@@ -15,14 +15,15 @@ Features:
     - Seamless integration with OpenTelemetry observability
 """
 
+import asyncio
 import os
 import sys
-import asyncio
 
 try:
-    from genops.providers.together import auto_instrument, TogetherModel
     # Standard Together AI import (what users already have)
     from together import Together
+
+    from genops.providers.together import TogetherModel, auto_instrument
 except ImportError as e:
     print(f"❌ Import error: {e}")
     print("Please install: pip install genops-ai[together] together")
@@ -34,11 +35,11 @@ def demonstrate_manual_approach():
     """Show traditional approach without auto-instrumentation."""
     print("📝 Traditional Approach (without GenOps)")
     print("-" * 40)
-    
+
     try:
         # Traditional Together AI usage (what users already do)
         client = Together()
-        
+
         response = client.chat.completions.create(
             model="meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
             messages=[
@@ -46,14 +47,14 @@ def demonstrate_manual_approach():
             ],
             max_tokens=100
         )
-        
+
         print("✅ Traditional approach works")
         print(f"   Response: {response.choices[0].message.content[:100]}...")
         print("   ❌ No cost tracking")
         print("   ❌ No governance attributes")
         print("   ❌ No budget controls")
         print("   ❌ No observability telemetry")
-        
+
     except Exception as e:
         print(f"❌ Traditional approach failed: {e}")
 
@@ -62,7 +63,7 @@ def demonstrate_auto_instrumentation():
     """Show how auto-instrumentation adds governance with zero code changes."""
     print("\n🔧 Auto-Instrumentation Approach")
     print("-" * 40)
-    
+
     # STEP 1: Enable auto-instrumentation with ONE line
     print("Step 1: Enable auto-instrumentation")
     adapter = auto_instrument(
@@ -73,13 +74,13 @@ def demonstrate_auto_instrumentation():
         governance_policy='advisory'
     )
     print("✅ Auto-instrumentation enabled with one line!")
-    
+
     # STEP 2: Use existing Together AI code unchanged
     print("\nStep 2: Use existing Together AI code (unchanged)")
     try:
         # Same exact code as before - but now with governance!
         client = Together()
-        
+
         response = client.chat.completions.create(
             model="meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
             messages=[
@@ -87,20 +88,20 @@ def demonstrate_auto_instrumentation():
             ],
             max_tokens=100
         )
-        
+
         print("✅ Same code now has governance!")
         print(f"   Response: {response.choices[0].message.content[:100]}...")
         print("   ✅ Automatic cost tracking")
         print("   ✅ Governance attributes applied")
         print("   ✅ Budget monitoring active")
         print("   ✅ OpenTelemetry traces generated")
-        
+
         # Show cost summary
         cost_summary = adapter.get_cost_summary()
-        print(f"\n💰 Automatic Cost Tracking:")
+        print("\n💰 Automatic Cost Tracking:")
         print(f"   Daily costs: ${cost_summary['daily_costs']:.6f}")
         print(f"   Budget utilization: {cost_summary['daily_budget_utilization']:.1f}%")
-        
+
     except Exception as e:
         print(f"❌ Auto-instrumented approach failed: {e}")
         return
@@ -110,17 +111,17 @@ def demonstrate_mixed_approaches():
     """Show how manual and auto-instrumented approaches can coexist."""
     print("\n🔀 Mixed Approaches")
     print("-" * 40)
-    
+
     # Get the current auto-instrumented adapter
     from src.genops.providers.together import get_current_adapter
     adapter = get_current_adapter()
-    
+
     if not adapter:
         print("❌ No auto-instrumentation active")
         return
-    
+
     print("Combining auto-instrumentation with manual governance:")
-    
+
     try:
         # Use the adapter directly for fine-grained control
         result = adapter.chat_with_governance(
@@ -135,13 +136,13 @@ def demonstrate_mixed_approaches():
             approach="mixed",
             demo_type="governance-showcase"
         )
-        
+
         print("✅ Manual governance with fine-grained control:")
         print(f"   Response: {result.response[:120]}...")
         print(f"   Model: {result.model_used}")
         print(f"   Cost: ${result.cost:.6f}")
-        print(f"   Custom attributes: feature, approach, demo_type")
-        
+        print("   Custom attributes: feature, approach, demo_type")
+
         # Also show that regular Together calls still work
         client = Together()
         response = client.chat.completions.create(
@@ -149,11 +150,11 @@ def demonstrate_mixed_approaches():
             messages=[{"role": "user", "content": "This is automatically tracked too!"}],
             max_tokens=50
         )
-        
+
         print("\n✅ Regular Together calls automatically tracked:")
         print(f"   Response: {response.choices[0].message.content[:80]}...")
         print("   (Cost and governance automatically applied)")
-        
+
     except Exception as e:
         print(f"❌ Mixed approach failed: {e}")
 
@@ -162,14 +163,14 @@ def demonstrate_async_auto_instrumentation():
     """Show auto-instrumentation with async operations."""
     print("\n⚡ Async Auto-Instrumentation")
     print("-" * 40)
-    
+
     async def async_operations():
         """Demonstrate async operations with auto-instrumentation."""
         from together import AsyncTogether
-        
+
         try:
             client = AsyncTogether()
-            
+
             # Multiple concurrent operations
             tasks = [
                 client.chat.completions.create(
@@ -179,25 +180,25 @@ def demonstrate_async_auto_instrumentation():
                 )
                 for i in range(3)
             ]
-            
+
             print("🚀 Running 3 concurrent operations...")
             responses = await asyncio.gather(*tasks)
-            
+
             print("✅ All async operations completed with governance:")
             for i, response in enumerate(responses, 1):
                 print(f"   Task {i}: {response.choices[0].message.content[:60]}...")
-            
+
             # Show updated cost tracking
             from src.genops.providers.together import get_current_adapter
             adapter = get_current_adapter()
             if adapter:
                 cost_summary = adapter.get_cost_summary()
-                print(f"\n💰 Updated costs after async operations:")
+                print("\n💰 Updated costs after async operations:")
                 print(f"   Total daily costs: ${cost_summary['daily_costs']:.6f}")
-            
+
         except Exception as e:
             print(f"❌ Async operations failed: {e}")
-    
+
     # Run async demo
     try:
         asyncio.run(async_operations())
@@ -209,21 +210,21 @@ def main():
     """Demonstrate auto-instrumentation capabilities."""
     print("🔧 Together AI Auto-Instrumentation Demo")
     print("=" * 50)
-    
+
     # Show the difference
     demonstrate_manual_approach()
     demonstrate_auto_instrumentation()
     demonstrate_mixed_approaches()
     demonstrate_async_auto_instrumentation()
-    
+
     # Final summary
     print("\n" + "=" * 50)
     print("📊 Auto-Instrumentation Benefits")
     print("=" * 50)
-    
+
     from src.genops.providers.together import get_current_adapter
     adapter = get_current_adapter()
-    
+
     if adapter:
         cost_summary = adapter.get_cost_summary()
         print("✅ Zero-code governance achieved:")
@@ -233,7 +234,7 @@ def main():
         print(f"   • Project tracking: {cost_summary['project']}")
         print(f"   • Governance policy: {cost_summary['governance_policy']}")
         print(f"   • Active sessions: {cost_summary['active_sessions']}")
-        
+
         print("\n🎯 Key Advantages:")
         print("   ✅ Drop-in replacement for existing code")
         print("   ✅ No refactoring required")
@@ -241,13 +242,13 @@ def main():
         print("   ✅ Governance attributes applied globally")
         print("   ✅ OpenTelemetry integration")
         print("   ✅ Can mix with manual governance for fine control")
-    
+
     print("\n🚀 Next Steps:")
     print("   • Add auto_instrument() to your existing Together AI code")
     print("   • Configure team, project, and budget limits")
     print("   • Monitor costs and performance automatically")
     print("   • Use manual governance for fine-grained control when needed")
-    
+
     return 0
 
 

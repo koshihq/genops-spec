@@ -35,41 +35,36 @@ import logging
 
 # Import all main classes and functions
 from genops.providers.haystack_adapter import (
+    GenOpsComponentMixin,
     GenOpsHaystackAdapter,
     HaystackComponentResult,
     HaystackPipelineResult,
     HaystackSessionContext,
-    GenOpsComponentMixin
 )
-
 from genops.providers.haystack_cost_aggregator import (
-    HaystackCostAggregator,
     ComponentCostEntry,
-    ProviderCostSummary,
     CostAnalysisResult,
-    CostOptimizationRecommendation,
-    ProviderType
+    HaystackCostAggregator,
+    ProviderType,
 )
-
 from genops.providers.haystack_monitor import (
-    HaystackMonitor,
+    AgentWorkflowMetrics,
     ComponentExecutionMetrics,
+    HaystackMonitor,
     PipelineExecutionMetrics,
     RAGWorkflowMetrics,
-    AgentWorkflowMetrics
 )
-
 from genops.providers.haystack_registration import (
+    TemporaryInstrumentation,
     auto_instrument,
-    disable_auto_instrumentation,
     configure_auto_instrumentation,
-    is_instrumented,
-    get_instrumentation_stats,
+    disable_auto_instrumentation,
+    get_cost_summary,
     get_current_adapter,
     get_current_monitor,
-    get_cost_summary,
     get_execution_metrics,
-    TemporaryInstrumentation
+    get_instrumentation_stats,
+    is_instrumented,
 )
 
 logger = logging.getLogger(__name__)
@@ -90,7 +85,7 @@ __author__ = "GenOps AI"
 # Convenience functions for common patterns
 def instrument_haystack(
     team: str = "default-team",
-    project: str = "haystack-app", 
+    project: str = "haystack-app",
     environment: str = "development",
     daily_budget_limit: float = 100.0,
     governance_policy: str = "advisory"
@@ -247,16 +242,16 @@ def analyze_pipeline_costs(adapter: GenOpsHaystackAdapter, time_period_hours: in
     """
     if not hasattr(adapter, 'cost_aggregator') or not adapter.cost_aggregator:
         return {"error": "Cost aggregator not available"}
-    
+
     # Get cost analysis from aggregator
     analysis = adapter.cost_aggregator.get_cost_analysis(time_period_hours=time_period_hours)
-    
+
     # Convert to more friendly format
     return {
         "total_cost": float(analysis.total_cost),
         "cost_by_provider": {k: float(v) for k, v in analysis.cost_by_provider.items()},
         "cost_by_component": {k: float(v) for k, v in analysis.cost_by_component.items()},
-        "most_expensive_component": max(analysis.cost_by_component.items(), 
+        "most_expensive_component": max(analysis.cost_by_component.items(),
                                        key=lambda x: x[1], default=(None, 0))[0],
         "recommendations": [
             {
@@ -301,9 +296,9 @@ def get_rag_insights(monitor: HaystackMonitor, pipeline_id: str) -> dict:
     metrics = monitor.get_execution_metrics(pipeline_id)
     if not metrics:
         return {"error": "Pipeline execution not found"}
-    
+
     rag_metrics = monitor.analyze_rag_workflow(metrics)
-    
+
     return {
         "retrieval_latency": rag_metrics.retrieval_latency_seconds,
         "generation_latency": rag_metrics.generation_latency_seconds,
@@ -336,9 +331,9 @@ def get_agent_insights(monitor: HaystackMonitor, pipeline_id: str) -> dict:
     metrics = monitor.get_execution_metrics(pipeline_id)
     if not metrics:
         return {"error": "Pipeline execution not found"}
-    
+
     agent_metrics = monitor.analyze_agent_workflow(metrics)
-    
+
     return {
         "decisions_made": agent_metrics.decisions_made,
         "tools_used": agent_metrics.tools_used,
@@ -352,23 +347,22 @@ def get_agent_insights(monitor: HaystackMonitor, pipeline_id: str) -> dict:
 
 # Import validation functions
 from genops.providers.haystack_validation import (
-    validate_haystack_setup,
-    print_validation_result,
+    ValidationIssue,
     ValidationResult,
-    ValidationIssue
+    print_validation_result,
+    validate_haystack_setup,
 )
-
 
 # Export all main classes and functions
 __all__ = [
     # Core classes
     'GenOpsHaystackAdapter',
-    'HaystackMonitor', 
+    'HaystackMonitor',
     'HaystackCostAggregator',
-    
+
     # Data classes
     'HaystackComponentResult',
-    'HaystackPipelineResult', 
+    'HaystackPipelineResult',
     'HaystackSessionContext',
     'ComponentExecutionMetrics',
     'PipelineExecutionMetrics',
@@ -376,14 +370,14 @@ __all__ = [
     'AgentWorkflowMetrics',
     'ComponentCostEntry',
     'CostAnalysisResult',
-    
+
     # Auto-instrumentation
     'auto_instrument',
     'disable_auto_instrumentation',
     'configure_auto_instrumentation',
     'is_instrumented',
     'TemporaryInstrumentation',
-    
+
     # Convenience functions
     'instrument_haystack',
     'create_rag_adapter',
@@ -391,20 +385,20 @@ __all__ = [
     'analyze_pipeline_costs',
     'get_rag_insights',
     'get_agent_insights',
-    
+
     # Validation functions
     'validate_haystack_setup',
     'print_validation_result',
     'ValidationResult',
     'ValidationIssue',
-    
+
     # Monitoring functions
     'get_current_adapter',
     'get_current_monitor',
     'get_cost_summary',
     'get_execution_metrics',
     'get_instrumentation_stats',
-    
+
     # Mixins and utilities
     'GenOpsComponentMixin',
     'ProviderType'

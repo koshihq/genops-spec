@@ -9,22 +9,20 @@ Tests the intelligent pricing functionality including:
 - Edge cases and error handling
 """
 
+
 import pytest
-from unittest.mock import Mock, patch
-from decimal import Decimal
-from typing import Dict, List
 
 # Import the modules under test
 try:
     from genops.providers.bedrock_pricing import (
-        calculate_bedrock_cost,
-        compare_bedrock_models,
-        get_cost_optimization_recommendations,
-        calculate_regional_costs,
         BEDROCK_MODELS,
         BedrockCostBreakdown,
         ModelComparison,
-        OptimizationRecommendations
+        OptimizationRecommendations,
+        calculate_bedrock_cost,
+        calculate_regional_costs,
+        compare_bedrock_models,
+        get_cost_optimization_recommendations,
     )
     PRICING_AVAILABLE = True
 except ImportError:
@@ -44,7 +42,7 @@ class TestBedrockCostCalculation:
             model_id="anthropic.claude-3-haiku-20240307-v1:0",
             region="us-east-1"
         )
-        
+
         assert isinstance(cost, BedrockCostBreakdown)
         assert cost.total_cost > 0
         assert cost.input_cost > 0
@@ -62,7 +60,7 @@ class TestBedrockCostCalculation:
             model_id="amazon.titan-text-express-v1",
             region="us-east-1"
         )
-        
+
         assert cost.total_cost > 0
         assert cost.model_id == "amazon.titan-text-express-v1"
         assert cost.input_tokens == 2000
@@ -76,7 +74,7 @@ class TestBedrockCostCalculation:
             model_id="ai21.j2-ultra-v1",
             region="us-east-1"
         )
-        
+
         assert cost.total_cost > 0
         assert cost.model_id == "ai21.j2-ultra-v1"
 
@@ -88,7 +86,7 @@ class TestBedrockCostCalculation:
             model_id="cohere.command-text-v14",
             region="us-east-1"
         )
-        
+
         assert cost.total_cost > 0
         assert cost.model_id == "cohere.command-text-v14"
 
@@ -100,7 +98,7 @@ class TestBedrockCostCalculation:
             model_id="anthropic.claude-3-haiku-20240307-v1:0",
             region="us-east-1"
         )
-        
+
         assert cost.total_cost == 0
         assert cost.input_cost == 0
         assert cost.output_cost == 0
@@ -113,7 +111,7 @@ class TestBedrockCostCalculation:
             model_id="anthropic.claude-3-haiku-20240307-v1:0",
             region="us-east-1"
         )
-        
+
         assert cost.input_cost > 0
         assert cost.output_cost == 0
         assert cost.total_cost == cost.input_cost
@@ -126,7 +124,7 @@ class TestBedrockCostCalculation:
             model_id="anthropic.claude-3-haiku-20240307-v1:0",
             region="us-east-1"
         )
-        
+
         assert cost.input_cost == 0
         assert cost.output_cost > 0
         assert cost.total_cost == cost.output_cost
@@ -139,7 +137,7 @@ class TestBedrockCostCalculation:
             model_id="anthropic.claude-3-opus-20240229-v1:0",
             region="us-east-1"
         )
-        
+
         assert cost.total_cost > 1.0  # Should be substantial cost
         assert cost.input_cost > cost.output_cost  # Opus has higher input cost
 
@@ -151,7 +149,7 @@ class TestBedrockCostCalculation:
             model_id="anthropic.claude-3-haiku-20240307-v1:0",
             region="us-east-1"
         )
-        
+
         # Should have at least 6 decimal places precision
         assert len(str(cost.total_cost).split('.')[-1]) >= 6 or cost.total_cost == 0
 
@@ -203,19 +201,19 @@ class TestModelComparison:
             "anthropic.claude-3-sonnet-20240229-v1:0",
             "amazon.titan-text-express-v1"
         ]
-        
+
         comparison = compare_bedrock_models(
             prompt="Test prompt for comparison",
             models=models_to_compare,
             region="us-east-1",
             expected_output_tokens=200
         )
-        
+
         assert isinstance(comparison, ModelComparison)
         assert len(comparison.model_comparisons) == 3
         assert comparison.best_for_cost in models_to_compare
         assert comparison.best_for_speed in models_to_compare
-        
+
         # Verify each model comparison has required fields
         for model_comp in comparison.model_comparisons:
             assert model_comp.model_id in models_to_compare
@@ -231,7 +229,7 @@ class TestModelComparison:
             region="us-east-1",
             expected_output_tokens=100
         )
-        
+
         assert len(comparison.model_comparisons) == 1
         assert comparison.best_for_cost == "anthropic.claude-3-haiku-20240307-v1:0"
 
@@ -242,19 +240,19 @@ class TestModelComparison:
             "anthropic.claude-3-sonnet-20240229-v1:0",  # Medium
             "anthropic.claude-3-haiku-20240307-v1:0",   # Least expensive
         ]
-        
+
         comparison = compare_bedrock_models(
             prompt="Cost ordering test",
             models=models_to_compare,
             region="us-east-1",
             expected_output_tokens=300
         )
-        
+
         # Find costs for each model
         costs = {}
         for model_comp in comparison.model_comparisons:
             costs[model_comp.model_id] = model_comp.estimated_cost
-        
+
         # Verify cost ordering (Opus > Sonnet > Haiku)
         assert costs["anthropic.claude-3-opus-20240229-v1:0"] > costs["anthropic.claude-3-sonnet-20240229-v1:0"]
         assert costs["anthropic.claude-3-sonnet-20240229-v1:0"] > costs["anthropic.claude-3-haiku-20240307-v1:0"]
@@ -267,10 +265,10 @@ class TestModelComparison:
             region="us-east-1",
             expected_output_tokens=150
         )
-        
+
         opus_score = next(mc.quality_score for mc in comparison.model_comparisons if "opus" in mc.model_id)
         haiku_score = next(mc.quality_score for mc in comparison.model_comparisons if "haiku" in mc.model_id)
-        
+
         # Opus should have higher quality score than Haiku
         assert opus_score > haiku_score
 
@@ -295,7 +293,7 @@ class TestModelComparison:
             region="us-east-1",
             expected_output_tokens=100
         )
-        
+
         # Should handle duplicates gracefully (either dedupe or allow)
         assert len(comparison.model_comparisons) >= 1
 
@@ -312,7 +310,7 @@ class TestOptimizationRecommendations:
             quality_requirement="medium",
             region="us-east-1"
         )
-        
+
         assert isinstance(recommendations, OptimizationRecommendations)
         assert recommendations.recommended_model is not None
         assert recommendations.estimated_cost <= 0.01  # Within budget
@@ -327,7 +325,7 @@ class TestOptimizationRecommendations:
             quality_requirement="high",
             region="us-east-1"
         )
-        
+
         # Should recommend a high-quality model (likely Sonnet or Opus)
         assert "sonnet" in recommendations.recommended_model.lower() or "opus" in recommendations.recommended_model.lower()
 
@@ -339,7 +337,7 @@ class TestOptimizationRecommendations:
             quality_requirement="low",
             region="us-east-1"
         )
-        
+
         # Should recommend the most cost-effective model
         assert "haiku" in recommendations.recommended_model.lower() or "titan" in recommendations.recommended_model.lower()
 
@@ -351,7 +349,7 @@ class TestOptimizationRecommendations:
             quality_requirement="premium",
             region="us-east-1"
         )
-        
+
         # Should recommend the highest quality model
         assert recommendations.recommended_model is not None
         assert recommendations.estimated_cost > 0
@@ -359,7 +357,7 @@ class TestOptimizationRecommendations:
     def test_different_quality_levels(self):
         """Test different quality requirement levels."""
         quality_levels = ["low", "medium", "high", "premium"]
-        
+
         for quality in quality_levels:
             recommendations = get_cost_optimization_recommendations(
                 prompt="Standard analysis task",
@@ -367,7 +365,7 @@ class TestOptimizationRecommendations:
                 quality_requirement=quality,
                 region="us-east-1"
             )
-            
+
             assert recommendations.recommended_model is not None
             assert recommendations.quality_score >= 0
 
@@ -381,28 +379,28 @@ class TestOptimizationRecommendations:
         4. Risk assessment and recommendations
         5. Competitive positioning analysis
         """
-        
+
         recommendations = get_cost_optimization_recommendations(
             prompt=complex_prompt,
             budget_constraint=0.05,
             quality_requirement="high",
             region="us-east-1"
         )
-        
+
         # Complex tasks should prefer higher-quality models
         assert "haiku" not in recommendations.recommended_model.lower()  # Should use better than cheapest
 
     def test_simple_prompt_analysis(self):
         """Test that simple prompts get cost-effective recommendations."""
         simple_prompt = "Classify: positive or negative sentiment"
-        
+
         recommendations = get_cost_optimization_recommendations(
             prompt=simple_prompt,
             budget_constraint=0.01,
             quality_requirement="medium",
             region="us-east-1"
         )
-        
+
         # Simple tasks should be cost-effective
         assert recommendations.estimated_cost <= 0.01
 
@@ -414,14 +412,14 @@ class TestRegionalPricing:
     def test_regional_cost_calculation(self):
         """Test cost calculation across different regions."""
         regions = ["us-east-1", "us-west-2", "eu-west-1"]
-        
+
         regional_costs = calculate_regional_costs(
             prompt="Regional pricing test",
             model_id="anthropic.claude-3-haiku-20240307-v1:0",
             regions=regions,
             expected_output_tokens=200
         )
-        
+
         assert len(regional_costs) == 3
         for cost_info in regional_costs:
             assert cost_info.region in regions
@@ -436,7 +434,7 @@ class TestRegionalPricing:
             regions=["us-east-1"],
             expected_output_tokens=100
         )
-        
+
         assert len(regional_costs) == 1
         assert regional_costs[0].region == "us-east-1"
 
@@ -449,10 +447,10 @@ class TestRegionalPricing:
             regions=["us-east-1", "ap-south-1"],  # Some regions may not have all models
             expected_output_tokens=150
         )
-        
+
         # Should return results for all requested regions
         assert len(regional_costs) == 2
-        
+
         # Check that availability is properly reported
         for cost_info in regional_costs:
             assert hasattr(cost_info, 'model_available')
@@ -465,10 +463,10 @@ class TestRegionalPricing:
             regions=["us-east-1", "eu-west-1"],
             expected_output_tokens=200
         )
-        
+
         us_cost = next(c.total_cost for c in regional_costs if c.region == "us-east-1")
         eu_cost = next(c.total_cost for c in regional_costs if c.region == "eu-west-1")
-        
+
         # Costs might be the same or different - both are valid
         assert us_cost >= 0
         assert eu_cost >= 0
@@ -482,14 +480,14 @@ class TestPricingDataStructure:
         """Test that the BEDROCK_MODELS catalog is properly structured."""
         assert isinstance(BEDROCK_MODELS, dict)
         assert len(BEDROCK_MODELS) > 0
-        
+
         # Check that key models are present
         expected_models = [
             "anthropic.claude-3-haiku-20240307-v1:0",
             "anthropic.claude-3-sonnet-20240229-v1:0",
             "amazon.titan-text-express-v1"
         ]
-        
+
         for model in expected_models:
             assert model in BEDROCK_MODELS
 
@@ -499,11 +497,11 @@ class TestPricingDataStructure:
             assert 'provider' in model_info
             assert 'input_price_per_1k' in model_info
             assert 'output_price_per_1k' in model_info
-            
+
             # Prices should be positive numbers
             assert model_info['input_price_per_1k'] >= 0
             assert model_info['output_price_per_1k'] >= 0
-            
+
             # Should have quality and speed estimates
             if 'quality_score' in model_info:
                 assert 0 <= model_info['quality_score'] <= 10
@@ -514,11 +512,11 @@ class TestPricingDataStructure:
         """Test that models are properly categorized by provider."""
         anthropic_models = [k for k, v in BEDROCK_MODELS.items() if v['provider'] == 'anthropic']
         amazon_models = [k for k, v in BEDROCK_MODELS.items() if v['provider'] == 'amazon']
-        
+
         # Anthropic models should have 'anthropic' in their ID
         for model in anthropic_models:
             assert 'anthropic' in model
-        
+
         # Amazon models should have 'amazon' in their ID
         for model in amazon_models:
             assert 'amazon' in model
@@ -530,7 +528,7 @@ class TestPricingDataStructure:
             'total_cost', 'input_cost', 'output_cost', 'input_tokens', 'output_tokens',
             'model_id', 'region', 'currency', 'cost_per_1k_input', 'cost_per_1k_output'
         ]
-        
+
         # Test with a sample calculation
         cost = calculate_bedrock_cost(
             input_tokens=100,
@@ -538,7 +536,7 @@ class TestPricingDataStructure:
             model_id="anthropic.claude-3-haiku-20240307-v1:0",
             region="us-east-1"
         )
-        
+
         for field in expected_fields:
             assert hasattr(cost, field)
 
@@ -556,7 +554,7 @@ class TestEdgeCases:
             model_id="anthropic.claude-3-opus-20240229-v1:0",
             region="us-east-1"
         )
-        
+
         assert cost.total_cost > 0
         assert cost.input_tokens == 200000
         assert cost.output_tokens == 4096
@@ -570,7 +568,7 @@ class TestEdgeCases:
             model_id="anthropic.claude-3-haiku-20240307-v1:0",
             region="us-east-1"
         )
-        
+
         # Even tiny costs should be calculated precisely
         assert cost.total_cost > 0
         assert cost.input_cost > 0
@@ -585,7 +583,7 @@ class TestEdgeCases:
                 model_id=model_id,
                 region="us-east-1"
             )
-            
+
             assert cost.total_cost > 0
             assert cost.model_id == model_id
 
@@ -594,7 +592,7 @@ class TestEdgeCases:
         model_id = "anthropic.claude-3-haiku-20240307-v1:0"
         input_tokens = 1000
         output_tokens = 500
-        
+
         # Make multiple calls with same parameters
         costs = []
         for _ in range(5):
@@ -605,7 +603,7 @@ class TestEdgeCases:
                 region="us-east-1"
             )
             costs.append(cost.total_cost)
-        
+
         # All costs should be identical
         assert all(c == costs[0] for c in costs)
 
@@ -617,7 +615,7 @@ class TestEdgeCases:
             model_id="anthropic.claude-3-haiku-20240307-v1:0",
             region="us-east-1"
         )
-        
+
         assert cost.currency == "USD"
 
     def test_zero_cost_scenarios(self):
@@ -628,7 +626,7 @@ class TestEdgeCases:
             model_id="anthropic.claude-3-haiku-20240307-v1:0",
             region="us-east-1"
         )
-        
+
         assert cost.total_cost == 0.0
         assert cost.input_cost == 0.0
         assert cost.output_cost == 0.0
@@ -641,12 +639,12 @@ class TestPerformance:
     def test_calculation_performance(self):
         """Test that pricing calculations are fast."""
         import time
-        
+
         if not PRICING_AVAILABLE:
             pytest.skip("Bedrock pricing module not available")
-        
+
         start_time = time.time()
-        
+
         # Perform many calculations
         for _ in range(1000):
             calculate_bedrock_cost(
@@ -655,33 +653,33 @@ class TestPerformance:
                 model_id="anthropic.claude-3-haiku-20240307-v1:0",
                 region="us-east-1"
             )
-        
+
         end_time = time.time()
         total_time = end_time - start_time
-        
+
         # Should complete 1000 calculations in under 1 second
         assert total_time < 1.0
 
     def test_comparison_performance(self):
         """Test that model comparisons are reasonably fast."""
         import time
-        
+
         if not PRICING_AVAILABLE:
             pytest.skip("Bedrock pricing module not available")
-        
+
         start_time = time.time()
-        
+
         models_to_compare = list(BEDROCK_MODELS.keys())[:5]  # First 5 models
-        
+
         compare_bedrock_models(
             prompt="Performance test prompt",
             models=models_to_compare,
             region="us-east-1",
             expected_output_tokens=200
         )
-        
+
         end_time = time.time()
         total_time = end_time - start_time
-        
+
         # Should complete comparison in under 1 second
         assert total_time < 1.0

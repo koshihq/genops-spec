@@ -11,19 +11,17 @@ Tests the core adapter functionality including:
 - Performance monitoring
 """
 
+from unittest.mock import Mock, patch
+
 import pytest
-import json
-from unittest.mock import Mock, patch, MagicMock
-from datetime import datetime
-from typing import Dict, Any
 
 # Import the modules under test
 try:
     from genops.providers.helicone import (
-        GenOpsHeliconeAdapter, 
-        HeliconeResponse, 
+        GenOpsHeliconeAdapter,
+        HeliconeResponse,
         MultiProviderResponse,
-        instrument_helicone
+        instrument_helicone,
     )
     HELICONE_AVAILABLE = True
 except ImportError:
@@ -146,7 +144,7 @@ class TestHeliconeInstrumentation:
         pass
 
 
-@pytest.mark.skipif(not HELICONE_AVAILABLE, reason="Helicone provider not available") 
+@pytest.mark.skipif(not HELICONE_AVAILABLE, reason="Helicone provider not available")
 class TestHeliconeIntegration:
     """Integration tests for Helicone provider."""
 

@@ -6,19 +6,17 @@ Tests cover cost calculation, multi-provider aggregation, optimization recommend
 and analysis scenarios as required by CLAUDE.md standards.
 """
 
-import pytest
-from decimal import Decimal
 from datetime import datetime, timedelta
-from unittest.mock import Mock, patch
-from typing import Dict, List
+from decimal import Decimal
+
+import pytest
 
 from genops.providers.haystack_cost_aggregator import (
-    HaystackCostAggregator,
     ComponentCostEntry,
-    ProviderCostSummary,
     CostAnalysisResult,
     CostOptimizationRecommendation,
-    ProviderType
+    HaystackCostAggregator,
+    ProviderCostSummary,
 )
 
 
@@ -35,7 +33,7 @@ class TestComponentCostEntry:
             cost=Decimal("0.005"),
             timestamp=datetime.now()
         )
-        
+
         assert entry.component_name == "test-generator"
         assert entry.component_type == "Generator"
         assert entry.provider_name == "OpenAI"
@@ -54,7 +52,7 @@ class TestComponentCostEntry:
             tokens_used=100,
             operation_type="embedding"
         )
-        
+
         assert entry.tokens_used == 100
         assert entry.operation_type == "embedding"
 
@@ -71,7 +69,7 @@ class TestProviderCostSummary:
             components_used={"Generator", "Embedder"},
             models_used={"gpt-3.5-turbo", "text-embedding-ada-002"}
         )
-        
+
         assert summary.provider_name == "OpenAI"
         assert summary.total_cost == Decimal("0.025")
         assert summary.total_operations == 15
@@ -93,7 +91,7 @@ class TestCostOptimizationRecommendation:
             potential_savings=Decimal("0.005"),
             reasoning="Anthropic offers better cost-performance for this use case"
         )
-        
+
         assert recommendation.component_name == "expensive-generator"
         assert recommendation.current_provider == "OpenAI"
         assert recommendation.recommended_provider == "Anthropic"
@@ -104,13 +102,13 @@ class TestCostOptimizationRecommendation:
         recommendation = CostOptimizationRecommendation(
             component_name="test-component",
             current_provider="Provider A",
-            recommended_provider="Provider B", 
+            recommended_provider="Provider B",
             current_cost=Decimal("0.100"),
             recommended_cost=Decimal("0.075"),
             potential_savings=Decimal("0.025"),
             reasoning="Test reason"
         )
-        
+
         savings_percentage = (recommendation.potential_savings / recommendation.current_cost) * 100
         assert savings_percentage == 25.0
 
@@ -121,7 +119,7 @@ class TestHaystackCostAggregator:
     def test_aggregator_initialization(self):
         """Test cost aggregator initializes properly."""
         aggregator = HaystackCostAggregator()
-        
+
         assert aggregator.cost_entries == []
         assert hasattr(aggregator, 'provider_pricing')
         assert hasattr(aggregator, 'add_component_cost')
@@ -129,7 +127,7 @@ class TestHaystackCostAggregator:
     def test_aggregator_add_component_cost(self):
         """Test adding component cost to aggregator."""
         aggregator = HaystackCostAggregator()
-        
+
         aggregator.add_component_cost(
             component_name="test-generator",
             component_type="Generator",
@@ -137,7 +135,7 @@ class TestHaystackCostAggregator:
             model_name="gpt-3.5-turbo",
             cost=Decimal("0.005")
         )
-        
+
         assert len(aggregator.cost_entries) == 1
         entry = aggregator.cost_entries[0]
         assert entry.component_name == "test-generator"
@@ -146,29 +144,29 @@ class TestHaystackCostAggregator:
     def test_aggregator_calculate_cost_openai_gpt35(self):
         """Test OpenAI GPT-3.5 cost calculation."""
         aggregator = HaystackCostAggregator()
-        
+
         cost = aggregator._calculate_component_cost(
             provider_name="OpenAI",
             model_name="gpt-3.5-turbo",
             component_type="Generator",
             tokens_used=1000
         )
-        
+
         # GPT-3.5-turbo: $0.002 per 1K tokens
         expected_cost = Decimal("0.002")
         assert cost == expected_cost
 
     def test_aggregator_calculate_cost_openai_gpt4(self):
-        """Test OpenAI GPT-4 cost calculation.""" 
+        """Test OpenAI GPT-4 cost calculation."""
         aggregator = HaystackCostAggregator()
-        
+
         cost = aggregator._calculate_component_cost(
             provider_name="OpenAI",
             model_name="gpt-4",
             component_type="Generator",
             tokens_used=1000
         )
-        
+
         # GPT-4: $0.06 per 1K tokens (input)
         expected_cost = Decimal("0.06")
         assert cost == expected_cost
@@ -176,14 +174,14 @@ class TestHaystackCostAggregator:
     def test_aggregator_calculate_cost_anthropic_claude(self):
         """Test Anthropic Claude cost calculation."""
         aggregator = HaystackCostAggregator()
-        
+
         cost = aggregator._calculate_component_cost(
             provider_name="Anthropic",
             model_name="claude-3-haiku",
-            component_type="Generator", 
+            component_type="Generator",
             tokens_used=1000
         )
-        
+
         # Claude-3-haiku: $0.00025 per 1K tokens (input)
         expected_cost = Decimal("0.00025")
         assert cost == expected_cost
@@ -191,14 +189,14 @@ class TestHaystackCostAggregator:
     def test_aggregator_calculate_cost_unknown_model(self):
         """Test cost calculation for unknown model uses generic pricing."""
         aggregator = HaystackCostAggregator()
-        
+
         cost = aggregator._calculate_component_cost(
             provider_name="UnknownProvider",
             model_name="unknown-model",
             component_type="Generator",
             tokens_used=1000
         )
-        
+
         # Generic pricing: $0.001 per 1K tokens
         expected_cost = Decimal("0.001")
         assert cost == expected_cost
@@ -206,7 +204,7 @@ class TestHaystackCostAggregator:
     def test_aggregator_get_cost_summary(self):
         """Test cost aggregator summary calculation."""
         aggregator = HaystackCostAggregator()
-        
+
         # Add multiple cost entries
         aggregator.add_component_cost(
             component_name="generator1",
@@ -215,15 +213,15 @@ class TestHaystackCostAggregator:
             model_name="gpt-3.5-turbo",
             cost=Decimal("0.005")
         )
-        
+
         aggregator.add_component_cost(
             component_name="retriever1",
             component_type="Retriever",
-            provider_name="HuggingFace", 
+            provider_name="HuggingFace",
             model_name="sentence-transformers",
             cost=Decimal("0.001")
         )
-        
+
         aggregator.add_component_cost(
             component_name="generator2",
             component_type="Generator",
@@ -231,9 +229,9 @@ class TestHaystackCostAggregator:
             model_name="claude-3-haiku",
             cost=Decimal("0.003")
         )
-        
+
         summary = aggregator.get_cost_summary()
-        
+
         assert summary["total_cost"] == Decimal("0.009")
         assert summary["cost_by_provider"]["OpenAI"] == Decimal("0.005")
         assert summary["cost_by_provider"]["HuggingFace"] == Decimal("0.001")
@@ -243,11 +241,11 @@ class TestHaystackCostAggregator:
     def test_aggregator_get_daily_costs(self):
         """Test daily cost calculation."""
         aggregator = HaystackCostAggregator()
-        
+
         # Add costs from different days
         today = datetime.now()
         yesterday = today - timedelta(days=1)
-        
+
         aggregator.cost_entries = [
             ComponentCostEntry(
                 component_name="today1",
@@ -258,7 +256,7 @@ class TestHaystackCostAggregator:
                 timestamp=today
             ),
             ComponentCostEntry(
-                component_name="today2", 
+                component_name="today2",
                 component_type="Generator",
                 provider_name="OpenAI",
                 model_name="gpt-3.5-turbo",
@@ -269,19 +267,19 @@ class TestHaystackCostAggregator:
                 component_name="yesterday1",
                 component_type="Generator",
                 provider_name="OpenAI",
-                model_name="gpt-3.5-turbo", 
+                model_name="gpt-3.5-turbo",
                 cost=Decimal("0.010"),
                 timestamp=yesterday
             )
         ]
-        
+
         daily_costs = aggregator.get_daily_costs()
         assert daily_costs == Decimal("0.008")  # Only today's costs
 
     def test_aggregator_get_cost_analysis(self):
         """Test comprehensive cost analysis."""
         aggregator = HaystackCostAggregator()
-        
+
         # Add various cost entries
         aggregator.add_component_cost(
             component_name="expensive-generator",
@@ -290,7 +288,7 @@ class TestHaystackCostAggregator:
             model_name="gpt-4",
             cost=Decimal("0.050")
         )
-        
+
         aggregator.add_component_cost(
             component_name="cheap-generator",
             component_type="Generator",
@@ -298,9 +296,9 @@ class TestHaystackCostAggregator:
             model_name="claude-3-haiku",
             cost=Decimal("0.005")
         )
-        
+
         analysis = aggregator.get_cost_analysis(time_period_hours=24)
-        
+
         assert isinstance(analysis, CostAnalysisResult)
         assert analysis.total_cost == Decimal("0.055")
         assert len(analysis.cost_by_provider) == 2
@@ -310,7 +308,7 @@ class TestHaystackCostAggregator:
     def test_aggregator_optimization_recommendations(self):
         """Test cost optimization recommendations."""
         aggregator = HaystackCostAggregator()
-        
+
         # Add expensive OpenAI operations
         for i in range(5):
             aggregator.add_component_cost(
@@ -320,12 +318,12 @@ class TestHaystackCostAggregator:
                 model_name="gpt-4",
                 cost=Decimal("0.060")
             )
-        
+
         analysis = aggregator.get_cost_analysis(time_period_hours=24)
-        
+
         # Should generate recommendations due to high OpenAI costs
         assert len(analysis.optimization_recommendations) > 0
-        
+
         # Check recommendation properties
         rec = analysis.optimization_recommendations[0]
         assert rec.current_provider == "OpenAI"
@@ -339,7 +337,7 @@ class TestProviderPricingModels:
         """Test OpenAI pricing models are defined."""
         aggregator = HaystackCostAggregator()
         pricing = aggregator.provider_pricing
-        
+
         assert "OpenAI" in pricing
         assert "gpt-3.5-turbo" in pricing["OpenAI"]
         assert "gpt-4" in pricing["OpenAI"]
@@ -349,7 +347,7 @@ class TestProviderPricingModels:
         """Test Anthropic pricing models are defined."""
         aggregator = HaystackCostAggregator()
         pricing = aggregator.provider_pricing
-        
+
         assert "Anthropic" in pricing
         assert "claude-3-haiku" in pricing["Anthropic"]
         assert "claude-3-sonnet" in pricing["Anthropic"]
@@ -359,7 +357,7 @@ class TestProviderPricingModels:
         """Test HuggingFace pricing models are defined."""
         aggregator = HaystackCostAggregator()
         pricing = aggregator.provider_pricing
-        
+
         assert "HuggingFace" in pricing
         # Generic pricing for HuggingFace models
 
@@ -367,7 +365,7 @@ class TestProviderPricingModels:
         """Test Cohere pricing models are defined."""
         aggregator = HaystackCostAggregator()
         pricing = aggregator.provider_pricing
-        
+
         assert "Cohere" in pricing
 
 
@@ -392,7 +390,7 @@ class TestCostAnalysisResult:
             optimization_recommendations=[],
             time_period_hours=24
         )
-        
+
         assert result.total_cost == Decimal("0.100")
         assert len(result.cost_by_provider) == 2
         assert result.time_period_hours == 24
@@ -404,7 +402,7 @@ class TestMultiProviderScenarios:
     def test_multi_provider_cost_tracking(self):
         """Test tracking costs across multiple providers."""
         aggregator = HaystackCostAggregator()
-        
+
         # OpenAI generator
         aggregator.add_component_cost(
             component_name="openai-gen",
@@ -413,8 +411,8 @@ class TestMultiProviderScenarios:
             model_name="gpt-3.5-turbo",
             cost=Decimal("0.010")
         )
-        
-        # Anthropic generator  
+
+        # Anthropic generator
         aggregator.add_component_cost(
             component_name="anthropic-gen",
             component_type="Generator",
@@ -422,7 +420,7 @@ class TestMultiProviderScenarios:
             model_name="claude-3-haiku",
             cost=Decimal("0.005")
         )
-        
+
         # HuggingFace embedder
         aggregator.add_component_cost(
             component_name="hf-embed",
@@ -431,19 +429,19 @@ class TestMultiProviderScenarios:
             model_name="sentence-transformers",
             cost=Decimal("0.001")
         )
-        
+
         summary = aggregator.get_cost_summary()
-        
+
         assert summary["total_cost"] == Decimal("0.016")
         assert len(summary["cost_by_provider"]) == 3
         assert "OpenAI" in summary["cost_by_provider"]
-        assert "Anthropic" in summary["cost_by_provider"] 
+        assert "Anthropic" in summary["cost_by_provider"]
         assert "HuggingFace" in summary["cost_by_provider"]
 
     def test_cross_provider_optimization(self):
         """Test optimization recommendations across providers."""
         aggregator = HaystackCostAggregator()
-        
+
         # Add many expensive OpenAI calls
         for i in range(10):
             aggregator.add_component_cost(
@@ -453,9 +451,9 @@ class TestMultiProviderScenarios:
                 model_name="gpt-4",
                 cost=Decimal("0.060")
             )
-        
+
         analysis = aggregator.get_cost_analysis(time_period_hours=1)
-        
+
         # Should recommend switching to cheaper alternatives
         assert len(analysis.optimization_recommendations) > 0
         rec = analysis.optimization_recommendations[0]
@@ -469,18 +467,18 @@ class TestEdgeCases:
     def test_aggregator_empty_cost_entries(self):
         """Test aggregator with no cost entries."""
         aggregator = HaystackCostAggregator()
-        
+
         summary = aggregator.get_cost_summary()
         assert summary["total_cost"] == Decimal("0.0")
         assert len(summary["cost_by_provider"]) == 0
-        
+
         daily_costs = aggregator.get_daily_costs()
         assert daily_costs == Decimal("0.0")
 
     def test_aggregator_zero_cost_entries(self):
         """Test aggregator with zero-cost entries."""
         aggregator = HaystackCostAggregator()
-        
+
         aggregator.add_component_cost(
             component_name="free-component",
             component_type="Preprocessor",
@@ -488,29 +486,29 @@ class TestEdgeCases:
             model_name="custom-model",
             cost=Decimal("0.0")
         )
-        
+
         summary = aggregator.get_cost_summary()
         assert summary["total_cost"] == Decimal("0.0")
 
     def test_aggregator_very_small_costs(self):
         """Test aggregator with very small cost values."""
         aggregator = HaystackCostAggregator()
-        
+
         aggregator.add_component_cost(
             component_name="micro-cost",
-            component_type="Generator", 
+            component_type="Generator",
             provider_name="OpenAI",
             model_name="gpt-3.5-turbo",
             cost=Decimal("0.000001")
         )
-        
+
         summary = aggregator.get_cost_summary()
         assert summary["total_cost"] == Decimal("0.000001")
 
     def test_aggregator_invalid_cost_values(self):
         """Test aggregator handles invalid cost values."""
         aggregator = HaystackCostAggregator()
-        
+
         # Negative costs should be handled gracefully
         with pytest.raises(ValueError):
             aggregator.add_component_cost(
@@ -524,13 +522,13 @@ class TestEdgeCases:
     def test_aggregator_missing_provider_pricing(self):
         """Test aggregator handles unknown providers gracefully."""
         aggregator = HaystackCostAggregator()
-        
+
         cost = aggregator._calculate_component_cost(
             provider_name="UnknownProvider",
             model_name="unknown-model",
             component_type="Generator",
             tokens_used=1000
         )
-        
+
         # Should fall back to generic pricing
         assert cost == Decimal("0.001")  # Generic rate

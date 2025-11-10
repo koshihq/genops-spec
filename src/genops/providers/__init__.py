@@ -64,11 +64,15 @@ except ImportError:
 
 try:
     from genops.providers.bedrock import (
-        instrument_bedrock,
-        auto_instrument_bedrock,
         GenOpsBedrockAdapter,
-        validate_setup as validate_bedrock_setup,
+        auto_instrument_bedrock,
+        instrument_bedrock,
+    )
+    from genops.providers.bedrock import (
         print_validation_result as print_bedrock_validation_result,
+    )
+    from genops.providers.bedrock import (
+        validate_setup as validate_bedrock_setup,
     )
     _bedrock_available = True
 except ImportError:
@@ -81,10 +85,10 @@ except ImportError:
 
     def GenOpsBedrockAdapter(*args, **kwargs):
         raise ImportError("Bedrock provider not available. Install with: pip install boto3")
-    
+
     def validate_bedrock_setup(*args, **kwargs):
         raise ImportError("Bedrock provider not available. Install with: pip install boto3")
-    
+
     def print_bedrock_validation_result(*args, **kwargs):
         raise ImportError("Bedrock provider not available. Install with: pip install boto3")
 
@@ -92,13 +96,15 @@ except ImportError:
 
 try:
     from genops.providers.helicone import (
-        instrument_helicone,
         GenOpsHeliconeAdapter,
         create_helicone_adapter,
+        instrument_helicone,
+    )
+    from genops.providers.helicone_validation import (
+        print_validation_result as print_helicone_validation_result,
     )
     from genops.providers.helicone_validation import (
         validate_setup as validate_helicone_setup,
-        print_validation_result as print_helicone_validation_result,
     )
     _helicone_available = True
 except ImportError:
@@ -108,13 +114,13 @@ except ImportError:
 
     def GenOpsHeliconeAdapter(*args, **kwargs):
         raise ImportError("Helicone provider not available. Install with: pip install 'genops[helicone]'")
-    
+
     def create_helicone_adapter(*args, **kwargs):
         raise ImportError("Helicone provider not available. Install with: pip install 'genops[helicone]'")
-    
+
     def validate_helicone_setup(*args, **kwargs):
         raise ImportError("Helicone provider not available. Install with: pip install 'genops[helicone]'")
-    
+
     def print_helicone_validation_result(*args, **kwargs):
         raise ImportError("Helicone provider not available. Install with: pip install 'genops[helicone]'")
 
@@ -122,13 +128,15 @@ except ImportError:
 
 try:
     from genops.providers.langfuse import (
-        instrument_langfuse,
         GenOpsLangfuseAdapter,
         create_langfuse_adapter,
+        instrument_langfuse,
+    )
+    from genops.providers.langfuse_validation import (
+        print_validation_result as print_langfuse_validation_result,
     )
     from genops.providers.langfuse_validation import (
         validate_setup as validate_langfuse_setup,
-        print_validation_result as print_langfuse_validation_result,
     )
     _langfuse_available = True
 except ImportError:
@@ -138,13 +146,13 @@ except ImportError:
 
     def GenOpsLangfuseAdapter(*args, **kwargs):
         raise ImportError("Langfuse provider not available. Install with: pip install 'genops[langfuse]'")
-    
+
     def create_langfuse_adapter(*args, **kwargs):
         raise ImportError("Langfuse provider not available. Install with: pip install 'genops[langfuse]'")
-    
+
     def validate_langfuse_setup(*args, **kwargs):
         raise ImportError("Langfuse provider not available. Install with: pip install 'genops[langfuse]'")
-    
+
     def print_langfuse_validation_result(*args, **kwargs):
         raise ImportError("Langfuse provider not available. Install with: pip install 'genops[langfuse]'")
 
@@ -152,13 +160,17 @@ except ImportError:
 
 try:
     from genops.providers.arize import (
-        instrument_arize,
-        auto_instrument as auto_instrument_arize,
         GenOpsArizeAdapter,
+        instrument_arize,
+    )
+    from genops.providers.arize import (
+        auto_instrument as auto_instrument_arize,
+    )
+    from genops.providers.arize_validation import (
+        print_validation_result as print_arize_validation_result,
     )
     from genops.providers.arize_validation import (
         validate_setup as validate_arize_setup,
-        print_validation_result as print_arize_validation_result,
     )
     _arize_available = True
 except ImportError:
@@ -171,10 +183,10 @@ except ImportError:
 
     def GenOpsArizeAdapter(*args, **kwargs):
         raise ImportError("Arize provider not available. Install with: pip install 'genops[arize]'")
-    
+
     def validate_arize_setup(*args, **kwargs):
         raise ImportError("Arize provider not available. Install with: pip install 'genops[arize]'")
-    
+
     def print_arize_validation_result(*args, **kwargs):
         raise ImportError("Arize provider not available. Install with: pip install 'genops[arize]'")
 

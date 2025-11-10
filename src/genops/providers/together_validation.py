@@ -13,14 +13,13 @@ from __future__ import annotations
 
 import logging
 import os
-import time
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import List, Dict, Any, Optional, Union
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 # Import Together pricing and core utilities
-from .together_pricing import TogetherPricingCalculator, TogetherModelTier
+from .together_pricing import TogetherPricingCalculator
 
 logger = logging.getLogger(__name__)
 
@@ -67,12 +66,12 @@ class ValidationResult:
     pricing_info: Dict[str, Any] = field(default_factory=dict)
     recommendations: List[str] = field(default_factory=list)
     validation_timestamp: datetime = field(default_factory=datetime.now)
-    
+
     @property
     def errors(self) -> List[ValidationIssue]:
         """Get all error-level issues."""
         return [issue for issue in self.issues if issue.severity == ValidationSeverity.ERROR]
-    
+
     @property
     def warnings(self) -> List[ValidationIssue]:
         """Get all warning-level issues."""
@@ -86,7 +85,7 @@ class TogetherSetupValidator:
     Validates API authentication, model access, configuration, and provides
     security-compliant diagnostic output with remediation guidance.
     """
-    
+
     def __init__(self, together_api_key: Optional[str] = None):
         """
         Initialize validator with Together AI credentials.
@@ -97,18 +96,18 @@ class TogetherSetupValidator:
         self.together_api_key = together_api_key or os.getenv('TOGETHER_API_KEY')
         self.pricing_calculator = TogetherPricingCalculator()
         self.client = None
-        
+
         # Initialize client if credentials available
         if self.together_api_key and HAS_TOGETHER:
             try:
                 self.client = Together(api_key=self.together_api_key)
             except Exception as e:
                 logger.warning(f"Failed to initialize Together client: {e}")
-    
+
     def validate_dependencies(self) -> List[ValidationIssue]:
         """Validate required dependencies are installed."""
         issues = []
-        
+
         if not HAS_TOGETHER:
             issues.append(ValidationIssue(
                 severity=ValidationSeverity.ERROR,
@@ -117,7 +116,7 @@ class TogetherSetupValidator:
                 remediation="Install with: pip install together",
                 code="TOGETHER_MISSING"
             ))
-        
+
         if not HAS_REQUESTS:
             issues.append(ValidationIssue(
                 severity=ValidationSeverity.WARNING,
@@ -126,7 +125,7 @@ class TogetherSetupValidator:
                 remediation="Install with: pip install requests",
                 code="REQUESTS_MISSING"
             ))
-        
+
         # Check for optional but recommended packages
         try:
             import numpy
@@ -138,13 +137,13 @@ class TogetherSetupValidator:
                 remediation="Install with: pip install numpy",
                 code="NUMPY_MISSING"
             ))
-        
+
         return issues
-    
+
     def validate_api_key(self) -> List[ValidationIssue]:
         """Validate Together AI API key authentication."""
         issues = []
-        
+
         if not self.together_api_key:
             issues.append(ValidationIssue(
                 severity=ValidationSeverity.ERROR,
@@ -154,7 +153,7 @@ class TogetherSetupValidator:
                 code="API_KEY_MISSING"
             ))
             return issues
-        
+
         # Check API key format (Together keys typically start with specific patterns)
         if not self.together_api_key.startswith(('sk-', 'pk-')):
             issues.append(ValidationIssue(
@@ -165,7 +164,7 @@ class TogetherSetupValidator:
                 code="API_KEY_FORMAT",
                 details={"key_prefix": "***REDACTED***"}
             ))
-        
+
         # Test API key by attempting to list models
         if self.client and HAS_TOGETHER:
             try:
@@ -196,14 +195,14 @@ class TogetherSetupValidator:
                     code="API_KEY_INVALID",
                     details={"error_type": type(e).__name__}
                 ))
-        
+
         return issues
-    
+
     def validate_model_access(self, test_models: Optional[List[str]] = None) -> Tuple[List[ValidationIssue], List[str]]:
         """Validate access to specific Together AI models."""
         issues = []
         accessible_models = []
-        
+
         if not self.client:
             issues.append(ValidationIssue(
                 severity=ValidationSeverity.ERROR,
@@ -213,7 +212,7 @@ class TogetherSetupValidator:
                 code="CLIENT_UNAVAILABLE"
             ))
             return issues, accessible_models
-        
+
         # Default test models if none provided
         if test_models is None:
             test_models = [
@@ -222,7 +221,7 @@ class TogetherSetupValidator:
                 "Qwen/Qwen2.5-Coder-32B-Instruct",
                 "mistralai/Mixtral-8x7B-Instruct-v0.1"
             ]
-        
+
         # Test each model with a minimal request
         for model in test_models:
             try:
@@ -233,7 +232,7 @@ class TogetherSetupValidator:
                     max_tokens=1,
                     temperature=0.1
                 )
-                
+
                 if response and hasattr(response, 'choices') and response.choices:
                     accessible_models.append(model)
                     issues.append(ValidationIssue(
@@ -253,10 +252,10 @@ class TogetherSetupValidator:
                         code="MODEL_RESPONSE_UNEXPECTED",
                         details={"model": model}
                     ))
-                
+
             except Exception as e:
                 error_msg = str(e).lower()
-                
+
                 if "billing" in error_msg or "quota" in error_msg:
                     severity = ValidationSeverity.ERROR
                     remediation = "Check account billing and usage limits"
@@ -269,7 +268,7 @@ class TogetherSetupValidator:
                     severity = ValidationSeverity.WARNING
                     remediation = "Check model availability and account permissions"
                     code = "MODEL_ERROR"
-                
+
                 issues.append(ValidationIssue(
                     severity=severity,
                     component="model_access",
@@ -278,13 +277,13 @@ class TogetherSetupValidator:
                     code=code,
                     details={"model": model, "error_type": type(e).__name__}
                 ))
-        
+
         return issues, accessible_models
-    
+
     def validate_configuration(self, config: Dict[str, Any]) -> List[ValidationIssue]:
         """Validate GenOps configuration parameters."""
         issues = []
-        
+
         # Required configuration
         required_fields = ['team', 'project', 'environment']
         for field in required_fields:
@@ -297,7 +296,7 @@ class TogetherSetupValidator:
                     code="MISSING_REQUIRED_FIELD",
                     details={"field": field}
                 ))
-        
+
         # Budget validation
         budget_fields = ['daily_budget_limit', 'monthly_budget_limit']
         for field in budget_fields:
@@ -320,7 +319,7 @@ class TogetherSetupValidator:
                         remediation=f"Set {field} to a numeric value",
                         code="INVALID_BUDGET_TYPE"
                     ))
-        
+
         # Governance policy validation
         if 'governance_policy' in config:
             valid_policies = ['advisory', 'enforced', 'strict']
@@ -332,26 +331,26 @@ class TogetherSetupValidator:
                     remediation=f"Use one of: {', '.join(valid_policies)}",
                     code="INVALID_GOVERNANCE_POLICY"
                 ))
-        
+
         return issues
-    
+
     def validate_environment(self) -> List[ValidationIssue]:
         """Validate environment setup and OpenTelemetry configuration."""
         issues = []
-        
+
         # Check OTEL configuration
         otel_vars = [
             'OTEL_SERVICE_NAME',
             'OTEL_EXPORTER_OTLP_ENDPOINT',
             'OTEL_RESOURCE_ATTRIBUTES'
         ]
-        
+
         otel_configured = False
         for var in otel_vars:
             if os.getenv(var):
                 otel_configured = True
                 break
-        
+
         if not otel_configured:
             issues.append(ValidationIssue(
                 severity=ValidationSeverity.INFO,
@@ -360,14 +359,14 @@ class TogetherSetupValidator:
                 remediation="Set OTEL_SERVICE_NAME and OTEL_EXPORTER_OTLP_ENDPOINT for observability",
                 code="OTEL_NOT_CONFIGURED"
             ))
-        
+
         # Check GenOps environment variables
         genops_vars = {
             'GENOPS_TEAM': 'Team name for cost attribution',
             'GENOPS_PROJECT': 'Project name for cost tracking',
             'GENOPS_ENVIRONMENT': 'Environment identifier (dev/staging/prod)'
         }
-        
+
         for var, description in genops_vars.items():
             if not os.getenv(var):
                 issues.append(ValidationIssue(
@@ -377,9 +376,9 @@ class TogetherSetupValidator:
                     remediation=f"Set {var} for {description}",
                     code="GENOPS_VAR_MISSING"
                 ))
-        
+
         return issues
-    
+
     def run_comprehensive_validation(
         self,
         config: Optional[Dict[str, Any]] = None,
@@ -398,22 +397,22 @@ class TogetherSetupValidator:
         config = config or {}
         all_issues = []
         accessible_models = []
-        
+
         # Run all validation checks
         all_issues.extend(self.validate_dependencies())
         all_issues.extend(self.validate_api_key())
-        
+
         model_issues, models = self.validate_model_access(test_models)
         all_issues.extend(model_issues)
         accessible_models = models
-        
+
         all_issues.extend(self.validate_configuration(config))
         all_issues.extend(self.validate_environment())
-        
+
         # Check for critical errors
         has_errors = any(issue.severity == ValidationSeverity.ERROR for issue in all_issues)
         is_valid = not has_errors
-        
+
         # Generate pricing info for accessible models
         pricing_info = {}
         if accessible_models:
@@ -426,19 +425,19 @@ class TogetherSetupValidator:
                 }
             except Exception as e:
                 logger.warning(f"Failed to generate pricing info: {e}")
-        
+
         # Generate recommendations
         recommendations = []
         if not has_errors:
             recommendations.append("✅ Together AI integration ready for use")
         if accessible_models:
             recommendations.append(f"🎯 {len(accessible_models)} models available for use")
-        
+
         # Add specific recommendations based on issues
         warning_count = len([i for i in all_issues if i.severity == ValidationSeverity.WARNING])
         if warning_count > 0:
             recommendations.append(f"⚠️ {warning_count} configuration improvements recommended")
-        
+
         return ValidationResult(
             is_valid=is_valid,
             issues=all_issues,
@@ -479,10 +478,10 @@ def validate_together_setup(
     """
     validator = TogetherSetupValidator(together_api_key=together_api_key)
     result = validator.run_comprehensive_validation(config=config)
-    
+
     if print_results:
         print_validation_result(result, config or {})
-    
+
     return result
 
 
@@ -497,29 +496,29 @@ def print_validation_result(result: ValidationResult, config: Dict[str, Any]) ->
     print("\n" + "=" * 60)
     print("🔧 Together AI + GenOps Setup Validation")
     print("=" * 60)
-    
+
     # Overall status
     if result.is_valid:
         print("✅ Setup validation PASSED - Ready for Together AI operations")
     else:
         print("❌ Setup validation FAILED - Issues require attention")
-    
+
     # Print issues by severity
     errors = result.errors
     warnings = result.warnings
-    
+
     if errors:
         print(f"\n❌ ERRORS ({len(errors)}) - Must be resolved:")
         for error in errors:
             print(f"   • {error.message}")
             print(f"     → {error.remediation}")
-    
+
     if warnings:
         print(f"\n⚠️ WARNINGS ({len(warnings)}) - Recommended fixes:")
         for warning in warnings:
             print(f"   • {warning.message}")
             print(f"     → {warning.remediation}")
-    
+
     # Print model access info
     if result.model_access:
         print(f"\n🎯 Model Access ({len(result.model_access)} models available):")
@@ -527,20 +526,20 @@ def print_validation_result(result: ValidationResult, config: Dict[str, Any]) ->
             print(f"   ✅ {model}")
         if len(result.model_access) > 5:
             print(f"   ... and {len(result.model_access) - 5} more models")
-    
+
     # Print pricing information
     if result.pricing_info and 'cost_comparison' in result.pricing_info:
         print("\n💰 Cost Overview (per 1000 tokens):")
         comparisons = result.pricing_info['cost_comparison'][:3]
         for comp in comparisons:
             print(f"   • {comp['model']}: ${comp['cost_per_1k_tokens']:.4f} ({comp['tier']} tier)")
-    
+
     # Print recommendations
     if result.recommendations:
         print("\n📋 Recommendations:")
         for rec in result.recommendations:
             print(f"   {rec}")
-    
+
     if result.is_valid:
         print("\n💻 Your Configuration:")
         print("```python")
@@ -553,10 +552,10 @@ def print_validation_result(result: ValidationResult, config: Dict[str, Any]) ->
         print("    # All sensitive values like API keys are properly secured")
         print(")")
         print("```")
-        
+
     else:
         print("❌ Configuration validation failed. Please check the issues above.")
-    
+
     return config
 
 
@@ -572,12 +571,12 @@ def _sanitize_sensitive_field(field_name: str, value: Any) -> Any:
         'key', 'token', 'secret', 'password', 'credential', 'auth',
         'private', 'secure', 'sensitive', 'confidential', 'restricted'
     }
-    
+
     # Check field name against all sensitive patterns
     field_lower = field_name.lower()
     if any(pattern in field_lower for pattern in sensitive_patterns):
         return "***REDACTED***"
-    
+
     # Allowlist of explicitly safe configuration fields
     safe_fields = {
         'team', 'project', 'environment', 'daily_budget_limit',
@@ -585,7 +584,7 @@ def _sanitize_sensitive_field(field_name: str, value: Any) -> Any:
         'customer_id', 'cost_center', 'default_model', 'enable_governance',
         'enable_caching', 'retry_attempts', 'timeout_seconds', 'tags'
     }
-    
+
     if field_name in safe_fields:
         return value
     else:

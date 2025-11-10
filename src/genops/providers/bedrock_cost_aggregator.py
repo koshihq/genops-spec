@@ -34,22 +34,19 @@ Example usage:
 
 import json
 import logging
-import time
-import uuid
-from contextlib import contextmanager
-from dataclasses import dataclass, field, asdict
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Set, Any, Tuple
 from collections import defaultdict
+from dataclasses import asdict, dataclass, field
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 try:
     from genops.core.telemetry import GenOpsTelemetry
     from genops.providers.bedrock_pricing import (
+        BedrockCostBreakdown,
         calculate_bedrock_cost,
-        get_detailed_cost_breakdown,
         compare_bedrock_models,
         get_cost_optimization_recommendations,
-        BedrockCostBreakdown
+        get_detailed_cost_breakdown,
     )
     GENOPS_AVAILABLE = True
 except ImportError:
@@ -96,15 +93,15 @@ class BedrockCostSummary:
     end_time: Optional[datetime] = None
     governance_attributes: Dict[str, str] = field(default_factory=dict)
     optimization_recommendations: List[str] = field(default_factory=list)
-    
+
     def get_average_cost_per_operation(self) -> float:
         """Get average cost per operation."""
         return self.total_cost / max(1, self.total_operations)
-    
+
     def get_average_latency_ms(self) -> float:
         """Get average latency per operation."""
         return self.total_latency_ms / max(1, self.total_operations)
-    
+
     def get_cost_breakdown_percentage(self) -> Dict[str, Dict[str, float]]:
         """Get cost breakdown as percentages."""
         breakdown = {
@@ -112,31 +109,31 @@ class BedrockCostSummary:
             "by_provider": {},
             "by_region": {}
         }
-        
+
         if self.total_cost > 0:
             for model, cost in self.cost_by_model.items():
                 breakdown["by_model"][model] = (cost / self.total_cost) * 100
-            
+
             for provider, cost in self.cost_by_provider.items():
                 breakdown["by_provider"][provider] = (cost / self.total_cost) * 100
-                
+
             for region, cost in self.cost_by_region.items():
                 breakdown["by_region"][region] = (cost / self.total_cost) * 100
-        
+
         return breakdown
-    
+
     def get_most_expensive_model(self) -> Optional[Tuple[str, float]]:
         """Get the most expensive model used."""
         if not self.cost_by_model:
             return None
         return max(self.cost_by_model.items(), key=lambda x: x[1])
-    
+
     def get_cheapest_model(self) -> Optional[Tuple[str, float]]:
         """Get the least expensive model used."""
         if not self.cost_by_model:
             return None
         return min(self.cost_by_model.items(), key=lambda x: x[1])
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert summary to dictionary for serialization."""
         data = asdict(self)
@@ -157,7 +154,7 @@ class BedrockCostContext:
     This enables comprehensive cost aggregation across multiple Bedrock operations
     with real-time optimization recommendations and budget monitoring.
     """
-    
+
     def __init__(
         self,
         context_id: str,
@@ -178,26 +175,26 @@ class BedrockCostContext:
         self.budget_limit = budget_limit
         self.alert_threshold = alert_threshold
         self.enable_optimization = enable_optimization_recommendations
-        
+
         self.operations: List[BedrockOperationRecord] = []
         self.start_time = datetime.now()
         self.end_time: Optional[datetime] = None
         self.telemetry: Optional[GenOpsTelemetry] = None
-        
+
         # Initialize telemetry if available
         if GENOPS_AVAILABLE:
             self.telemetry = GenOpsTelemetry()
-    
+
     def __enter__(self):
         """Enter the cost tracking context."""
         logger.info(f"Starting Bedrock cost tracking context: {self.context_id}")
         return self
-    
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Exit the cost tracking context with final summary."""
         self.end_time = datetime.now()
         summary = self.get_current_summary()
-        
+
         # Log final summary
         duration = (self.end_time - self.start_time).total_seconds()
         logger.info(
@@ -205,18 +202,18 @@ class BedrockCostContext:
             f"${summary.total_cost:.6f} over {duration:.1f}s "
             f"({summary.total_operations} operations)"
         )
-        
+
         # Export telemetry if available
         if self.telemetry:
             with self.telemetry.trace_operation(
-                operation_name=f"bedrock.cost_context.summary",
+                operation_name="bedrock.cost_context.summary",
                 context_id=self.context_id
             ) as span:
                 span.set_attribute("bedrock.context.total_cost", summary.total_cost)
                 span.set_attribute("bedrock.context.total_operations", summary.total_operations)
                 span.set_attribute("bedrock.context.duration_ms", duration * 1000)
                 span.set_attribute("bedrock.context.unique_models", len(summary.unique_models))
-    
+
     def add_operation(
         self,
         operation_id: str,
@@ -254,7 +251,7 @@ class BedrockCostContext:
             output_tokens=output_tokens,
             region=region
         )
-        
+
         # Create operation record
         record = BedrockOperationRecord(
             operation_id=operation_id,
@@ -271,9 +268,9 @@ class BedrockCostContext:
             success=success,
             error_message=error_message
         )
-        
+
         self.operations.append(record)
-        
+
         # Check budget alerts
         if self.budget_limit:
             current_total = sum(op.cost for op in self.operations)
@@ -283,9 +280,9 @@ class BedrockCostContext:
                     f"${current_total:.6f} of ${self.budget_limit:.6f} budget "
                     f"({(current_total/self.budget_limit)*100:.1f}%)"
                 )
-        
+
         logger.debug(f"Added operation {operation_id}: ${cost:.6f} ({model_id})")
-    
+
     def get_current_summary(self) -> BedrockCostSummary:
         """Get current cost summary for the context."""
         if not self.operations:
@@ -298,42 +295,42 @@ class BedrockCostContext:
                 total_latency_ms=0.0,
                 start_time=self.start_time
             )
-        
+
         # Aggregate metrics
         total_cost = sum(op.cost for op in self.operations)
         total_operations = len(self.operations)
         total_input_tokens = sum(op.input_tokens for op in self.operations)
         total_output_tokens = sum(op.output_tokens for op in self.operations)
         total_latency_ms = sum(op.latency_ms for op in self.operations)
-        
+
         # Aggregate by dimensions
         unique_models = set(op.model_id for op in self.operations)
         unique_providers = set(op.provider for op in self.operations)
         unique_regions = set(op.region for op in self.operations)
-        
+
         cost_by_model = defaultdict(float)
         cost_by_provider = defaultdict(float)
         cost_by_region = defaultdict(float)
         operations_by_model = defaultdict(int)
-        
+
         for op in self.operations:
             cost_by_model[op.model_id] += op.cost
             cost_by_provider[op.provider] += op.cost
             cost_by_region[op.region] += op.cost
             operations_by_model[op.model_id] += 1
-        
+
         # Collect governance attributes from first operation
         governance_attrs = {}
         if self.operations:
             governance_attrs = self.operations[0].governance_attributes.copy()
-        
+
         # Generate optimization recommendations
         recommendations = []
         if self.enable_optimization and len(self.operations) > 1:
             recommendations = self._generate_optimization_recommendations(
                 cost_by_model, operations_by_model, total_cost
             )
-        
+
         return BedrockCostSummary(
             context_id=self.context_id,
             total_cost=total_cost,
@@ -353,7 +350,7 @@ class BedrockCostContext:
             governance_attributes=governance_attrs,
             optimization_recommendations=recommendations
         )
-    
+
     def _generate_optimization_recommendations(
         self,
         cost_by_model: Dict[str, float],
@@ -362,38 +359,38 @@ class BedrockCostContext:
     ) -> List[str]:
         """Generate cost optimization recommendations."""
         recommendations = []
-        
+
         if not cost_by_model:
             return recommendations
-        
+
         # Find most expensive model
         most_expensive_model = max(cost_by_model.items(), key=lambda x: x[1])
         most_expensive_cost = most_expensive_model[1]
         most_expensive_percentage = (most_expensive_cost / total_cost) * 100
-        
+
         if most_expensive_percentage > 50:
             recommendations.append(
                 f"Model {most_expensive_model[0]} accounts for {most_expensive_percentage:.1f}% "
                 f"of costs (${most_expensive_cost:.6f}). Consider cheaper alternatives for high-volume tasks."
             )
-        
+
         # Check for model diversity
         if len(cost_by_model) > 3:
             cheapest_model = min(cost_by_model.items(), key=lambda x: x[1])
             cost_ratio = most_expensive_model[1] / max(cheapest_model[1], 0.000001)
-            
+
             if cost_ratio > 10:
                 recommendations.append(
                     f"Cost variation is high ({cost_ratio:.1f}x between cheapest and most expensive). "
                     f"Consider standardizing on {cheapest_model[0]} for similar tasks."
                 )
-        
+
         # Volume-based recommendations
         high_volume_models = [
-            model for model, ops in operations_by_model.items() 
+            model for model, ops in operations_by_model.items()
             if ops > len(self.operations) * 0.3
         ]
-        
+
         for model in high_volume_models:
             avg_cost_per_op = cost_by_model[model] / operations_by_model[model]
             if avg_cost_per_op > 0.01:  # $0.01 per operation threshold
@@ -401,9 +398,9 @@ class BedrockCostContext:
                     f"High-volume model {model} costs ${avg_cost_per_op:.6f} per operation. "
                     f"Consider a more efficient model for bulk processing."
                 )
-        
+
         return recommendations
-    
+
     def get_operations_by_timespan(
         self,
         start_time: Optional[datetime] = None,
@@ -411,15 +408,15 @@ class BedrockCostContext:
     ) -> List[BedrockOperationRecord]:
         """Get operations within a specific timespan."""
         filtered_ops = self.operations
-        
+
         if start_time:
             filtered_ops = [op for op in filtered_ops if op.timestamp >= start_time]
-        
+
         if end_time:
             filtered_ops = [op for op in filtered_ops if op.timestamp <= end_time]
-        
+
         return filtered_ops
-    
+
     def export_cost_report(
         self,
         format: str = "json",
@@ -436,7 +433,7 @@ class BedrockCostContext:
             Formatted cost report
         """
         summary = self.get_current_summary()
-        
+
         if format == "json":
             report_data = summary.to_dict()
             if include_operations:
@@ -456,7 +453,7 @@ class BedrockCostContext:
                     for op in self.operations
                 ]
             return json.dumps(report_data, indent=2)
-        
+
         elif format == "summary":
             lines = [
                 f"Bedrock Cost Summary - Context: {self.context_id}",
@@ -470,21 +467,21 @@ class BedrockCostContext:
                 f"Regions: {', '.join(summary.unique_regions)}",
                 ""
             ]
-            
+
             if summary.cost_by_model:
                 lines.append("Cost by Model:")
                 for model, cost in sorted(summary.cost_by_model.items(), key=lambda x: x[1], reverse=True):
                     percentage = (cost / summary.total_cost) * 100
                     lines.append(f"  {model}: ${cost:.6f} ({percentage:.1f}%)")
                 lines.append("")
-            
+
             if summary.optimization_recommendations:
                 lines.append("Optimization Recommendations:")
                 for i, rec in enumerate(summary.optimization_recommendations, 1):
                     lines.append(f"  {i}. {rec}")
-            
+
             return "\n".join(lines)
-        
+
         else:
             raise ValueError(f"Unsupported export format: {format}")
 
@@ -525,11 +522,11 @@ def create_bedrock_cost_context(
         alert_threshold=alert_threshold,
         enable_optimization_recommendations=enable_optimization_recommendations
     )
-    
+
     # Register in global aggregator for cross-context analysis
     if _global_cost_aggregator is not None:
         _global_cost_aggregator[context_id] = context
-    
+
     return context
 
 
@@ -547,39 +544,39 @@ def get_global_cost_summary(
     """
     if not _global_cost_aggregator:
         return {"total_contexts": 0, "total_cost": 0.0}
-    
+
     cutoff_time = None
     if timespan_hours:
         cutoff_time = datetime.now() - timedelta(hours=timespan_hours)
-    
+
     total_cost = 0.0
     total_operations = 0
     all_models = set()
     all_providers = set()
-    
+
     context_summaries = {}
-    
+
     for context_id, context in _global_cost_aggregator.items():
         ops = context.operations
-        
+
         if cutoff_time:
             ops = [op for op in ops if op.timestamp >= cutoff_time]
-        
+
         if ops:
             context_cost = sum(op.cost for op in ops)
             context_ops = len(ops)
-            
+
             total_cost += context_cost
             total_operations += context_ops
             all_models.update(op.model_id for op in ops)
             all_providers.update(op.provider for op in ops)
-            
+
             context_summaries[context_id] = {
                 "cost": context_cost,
                 "operations": context_ops,
                 "avg_cost_per_op": context_cost / context_ops if context_ops > 0 else 0
             }
-    
+
     return {
         "total_contexts": len(context_summaries),
         "total_cost": total_cost,
@@ -596,17 +593,17 @@ def cleanup_old_contexts(max_age_hours: int = 24):
     """Clean up old cost contexts to prevent memory leaks."""
     if not _global_cost_aggregator:
         return
-    
+
     cutoff_time = datetime.now() - timedelta(hours=max_age_hours)
     contexts_to_remove = []
-    
+
     for context_id, context in _global_cost_aggregator.items():
         if context.end_time and context.end_time < cutoff_time:
             contexts_to_remove.append(context_id)
-    
+
     for context_id in contexts_to_remove:
         del _global_cost_aggregator[context_id]
-    
+
     if contexts_to_remove:
         logger.info(f"Cleaned up {len(contexts_to_remove)} old cost contexts")
 

@@ -14,22 +14,21 @@ Prerequisites:
 """
 
 import os
-import time
 import random
-from datetime import datetime
+import time
 
 
 def main():
     """Demonstrate PostHog zero-code auto-instrumentation with GenOps governance."""
     print("🚀 PostHog + GenOps Zero-Code Auto-Instrumentation Example")
     print("=" * 70)
-    
+
     # Step 1: Enable auto-instrumentation BEFORE importing PostHog
     print("\n🔄 Enabling auto-instrumentation for existing PostHog workflows...")
-    
+
     try:
         from genops.providers.posthog import auto_instrument
-        
+
         # Auto-instrument with governance - this patches PostHog globally
         adapter = auto_instrument(
             posthog_api_key=os.getenv('POSTHOG_API_KEY'),
@@ -39,16 +38,16 @@ def main():
             daily_budget_limit=100.0,
             governance_policy='advisory'
         )
-        
+
         print("✅ Auto-instrumentation activated")
-        
+
     except Exception as e:
         print(f"❌ Auto-instrumentation setup failed: {e}")
         print("\n💡 Troubleshooting:")
         print("1. Ensure POSTHOG_API_KEY is set")
         print("2. Run: pip install genops[posthog]")
         return
-    
+
     print("\n📋 Your existing PostHog code now includes:")
     print("  🏷️ Team and project attribution")
     print("  💰 Automatic cost tracking")
@@ -57,17 +56,17 @@ def main():
     print("  📈 Enhanced analytics metadata")
 
     # Step 2: Use PostHog exactly as you normally would
-    print(f"\n🎯 Simulating existing PostHog client usage...")
+    print("\n🎯 Simulating existing PostHog client usage...")
     print("(This is your existing code - unchanged!)")
-    
+
     try:
         # This would be your existing PostHog usage - no changes required!
         # The auto-instrumentation transparently adds governance
-        
+
         # Simulate typical PostHog usage patterns
         user_id = f"user_{random.randint(1000, 9999)}"
         session_id = f"session_{int(time.time())}"
-        
+
         # Example 1: Product analytics events
         print("\n📊 Product Analytics Events:")
         product_events = [
@@ -76,7 +75,7 @@ def main():
             ("feature_used", {"feature": "export_data", "success": True, "file_format": "csv"}),
             ("conversion_completed", {"plan": "business", "value": 299.00, "currency": "USD"}),
         ]
-        
+
         for event_name, properties in product_events:
             # Your existing PostHog.capture() calls work unchanged
             # adapter.capture_event_with_governance() is called transparently
@@ -86,17 +85,17 @@ def main():
                 distinct_id=user_id,
                 is_identified=True
             )
-            
+
             print(f"  ✅ Event '{event_name}' tracked - ${result['cost']:.6f}")
             time.sleep(0.1)  # Simulate real usage timing
-        
+
         print("\n🚩 Feature Flag Evaluations:")
         feature_flags = [
             ("new_dashboard_layout", {"user_segment": "enterprise", "region": "us_west"}),
             ("experimental_checkout", {"plan_type": "business", "signup_date": "2024-01-15"}),
             ("beta_ai_features", {"usage_tier": "high", "opt_in_beta": True}),
         ]
-        
+
         for flag_name, context in feature_flags:
             # Your existing PostHog.feature_enabled() calls work unchanged
             flag_value, metadata = adapter.evaluate_feature_flag_with_governance(
@@ -104,20 +103,20 @@ def main():
                 distinct_id=user_id,
                 properties=context
             )
-            
+
             print(f"  🎯 Flag '{flag_name}': {flag_value} - ${metadata['cost']:.6f}")
             time.sleep(0.1)
-        
+
         print("\n🎬 Session Analytics:")
         # Simulate session-based tracking
         session_events = [
             ("session_started", {"referrer": "google.com", "utm_campaign": "q4_growth"}),
             ("onboarding_step_1", {"completed": True, "time_spent": 45}),
-            ("onboarding_step_2", {"completed": True, "time_spent": 62}), 
+            ("onboarding_step_2", {"completed": True, "time_spent": 62}),
             ("onboarding_completed", {"total_time": 187, "completion_rate": 1.0}),
             ("session_ended", {"duration": 892, "pages_viewed": 7, "actions_taken": 4})
         ]
-        
+
         for event_name, properties in session_events:
             properties["session_id"] = session_id
             result = adapter.capture_event_with_governance(
@@ -126,87 +125,87 @@ def main():
                 distinct_id=user_id,
                 is_identified=True
             )
-            
+
             print(f"  📈 Session event '{event_name}' tracked - ${result['cost']:.6f}")
             time.sleep(0.1)
-            
+
     except Exception as e:
         print(f"❌ Event tracking failed: {e}")
         return
 
     # Step 3: Show the governance benefits you get automatically
-    print(f"\n📊 Auto-Instrumentation Summary:")
+    print("\n📊 Auto-Instrumentation Summary:")
     cost_summary = adapter.get_cost_summary()
-    
+
     total_events = len(product_events) + len(feature_flags) + len(session_events)
     total_cost = cost_summary['daily_costs']
-    
+
     print(f"  Operations Tracked: {total_events}")
     print(f"  Total Cost: ${total_cost:.6f}")
     print(f"  Governance Attributes Added: {total_events * 8}")  # Estimated governance attributes
     print(f"  Telemetry Spans Created: {total_events}")
-    
-    print(f"\n🏛️ Governance Benefits Applied:")
+
+    print("\n🏛️ Governance Benefits Applied:")
     print(f"  Team Attribution: {cost_summary['team']}")
     print(f"  Project Tracking: {cost_summary['project']}")
     print(f"  Environment: {cost_summary['environment']}")
     print(f"  Cost Tracking: ${total_cost:.6f}")
     print(f"  Budget Monitoring: {cost_summary['daily_budget_utilization']:.1f}% used")
-    
+
     # Cost analysis
     avg_cost = total_cost / total_events if total_events > 0 else 0
     events_per_dollar = 1 / avg_cost if avg_cost > 0 else 0
-    
-    print(f"\n💰 Cost Intelligence:")
+
+    print("\n💰 Cost Intelligence:")
     print(f"  Average cost per operation: ${avg_cost:.6f}")
     print(f"  Operations per dollar: {events_per_dollar:,.0f}")
     print(f"  Daily budget utilization: {cost_summary['daily_budget_utilization']:.1f}%")
     print(f"  Estimated monthly cost at this rate: ${total_cost * 30:.2f}")
-    
+
     # Free tier analysis
     if events_per_dollar > 100000:
-        print(f"  ✅ Excellent efficiency - well within PostHog free tier!")
+        print("  ✅ Excellent efficiency - well within PostHog free tier!")
     elif events_per_dollar > 20000:
-        print(f"  👍 Good efficiency - optimized for PostHog pricing")
+        print("  👍 Good efficiency - optimized for PostHog pricing")
     else:
-        print(f"  💡 Consider volume optimization for better pricing")
-    
+        print("  💡 Consider volume optimization for better pricing")
+
     # Show what governance telemetry looks like
-    print(f"\n📡 Example Governance Telemetry (OpenTelemetry format):")
+    print("\n📡 Example Governance Telemetry (OpenTelemetry format):")
     print("  {")
-    print(f"    \"trace_id\": \"abc123def456...\",")
-    print(f"    \"span_name\": \"posthog_capture_event\",")
+    print("    \"trace_id\": \"abc123def456...\",")
+    print("    \"span_name\": \"posthog_capture_event\",")
     print("    \"attributes\": {")
-    print(f"      \"genops.provider\": \"posthog\",")
+    print("      \"genops.provider\": \"posthog\",")
     print(f"      \"genops.team\": \"{cost_summary['team']}\",")
     print(f"      \"genops.project\": \"{cost_summary['project']}\",")
     print(f"      \"genops.cost.total\": {avg_cost:.6f},")
-    print(f"      \"genops.cost.currency\": \"USD\",")
-    print(f"      \"genops.posthog.event.name\": \"conversion_completed\",")
-    print(f"      \"genops.governance.enabled\": true,")
+    print("      \"genops.cost.currency\": \"USD\",")
+    print("      \"genops.posthog.event.name\": \"conversion_completed\",")
+    print("      \"genops.governance.enabled\": true,")
     print(f"      \"genops.environment\": \"{cost_summary['environment']}\"")
     print("    }")
     print("  }")
 
-    print(f"\n💡 Zero code changes required - existing workflows now governed!")
-    
+    print("\n💡 Zero code changes required - existing workflows now governed!")
+
     # Next steps
-    print(f"\n🚀 What You Can Do Next:")
-    print(f"  1. Apply this to your existing PostHog codebase (no changes needed)")
-    print(f"  2. View governance data in your observability platform")
-    print(f"  3. Set up cost alerts and budget limits")
-    print(f"  4. Explore advanced features: python advanced_features.py")
-    print(f"  5. Learn cost optimization: python cost_optimization.py")
+    print("\n🚀 What You Can Do Next:")
+    print("  1. Apply this to your existing PostHog codebase (no changes needed)")
+    print("  2. View governance data in your observability platform")
+    print("  3. Set up cost alerts and budget limits")
+    print("  4. Explore advanced features: python advanced_features.py")
+    print("  5. Learn cost optimization: python cost_optimization.py")
 
-    print(f"\n✨ Key Benefits of Auto-Instrumentation:")
-    print(f"  ✅ Zero code changes to existing PostHog usage")
-    print(f"  ✅ Automatic team and project attribution")
-    print(f"  ✅ Real-time cost tracking and budget monitoring")
-    print(f"  ✅ OpenTelemetry-compatible governance telemetry")
-    print(f"  ✅ Works with any PostHog deployment (cloud or self-hosted)")
-    print(f"  ✅ Configurable governance policies (advisory, enforced, strict)")
+    print("\n✨ Key Benefits of Auto-Instrumentation:")
+    print("  ✅ Zero code changes to existing PostHog usage")
+    print("  ✅ Automatic team and project attribution")
+    print("  ✅ Real-time cost tracking and budget monitoring")
+    print("  ✅ OpenTelemetry-compatible governance telemetry")
+    print("  ✅ Works with any PostHog deployment (cloud or self-hosted)")
+    print("  ✅ Configurable governance policies (advisory, enforced, strict)")
 
-    print(f"\n✅ Auto-instrumentation example completed successfully!")
+    print("\n✅ Auto-instrumentation example completed successfully!")
 
 
 if __name__ == "__main__":

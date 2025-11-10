@@ -17,19 +17,22 @@ Features:
     - Audit trails and compliance logging
 """
 
-import os
+import logging
 import sys
 import time
 import uuid
-import logging
+from collections.abc import Generator
 from contextlib import contextmanager
-from decimal import Decimal
-from typing import Dict, List, Any, Optional, Generator
 from dataclasses import dataclass
+from decimal import Decimal
+from typing import Any, Dict, List, Optional
 
 try:
+    from genops.core.exceptions import (
+        GenOpsBudgetExceededError,
+        GenOpsConfigurationError,
+    )
     from genops.providers.together import GenOpsTogetherAdapter, TogetherModel
-    from genops.core.exceptions import GenOpsBudgetExceededError, GenOpsConfigurationError
 except ImportError as e:
     print(f"❌ Import error: {e}")
     print("Please install: pip install genops-ai[together]")
@@ -58,14 +61,14 @@ class CircuitBreakerState:
 
 class ProductionCircuitBreaker:
     """Circuit breaker for resilient Together AI operations."""
-    
+
     def __init__(self, config: CircuitBreakerConfig):
         self.config = config
         self.failure_count = 0
         self.success_count = 0
         self.last_failure_time = 0
         self.state = CircuitBreakerState.CLOSED
-    
+
     def call(self, func, *args, **kwargs):
         """Execute function through circuit breaker."""
         if self.state == CircuitBreakerState.OPEN:
@@ -74,15 +77,15 @@ class ProductionCircuitBreaker:
                 self.success_count = 0
             else:
                 raise Exception("Circuit breaker is OPEN - service unavailable")
-        
+
         try:
             result = func(*args, **kwargs)
             self._on_success()
             return result
-        except Exception as e:
+        except Exception:
             self._on_failure()
             raise
-    
+
     def _on_success(self):
         """Handle successful operation."""
         if self.state == CircuitBreakerState.HALF_OPEN:
@@ -92,19 +95,19 @@ class ProductionCircuitBreaker:
                 self.failure_count = 0
         else:
             self.failure_count = 0
-    
+
     def _on_failure(self):
         """Handle failed operation."""
         self.failure_count += 1
         self.last_failure_time = time.time()
-        
+
         if self.failure_count >= self.config.failure_threshold:
             self.state = CircuitBreakerState.OPEN
 
 
 class EnterpriseTogetherService:
     """Enterprise-grade Together AI service with production patterns."""
-    
+
     def __init__(
         self,
         adapter: GenOpsTogetherAdapter,
@@ -116,7 +119,7 @@ class EnterpriseTogetherService:
         )
         self.operation_count = 0
         self.error_count = 0
-    
+
     def chat_with_resilience(
         self,
         messages: List[Dict[str, Any]],
@@ -126,14 +129,14 @@ class EnterpriseTogetherService:
         **kwargs
     ) -> Dict[str, Any]:
         """Chat with resilience patterns: retries, fallbacks, circuit breaker."""
-        
+
         def _execute_chat():
             return self.adapter.chat_with_governance(
                 messages=messages,
                 model=model,
                 **kwargs
             )
-        
+
         # Try primary model with circuit breaker
         for attempt in range(max_retries):
             try:
@@ -146,14 +149,14 @@ class EnterpriseTogetherService:
                     'fallback_used': False,
                     'circuit_breaker_state': self.circuit_breaker.state
                 }
-            
+
             except Exception as e:
                 logger.warning(f"Primary model attempt {attempt + 1} failed: {e}")
                 self.error_count += 1
-                
+
                 if attempt < max_retries - 1:
                     time.sleep(2 ** attempt)  # Exponential backoff
-        
+
         # Try fallback model if primary fails
         if fallback_model:
             try:
@@ -165,7 +168,7 @@ class EnterpriseTogetherService:
                     original_model=model,
                     **kwargs
                 )
-                
+
                 self.operation_count += 1
                 return {
                     'result': result,
@@ -174,10 +177,10 @@ class EnterpriseTogetherService:
                     'fallback_used': True,
                     'circuit_breaker_state': self.circuit_breaker.state
                 }
-            
+
             except Exception as e:
                 logger.error(f"Fallback model also failed: {e}")
-        
+
         raise Exception(f"All attempts failed for model {model}")
 
 
@@ -185,7 +188,7 @@ def demonstrate_multi_tenant_governance():
     """Demonstrate multi-tenant governance patterns."""
     print("🏢 Multi-Tenant Governance Patterns")
     print("=" * 50)
-    
+
     # Create adapters for different tenants/customers
     tenants = [
         {
@@ -196,7 +199,7 @@ def demonstrate_multi_tenant_governance():
         },
         {
             "name": "startup-inc",
-            "tier": "standard", 
+            "tier": "standard",
             "daily_budget": 50.0,
             "governance_policy": "enforced"
         },
@@ -207,15 +210,15 @@ def demonstrate_multi_tenant_governance():
             "governance_policy": "advisory"
         }
     ]
-    
+
     tenant_adapters = {}
     tenant_results = {}
-    
+
     print("🏗️ Setting up multi-tenant environment...")
-    
+
     for tenant in tenants:
         print(f"   Setting up {tenant['name']} ({tenant['tier']} tier)")
-        
+
         tenant_adapters[tenant['name']] = GenOpsTogetherAdapter(
             team="multi-tenant-demo",
             project=f"tenant-{tenant['name']}",
@@ -230,18 +233,18 @@ def demonstrate_multi_tenant_governance():
                 "tenant_name": tenant['name']
             }
         )
-    
+
     # Simulate operations for each tenant
     test_query = "Explain the benefits of AI automation for business processes."
-    
-    print(f"\n🎯 Processing query for all tenants:")
+
+    print("\n🎯 Processing query for all tenants:")
     print(f"   Query: {test_query[:60]}...")
-    
+
     for tenant_name, adapter in tenant_adapters.items():
         tenant_info = next(t for t in tenants if t['name'] == tenant_name)
-        
+
         print(f"\n👤 {tenant_name} ({tenant_info['tier']} tier):")
-        
+
         try:
             with adapter.track_session(f"{tenant_name}-operations") as session:
                 # Select model based on tenant tier
@@ -254,7 +257,7 @@ def demonstrate_multi_tenant_governance():
                 else:  # basic
                     model = TogetherModel.LLAMA_3_1_8B_INSTRUCT
                     max_tokens = 150
-                
+
                 result = adapter.chat_with_governance(
                     messages=[{"role": "user", "content": test_query}],
                     model=model,
@@ -263,9 +266,9 @@ def demonstrate_multi_tenant_governance():
                     tenant_tier=tenant_info['tier'],
                     business_unit="ai-automation"
                 )
-                
+
                 cost_summary = adapter.get_cost_summary()
-                
+
                 tenant_results[tenant_name] = {
                     'cost': float(result.cost),
                     'tokens': result.tokens_used,
@@ -273,27 +276,27 @@ def demonstrate_multi_tenant_governance():
                     'budget_utilization': cost_summary['daily_budget_utilization'],
                     'governance_policy': cost_summary['governance_policy']
                 }
-                
+
                 print(f"   ✅ Model: {result.model_used}")
                 print(f"   💰 Cost: ${result.cost:.6f}")
                 print(f"   📊 Budget used: {cost_summary['daily_budget_utilization']:.1f}%")
                 print(f"   🛡️ Governance: {cost_summary['governance_policy']}")
-        
+
         except GenOpsBudgetExceededError as e:
             print(f"   ❌ Budget exceeded: {e}")
             tenant_results[tenant_name] = {'error': 'budget_exceeded'}
         except Exception as e:
             print(f"   ❌ Operation failed: {e}")
             tenant_results[tenant_name] = {'error': str(e)}
-    
+
     # Multi-tenant summary
     successful_tenants = {k: v for k, v in tenant_results.items() if 'error' not in v}
-    
+
     if successful_tenants:
-        print(f"\n📊 Multi-Tenant Summary:")
+        print("\n📊 Multi-Tenant Summary:")
         total_cost = sum(t['cost'] for t in successful_tenants.values())
         avg_utilization = sum(t['budget_utilization'] for t in successful_tenants.values()) / len(successful_tenants)
-        
+
         print(f"   Successful operations: {len(successful_tenants)}/{len(tenants)}")
         print(f"   Total cost across tenants: ${total_cost:.6f}")
         print(f"   Average budget utilization: {avg_utilization:.1f}%")
@@ -304,7 +307,7 @@ def demonstrate_circuit_breaker_pattern():
     """Demonstrate circuit breaker pattern for resilient operations."""
     print("\n⚡ Circuit Breaker & Resilience Patterns")
     print("=" * 50)
-    
+
     adapter = GenOpsTogetherAdapter(
         team="resilience-demo",
         project="circuit-breaker",
@@ -312,18 +315,18 @@ def demonstrate_circuit_breaker_pattern():
         daily_budget_limit=20.0,
         governance_policy="advisory"
     )
-    
+
     # Configure circuit breaker with tight thresholds for demo
     circuit_config = CircuitBreakerConfig(
         failure_threshold=3,
         recovery_timeout=30,
         success_threshold=2
     )
-    
+
     service = EnterpriseTogetherService(adapter, circuit_config)
-    
+
     print("🔧 Testing circuit breaker with simulated failures...")
-    
+
     test_scenarios = [
         {
             "name": "Normal Operations",
@@ -345,10 +348,10 @@ def demonstrate_circuit_breaker_pattern():
             "iterations": 3
         }
     ]
-    
+
     for scenario in test_scenarios:
         print(f"\n🎯 {scenario['name']}:")
-        
+
         for i in range(scenario['iterations']):
             try:
                 result = service.chat_with_resilience(
@@ -360,16 +363,16 @@ def demonstrate_circuit_breaker_pattern():
                     scenario=scenario['name'],
                     iteration=i+1
                 )
-                
+
                 print(f"   ✅ Operation {i+1}: {result['model_used']} "
                       f"(attempt {result['attempt']}, "
                       f"fallback: {result['fallback_used']}, "
                       f"circuit: {result['circuit_breaker_state']})")
-                
+
             except Exception as e:
                 print(f"   ❌ Operation {i+1} failed: {str(e)[:60]}...")
-    
-    print(f"\n📊 Circuit Breaker Stats:")
+
+    print("\n📊 Circuit Breaker Stats:")
     print(f"   Total operations attempted: {service.operation_count}")
     print(f"   Total errors: {service.error_count}")
     print(f"   Success rate: {((service.operation_count - service.error_count) / max(service.operation_count, 1)) * 100:.1f}%")
@@ -380,7 +383,7 @@ def demonstrate_cost_governance_enforcement():
     """Demonstrate strict cost governance and budget enforcement."""
     print("\n💸 Cost Governance & Budget Enforcement")
     print("=" * 50)
-    
+
     # Create adapter with very strict budget for demo
     strict_adapter = GenOpsTogetherAdapter(
         team="cost-governance",
@@ -390,9 +393,9 @@ def demonstrate_cost_governance_enforcement():
         governance_policy="strict",  # Strict enforcement
         enable_cost_alerts=True
     )
-    
+
     print(f"💰 Testing strict budget enforcement (${strict_adapter.daily_budget_limit} daily limit)")
-    
+
     # Try operations that would exceed budget
     operations = [
         {"query": "Short answer please", "max_tokens": 20},
@@ -400,13 +403,13 @@ def demonstrate_cost_governance_enforcement():
         {"query": "One more quick query", "max_tokens": 20},
         {"query": "This should trigger budget limit", "max_tokens": 50},
     ]
-    
+
     successful_ops = 0
     total_cost = Decimal('0')
-    
+
     for i, op in enumerate(operations, 1):
         print(f"\n🎯 Operation {i}: {op['query']}")
-        
+
         try:
             result = strict_adapter.chat_with_governance(
                 messages=[{"role": "user", "content": op['query']}],
@@ -416,25 +419,25 @@ def demonstrate_cost_governance_enforcement():
                 operation_index=i,
                 budget_test=True
             )
-            
+
             successful_ops += 1
             total_cost += result.cost
-            
+
             cost_summary = strict_adapter.get_cost_summary()
-            
+
             print(f"   ✅ Success: ${result.cost:.6f}")
             print(f"   📊 Budget utilization: {cost_summary['daily_budget_utilization']:.1f}%")
-            
+
             if cost_summary['daily_budget_utilization'] > 75:
-                print(f"   ⚠️ Approaching budget limit!")
-        
+                print("   ⚠️ Approaching budget limit!")
+
         except GenOpsBudgetExceededError as e:
             print(f"   ❌ Budget exceeded: {e}")
             break
         except Exception as e:
             print(f"   ❌ Operation failed: {e}")
-    
-    print(f"\n📊 Budget Enforcement Results:")
+
+    print("\n📊 Budget Enforcement Results:")
     print(f"   Operations completed: {successful_ops}/{len(operations)}")
     print(f"   Total cost: ${total_cost:.6f}")
     print(f"   Budget limit: ${strict_adapter.daily_budget_limit:.6f}")
@@ -454,35 +457,35 @@ def production_monitoring_context(
         'errors': [],
         'metrics': {}
     }
-    
+
     logger.info(f"Starting operation: {operation_name} ({monitoring_data['operation_id']})")
-    
+
     try:
         yield monitoring_data
-        
+
         # Log successful completion
         duration = time.time() - monitoring_data['start_time']
         logger.info(f"Operation completed: {operation_name} in {duration:.2f}s")
-        
+
         monitoring_data['metrics']['duration'] = duration
         monitoring_data['metrics']['success'] = True
-        
+
     except Exception as e:
         # Log errors with full context
         duration = time.time() - monitoring_data['start_time']
         monitoring_data['errors'].append(str(e))
         monitoring_data['metrics']['duration'] = duration
         monitoring_data['metrics']['success'] = False
-        
+
         logger.error(f"Operation failed: {operation_name} after {duration:.2f}s - {e}")
         raise
-    
+
     finally:
         # Always log final metrics
         cost_summary = adapter.get_cost_summary()
         monitoring_data['metrics']['total_cost'] = cost_summary['daily_costs']
         monitoring_data['metrics']['budget_utilization'] = cost_summary['daily_budget_utilization']
-        
+
         logger.info(f"Operation metrics: {monitoring_data['metrics']}")
 
 
@@ -490,7 +493,7 @@ def demonstrate_production_monitoring():
     """Demonstrate production monitoring and observability patterns."""
     print("\n📊 Production Monitoring & Observability")
     print("=" * 50)
-    
+
     adapter = GenOpsTogetherAdapter(
         team="production-monitoring",
         project="observability-demo",
@@ -502,7 +505,7 @@ def demonstrate_production_monitoring():
             "service": "ai-assistant"
         }
     )
-    
+
     monitoring_tasks = [
         {
             "name": "customer_query_processing",
@@ -517,20 +520,20 @@ def demonstrate_production_monitoring():
             "criticality": "medium"
         },
         {
-            "name": "data_analysis_request", 
+            "name": "data_analysis_request",
             "query": "Analyze the trends in AI adoption across different industries.",
             "expected_duration": 4.0,
             "criticality": "low"
         }
     ]
-    
+
     print("📈 Testing production monitoring patterns...")
-    
+
     operation_results = []
-    
+
     for task in monitoring_tasks:
         print(f"\n🎯 {task['name']} (criticality: {task['criticality']})")
-        
+
         with production_monitoring_context(task['name'], adapter) as monitor:
             try:
                 result = adapter.chat_with_governance(
@@ -542,11 +545,11 @@ def demonstrate_production_monitoring():
                     criticality=task['criticality'],
                     expected_duration=task['expected_duration']
                 )
-                
+
                 monitor['metrics']['tokens_used'] = result.tokens_used
                 monitor['metrics']['cost'] = float(result.cost)
                 monitor['metrics']['model_used'] = result.model_used
-                
+
                 operation_results.append({
                     'name': task['name'],
                     'success': True,
@@ -554,17 +557,17 @@ def demonstrate_production_monitoring():
                     'cost': monitor['metrics']['cost'],
                     'criticality': task['criticality']
                 })
-                
+
                 print(f"   ✅ Completed in {monitor['metrics']['duration']:.2f}s")
                 print(f"   💰 Cost: ${monitor['metrics']['cost']:.6f}")
                 print(f"   📏 Tokens: {monitor['metrics']['tokens_used']}")
-                
+
                 # Performance analysis
                 if monitor['metrics']['duration'] > task['expected_duration']:
                     print(f"   ⚠️ Slower than expected ({task['expected_duration']:.1f}s)")
                 else:
-                    print(f"   ⚡ Within performance target")
-                
+                    print("   ⚡ Within performance target")
+
             except Exception as e:
                 operation_results.append({
                     'name': task['name'],
@@ -573,24 +576,24 @@ def demonstrate_production_monitoring():
                     'criticality': task['criticality']
                 })
                 print(f"   ❌ Failed: {e}")
-    
+
     # Production monitoring summary
-    print(f"\n📊 Production Monitoring Summary:")
+    print("\n📊 Production Monitoring Summary:")
     successful_ops = [op for op in operation_results if op['success']]
     failed_ops = [op for op in operation_results if not op['success']]
-    
+
     if successful_ops:
         avg_duration = sum(op['duration'] for op in successful_ops) / len(successful_ops)
         total_cost = sum(op['cost'] for op in successful_ops)
-        
+
         print(f"   ✅ Successful operations: {len(successful_ops)}/{len(operation_results)}")
         print(f"   ⏱️ Average duration: {avg_duration:.2f}s")
         print(f"   💰 Total cost: ${total_cost:.6f}")
-        
+
         # Criticality analysis
         high_crit_success = len([op for op in successful_ops if op['criticality'] == 'high'])
         print(f"   🔥 High criticality success rate: {high_crit_success}/1")
-    
+
     if failed_ops:
         print(f"   ❌ Failed operations: {len(failed_ops)}")
         for failed_op in failed_ops:
@@ -601,19 +604,19 @@ def main():
     """Run all production pattern demonstrations."""
     print("🏭 Together AI Production Patterns with GenOps")
     print("=" * 60)
-    
+
     try:
         # Run all production pattern demonstrations
         demonstrate_multi_tenant_governance()
         demonstrate_circuit_breaker_pattern()
         demonstrate_cost_governance_enforcement()
         demonstrate_production_monitoring()
-        
+
         # Final production summary
         print("\n" + "=" * 60)
         print("🎯 Production Patterns Summary")
         print("=" * 60)
-        
+
         print("✅ Enterprise patterns demonstrated:")
         print("   • Multi-tenant governance with tier-based resource allocation")
         print("   • Circuit breaker patterns for resilient operations")
@@ -621,7 +624,7 @@ def main():
         print("   • Production monitoring with observability integration")
         print("   • Error handling and retry strategies")
         print("   • Performance monitoring and SLA tracking")
-        
+
         print("\n🏗️ Production Readiness Checklist:")
         print("   ✅ Multi-tenant isolation and governance")
         print("   ✅ Circuit breakers for external service calls")
@@ -630,7 +633,7 @@ def main():
         print("   ✅ Monitoring and alerting")
         print("   ✅ Audit trails and compliance logging")
         print("   ✅ Performance optimization patterns")
-        
+
         print("\n🚀 Deployment Considerations:")
         print("   • Set appropriate budget limits per tenant/environment")
         print("   • Configure circuit breaker thresholds based on SLAs")
@@ -638,9 +641,9 @@ def main():
         print("   • Set up cost alerts and governance policies")
         print("   • Plan for model fallback strategies")
         print("   • Test resilience patterns under load")
-        
+
         return 0
-        
+
     except Exception as e:
         print(f"❌ Production patterns demo failed: {e}")
         return 1

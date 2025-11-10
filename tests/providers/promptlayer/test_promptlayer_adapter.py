@@ -11,23 +11,21 @@ Tests the core adapter functionality including:
 - Performance monitoring
 """
 
-import pytest
-import json
 import time
-from unittest.mock import Mock, patch, MagicMock, call
-from datetime import datetime
-from typing import Dict, Any
+from unittest.mock import Mock, patch
+
+import pytest
 
 # Import the modules under test
 try:
     from genops.providers.promptlayer import (
-        GenOpsPromptLayerAdapter,
         EnhancedPromptLayerSpan,
-        PromptLayerUsage,
-        PromptLayerResponse,
+        GenOpsPromptLayerAdapter,
         GovernancePolicy,
+        PromptLayerResponse,
+        PromptLayerUsage,
+        auto_instrument,
         instrument_promptlayer,
-        auto_instrument
     )
     PROMPTLAYER_AVAILABLE = True
 except ImportError:
@@ -50,7 +48,7 @@ class TestGenOpsPromptLayerAdapter:
                 max_operation_cost=1.0,
                 enable_governance=True
             )
-        
+
         self.sample_governance_attrs = {
             'team': 'test-team',
             'project': 'test-project',
@@ -67,7 +65,7 @@ class TestGenOpsPromptLayerAdapter:
         assert self.adapter.daily_budget_limit == 10.0
         assert self.adapter.max_operation_cost == 1.0
         assert self.adapter.enable_governance is True
-        
+
         # Test default initialization
         with patch('genops.providers.promptlayer.PromptLayer'):
             default_adapter = GenOpsPromptLayerAdapter()
@@ -106,7 +104,7 @@ class TestGenOpsPromptLayerAdapter:
                 daily_budget_limit=0.01  # Very low limit
             )
             assert advisory_adapter.governance_policy == GovernancePolicy.ADVISORY
-        
+
         # Test enforced policy
         with patch('genops.providers.promptlayer.PromptLayer'):
             enforced_adapter = GenOpsPromptLayerAdapter(
@@ -127,7 +125,7 @@ class TestGenOpsPromptLayerAdapter:
             assert span.team == 'test-team'
             assert span.project == 'test-project'
             assert span.operation_id in self.adapter.active_spans
-        
+
         # After context exits, span should be removed from active spans
         assert span.operation_id not in self.adapter.active_spans
         assert span.end_time is not None
@@ -155,7 +153,7 @@ class TestGenOpsPromptLayerAdapter:
         self.adapter.governance_policy = GovernancePolicy.ADVISORY
         self.adapter.daily_budget_limit = 0.01
         self.adapter.daily_usage = 0.005  # Half budget used
-        
+
         with self.adapter.track_prompt_operation('budget_test') as span:
             # Simulate operation that would exceed budget
             span.update_cost(0.02)  # Would exceed daily limit
@@ -168,7 +166,7 @@ class TestGenOpsPromptLayerAdapter:
         self.adapter.governance_policy = GovernancePolicy.ENFORCED
         self.adapter.daily_budget_limit = 0.01
         self.adapter.daily_usage = 0.02  # Budget already exceeded
-        
+
         # Should raise exception due to budget violation
         with pytest.raises(ValueError, match="Daily budget limit"):
             with self.adapter.track_prompt_operation('budget_violation_test') as span:
@@ -183,7 +181,7 @@ class TestGenOpsPromptLayerAdapter:
             # Cost within limit should be fine
             span.update_cost(0.03)
             assert len([v for v in span.policy_violations if 'operation cost' in v.lower()]) == 0
-            
+
             # Cost exceeding limit should trigger violation
             span.update_cost(0.08)
             assert len([v for v in span.policy_violations if 'operation cost' in v.lower()]) > 0
@@ -192,10 +190,10 @@ class TestGenOpsPromptLayerAdapter:
         """Test that usage tracking is properly updated."""
         initial_usage = self.adapter.daily_usage
         initial_count = self.adapter.operation_count
-        
+
         with self.adapter.track_prompt_operation('usage_test') as span:
             span.update_cost(0.05)
-        
+
         assert self.adapter.daily_usage == initial_usage + 0.05
         assert self.adapter.operation_count == initial_count + 1
 
@@ -209,13 +207,13 @@ class TestGenOpsPromptLayerAdapter:
             'response': 'Test response',
             'usage': {'input_tokens': 10, 'output_tokens': 20}
         }
-        
+
         # Create adapter with mock
         adapter = GenOpsPromptLayerAdapter(
             promptlayer_api_key='pl-test-key',
             team='test-team'
         )
-        
+
         # Test prompt execution
         result = adapter.run_prompt_with_governance(
             prompt_name='test_prompt',
@@ -223,16 +221,16 @@ class TestGenOpsPromptLayerAdapter:
             prompt_version='v1.0',
             tags=['test_tag']
         )
-        
+
         # Verify mock was called correctly
         mock_client.run.assert_called_once()
         call_args = mock_client.run.call_args
-        
+
         assert call_args[1]['prompt_name'] == 'test_prompt'
         assert call_args[1]['input_variables'] == {'query': 'test query'}
         assert call_args[1]['version'] == 'v1.0'
         assert 'team:test-team' in call_args[1]['tags']
-        
+
         # Verify governance context in response
         assert 'governance' in result
         assert result['governance']['team'] == 'test-team'
@@ -242,12 +240,12 @@ class TestGenOpsPromptLayerAdapter:
         # Force use of mock client
         self.adapter.client = Mock()
         self.adapter.client.run = Mock(return_value={'mock': True, 'message': 'PromptLayer not available'})
-        
+
         result = self.adapter.run_prompt_with_governance(
             prompt_name='mock_test',
             input_variables={'test': 'value'}
         )
-        
+
         assert result['response']['mock'] is True
         assert 'governance' in result
 
@@ -256,9 +254,9 @@ class TestGenOpsPromptLayerAdapter:
         # Update some usage
         self.adapter.daily_usage = 0.15
         self.adapter.operation_count = 5
-        
+
         metrics = self.adapter.get_metrics()
-        
+
         assert metrics['team'] == 'test-team'
         assert metrics['project'] == 'test-project'
         assert metrics['environment'] == 'test'
@@ -274,7 +272,7 @@ class TestGenOpsPromptLayerAdapter:
             with self.adapter.track_prompt_operation('error_test') as span:
                 # Simulate error during operation
                 raise ValueError("Test error")
-        
+
         # Span should still be finalized and removed from active spans
         assert span.operation_id not in self.adapter.active_spans
         assert span.end_time is not None
@@ -283,22 +281,22 @@ class TestGenOpsPromptLayerAdapter:
     def test_concurrent_operations_tracking(self):
         """Test tracking multiple concurrent operations."""
         spans = []
-        
+
         # Start multiple operations
         span1 = self.adapter.track_prompt_operation('concurrent_1').__enter__()
         span2 = self.adapter.track_prompt_operation('concurrent_2').__enter__()
         span3 = self.adapter.track_prompt_operation('concurrent_3').__enter__()
-        
+
         spans.extend([span1, span2, span3])
-        
+
         # All should be tracked as active
         assert len(self.adapter.active_spans) == 3
         assert all(span.operation_id in self.adapter.active_spans for span in spans)
-        
+
         # Close operations
         for span in spans:
             self.adapter.track_prompt_operation('dummy').__exit__(None, None, None)
-        
+
         # Clean up manually since we didn't use proper context managers
         for span in spans:
             if span.operation_id in self.adapter.active_spans:
@@ -312,12 +310,12 @@ class TestGenOpsPromptLayerAdapter:
             team='test-team',
             max_cost=0.10
         )
-        
+
         # Test within limits
         span.update_cost(0.05)
         self.adapter._check_governance_policies(span)
         assert len(span.policy_violations) == 0
-        
+
         # Test exceeding operation cost limit
         span.update_cost(0.15)
         self.adapter._check_governance_policies(span)
@@ -327,18 +325,18 @@ class TestGenOpsPromptLayerAdapter:
     def test_custom_tags_propagation(self):
         """Test that custom tags are properly propagated."""
         custom_tags = {'environment': 'staging', 'feature': 'recommendation'}
-        
+
         with patch('genops.providers.promptlayer.PromptLayer') as mock_pl:
             adapter = GenOpsPromptLayerAdapter(
                 team='test-team',
                 tags=custom_tags
             )
-            
+
             mock_client = Mock()
             mock_pl.return_value = mock_client
             mock_client.run.return_value = {'response': 'test'}
             adapter.client = mock_client
-            
+
             with adapter.track_prompt_operation('tag_test') as span:
                 assert span.tags['environment'] == 'staging'
                 assert span.tags['feature'] == 'recommendation'
@@ -349,9 +347,9 @@ class TestGenOpsPromptLayerAdapter:
             span.update_cost(0.025)
             span.update_token_usage(50, 100, 'gpt-3.5-turbo')
             span.add_attributes({'custom_metric': 'test_value'})
-            
+
             metrics = span.get_metrics()
-            
+
             assert metrics['estimated_cost'] == 0.025
             assert metrics['input_tokens'] == 50
             assert metrics['output_tokens'] == 100
@@ -390,14 +388,14 @@ class TestEnhancedPromptLayerSpan:
         # Test normal cost update
         self.span.update_cost(0.05)
         assert self.span.estimated_cost == 0.05
-        
+
         # Test cost limit violation
         span_with_limit = EnhancedPromptLayerSpan(
             operation_type='test',
             operation_name='limit_test',
             max_cost=0.10
         )
-        
+
         span_with_limit.update_cost(0.15)  # Exceeds limit
         assert len(span_with_limit.policy_violations) > 0
         assert any('exceeds maximum' in v for v in span_with_limit.policy_violations)
@@ -412,7 +410,7 @@ class TestEnhancedPromptLayerSpan:
         assert self.span.model == 'gpt-4'
         # Should estimate cost based on GPT-4 pricing
         assert self.span.estimated_cost > 0.05  # GPT-4 is expensive
-        
+
         # Test GPT-3.5 pricing
         span_35 = EnhancedPromptLayerSpan('test', 'test')
         span_35.update_token_usage(1000, 500, 'gpt-3.5-turbo')
@@ -425,9 +423,9 @@ class TestEnhancedPromptLayerSpan:
             'priority': 'high',
             'team': 'override-team'  # Should override existing team
         }
-        
+
         self.span.add_attributes(test_attrs)
-        
+
         assert self.span.metadata['custom_field'] == 'test_value'
         assert self.span.metadata['priority'] == 'high'
         assert self.span.team == 'override-team'  # Should be overridden
@@ -438,13 +436,13 @@ class TestEnhancedPromptLayerSpan:
         self.span.update_cost(0.032)
         self.span.update_token_usage(75, 125, 'gpt-3.5-turbo')
         self.span.add_attributes({'quality_score': 0.85})
-        
+
         # Simulate some duration
         time.sleep(0.01)  # Small delay
         self.span.finalize()
-        
+
         metrics = self.span.get_metrics()
-        
+
         # Verify all expected fields
         assert metrics['operation_id'] == self.span.operation_id
         assert metrics['operation_type'] == 'test_operation'
@@ -458,9 +456,9 @@ class TestEnhancedPromptLayerSpan:
     def test_span_finalization(self):
         """Test span finalization process."""
         assert self.span.end_time is None
-        
+
         self.span.finalize()
-        
+
         assert self.span.end_time is not None
         assert self.span.end_time >= self.span.start_time
 
@@ -474,13 +472,13 @@ class TestPromptLayerInstrumentationFunctions:
         """Test the instrument_promptlayer convenience function."""
         mock_adapter = Mock()
         mock_adapter_class.return_value = mock_adapter
-        
+
         result = instrument_promptlayer(
             promptlayer_api_key='pl-test-key',
             team='function-test-team',
             project='function-test-project'
         )
-        
+
         # Verify adapter was created with correct parameters
         mock_adapter_class.assert_called_once_with(
             promptlayer_api_key='pl-test-key',
@@ -494,14 +492,14 @@ class TestPromptLayerInstrumentationFunctions:
         """Test the auto_instrument function for zero-code integration."""
         mock_adapter = Mock()
         mock_adapter_class.return_value = mock_adapter
-        
+
         auto_instrument(
             promptlayer_api_key='pl-auto-key',
             team='auto-team',
             project='auto-project',
             environment='production'
         )
-        
+
         # Verify global adapter was created
         mock_adapter_class.assert_called_once_with(
             promptlayer_api_key='pl-auto-key',
@@ -509,7 +507,7 @@ class TestPromptLayerInstrumentationFunctions:
             project='auto-project',
             environment='production'
         )
-        
+
         # Test get_current_adapter
         from genops.providers.promptlayer import get_current_adapter
         current_adapter = get_current_adapter()
@@ -542,7 +540,7 @@ class TestPromptLayerDataClasses:
             team='data-team',
             project='data-project'
         )
-        
+
         assert usage.operation_id == 'test-op-123'
         assert usage.total_tokens == 150
         assert usage.cost == 0.025
@@ -568,7 +566,7 @@ class TestPromptLayerDataClasses:
             prompt_id='prompt-123',
             request_id='req-456'
         )
-        
+
         assert response.content == 'Test response content'
         assert response.usage.operation_id == 'resp-test'
         assert response.prompt_id == 'prompt-123'
@@ -577,28 +575,28 @@ class TestPromptLayerDataClasses:
 
 
 @pytest.mark.integration
-@pytest.mark.skipif(not PROMPTLAYER_AVAILABLE, reason="PromptLayer provider not available") 
+@pytest.mark.skipif(not PROMPTLAYER_AVAILABLE, reason="PromptLayer provider not available")
 class TestPromptLayerRealIntegration:
     """Integration tests that require real PromptLayer API keys."""
 
     def test_real_promptlayer_connection(self):
         """Test connection to real PromptLayer API."""
         import os
-        
+
         api_key = os.getenv('PROMPTLAYER_API_KEY')
         if not api_key:
             pytest.skip("PROMPTLAYER_API_KEY not set for integration tests")
-        
+
         adapter = GenOpsPromptLayerAdapter(
             promptlayer_api_key=api_key,
             team='integration-test',
             project='test-suite'
         )
-        
+
         # Test basic initialization
         assert adapter.promptlayer_api_key == api_key
         assert adapter.team == 'integration-test'
-        
+
         # Test metrics collection
         metrics = adapter.get_metrics()
         assert 'team' in metrics
@@ -607,25 +605,25 @@ class TestPromptLayerRealIntegration:
     def test_real_governance_tracking(self):
         """Test governance tracking with real operations."""
         import os
-        
+
         api_key = os.getenv('PROMPTLAYER_API_KEY')
         if not api_key:
             pytest.skip("PROMPTLAYER_API_KEY not set for integration tests")
-        
+
         adapter = GenOpsPromptLayerAdapter(
             promptlayer_api_key=api_key,
             team='integration-test',
             daily_budget_limit=0.10  # Small budget for testing
         )
-        
+
         with adapter.track_prompt_operation('integration_test') as span:
             span.update_cost(0.01)
             span.add_attributes({'integration_test': True})
-        
+
         # Verify tracking worked
         assert adapter.daily_usage == 0.01
         assert adapter.operation_count == 1
-        
+
         # Test metrics
         metrics = adapter.get_metrics()
         assert metrics['daily_usage'] == 0.01

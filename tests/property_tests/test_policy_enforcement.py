@@ -10,7 +10,7 @@ from typing import Any
 import pytest
 from hypothesis import assume, given, settings
 from hypothesis import strategies as st
-from hypothesis.stateful import RuleBasedStateMachine, invariant, rule, Bundle
+from hypothesis.stateful import Bundle, RuleBasedStateMachine, invariant, rule
 
 from genops.core.policy import PolicyResult, _policy_engine, register_policy
 
@@ -253,7 +253,7 @@ class PolicyEnforcementStateMachine(RuleBasedStateMachine):
             "enforcement_level": enforcement_level,
             "type": "cost"
         }
-        
+
         # Return the policy name to the Bundle
         return name
 

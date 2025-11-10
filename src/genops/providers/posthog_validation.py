@@ -17,20 +17,19 @@ Author: GenOps AI Team
 License: Apache 2.0
 """
 
-import os
-import sys
 import logging
+import os
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Dict, List, Optional, Any, Tuple
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
 class ValidationLevel(Enum):
     """Validation severity levels."""
     SUCCESS = "success"
-    WARNING = "warning" 
+    WARNING = "warning"
     ERROR = "error"
     INFO = "info"
 
@@ -55,22 +54,22 @@ class ValidationResult:
     recommendations: List[str]
     summary: Dict[str, Any]
     validation_timestamp: datetime
-    
+
     @property
     def has_errors(self) -> bool:
         """Check if validation has any errors."""
         return any(issue.level == ValidationLevel.ERROR for issue in self.issues)
-    
+
     @property
     def has_warnings(self) -> bool:
         """Check if validation has any warnings."""
         return any(issue.level == ValidationLevel.WARNING for issue in self.issues)
-    
+
     @property
     def error_count(self) -> int:
         """Count of error-level issues."""
         return len([issue for issue in self.issues if issue.level == ValidationLevel.ERROR])
-    
+
     @property
     def warning_count(self) -> int:
         """Count of warning-level issues."""
@@ -79,7 +78,7 @@ class ValidationResult:
 def validate_environment_config() -> List[ValidationIssue]:
     """Validate PostHog environment configuration."""
     issues = []
-    
+
     # Check PostHog API key
     posthog_api_key = os.getenv('POSTHOG_API_KEY')
     if not posthog_api_key:
@@ -94,7 +93,7 @@ def validate_environment_config() -> List[ValidationIssue]:
     elif not posthog_api_key.startswith('phc_'):
         issues.append(ValidationIssue(
             level=ValidationLevel.WARNING,
-            component="Configuration", 
+            component="Configuration",
             issue="PostHog API key format doesn't match expected pattern (should start with 'phc_')",
             recommendation="Verify your PostHog project API key is correct",
             documentation_link="https://posthog.com/docs/api/overview"
@@ -106,7 +105,7 @@ def validate_environment_config() -> List[ValidationIssue]:
             issue="POSTHOG_API_KEY configured correctly",
             recommendation="API key validation successful"
         ))
-    
+
     # Check PostHog host configuration
     posthog_host = os.getenv('POSTHOG_HOST', 'https://app.posthog.com')
     if posthog_host in ['https://app.posthog.com', 'https://eu.posthog.com']:
@@ -130,7 +129,7 @@ def validate_environment_config() -> List[ValidationIssue]:
             issue=f"PostHog host may be invalid: {posthog_host}",
             recommendation="Verify PostHog host URL format (should start with http:// or https://)"
         ))
-    
+
     # Check GenOps team configuration
     genops_team = os.getenv('GENOPS_TEAM')
     if genops_team:
@@ -148,7 +147,7 @@ def validate_environment_config() -> List[ValidationIssue]:
             recommendation="Set GENOPS_TEAM for better cost attribution and governance",
             fix_command="export GENOPS_TEAM='your-team-name'"
         ))
-    
+
     # Check GenOps project configuration
     genops_project = os.getenv('GENOPS_PROJECT')
     if genops_project:
@@ -166,13 +165,13 @@ def validate_environment_config() -> List[ValidationIssue]:
             recommendation="Set GENOPS_PROJECT for better cost attribution",
             fix_command="export GENOPS_PROJECT='your-project-name'"
         ))
-    
+
     return issues
 
 def validate_sdk_dependencies() -> List[ValidationIssue]:
     """Validate SDK and dependency installation."""
     issues = []
-    
+
     # Check GenOps installation
     try:
         import genops
@@ -182,7 +181,7 @@ def validate_sdk_dependencies() -> List[ValidationIssue]:
             issue="GenOps SDK installed and importable",
             recommendation="GenOps core functionality available"
         ))
-        
+
         # Check GenOps version
         try:
             version = getattr(genops, '__version__', 'unknown')
@@ -194,8 +193,8 @@ def validate_sdk_dependencies() -> List[ValidationIssue]:
             ))
         except Exception:
             pass
-            
-    except ImportError as e:
+
+    except ImportError:
         issues.append(ValidationIssue(
             level=ValidationLevel.ERROR,
             component="SDK Installation",
@@ -203,7 +202,7 @@ def validate_sdk_dependencies() -> List[ValidationIssue]:
             recommendation="Install GenOps SDK with PostHog support",
             fix_command="pip install genops[posthog]"
         ))
-    
+
     # Check PostHog SDK installation
     try:
         import posthog
@@ -213,7 +212,7 @@ def validate_sdk_dependencies() -> List[ValidationIssue]:
             issue="PostHog Python SDK installed and importable",
             recommendation="PostHog client functionality available"
         ))
-        
+
         # Check PostHog version
         try:
             version = getattr(posthog, '__version__', 'unknown')
@@ -226,16 +225,16 @@ def validate_sdk_dependencies() -> List[ValidationIssue]:
                 ))
         except Exception:
             pass
-            
-    except ImportError as e:
+
+    except ImportError:
         issues.append(ValidationIssue(
             level=ValidationLevel.ERROR,
-            component="SDK Installation", 
+            component="SDK Installation",
             issue="PostHog Python SDK not installed or not importable",
             recommendation="Install PostHog SDK",
             fix_command="pip install posthog"
         ))
-    
+
     # Check OpenTelemetry dependencies
     try:
         from opentelemetry import trace
@@ -253,16 +252,16 @@ def validate_sdk_dependencies() -> List[ValidationIssue]:
             recommendation="Install OpenTelemetry for enhanced telemetry",
             fix_command="pip install opentelemetry-api opentelemetry-sdk"
         ))
-    
+
     return issues
 
 def validate_posthog_connection(api_key: Optional[str] = None, host: Optional[str] = None) -> List[ValidationIssue]:
     """Validate PostHog API connectivity and authentication."""
     issues = []
-    
+
     api_key = api_key or os.getenv('POSTHOG_API_KEY')
     host = host or os.getenv('POSTHOG_HOST', 'https://app.posthog.com')
-    
+
     if not api_key:
         issues.append(ValidationIssue(
             level=ValidationLevel.ERROR,
@@ -271,11 +270,11 @@ def validate_posthog_connection(api_key: Optional[str] = None, host: Optional[st
             recommendation="Configure POSTHOG_API_KEY to test connectivity"
         ))
         return issues
-    
+
     try:
         # Import PostHog
         import posthog
-        
+
         # Test basic client initialization
         try:
             client = posthog.Client(api_key=api_key, host=host)
@@ -285,10 +284,10 @@ def validate_posthog_connection(api_key: Optional[str] = None, host: Optional[st
                 issue="PostHog client initialized successfully",
                 recommendation="PostHog API connectivity established"
             ))
-            
+
             # In a real implementation, we could test a lightweight API call
             # For now, we'll just test client initialization
-            
+
         except Exception as e:
             issues.append(ValidationIssue(
                 level=ValidationLevel.ERROR,
@@ -297,7 +296,7 @@ def validate_posthog_connection(api_key: Optional[str] = None, host: Optional[st
                 recommendation="Verify PostHog API key and host configuration",
                 documentation_link="https://posthog.com/docs/api/overview"
             ))
-    
+
     except ImportError:
         issues.append(ValidationIssue(
             level=ValidationLevel.ERROR,
@@ -306,13 +305,13 @@ def validate_posthog_connection(api_key: Optional[str] = None, host: Optional[st
             recommendation="Install PostHog SDK first",
             fix_command="pip install posthog"
         ))
-    
+
     return issues
 
 def validate_genops_posthog_integration() -> List[ValidationIssue]:
     """Validate GenOps PostHog adapter functionality."""
     issues = []
-    
+
     try:
         from genops.providers.posthog import GenOpsPostHogAdapter, auto_instrument
         issues.append(ValidationIssue(
@@ -321,7 +320,7 @@ def validate_genops_posthog_integration() -> List[ValidationIssue]:
             issue="GenOps PostHog adapter importable",
             recommendation="PostHog integration functionality available"
         ))
-        
+
         # Test adapter initialization
         try:
             api_key = os.getenv('POSTHOG_API_KEY', 'test-key')
@@ -336,7 +335,7 @@ def validate_genops_posthog_integration() -> List[ValidationIssue]:
                 issue="GenOps PostHog adapter initialization successful",
                 recommendation="Adapter configuration is valid"
             ))
-            
+
         except Exception as e:
             issues.append(ValidationIssue(
                 level=ValidationLevel.ERROR,
@@ -344,8 +343,8 @@ def validate_genops_posthog_integration() -> List[ValidationIssue]:
                 issue=f"GenOps PostHog adapter initialization failed: {e}",
                 recommendation="Check adapter configuration and dependencies"
             ))
-    
-    except ImportError as e:
+
+    except ImportError:
         issues.append(ValidationIssue(
             level=ValidationLevel.ERROR,
             component="GenOps Integration",
@@ -353,13 +352,13 @@ def validate_genops_posthog_integration() -> List[ValidationIssue]:
             recommendation="Install GenOps with PostHog support",
             fix_command="pip install genops[posthog]"
         ))
-    
+
     return issues
 
 def validate_cost_tracking_configuration() -> List[ValidationIssue]:
     """Validate cost tracking and governance configuration."""
     issues = []
-    
+
     # Check budget configuration
     daily_budget = os.getenv('GENOPS_DAILY_BUDGET_LIMIT')
     if daily_budget:
@@ -394,7 +393,7 @@ def validate_cost_tracking_configuration() -> List[ValidationIssue]:
             issue="Daily budget limit not configured (will use default)",
             recommendation="Consider setting GENOPS_DAILY_BUDGET_LIMIT for cost control"
         ))
-    
+
     # Check governance policy
     governance_policy = os.getenv('GENOPS_GOVERNANCE_POLICY', 'advisory')
     valid_policies = ['advisory', 'enforced', 'strict']
@@ -413,7 +412,7 @@ def validate_cost_tracking_configuration() -> List[ValidationIssue]:
             recommendation=f"Set governance policy to one of: {', '.join(valid_policies)}",
             fix_command="export GENOPS_GOVERNANCE_POLICY='advisory'"
         ))
-    
+
     return issues
 
 def validate_setup(verbose: bool = False) -> ValidationResult:
@@ -427,7 +426,7 @@ def validate_setup(verbose: bool = False) -> ValidationResult:
         ValidationResult with comprehensive validation status
     """
     all_issues = []
-    
+
     # Run all validation checks
     validation_functions = [
         ("Environment Configuration", validate_environment_config),
@@ -436,7 +435,7 @@ def validate_setup(verbose: bool = False) -> ValidationResult:
         ("GenOps Integration", validate_genops_posthog_integration),
         ("Cost Tracking", validate_cost_tracking_configuration)
     ]
-    
+
     for component_name, validation_func in validation_functions:
         try:
             issues = validation_func()
@@ -448,12 +447,12 @@ def validate_setup(verbose: bool = False) -> ValidationResult:
                 issue=f"Validation function failed: {e}",
                 recommendation="Check system configuration and dependencies"
             ))
-    
+
     # Categorize issues
     errors = [issue for issue in all_issues if issue.level == ValidationLevel.ERROR]
     warnings = [issue for issue in all_issues if issue.level == ValidationLevel.WARNING]
     successes = [issue for issue in all_issues if issue.level == ValidationLevel.SUCCESS]
-    
+
     # Determine overall status
     if errors:
         overall_status = ValidationLevel.ERROR
@@ -464,7 +463,7 @@ def validate_setup(verbose: bool = False) -> ValidationResult:
     else:
         overall_status = ValidationLevel.SUCCESS
         is_valid = True
-    
+
     # Generate recommendations
     recommendations = []
     if errors:
@@ -473,7 +472,7 @@ def validate_setup(verbose: bool = False) -> ValidationResult:
         recommendations.append("Address warning-level issues for optimal experience")
     if is_valid:
         recommendations.append("You can now use GenOps PostHog integration with confidence")
-    
+
     # Build summary
     summary = {
         'total_issues': len(all_issues),
@@ -483,7 +482,7 @@ def validate_setup(verbose: bool = False) -> ValidationResult:
         'components_validated': len(validation_functions),
         'is_ready_for_production': len(errors) == 0 and len(warnings) == 0
     }
-    
+
     return ValidationResult(
         is_valid=is_valid,
         overall_status=overall_status,
@@ -506,31 +505,31 @@ def print_validation_result(result: ValidationResult, show_successes: bool = Tru
     print("🔍 PostHog + GenOps Integration Validation Report")
     print("=" * 60)
     print()
-    
+
     # Overall status
     status_icons = {
         ValidationLevel.SUCCESS: "✅",
-        ValidationLevel.WARNING: "⚠️", 
+        ValidationLevel.WARNING: "⚠️",
         ValidationLevel.ERROR: "❌",
         ValidationLevel.INFO: "ℹ️"
     }
-    
+
     status_icon = status_icons[result.overall_status]
     status_text = "SUCCESS" if result.is_valid else "ISSUES DETECTED"
     print(f"{status_icon} Overall Status: {status_text}")
     print()
-    
+
     # Summary
     print("📊 Validation Summary:")
     print(f"  • SDK Installation: {result.summary['success_count'] - result.summary['error_count']} issues")
-    print(f"  • Authentication: {result.error_count} issues") 
+    print(f"  • Authentication: {result.error_count} issues")
     print(f"  • Configuration: {result.warning_count} issues")
     if result.summary.get('is_ready_for_production'):
-        print(f"  • Production Ready: Yes")
+        print("  • Production Ready: Yes")
     else:
-        print(f"  • Production Ready: No")
+        print("  • Production Ready: No")
     print()
-    
+
     # Issues by category
     if result.has_errors:
         print("❌ Errors (must fix):")
@@ -543,7 +542,7 @@ def print_validation_result(result: ValidationResult, show_successes: bool = Tru
                 if issue.documentation_link:
                     print(f"    📚 Docs: {issue.documentation_link}")
                 print()
-    
+
     if result.has_warnings:
         print("⚠️ Warnings (recommended fixes):")
         for issue in result.issues:
@@ -553,20 +552,20 @@ def print_validation_result(result: ValidationResult, show_successes: bool = Tru
                 if issue.fix_command:
                     print(f"    🔧 Command: {issue.fix_command}")
                 print()
-    
+
     if show_successes and result.successes:
         print("✅ Successful Validations:")
         for issue in result.successes:
             print(f"  • {issue.component}: {issue.issue}")
         print()
-    
+
     # Recommendations
     if result.recommendations:
         print("💡 Recommendations:")
         for i, rec in enumerate(result.recommendations, 1):
             print(f"  {i}. {rec}")
         print()
-    
+
     # Next steps
     print("🚀 Next Steps:")
     if not result.is_valid:
@@ -577,7 +576,7 @@ def print_validation_result(result: ValidationResult, show_successes: bool = Tru
         print("  1. You can now use GenOps PostHog integration with confidence")
         print("  2. Try the examples: python examples/posthog/basic_tracking.py")
         print("  3. Check the integration guide for advanced features")
-    
+
     print(f"\n📅 Validation completed at: {result.validation_timestamp.strftime('%Y-%m-%d %H:%M:%S')}")
 
 def interactive_setup_wizard() -> None:
@@ -588,7 +587,7 @@ def interactive_setup_wizard() -> None:
     print("This wizard will help you configure PostHog integration step-by-step.")
     print("Press Ctrl+C at any time to cancel.")
     print()
-    
+
     try:
         # Step 1: API Key
         print("📋 Step 1: PostHog API Key")
@@ -607,9 +606,9 @@ def interactive_setup_wizard() -> None:
             new_key = input("Enter your PostHog project API key (starts with 'phc_'): ").strip()
             if new_key:
                 print(f"💡 Add this to your environment: export POSTHOG_API_KEY='{new_key}'")
-        
+
         print()
-        
+
         # Step 2: Team Configuration
         print("📋 Step 2: Team Configuration")
         print("-" * 30)
@@ -627,9 +626,9 @@ def interactive_setup_wizard() -> None:
                 print(f"💡 Add this to your environment: export GENOPS_TEAM='{new_team}'")
             else:
                 print("⚠️ Skipping team configuration (recommended for cost attribution)")
-        
+
         print()
-        
+
         # Step 3: Project Configuration
         print("📋 Step 3: Project Configuration")
         print("-" * 30)
@@ -647,9 +646,9 @@ def interactive_setup_wizard() -> None:
                 print(f"💡 Add this to your environment: export GENOPS_PROJECT='{new_project}'")
             else:
                 print("⚠️ Skipping project configuration (recommended for cost tracking)")
-        
+
         print()
-        
+
         # Step 4: Budget Configuration
         print("📋 Step 4: Budget Configuration")
         print("-" * 30)
@@ -675,9 +674,9 @@ def interactive_setup_wizard() -> None:
                     print("⚠️ Invalid budget format, skipping budget configuration")
             else:
                 print("⚠️ Skipping budget configuration (will use default $1000/day)")
-        
+
         print()
-        
+
         # Step 5: Validation
         print("📋 Step 5: Validation")
         print("-" * 30)
@@ -686,7 +685,7 @@ def interactive_setup_wizard() -> None:
             print("\n🔍 Running validation...")
             result = validate_setup()
             print_validation_result(result, show_successes=False)
-        
+
         print()
         print("🎉 Setup wizard completed!")
         print("🚀 Next steps:")
@@ -694,7 +693,7 @@ def interactive_setup_wizard() -> None:
         print("  2. Restart your terminal or run 'source ~/.bashrc' (or ~/.zshrc)")
         print("  3. Run validation: python -c \"from genops.providers.posthog_validation import validate_setup, print_validation_result; print_validation_result(validate_setup())\"")
         print("  4. Try the examples: python examples/posthog/basic_tracking.py")
-        
+
     except KeyboardInterrupt:
         print("\n\n👋 Setup wizard cancelled by user")
     except Exception as e:
@@ -706,14 +705,14 @@ def get_setup_recommendations() -> List[Dict[str, str]]:
     return [
         {
             "category": "Environment Setup",
-            "recommendation": "Configure PostHog API key", 
+            "recommendation": "Configure PostHog API key",
             "command": "export POSTHOG_API_KEY='phc_your_project_api_key'",
             "priority": "high"
         },
         {
             "category": "Environment Setup",
             "recommendation": "Set team for cost attribution",
-            "command": "export GENOPS_TEAM='your-team-name'", 
+            "command": "export GENOPS_TEAM='your-team-name'",
             "priority": "medium"
         },
         {
@@ -739,7 +738,7 @@ def get_setup_recommendations() -> List[Dict[str, str]]:
 # Export validation utilities
 __all__ = [
     'validate_setup',
-    'print_validation_result', 
+    'print_validation_result',
     'validate_environment_config',
     'validate_sdk_dependencies',
     'validate_posthog_connection',

@@ -37,8 +37,7 @@ Example usage:
 
 import logging
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple, Any
-from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +73,7 @@ BEDROCK_MODELS = {
         "performance_tier": "efficient"
     },
     "anthropic.claude-v2:1": {
-        "provider": "anthropic", 
+        "provider": "anthropic",
         "name": "Claude 2.1",
         "input_price_per_1k": 0.008,
         "output_price_per_1k": 0.024,
@@ -100,7 +99,7 @@ BEDROCK_MODELS = {
         "use_cases": ["fast responses", "simple tasks"],
         "performance_tier": "efficient"
     },
-    
+
     # Amazon Titan Models
     "amazon.titan-text-express-v1": {
         "provider": "amazon",
@@ -139,7 +138,7 @@ BEDROCK_MODELS = {
         "use_cases": ["image generation", "creative content"],
         "performance_tier": "specialized"
     },
-    
+
     # AI21 Labs Jurassic Models
     "ai21.j2-ultra-v1": {
         "provider": "ai21",
@@ -152,14 +151,14 @@ BEDROCK_MODELS = {
     },
     "ai21.j2-mid-v1": {
         "provider": "ai21",
-        "name": "Jurassic-2 Mid", 
+        "name": "Jurassic-2 Mid",
         "input_price_per_1k": 0.0125,
         "output_price_per_1k": 0.0125,
         "context_length": 8192,
         "use_cases": ["general text generation", "content creation"],
         "performance_tier": "balanced"
     },
-    
+
     # Cohere Command Models
     "cohere.command-text-v14": {
         "provider": "cohere",
@@ -197,8 +196,8 @@ BEDROCK_MODELS = {
         "use_cases": ["multilingual embeddings", "global applications"],
         "performance_tier": "efficient"
     },
-    
-    # Meta Llama Models  
+
+    # Meta Llama Models
     "meta.llama2-13b-chat-v1": {
         "provider": "meta",
         "name": "Llama 2 13B Chat",
@@ -210,14 +209,14 @@ BEDROCK_MODELS = {
     },
     "meta.llama2-70b-chat-v1": {
         "provider": "meta",
-        "name": "Llama 2 70B Chat", 
+        "name": "Llama 2 70B Chat",
         "input_price_per_1k": 0.00195,
         "output_price_per_1k": 0.00256,
         "context_length": 4096,
         "use_cases": ["complex reasoning", "high quality chat"],
         "performance_tier": "premium"
     },
-    
+
     # Mistral Models
     "mistral.mistral-7b-instruct-v0:2": {
         "provider": "mistral",
@@ -237,7 +236,7 @@ BEDROCK_MODELS = {
         "use_cases": ["complex reasoning", "multilingual"],
         "performance_tier": "balanced"
     },
-    
+
     # Stability AI Models
     "stability.stable-diffusion-xl-v1": {
         "provider": "stability",
@@ -269,7 +268,7 @@ REGIONAL_MULTIPLIERS = {
 # Provisioned throughput pricing (approximate, varies by model)
 PROVISIONED_THROUGHPUT_HOURLY_RATES = {
     "anthropic.claude-3-opus-20240229-v1:0": 22.0,
-    "anthropic.claude-3-sonnet-20240229-v1:0": 4.0, 
+    "anthropic.claude-3-sonnet-20240229-v1:0": 4.0,
     "anthropic.claude-3-haiku-20240307-v1:0": 0.4,
     "amazon.titan-text-express-v1": 1.5,
     "amazon.titan-text-lite-v1": 0.5,
@@ -297,7 +296,7 @@ class BedrockCostBreakdown:
     use_cases: List[str]
 
 
-@dataclass  
+@dataclass
 class BedrockModelComparison:
     """Comparison between different Bedrock models for cost optimization."""
     task_description: str
@@ -334,21 +333,21 @@ def calculate_bedrock_cost(
     if model_id not in BEDROCK_MODELS:
         logger.warning(f"Unknown model {model_id}, using generic pricing")
         return _calculate_generic_cost(input_tokens, output_tokens)
-    
+
     model_info = BEDROCK_MODELS[model_id]
     regional_multiplier = REGIONAL_MULTIPLIERS.get(region, 1.0)
-    
+
     # Handle image generation models
     if "per_image_price" in model_info and images_generated > 0:
         image_cost = model_info["per_image_price"] * images_generated * regional_multiplier
         # Add small text processing cost for the prompt
         text_cost = (input_tokens / 1000.0) * model_info["input_price_per_1k"] * regional_multiplier
         return image_cost + text_cost
-    
+
     # Regular text/embedding models
     input_cost = (input_tokens / 1000.0) * model_info["input_price_per_1k"] * regional_multiplier
     output_cost = (output_tokens / 1000.0) * model_info["output_price_per_1k"] * regional_multiplier
-    
+
     return input_cost + output_cost
 
 
@@ -371,10 +370,10 @@ def get_detailed_cost_breakdown(
     """
     if model_id not in BEDROCK_MODELS:
         raise ValueError(f"Unknown model: {model_id}")
-    
+
     model_info = BEDROCK_MODELS[model_id]
     regional_multiplier = REGIONAL_MULTIPLIERS.get(region, 1.0)
-    
+
     # Calculate costs
     if "per_image_price" in model_info and images_generated > 0:
         input_cost = (input_tokens / 1000.0) * model_info["input_price_per_1k"] * regional_multiplier
@@ -384,10 +383,10 @@ def get_detailed_cost_breakdown(
         input_cost = (input_tokens / 1000.0) * model_info["input_price_per_1k"] * regional_multiplier
         output_cost = (output_tokens / 1000.0) * model_info["output_price_per_1k"] * regional_multiplier
         total_tokens = input_tokens + output_tokens
-    
+
     total_cost = input_cost + output_cost
     cost_per_token = total_cost / max(1, total_tokens)
-    
+
     return BedrockCostBreakdown(
         model_id=model_id,
         model_name=model_info["name"],
@@ -418,7 +417,7 @@ def compare_bedrock_models(
     Returns comprehensive comparison with recommendations.
     """
     model_breakdowns = []
-    
+
     for model_id in model_ids:
         if model_id in BEDROCK_MODELS:
             breakdown = get_detailed_cost_breakdown(
@@ -427,42 +426,42 @@ def compare_bedrock_models(
             model_breakdowns.append(breakdown)
         else:
             logger.warning(f"Skipping unknown model: {model_id}")
-    
+
     if not model_breakdowns:
         raise ValueError("No valid models provided for comparison")
-    
+
     # Sort by cost
     model_breakdowns.sort(key=lambda x: x.total_cost)
-    
+
     cheapest = model_breakdowns[0]
     most_expensive = model_breakdowns[-1]
-    
+
     # Generate recommendations
     recommendations = []
-    
+
     if len(model_breakdowns) > 1:
         cost_savings = most_expensive.total_cost - cheapest.total_cost
         percentage_savings = (cost_savings / most_expensive.total_cost) * 100
-        
+
         recommendations.append(
             f"Switch from {most_expensive.model_name} to {cheapest.model_name} "
             f"for {percentage_savings:.1f}% cost savings (${cost_savings:.6f} per operation)"
         )
-    
+
     # Performance tier recommendations
     efficient_models = [m for m in model_breakdowns if m.performance_tier == "efficient"]
     if efficient_models and task_description.lower() in ["simple", "high volume", "basic"]:
         recommendations.append(
             f"Consider {efficient_models[0].model_name} for simple/high-volume tasks"
         )
-    
+
     premium_models = [m for m in model_breakdowns if m.performance_tier == "premium"]
-    if premium_models and any(keyword in task_description.lower() 
+    if premium_models and any(keyword in task_description.lower()
                               for keyword in ["complex", "reasoning", "creative", "analysis"]):
         recommendations.append(
             f"Consider {premium_models[0].model_name} for complex reasoning tasks"
         )
-    
+
     return BedrockModelComparison(
         task_description=task_description,
         input_tokens=input_tokens,
@@ -491,7 +490,7 @@ def estimate_monthly_cost(
     daily_cost = calculate_bedrock_cost(
         model_id, avg_input_tokens, avg_output_tokens, region
     ) * daily_operations
-    
+
     return {
         "daily_cost": daily_cost,
         "weekly_cost": daily_cost * 7,
@@ -519,29 +518,29 @@ def calculate_provisioned_vs_ondemand(
         model_id, avg_input_tokens, avg_output_tokens, region
     )
     ondemand_monthly = operation_cost * monthly_operations
-    
+
     # Provisioned throughput cost (if available)
     hourly_rate = PROVISIONED_THROUGHPUT_HOURLY_RATES.get(model_id)
-    
+
     if not hourly_rate:
         return {
             "ondemand_monthly": ondemand_monthly,
             "provisioned_available": False,
             "recommendation": "Use on-demand pricing (provisioned not available for this model)"
         }
-    
+
     # Assume 24/7 provisioned capacity for simplicity
     provisioned_monthly = hourly_rate * 24 * 30
-    
+
     savings = ondemand_monthly - provisioned_monthly
     breakeven_operations = provisioned_monthly / operation_cost
-    
+
     recommendation = ""
     if savings > 0:
         recommendation = f"Use provisioned throughput to save ${savings:.2f}/month"
     else:
         recommendation = f"Use on-demand pricing to save ${abs(savings):.2f}/month"
-    
+
     return {
         "ondemand_monthly": ondemand_monthly,
         "provisioned_monthly": provisioned_monthly,
@@ -576,14 +575,14 @@ def get_cost_optimization_recommendations(
         List of actionable optimization recommendations
     """
     recommendations = []
-    
+
     if current_model not in BEDROCK_MODELS:
         recommendations.append(f"Warning: Unknown model {current_model}")
         return recommendations
-    
+
     current_cost = calculate_bedrock_cost(current_model, input_tokens, output_tokens, region)
     current_info = BEDROCK_MODELS[current_model]
-    
+
     # Budget check
     if budget_per_operation and current_cost > budget_per_operation:
         over_budget = current_cost - budget_per_operation
@@ -591,50 +590,50 @@ def get_cost_optimization_recommendations(
             f"Current cost ${current_cost:.6f} exceeds budget ${budget_per_operation:.6f} "
             f"by ${over_budget:.6f} per operation"
         )
-    
+
     # Task-specific recommendations
     if task_type.lower() in ["simple", "basic", "high-volume"]:
         efficient_models = [
             model_id for model_id, info in BEDROCK_MODELS.items()
             if info["performance_tier"] == "efficient" and model_id != current_model
         ]
-        
+
         if efficient_models:
             cheapest_efficient = min(
                 efficient_models,
                 key=lambda m: calculate_bedrock_cost(m, input_tokens, output_tokens, region)
             )
             efficient_cost = calculate_bedrock_cost(cheapest_efficient, input_tokens, output_tokens, region)
-            
+
             if efficient_cost < current_cost:
                 savings = current_cost - efficient_cost
                 recommendations.append(
                     f"For simple tasks, consider {BEDROCK_MODELS[cheapest_efficient]['name']} "
                     f"to save ${savings:.6f} per operation ({(savings/current_cost)*100:.1f}% savings)"
                 )
-    
+
     # Regional optimization
     best_region = min(
         REGIONAL_MULTIPLIERS.keys(),
         key=lambda r: calculate_bedrock_cost(current_model, input_tokens, output_tokens, r)
     )
-    
+
     if best_region != region:
         best_cost = calculate_bedrock_cost(current_model, input_tokens, output_tokens, best_region)
         regional_savings = current_cost - best_cost
-        
+
         if regional_savings > 0:
             recommendations.append(
                 f"Consider using {best_region} region for ${regional_savings:.6f} savings per operation"
             )
-    
+
     # Volume-based recommendations
     if budget_per_operation:
         operations_per_dollar = 1.0 / current_cost
         recommendations.append(
             f"Current efficiency: {operations_per_dollar:.1f} operations per dollar"
         )
-    
+
     return recommendations
 
 
@@ -643,10 +642,10 @@ def _calculate_generic_cost(input_tokens: int, output_tokens: int) -> float:
     # Use average pricing across all models as fallback
     avg_input_price = sum(model["input_price_per_1k"] for model in BEDROCK_MODELS.values()) / len(BEDROCK_MODELS)
     avg_output_price = sum(model["output_price_per_1k"] for model in BEDROCK_MODELS.values()) / len(BEDROCK_MODELS)
-    
+
     input_cost = (input_tokens / 1000.0) * avg_input_price
     output_cost = (output_tokens / 1000.0) * avg_output_price
-    
+
     return input_cost + output_cost
 
 
@@ -658,14 +657,14 @@ def get_cheapest_model_for_task(
     output_tokens: int = 500
 ) -> Tuple[str, float]:
     """Get the most cost-effective model for a specific task type."""
-    
+
     suitable_models = []
-    
+
     for model_id, info in BEDROCK_MODELS.items():
         if any(use_case in task_type.lower() for use_case in info["use_cases"]):
             cost = calculate_bedrock_cost(model_id, input_tokens, output_tokens, region)
             suitable_models.append((model_id, cost))
-    
+
     if not suitable_models:
         # Fallback to all efficient models
         suitable_models = [
@@ -673,7 +672,7 @@ def get_cheapest_model_for_task(
             for model_id, info in BEDROCK_MODELS.items()
             if info["performance_tier"] == "efficient"
         ]
-    
+
     return min(suitable_models, key=lambda x: x[1])
 
 
@@ -684,15 +683,15 @@ def get_premium_model_for_task(
     output_tokens: int = 500
 ) -> Tuple[str, float]:
     """Get the highest quality model for a specific task type."""
-    
+
     premium_models = []
-    
+
     for model_id, info in BEDROCK_MODELS.items():
         if (info["performance_tier"] in ["premium", "balanced"] and
             any(use_case in task_type.lower() for use_case in info["use_cases"])):
             cost = calculate_bedrock_cost(model_id, input_tokens, output_tokens, region)
             premium_models.append((model_id, cost))
-    
+
     if not premium_models:
         # Fallback to all premium models
         premium_models = [
@@ -700,14 +699,14 @@ def get_premium_model_for_task(
             for model_id, info in BEDROCK_MODELS.items()
             if info["performance_tier"] == "premium"
         ]
-    
+
     return min(premium_models, key=lambda x: x[1]) if premium_models else ("", 0.0)
 
 
 # Export main functions
 __all__ = [
     'calculate_bedrock_cost',
-    'get_bedrock_model_info', 
+    'get_bedrock_model_info',
     'get_detailed_cost_breakdown',
     'compare_bedrock_models',
     'estimate_monthly_cost',

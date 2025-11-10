@@ -29,18 +29,17 @@ Features:
 """
 
 import logging
+import random
 import time
 import uuid
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from decimal import Decimal
-from typing import Any, Dict, List, Optional, Set, Union
 from datetime import datetime
-import random
+from decimal import Decimal
 from functools import wraps
+from typing import Any, Dict, List, Optional
 
 # OpenTelemetry imports
-from opentelemetry import trace
 from opentelemetry.trace import Status, StatusCode
 
 # GenOps core imports
@@ -97,7 +96,7 @@ class HaystackPipelineResult:
     end_time: datetime
 
 
-@dataclass 
+@dataclass
 class HaystackSessionContext:
     """Context for tracking multi-pipeline sessions in Haystack workflows."""
     session_id: str
@@ -108,7 +107,7 @@ class HaystackSessionContext:
     total_cost: Decimal = Decimal('0')
     governance_attributes: Dict[str, Any] = field(default_factory=dict)
     pipeline_results: List[HaystackPipelineResult] = field(default_factory=list)
-    
+
     def add_pipeline_result(self, result: HaystackPipelineResult):
         """Add a pipeline result to the session."""
         self.pipeline_results.append(result)
@@ -118,71 +117,71 @@ class HaystackSessionContext:
 
 class HaystackPipelineContext:
     """Context manager for tracking Haystack pipeline execution."""
-    
-    def __init__(self, adapter: 'GenOpsHaystackAdapter', pipeline_name: str, 
+
+    def __init__(self, adapter: 'GenOpsHaystackAdapter', pipeline_name: str,
                  pipeline_id: str, **governance_attrs):
         self.adapter = adapter
         self.pipeline_name = pipeline_name
         self.pipeline_id = pipeline_id
         self.governance_attrs = governance_attrs
-        
+
         # Tracking state
         self.start_time = None
         self.end_time = None
         self.component_results: List[HaystackComponentResult] = []
         self.total_cost = Decimal('0')
         self.span = None
-        
+
     def __enter__(self):
         """Start pipeline tracking."""
         self.start_time = datetime.utcnow()
-        
+
         # Create OpenTelemetry span for the entire pipeline
         self.span = self.adapter.telemetry.tracer.start_span(
             f"haystack.pipeline.{self.pipeline_name}"
         )
-        
+
         # Set pipeline attributes
         self.span.set_attribute("genops.provider", "haystack")
         self.span.set_attribute("genops.pipeline.name", self.pipeline_name)
         self.span.set_attribute("genops.pipeline.id", self.pipeline_id)
         self.span.set_attribute("genops.framework", "haystack")
-        
+
         # Set governance attributes
         for key, value in self.governance_attrs.items():
             if value is not None:
                 self.span.set_attribute(f"genops.{key}", str(value))
-        
+
         # Set adapter-level governance attributes
         self.span.set_attribute("genops.team", self.adapter.team)
         self.span.set_attribute("genops.project", self.adapter.project)
         self.span.set_attribute("genops.environment", self.adapter.environment)
-        
+
         return self
-        
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Complete pipeline tracking."""
         self.end_time = datetime.utcnow()
-        
+
         # Calculate totals
         total_execution_time = (self.end_time - self.start_time).total_seconds()
-        
+
         # Aggregate costs by provider and component
         cost_by_provider = {}
         cost_by_component = {}
-        
+
         for result in self.component_results:
             # By provider
             if result.provider:
                 cost_by_provider[result.provider] = (
                     cost_by_provider.get(result.provider, Decimal('0')) + result.cost
                 )
-            
+
             # By component
             cost_by_component[result.component_name] = (
                 cost_by_component.get(result.component_name, Decimal('0')) + result.cost
             )
-        
+
         # Create pipeline result
         pipeline_result = HaystackPipelineResult(
             pipeline_name=self.pipeline_name,
@@ -199,41 +198,41 @@ class HaystackPipelineContext:
             start_time=self.start_time,
             end_time=self.end_time
         )
-        
+
         # Set final span attributes
         self.span.set_attribute("genops.cost.total", float(self.total_cost))
         self.span.set_attribute("genops.pipeline.components.total", len(self.component_results))
         self.span.set_attribute("genops.pipeline.components.successful", pipeline_result.successful_components)
         self.span.set_attribute("genops.pipeline.components.failed", pipeline_result.failed_components)
         self.span.set_attribute("genops.pipeline.execution_time_seconds", total_execution_time)
-        
+
         # Set provider cost breakdown
         for provider, cost in cost_by_provider.items():
             self.span.set_attribute(f"genops.cost.provider.{provider}", float(cost))
-        
+
         # Set span status
         if exc_type is None:
             self.span.set_status(Status(StatusCode.OK))
         else:
             self.span.set_status(Status(StatusCode.ERROR, str(exc_val)))
             self.span.record_exception(exc_val)
-        
+
         # Finish span
         self.span.end()
-        
+
         # Store result in adapter
         self.adapter._pipeline_results[self.pipeline_id] = pipeline_result
-        
+
         # Update adapter totals
         self.adapter._daily_costs += self.total_cost
-        
+
         return pipeline_result
-    
+
     def add_component_result(self, result: HaystackComponentResult):
         """Add a component execution result to the pipeline tracking."""
         self.component_results.append(result)
         self.total_cost += result.cost
-        
+
         # Create span for the component
         with self.adapter.telemetry.tracer.start_as_current_span(
             f"haystack.component.{result.component_name}"
@@ -242,7 +241,7 @@ class HaystackPipelineContext:
             component_span.set_attribute("genops.component.type", result.component_type)
             component_span.set_attribute("genops.cost.total", float(result.cost))
             component_span.set_attribute("genops.execution_time_seconds", result.execution_time_seconds)
-            
+
             if result.provider:
                 component_span.set_attribute("genops.provider", result.provider)
             if result.model:
@@ -251,11 +250,11 @@ class HaystackPipelineContext:
                 component_span.set_attribute("genops.tokens.input", result.tokens_input)
             if result.tokens_output:
                 component_span.set_attribute("genops.tokens.output", result.tokens_output)
-            
+
             # Set custom attributes
             for key, value in result.custom_attributes.items():
                 component_span.set_attribute(f"genops.component.{key}", str(value))
-            
+
             # Set status
             if result.status == "error":
                 component_span.set_status(Status(StatusCode.ERROR, result.error_message or "Component failed"))
@@ -275,7 +274,7 @@ class GenOpsHaystackAdapter:
     - Agent workflow governance
     - Enterprise compliance and multi-tenant support
     """
-    
+
     def __init__(
         self,
         team: str = "default-team",
@@ -316,13 +315,13 @@ class GenOpsHaystackAdapter:
                 "📚 Documentation: https://docs.haystack.deepset.ai/docs/installation"
             )
             logger.warning(error_msg)
-            
+
             # In strict mode, raise an exception with actionable guidance
             if kwargs.get('strict_mode', False):
                 raise ImportError(
                     f"Haystack AI framework is required but not installed. {error_msg}"
                 )
-        
+
         self.team = team
         self.project = project
         self.environment = environment
@@ -332,13 +331,13 @@ class GenOpsHaystackAdapter:
         self.enable_cost_alerts = enable_cost_alerts
         self.enable_component_tracking = enable_component_tracking
         self.enable_pipeline_caching = enable_pipeline_caching
-        
+
         # Initialize telemetry
         self.telemetry = GenOpsTelemetry(tracer_name="haystack")
-        
+
         # Initialize error tracking
         self.initialization_errors = []
-        
+
         # Initialize cost aggregator and monitor
         try:
             from genops.providers.haystack_cost_aggregator import HaystackCostAggregator
@@ -355,11 +354,11 @@ class GenOpsHaystackAdapter:
                 "📚 If issues persist, see: docs/troubleshooting.md"
             )
             logger.warning(error_msg)
-            
+
             # Initialize with None but provide helpful context
             self.cost_aggregator = None
             self.monitor = None
-            
+
             # Store error details for diagnostics
             self.initialization_errors = [f"Cost aggregator/monitor: {e}"]
         except Exception as e:
@@ -372,17 +371,17 @@ class GenOpsHaystackAdapter:
                 "📚 Documentation: docs/integrations/haystack.md#troubleshooting"
             )
             logger.error(error_msg)
-            
+
             self.cost_aggregator = None
             self.monitor = None
             self.initialization_errors = [f"Unexpected error: {e}"]
-        
+
         # Cost tracking
         self._daily_costs = Decimal("0.00")
         self._monthly_costs = Decimal("0.00")
         self._pipeline_results: Dict[str, HaystackPipelineResult] = {}
         self._active_sessions: Dict[str, HaystackSessionContext] = {}
-        
+
         # Component type registry for cost estimation
         self._component_cost_registry = {
             'OpenAIGenerator': {'provider': 'openai', 'cost_per_token': 0.00002},
@@ -392,7 +391,7 @@ class GenOpsHaystackAdapter:
             'EmbeddingRetriever': {'provider': 'generic', 'cost_per_operation': 0.0001},
             'InMemoryDocumentStore': {'provider': 'local', 'cost_per_operation': 0.0},
         }
-        
+
         # Enhanced error handling configuration
         self.retry_config = {
             'max_retries': kwargs.get('max_retries', 3),
@@ -401,7 +400,7 @@ class GenOpsHaystackAdapter:
             'backoff_factor': kwargs.get('retry_backoff_factor', 2.0),
             'jitter': kwargs.get('retry_jitter', True)
         }
-        
+
         # Error tracking and diagnostics
         self.error_stats = {
             'total_errors': 0,
@@ -410,9 +409,9 @@ class GenOpsHaystackAdapter:
             'component_failures': {},
             'provider_failures': {}
         }
-        
+
         logger.info(f"GenOps Haystack adapter initialized for team '{team}', project '{project}'")
-    
+
     @contextmanager
     def track_pipeline(self, pipeline_name: str, **governance_attrs):
         """
@@ -431,7 +430,7 @@ class GenOpsHaystackAdapter:
                 print(f"Total cost: ${context.total_cost:.6f}")
         """
         pipeline_id = str(uuid.uuid4())
-        
+
         # Merge governance attributes with adapter defaults
         merged_attrs = {
             "team": self.team,
@@ -439,13 +438,13 @@ class GenOpsHaystackAdapter:
             "environment": self.environment,
             **governance_attrs
         }
-        
+
         with HaystackPipelineContext(
             self, pipeline_name, pipeline_id, **merged_attrs
         ) as context:
             yield context
-    
-    @contextmanager 
+
+    @contextmanager
     def track_session(self, session_name: str, **governance_attrs):
         """
         Context manager for tracking multi-pipeline sessions.
@@ -467,21 +466,21 @@ class GenOpsHaystackAdapter:
                 print(f"Session cost: ${session.total_cost:.6f}")
         """
         session_id = str(uuid.uuid4())
-        
+
         session_context = HaystackSessionContext(
             session_id=session_id,
             session_name=session_name,
             start_time=datetime.utcnow(),
             governance_attributes=governance_attrs
         )
-        
+
         self._active_sessions[session_id] = session_context
-        
+
         try:
             yield session_context
         finally:
             session_context.end_time = datetime.utcnow()
-            
+
             # Create session telemetry span
             with self.telemetry.tracer.start_as_current_span(
                 f"haystack.session.{session_name}"
@@ -490,17 +489,17 @@ class GenOpsHaystackAdapter:
                 session_span.set_attribute("genops.session.id", session_id)
                 session_span.set_attribute("genops.session.total_pipelines", session_context.total_pipelines)
                 session_span.set_attribute("genops.session.total_cost", float(session_context.total_cost))
-                
+
                 # Set governance attributes
                 for key, value in governance_attrs.items():
                     if value is not None:
                         session_span.set_attribute(f"genops.{key}", str(value))
-                        
+
                 session_span.set_status(Status(StatusCode.OK))
-            
+
             del self._active_sessions[session_id]
-    
-    def estimate_component_cost(self, component_name: str, component_type: str, 
+
+    def estimate_component_cost(self, component_name: str, component_type: str,
                               tokens_input: int = 0, tokens_output: int = 0,
                               operations: int = 1) -> tuple[Decimal, str]:
         """
@@ -521,9 +520,9 @@ class GenOpsHaystackAdapter:
         if not registry_entry:
             # Default estimation for unknown components
             return Decimal("0.001"), "unknown"
-        
+
         provider = registry_entry['provider']
-        
+
         if 'cost_per_token' in registry_entry:
             # Token-based pricing
             cost_per_token = Decimal(str(registry_entry['cost_per_token']))
@@ -533,9 +532,9 @@ class GenOpsHaystackAdapter:
             # Operation-based pricing
             cost_per_operation = Decimal(str(registry_entry['cost_per_operation']))
             total_cost = cost_per_operation * operations
-        
+
         return total_cost, provider
-    
+
     def track_component_execution(self, component_name: str, component_type: str,
                                 execution_func, *args, **kwargs) -> HaystackComponentResult:
         """
@@ -554,7 +553,7 @@ class GenOpsHaystackAdapter:
         return self._execute_with_retry(
             component_name, component_type, execution_func, *args, **kwargs
         )
-    
+
     def _execute_with_retry(self, component_name: str, component_type: str,
                            execution_func, *args, **kwargs) -> HaystackComponentResult:
         """
@@ -563,7 +562,7 @@ class GenOpsHaystackAdapter:
         start_time = time.time()
         last_exception = None
         retry_count = 0
-        
+
         for attempt in range(self.retry_config['max_retries'] + 1):
             try:
                 # Add artificial delay for retries
@@ -576,26 +575,26 @@ class GenOpsHaystackAdapter:
                     time.sleep(delay)
                     retry_count += 1
                     self.error_stats['retry_attempts'] += 1
-                
+
                 # Execute the component
                 result = execution_func(*args, **kwargs)
                 execution_time = time.time() - start_time
-                
+
                 # Extract token information if available
                 tokens_input, tokens_output = self._extract_token_usage(result)
-                
+
                 # Estimate cost
                 estimated_cost, provider = self.estimate_component_cost(
                     component_name, component_type, tokens_input, tokens_output
                 )
-                
+
                 # Log successful execution after retries
                 if retry_count > 0:
                     logger.info(
                         f"Component {component_name} succeeded after {retry_count} retries "
                         f"(total time: {execution_time:.2f}s)"
                     )
-                
+
                 return HaystackComponentResult(
                     component_name=component_name,
                     component_type=component_type,
@@ -610,32 +609,32 @@ class GenOpsHaystackAdapter:
                         'final_attempt': attempt + 1
                     }
                 )
-                
+
             except Exception as e:
                 last_exception = e
                 error_type = type(e).__name__
-                
+
                 # Track error statistics
                 self._track_error(component_name, component_type, error_type, str(e))
-                
+
                 # Check if error is retryable
                 if not self._is_retryable_error(e) or attempt >= self.retry_config['max_retries']:
                     break
-                
+
                 logger.warning(
                     f"Component {component_name} failed with {error_type}: {str(e)}. "
                     f"Will retry (attempt {attempt + 1}/{self.retry_config['max_retries']})..."
                 )
-        
+
         # All retries exhausted or non-retryable error
         execution_time = time.time() - start_time
         error_message = str(last_exception) if last_exception else "Unknown error"
-        
+
         logger.error(
             f"Component {component_name} failed permanently after {retry_count} retries. "
             f"Final error: {error_message}"
         )
-        
+
         return HaystackComponentResult(
             component_name=component_name,
             component_type=component_type,
@@ -649,7 +648,7 @@ class GenOpsHaystackAdapter:
                 'retryable': self._is_retryable_error(last_exception) if last_exception else False
             }
         )
-    
+
     def _calculate_retry_delay(self, attempt: int) -> float:
         """
         Calculate retry delay with exponential backoff and optional jitter.
@@ -658,46 +657,46 @@ class GenOpsHaystackAdapter:
             self.retry_config['base_delay'] * (self.retry_config['backoff_factor'] ** (attempt - 1)),
             self.retry_config['max_delay']
         )
-        
+
         # Add jitter to avoid thundering herd
         if self.retry_config['jitter']:
             delay *= (0.5 + random.random() * 0.5)
-        
+
         return delay
-    
+
     def _is_retryable_error(self, error: Exception) -> bool:
         """
         Determine if an error is retryable based on error type and message.
         """
         retryable_errors = {
-            'ConnectionError', 'TimeoutError', 'HTTPError', 
+            'ConnectionError', 'TimeoutError', 'HTTPError',
             'ServiceUnavailableError', 'RateLimitError',
             'APIError', 'NetworkError', 'TemporaryFailure'
         }
-        
+
         error_type = type(error).__name__
         error_message = str(error).lower()
-        
+
         # Check error type
         if error_type in retryable_errors:
             return True
-        
+
         # Check error message for retryable patterns
         retryable_patterns = [
-            'timeout', 'connection', 'network', 'rate limit', 
-            'service unavailable', 'temporary', 'retry', 
+            'timeout', 'connection', 'network', 'rate limit',
+            'service unavailable', 'temporary', 'retry',
             'busy', 'overload', 'throttle'
         ]
-        
+
         return any(pattern in error_message for pattern in retryable_patterns)
-    
+
     def _extract_token_usage(self, result: Any) -> tuple[int, int]:
         """
         Extract token usage information from component result.
         """
         tokens_input = 0
         tokens_output = 0
-        
+
         if isinstance(result, dict):
             if 'usage' in result:
                 usage = result['usage']
@@ -705,7 +704,7 @@ class GenOpsHaystackAdapter:
                 tokens_output = usage.get('completion_tokens', 0)
             elif 'meta' in result:
                 meta = result['meta']
-                tokens_input = meta.get('prompt_tokens', 0)  
+                tokens_input = meta.get('prompt_tokens', 0)
                 tokens_output = meta.get('completion_tokens', 0)
             # Check for OpenAI-style usage in nested structures
             elif hasattr(result, 'get'):
@@ -715,26 +714,26 @@ class GenOpsHaystackAdapter:
                         tokens_input = usage.get('prompt_tokens', 0)
                         tokens_output = usage.get('completion_tokens', 0)
                         break
-        
+
         return tokens_input, tokens_output
-    
-    def _track_error(self, component_name: str, component_type: str, 
+
+    def _track_error(self, component_name: str, component_type: str,
                     error_type: str, error_message: str):
         """
         Track error statistics for diagnostics and monitoring.
         """
         self.error_stats['total_errors'] += 1
-        
+
         # Track by error type
         if error_type not in self.error_stats['error_types']:
             self.error_stats['error_types'][error_type] = 0
         self.error_stats['error_types'][error_type] += 1
-        
+
         # Track by component
         if component_name not in self.error_stats['component_failures']:
             self.error_stats['component_failures'][component_name] = 0
         self.error_stats['component_failures'][component_name] += 1
-        
+
         # Track by provider (if identifiable)
         registry_entry = self._component_cost_registry.get(component_type)
         if registry_entry:
@@ -742,7 +741,7 @@ class GenOpsHaystackAdapter:
             if provider not in self.error_stats['provider_failures']:
                 self.error_stats['provider_failures'][provider] = 0
             self.error_stats['provider_failures'][provider] += 1
-    
+
     def get_cost_summary(self) -> Dict[str, Any]:
         """
         Get comprehensive cost summary for the current period with error diagnostics.
@@ -751,36 +750,36 @@ class GenOpsHaystackAdapter:
             Dictionary with cost breakdown, budget utilization, and error statistics
         """
         daily_budget_utilization = (
-            (float(self._daily_costs) / self.daily_budget_limit) * 100 
+            (float(self._daily_costs) / self.daily_budget_limit) * 100
             if self.daily_budget_limit > 0 else 0
         )
-        
+
         monthly_budget_utilization = (
             (float(self._monthly_costs) / self.monthly_budget_limit) * 100
             if self.monthly_budget_limit > 0 else 0
         )
-        
+
         # Aggregate costs by provider across all pipelines
         cost_by_provider = {}
         total_pipelines = len(self._pipeline_results)
         total_components = 0
         successful_components = 0
         failed_components = 0
-        
+
         for pipeline_result in self._pipeline_results.values():
             for provider, cost in pipeline_result.cost_by_provider.items():
                 cost_by_provider[provider] = cost_by_provider.get(provider, Decimal('0')) + cost
-            
+
             total_components += pipeline_result.total_components
             successful_components += pipeline_result.successful_components
             failed_components += pipeline_result.failed_components
-        
+
         # Calculate reliability metrics
         success_rate = (
-            (successful_components / total_components * 100) 
+            (successful_components / total_components * 100)
             if total_components > 0 else 100.0
         )
-        
+
         return {
             "daily_costs": float(self._daily_costs),
             "monthly_costs": float(self._monthly_costs),
@@ -801,7 +800,7 @@ class GenOpsHaystackAdapter:
             "error_statistics": self.get_error_diagnostics(),
             "retry_configuration": self.retry_config
         }
-    
+
     def get_error_diagnostics(self) -> Dict[str, Any]:
         """
         Get comprehensive error diagnostics and failure analysis.
@@ -812,28 +811,28 @@ class GenOpsHaystackAdapter:
         total_operations = sum(
             pipeline.total_components for pipeline in self._pipeline_results.values()
         )
-        
+
         error_rate = (
             (self.error_stats['total_errors'] / total_operations * 100)
             if total_operations > 0 else 0.0
         )
-        
+
         # Generate recommendations based on error patterns
         recommendations = self._generate_error_recommendations()
-        
+
         # Find most problematic components and providers
         most_problematic_component = max(
             self.error_stats['component_failures'].items(),
             key=lambda x: x[1],
             default=('none', 0)
         )
-        
+
         most_problematic_provider = max(
             self.error_stats['provider_failures'].items(),
             key=lambda x: x[1],
             default=('none', 0)
         )
-        
+
         return {
             "total_errors": self.error_stats['total_errors'],
             "retry_attempts": self.error_stats['retry_attempts'],
@@ -851,13 +850,13 @@ class GenOpsHaystackAdapter:
             },
             "recommendations": recommendations
         }
-    
+
     def _generate_error_recommendations(self) -> List[str]:
         """
         Generate actionable recommendations based on error patterns.
         """
         recommendations = []
-        
+
         # High error rate recommendation
         total_ops = sum(pipeline.total_components for pipeline in self._pipeline_results.values())
         if total_ops > 0:
@@ -866,14 +865,14 @@ class GenOpsHaystackAdapter:
                 recommendations.append(
                     f"High error rate detected ({error_rate:.1f}%). Consider reviewing component configurations and provider connectivity."
                 )
-        
+
         # High retry rate recommendation
         if self.error_stats['retry_attempts'] > 10:
             recommendations.append(
                 f"High retry count ({self.error_stats['retry_attempts']}) detected. "
                 "Consider increasing timeout values or checking network stability."
             )
-        
+
         # Component-specific recommendations
         for component, failures in self.error_stats['component_failures'].items():
             if failures > 5:
@@ -881,7 +880,7 @@ class GenOpsHaystackAdapter:
                     f"Component '{component}' has {failures} failures. "
                     "Review configuration and input validation."
                 )
-        
+
         # Provider-specific recommendations
         for provider, failures in self.error_stats['provider_failures'].items():
             if failures > 3:
@@ -889,29 +888,29 @@ class GenOpsHaystackAdapter:
                     f"Provider '{provider}' has {failures} failures. "
                     "Check API keys, rate limits, and service status."
                 )
-        
+
         # Error type specific recommendations
         if 'ConnectionError' in self.error_stats['error_types']:
             recommendations.append(
                 "Connection errors detected. Verify network connectivity and firewall settings."
             )
-        
+
         if 'RateLimitError' in self.error_stats['error_types']:
             recommendations.append(
                 "Rate limit errors detected. Consider implementing request throttling or upgrading service tier."
             )
-        
+
         if not recommendations:
             recommendations.append(
                 "System operating normally. Error rates are within acceptable limits."
             )
-        
+
         return recommendations
-    
+
     def get_pipeline_result(self, pipeline_id: str) -> Optional[HaystackPipelineResult]:
         """Get a specific pipeline execution result."""
         return self._pipeline_results.get(pipeline_id)
-    
+
     def get_recent_pipeline_results(self, limit: int = 10) -> List[HaystackPipelineResult]:
         """Get the most recent pipeline execution results."""
         return sorted(
@@ -919,7 +918,7 @@ class GenOpsHaystackAdapter:
             key=lambda x: x.end_time,
             reverse=True
         )[:limit]
-    
+
     def get_initialization_status(self) -> Dict[str, Any]:
         """
         Get detailed initialization status with actionable error messages.
@@ -934,12 +933,12 @@ class GenOpsHaystackAdapter:
             "component_status": {},
             "fix_suggestions": []
         }
-        
+
         # Check for initialization errors
         if hasattr(self, 'initialization_errors') and self.initialization_errors:
             status["initialized"] = False
             status["errors"] = self.initialization_errors
-        
+
         # Check component availability
         components = {
             "haystack": HAS_HAYSTACK,
@@ -947,7 +946,7 @@ class GenOpsHaystackAdapter:
             "monitor": self.monitor is not None,
             "telemetry": self.telemetry is not None
         }
-        
+
         for component, available in components.items():
             status["component_status"][component] = "available" if available else "unavailable"
             if not available:
@@ -965,41 +964,41 @@ class GenOpsHaystackAdapter:
                         "priority": "medium",
                         "validation": "python scripts/validate_setup.py"
                     })
-        
+
         # Generate summary message
         if not status["initialized"] or not all(components.values()):
             status["summary"] = "⚠️ Initialization incomplete - some features may not work properly"
         else:
             status["summary"] = "✅ All components initialized successfully"
-        
+
         return status
-    
+
     def print_initialization_status(self):
         """Print user-friendly initialization status with fix suggestions."""
         status = self.get_initialization_status()
-        
-        print(f"\n🔍 GenOps Haystack Adapter Status")
+
+        print("\n🔍 GenOps Haystack Adapter Status")
         print("-" * 40)
         print(f"{status['summary']}")
-        
+
         if status["errors"]:
-            print(f"\n❌ Initialization Errors:")
+            print("\n❌ Initialization Errors:")
             for error in status["errors"]:
                 print(f"   • {error}")
-        
+
         if status["fix_suggestions"]:
-            print(f"\n🔧 Recommended Fixes:")
+            print("\n🔧 Recommended Fixes:")
             for i, fix in enumerate(status["fix_suggestions"], 1):
                 print(f"   {i}. {fix['issue']}")
                 print(f"      Fix: {fix['fix']}")
                 if fix.get("validation"):
                     print(f"      Validate: {fix['validation']}")
                 print()
-        
+
         if status["initialized"] and not status["errors"]:
-            print(f"\n🎉 Ready to use! Try:")
-            print(f"   with adapter.track_pipeline('my-pipeline') as context:")
-            print(f"       # Your Haystack code here")
+            print("\n🎉 Ready to use! Try:")
+            print("   with adapter.track_pipeline('my-pipeline') as context:")
+            print("       # Your Haystack code here")
 
 
 # Auto-instrumentation function for easy setup
@@ -1023,21 +1022,21 @@ def auto_instrument():
     if not HAS_HAYSTACK:
         logger.warning("Cannot auto-instrument: Haystack not installed")
         return
-    
+
     # Create a default adapter
     default_adapter = GenOpsHaystackAdapter()
-    
+
     # Store original Pipeline.run method
     original_run = Pipeline.run
-    
+
     def instrumented_run(self, inputs: Dict[str, Any], **kwargs):
         """Instrumented version of Pipeline.run with governance tracking."""
         pipeline_name = getattr(self, 'name', 'unknown-pipeline')
-        
+
         with default_adapter.track_pipeline(pipeline_name) as context:
             # Execute original pipeline
             result = original_run(self, inputs, **kwargs)
-            
+
             # Try to extract component information from pipeline
             if hasattr(self, 'graph') and hasattr(self.graph, 'nodes'):
                 for node_name in self.graph.nodes():
@@ -1050,12 +1049,12 @@ def auto_instrument():
                         provider="haystack"
                     )
                     context.add_component_result(component_result)
-            
+
             return result
-    
+
     # Monkey patch the Pipeline.run method
     Pipeline.run = instrumented_run
-    
+
     logger.info("Haystack auto-instrumentation enabled - all pipeline executions will be tracked")
 
 
@@ -1076,11 +1075,11 @@ class GenOpsComponentMixin:
                     span.record_cost(cost=0.001, provider="custom")
                     return {"output": result}
     """
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.telemetry = GenOpsTelemetry(tracer_name="haystack-component")
-    
+
     @contextmanager
     def track_operation(self, operation_name: str, **attributes):
         """
@@ -1101,7 +1100,7 @@ class GenOpsComponentMixin:
             yield span
 
 
-    def with_retry_decorator(self, max_retries: Optional[int] = None, 
+    def with_retry_decorator(self, max_retries: Optional[int] = None,
                            base_delay: Optional[float] = None):
         """
         Decorator factory for adding retry logic to external functions.
@@ -1124,36 +1123,36 @@ class GenOpsComponentMixin:
                 # Temporarily override retry config if specified
                 original_max_retries = self.retry_config['max_retries']
                 original_base_delay = self.retry_config['base_delay']
-                
+
                 if max_retries is not None:
                     self.retry_config['max_retries'] = max_retries
                 if base_delay is not None:
                     self.retry_config['base_delay'] = base_delay
-                
+
                 try:
                     # Use the existing retry mechanism
                     result = self._execute_with_retry(
-                        func.__name__, 
+                        func.__name__,
                         'DecoratedFunction',
                         func,
-                        *args, 
+                        *args,
                         **kwargs
                     )
-                    
+
                     # Return the actual result, not the HaystackComponentResult
                     if result.status == 'success':
                         return func(*args, **kwargs)  # Execute one final time to get actual result
                     else:
                         raise Exception(result.error_message)
-                        
+
                 finally:
                     # Restore original config
                     self.retry_config['max_retries'] = original_max_retries
                     self.retry_config['base_delay'] = original_base_delay
-                    
+
             return wrapper
         return decorator
-    
+
     def reset_error_stats(self):
         """
         Reset error tracking statistics. Useful for testing or periodic cleanup.
@@ -1166,7 +1165,7 @@ class GenOpsComponentMixin:
             'provider_failures': {}
         }
         logger.info("Error statistics reset")
-    
+
     def get_health_status(self) -> Dict[str, Any]:
         """
         Get overall health status of the adapter and its components.
@@ -1177,7 +1176,7 @@ class GenOpsComponentMixin:
         total_operations = sum(
             pipeline.total_components for pipeline in self._pipeline_results.values()
         )
-        
+
         if total_operations == 0:
             return {
                 "status": "healthy",
@@ -1186,10 +1185,10 @@ class GenOpsComponentMixin:
                 "retry_rate": 0.0,
                 "recommendations": []
             }
-        
+
         error_rate = (self.error_stats['total_errors'] / total_operations) * 100
         retry_rate = (self.error_stats['retry_attempts'] / total_operations) * 100
-        
+
         # Determine health status based on error rates
         if error_rate > 20:
             status = "unhealthy"
@@ -1203,7 +1202,7 @@ class GenOpsComponentMixin:
         else:
             status = "healthy"
             reason = "Operating within normal parameters"
-        
+
         return {
             "status": status,
             "reason": reason,
@@ -1218,7 +1217,7 @@ class GenOpsComponentMixin:
 # Export main classes and functions
 __all__ = [
     'GenOpsHaystackAdapter',
-    'HaystackComponentResult', 
+    'HaystackComponentResult',
     'HaystackPipelineResult',
     'HaystackSessionContext',
     'HaystackPipelineContext',

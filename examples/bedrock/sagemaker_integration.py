@@ -20,23 +20,20 @@ Note: This example shows SageMaker integration patterns. For actual deployment,
 use SageMaker SDK and configure IAM roles for cross-service access.
 """
 
-import sys
 import os
-import json
-import time
-from datetime import datetime
+import sys
 
 # Add src to path for development
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
 def create_sagemaker_training_integration():
     """Demonstrate SageMaker training with Bedrock augmentation."""
-    
+
     print("🧠 SageMaker Training + Bedrock Integration")
     print("=" * 48)
     print("ML model training augmented with foundation model capabilities:")
     print()
-    
+
     training_script = '''
 import os
 import json
@@ -204,7 +201,7 @@ if __name__ == "__main__":
     args = parse_args()
     train_model_with_governance(args)
 '''
-    
+
     print("🏋️ Training Script Features:")
     print("   ✅ Data augmentation using Bedrock foundation models")
     print("   ✅ Comprehensive training governance with cost tracking")
@@ -213,18 +210,18 @@ if __name__ == "__main__":
     print("   ✅ Training cost attribution alongside infrastructure costs")
     print("   ✅ SOC2 compliance for training workflows")
     print()
-    
+
     return training_script
 
 
 def create_sagemaker_inference_integration():
     """Demonstrate SageMaker inference endpoint with Bedrock augmentation."""
-    
+
     print("🔮 SageMaker Inference + Bedrock Hybrid")
     print("=" * 42)
     print("Hybrid inference combining custom models with foundation models:")
     print()
-    
+
     inference_code = '''
 import json
 import boto3
@@ -374,7 +371,7 @@ def model_fn(model_dir):
 def predict_fn(input_data, model):
     return model.predict_fn(input_data, model)
 '''
-    
+
     print("🎯 Hybrid Inference Features:")
     print("   ✅ Custom model + Bedrock foundation model combination")
     print("   ✅ Confidence-based intelligent routing")
@@ -383,18 +380,18 @@ def predict_fn(input_data, model):
     print("   ✅ Customer attribution for inference costs")
     print("   ✅ Governance context preservation")
     print()
-    
+
     return inference_code
 
 
 def create_sagemaker_pipeline_integration():
     """Create SageMaker Pipeline with Bedrock integration."""
-    
+
     print("🔄 SageMaker Pipeline + Bedrock MLOps")
     print("=" * 42)
     print("End-to-end ML pipeline with foundation model integration:")
     print()
-    
+
     pipeline_code = '''
 import boto3
 from sagemaker import get_execution_role
@@ -604,7 +601,7 @@ if __name__ == "__main__":
     # Execute with monitoring
     execution = execute_pipeline_with_monitoring(pipeline, workflow_id, "enterprise-ml-client")
 '''
-    
+
     print("🏭 SageMaker Pipeline Features:")
     print("   ✅ End-to-end ML pipeline with Bedrock integration")
     print("   ✅ Data augmentation using foundation models")
@@ -613,18 +610,18 @@ if __name__ == "__main__":
     print("   ✅ Automated model evaluation with AI analysis")
     print("   ✅ Budget limits and cost monitoring")
     print()
-    
+
     return pipeline_code
 
 
 def create_model_monitoring_integration():
     """Create SageMaker Model Monitor integration with Bedrock analysis."""
-    
+
     print("📊 Model Monitoring + Bedrock Analysis")
     print("=" * 43)
     print("Intelligent model monitoring with foundation model insights:")
     print()
-    
+
     monitoring_code = '''
 import json
 import boto3
@@ -842,7 +839,7 @@ if __name__ == "__main__":
     print(f"Next Actions: {len(initial_report['next_actions'])} items")
     print(f"Analysis Cost: ${initial_report['bedrock_insights']['analysis_cost']:.4f}")
 '''
-    
+
     print("🔍 Model Monitoring Features:")
     print("   ✅ SageMaker Model Monitor with Bedrock analysis")
     print("   ✅ Intelligent drift detection with AI insights")
@@ -851,43 +848,43 @@ if __name__ == "__main__":
     print("   ✅ Comprehensive governance reporting")
     print("   ✅ Actionable alerts based on AI analysis")
     print()
-    
+
     return monitoring_code
 
 
 def main():
     """Main demonstration function."""
-    
+
     print("🧠 Welcome to GenOps Bedrock SageMaker Integration!")
     print()
     print("This example demonstrates ML pipeline patterns combining")
     print("SageMaker and Bedrock with comprehensive MLOps governance.")
     print()
-    
+
     demos = [
         ("Training Integration", create_sagemaker_training_integration),
         ("Inference Integration", create_sagemaker_inference_integration),
         ("Pipeline Integration", create_sagemaker_pipeline_integration),
         ("Model Monitoring", create_model_monitoring_integration)
     ]
-    
+
     results = {}
-    
+
     for demo_name, demo_func in demos:
         print(f"🚀 {demo_name}")
         print("=" * (len(demo_name) + 3))
-        
+
         try:
             result = demo_func()
             results[demo_name] = result
             print(f"✅ {demo_name} completed successfully\n")
         except Exception as e:
             print(f"❌ {demo_name} failed: {e}\n")
-    
+
     # Summary
     print("🎉 SageMaker Integration Demo Summary")
     print("=" * 42)
-    
+
     print("🏆 MLOps Features Demonstrated:")
     print("   🧠 Training data augmentation with Bedrock foundation models")
     print("   🔮 Hybrid inference combining custom + foundation models")
@@ -896,7 +893,7 @@ def main():
     print("   💰 Unified cost tracking across training and inference")
     print("   🛡️ SOC2 compliance for ML workflows")
     print()
-    
+
     print("🚀 MLOps Best Practices Demonstrated:")
     print("   ✅ Comprehensive experiment tracking with governance")
     print("   ✅ Cost attribution for training and inference")
@@ -905,7 +902,7 @@ def main():
     print("   ✅ Production monitoring with drift detection")
     print("   ✅ Budget controls and cost optimization")
     print()
-    
+
     print("🎯 Implementation Guide:")
     print("   1. Set up SageMaker execution roles with Bedrock permissions")
     print("   2. Configure S3 buckets for model artifacts and monitoring")
@@ -914,13 +911,13 @@ def main():
     print("   5. Set up monitoring schedules with Bedrock analysis")
     print("   6. Configure CloudWatch dashboards for ML + AI metrics")
     print()
-    
+
     print("💡 Next Steps:")
     print("   → Implement A/B testing frameworks with GenOps governance")
     print("   → Set up MLOps CI/CD pipelines with cost validation")
     print("   → Create model registry with governance metadata")
     print("   → Implement automated model retraining triggers")
-    
+
     return True
 
 

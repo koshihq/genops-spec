@@ -1,11 +1,11 @@
 """Validation system for Ollama integration setup and diagnostics."""
 
 import logging
-import time
 import os
-from typing import List, Dict, Any, Optional, Tuple
+import time
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any, Dict, List
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ except ImportError:
 class ValidationLevel(Enum):
     """Validation severity levels."""
     INFO = "info"
-    WARNING = "warning" 
+    WARNING = "warning"
     ERROR = "error"
     CRITICAL = "critical"
 
@@ -44,29 +44,29 @@ class ValidationCategory(Enum):
 @dataclass
 class ValidationIssue:
     """Individual validation issue."""
-    
+
     category: ValidationCategory
     level: ValidationLevel
     title: str
     description: str
     fix_suggestion: str = ""
     technical_details: str = ""
-    
+
     def __str__(self) -> str:
         level_symbol = {
             ValidationLevel.INFO: "ℹ️",
-            ValidationLevel.WARNING: "⚠️", 
+            ValidationLevel.WARNING: "⚠️",
             ValidationLevel.ERROR: "❌",
             ValidationLevel.CRITICAL: "🚨"
         }
-        
+
         return f"{level_symbol[self.level]} {self.title}: {self.description}"
 
 
-@dataclass 
+@dataclass
 class ValidationResult:
     """Complete validation results."""
-    
+
     success: bool
     total_checks: int = 0
     passed_checks: int = 0
@@ -74,37 +74,37 @@ class ValidationResult:
     performance_metrics: Dict[str, float] = field(default_factory=dict)
     system_info: Dict[str, Any] = field(default_factory=dict)
     recommendations: List[str] = field(default_factory=list)
-    
+
     @property
     def has_critical_issues(self) -> bool:
         """Check if there are any critical issues."""
         return any(issue.level == ValidationLevel.CRITICAL for issue in self.issues)
-    
+
     @property
     def has_errors(self) -> bool:
         """Check if there are any errors."""
         return any(issue.level == ValidationLevel.ERROR for issue in self.issues)
-    
+
     @property
     def score(self) -> float:
         """Calculate validation score (0-100)."""
         if self.total_checks == 0:
             return 0.0
         return (self.passed_checks / self.total_checks) * 100
-    
+
     def add_issue(self, issue: ValidationIssue):
         """Add a validation issue."""
         self.issues.append(issue)
-        
+
         # Update success status
         if issue.level in [ValidationLevel.ERROR, ValidationLevel.CRITICAL]:
             self.success = False
-    
+
     def add_passed_check(self, check_name: str = ""):
         """Record a passed validation check."""
         self.passed_checks += 1
         self.total_checks += 1
-    
+
     def add_failed_check(self, issue: ValidationIssue):
         """Record a failed validation check."""
         self.total_checks += 1
@@ -122,7 +122,7 @@ class OllamaValidator:
     - GenOps integration configuration
     - System requirements and resources
     """
-    
+
     def __init__(
         self,
         ollama_base_url: str = "http://localhost:11434",
@@ -140,9 +140,9 @@ class OllamaValidator:
         self.ollama_base_url = ollama_base_url.rstrip('/')
         self.timeout = timeout
         self.include_performance_tests = include_performance_tests
-        
+
         self.result = ValidationResult(success=True)
-    
+
     def validate_all(self) -> ValidationResult:
         """
         Run complete validation suite.
@@ -151,30 +151,30 @@ class OllamaValidator:
             Comprehensive validation results
         """
         logger.info("Starting comprehensive Ollama validation")
-        
+
         # Core validation checks
         self._validate_dependencies()
         self._validate_configuration()
         self._validate_connectivity()
         self._validate_models()
-        
+
         # Optional performance validation
         if self.include_performance_tests:
             self._validate_performance()
-        
+
         # Security and best practices
         self._validate_security()
-        
+
         # Generate recommendations
         self._generate_recommendations()
-        
+
         logger.info(f"Validation completed: {self.result.score:.1f}% ({self.result.passed_checks}/{self.result.total_checks} checks passed)")
         return self.result
-    
+
     def _validate_dependencies(self):
         """Validate required dependencies."""
         logger.debug("Validating dependencies...")
-        
+
         # Check Python version
         import sys
         python_version = sys.version_info
@@ -188,7 +188,7 @@ class OllamaValidator:
                 description=f"Python {python_version.major}.{python_version.minor} detected, requires Python 3.8+",
                 fix_suggestion="Upgrade to Python 3.8 or later"
             ))
-        
+
         # Check requests library
         if HAS_REQUESTS:
             self.result.add_passed_check("requests library")
@@ -200,11 +200,11 @@ class OllamaValidator:
                 description="requests library is required for HTTP communication",
                 fix_suggestion="Install with: pip install requests"
             ))
-        
+
         # Check Ollama client (optional but recommended)
         if HAS_OLLAMA_CLIENT:
             self.result.add_passed_check("ollama client")
-            
+
             # Check ollama client version
             try:
                 import ollama
@@ -220,7 +220,7 @@ class OllamaValidator:
                 description="Ollama Python client provides better integration",
                 fix_suggestion="Install with: pip install ollama"
             ))
-        
+
         # Check GenOps core dependencies
         try:
             from opentelemetry import trace
@@ -233,11 +233,11 @@ class OllamaValidator:
                 description="OpenTelemetry is required for GenOps telemetry",
                 fix_suggestion="Install with: pip install opentelemetry-api opentelemetry-sdk"
             ))
-    
+
     def _validate_configuration(self):
         """Validate configuration and environment."""
         logger.debug("Validating configuration...")
-        
+
         # Check Ollama URL format
         if self.ollama_base_url.startswith(('http://', 'https://')):
             self.result.add_passed_check("Ollama URL format")
@@ -249,13 +249,13 @@ class OllamaValidator:
                 description=f"URL must start with http:// or https://: {self.ollama_base_url}",
                 fix_suggestion="Use format: http://localhost:11434 or https://your-ollama-server"
             ))
-        
+
         # Check environment variables (optional but useful)
         env_vars = {
             'OLLAMA_HOST': 'Ollama server host override',
             'OLLAMA_MODELS': 'Ollama models directory'
         }
-        
+
         for var, description in env_vars.items():
             value = os.getenv(var)
             if value:
@@ -266,23 +266,23 @@ class OllamaValidator:
                     title=f"Environment variable {var} set",
                     description=f"{description}: {value}"
                 ))
-        
+
         # Check GenOps configuration
         genops_env_vars = {
             'GENOPS_TELEMETRY_ENABLED': 'true',
             'GENOPS_COST_TRACKING_ENABLED': 'true',
             'OTEL_EXPORTER_OTLP_ENDPOINT': None
         }
-        
+
         for var, default in genops_env_vars.items():
             value = os.getenv(var, default)
             if value:
                 self.result.system_info[f'genops_{var.lower()}'] = value
-    
+
     def _validate_connectivity(self):
         """Validate Ollama server connectivity."""
         logger.debug("Validating Ollama server connectivity...")
-        
+
         if not HAS_REQUESTS:
             self.result.add_failed_check(ValidationIssue(
                 category=ValidationCategory.CONNECTIVITY,
@@ -292,27 +292,27 @@ class OllamaValidator:
                 fix_suggestion="Install requests: pip install requests"
             ))
             return
-        
+
         # Test basic connectivity
         try:
             start_time = time.time()
             response = requests.get(f"{self.ollama_base_url}/api/version", timeout=self.timeout)
             response_time = (time.time() - start_time) * 1000
-            
+
             if response.status_code == 200:
                 self.result.add_passed_check("Ollama server connectivity")
                 self.result.performance_metrics['server_response_time_ms'] = response_time
-                
+
                 # Get server version
                 try:
                     version_info = response.json()
                     self.result.system_info['ollama_version'] = version_info.get('version', 'unknown')
                 except Exception:
                     pass
-                
+
                 # Test additional endpoints
                 self._test_ollama_endpoints()
-                
+
             else:
                 self.result.add_failed_check(ValidationIssue(
                     category=ValidationCategory.CONNECTIVITY,
@@ -322,7 +322,7 @@ class OllamaValidator:
                     fix_suggestion="Check if Ollama server is running and accessible",
                     technical_details=f"GET {self.ollama_base_url}/api/version -> {response.status_code}"
                 ))
-        
+
         except requests.exceptions.ConnectTimeout:
             self.result.add_failed_check(ValidationIssue(
                 category=ValidationCategory.CONNECTIVITY,
@@ -332,7 +332,7 @@ class OllamaValidator:
                 fix_suggestion="Ensure Ollama is running: ollama serve",
                 technical_details=f"Timeout after {self.timeout}s"
             ))
-        
+
         except requests.exceptions.ConnectionError:
             self.result.add_failed_check(ValidationIssue(
                 category=ValidationCategory.CONNECTIVITY,
@@ -342,7 +342,7 @@ class OllamaValidator:
                 fix_suggestion="Start Ollama server: ollama serve",
                 technical_details="Connection refused - server not running"
             ))
-        
+
         except Exception as e:
             self.result.add_failed_check(ValidationIssue(
                 category=ValidationCategory.CONNECTIVITY,
@@ -351,14 +351,14 @@ class OllamaValidator:
                 description=f"Unexpected error connecting to Ollama: {str(e)}",
                 fix_suggestion="Check Ollama server status and network configuration"
             ))
-    
+
     def _test_ollama_endpoints(self):
         """Test additional Ollama API endpoints."""
         endpoints = [
             ('/api/tags', 'Model listing'),
             ('/api/ps', 'Running models')
         ]
-        
+
         for endpoint, description in endpoints:
             try:
                 response = requests.get(f"{self.ollama_base_url}{endpoint}", timeout=self.timeout)
@@ -379,30 +379,30 @@ class OllamaValidator:
                     title=f"{description} endpoint error",
                     description=f"Cannot access {endpoint}: {str(e)}"
                 ))
-    
+
     def _validate_models(self):
         """Validate available models."""
         logger.debug("Validating Ollama models...")
-        
+
         if not HAS_REQUESTS:
             return
-        
+
         try:
             response = requests.get(f"{self.ollama_base_url}/api/tags", timeout=self.timeout)
-            
+
             if response.status_code == 200:
                 models_data = response.json()
                 models = models_data.get('models', [])
-                
+
                 if models:
                     self.result.add_passed_check("Model availability")
                     self.result.system_info['available_models_count'] = len(models)
                     self.result.system_info['available_models'] = [m.get('name', 'unknown') for m in models]
-                    
+
                     # Check for common models
                     model_names = [m.get('name', '').lower() for m in models]
                     common_models = ['llama', 'mistral', 'codellama', 'gemma']
-                    
+
                     found_common = any(common in ' '.join(model_names) for common in common_models)
                     if found_common:
                         self.result.add_issue(ValidationIssue(
@@ -411,11 +411,11 @@ class OllamaValidator:
                             title="Common models available",
                             description=f"Found {len(models)} models including popular ones"
                         ))
-                    
+
                     # Check model sizes
                     total_size_gb = sum(m.get('size', 0) for m in models) / (1024**3)
                     self.result.performance_metrics['total_models_size_gb'] = total_size_gb
-                    
+
                 else:
                     self.result.add_failed_check(ValidationIssue(
                         category=ValidationCategory.MODELS,
@@ -432,7 +432,7 @@ class OllamaValidator:
                     description=f"Model listing returned HTTP {response.status_code}",
                     fix_suggestion="Check Ollama server status"
                 ))
-        
+
         except Exception as e:
             self.result.add_failed_check(ValidationIssue(
                 category=ValidationCategory.MODELS,
@@ -440,42 +440,42 @@ class OllamaValidator:
                 title="Model validation error",
                 description=f"Error checking models: {str(e)}"
             ))
-    
+
     def _validate_performance(self):
         """Validate system performance characteristics."""
         logger.debug("Validating performance...")
-        
+
         # Test a simple generation if models are available
         if self.result.system_info.get('available_models_count', 0) > 0:
             self._test_simple_generation()
-        
+
         # Check system resources
         self._check_system_resources()
-    
+
     def _test_simple_generation(self):
         """Test simple text generation performance."""
         models = self.result.system_info.get('available_models', [])
         if not models:
             return
-        
+
         # Use first available model for test
         test_model = models[0]
         test_prompt = "Hello"
-        
+
         try:
             start_time = time.time()
-            
+
             # Try with ollama client first
             if HAS_OLLAMA_CLIENT:
                 import ollama
                 client = ollama.Client(host=self.ollama_base_url)
                 response = client.generate(model=test_model, prompt=test_prompt, stream=False)
                 generation_time = (time.time() - start_time) * 1000
-                
+
                 if response and response.get('response'):
                     self.result.add_passed_check("Text generation")
                     self.result.performance_metrics['test_generation_time_ms'] = generation_time
-                    
+
                     # Extract token metrics if available
                     if 'eval_count' in response:
                         eval_count = response['eval_count']
@@ -483,7 +483,7 @@ class OllamaValidator:
                         if eval_duration > 0:
                             tokens_per_second = (eval_count / eval_duration) * 1000
                             self.result.performance_metrics['tokens_per_second'] = tokens_per_second
-                
+
                 else:
                     self.result.add_issue(ValidationIssue(
                         category=ValidationCategory.PERFORMANCE,
@@ -491,7 +491,7 @@ class OllamaValidator:
                         title="Generation test failed",
                         description="Model generation returned empty response"
                     ))
-            
+
             elif HAS_REQUESTS:
                 # Fallback to HTTP API
                 payload = {
@@ -499,15 +499,15 @@ class OllamaValidator:
                     "prompt": test_prompt,
                     "stream": False
                 }
-                
+
                 response = requests.post(
                     f"{self.ollama_base_url}/api/generate",
                     json=payload,
                     timeout=30
                 )
-                
+
                 generation_time = (time.time() - start_time) * 1000
-                
+
                 if response.status_code == 200:
                     self.result.add_passed_check("Text generation")
                     self.result.performance_metrics['test_generation_time_ms'] = generation_time
@@ -518,7 +518,7 @@ class OllamaValidator:
                         title="Generation test HTTP error",
                         description=f"Generation test returned HTTP {response.status_code}"
                     ))
-        
+
         except Exception as e:
             self.result.add_issue(ValidationIssue(
                 category=ValidationCategory.PERFORMANCE,
@@ -527,17 +527,17 @@ class OllamaValidator:
                 description=f"Cannot run performance test: {str(e)}",
                 technical_details=f"Model: {test_model}, Error: {str(e)}"
             ))
-    
+
     def _check_system_resources(self):
         """Check system resource availability."""
         try:
             import psutil
-            
+
             # Check memory
             memory = psutil.virtual_memory()
             memory_gb = memory.total / (1024**3)
             self.result.performance_metrics['system_memory_gb'] = memory_gb
-            
+
             if memory_gb >= 8:
                 self.result.add_passed_check("System memory")
             else:
@@ -548,11 +548,11 @@ class OllamaValidator:
                     description=f"Only {memory_gb:.1f}GB RAM available, recommend 8GB+ for local models",
                     fix_suggestion="Consider upgrading system memory for better performance"
                 ))
-            
+
             # Check CPU
             cpu_count = psutil.cpu_count()
             self.result.performance_metrics['cpu_cores'] = cpu_count
-            
+
             if cpu_count >= 4:
                 self.result.add_passed_check("CPU cores")
             else:
@@ -562,7 +562,7 @@ class OllamaValidator:
                     title="Low CPU core count",
                     description=f"Only {cpu_count} CPU cores, recommend 4+ for good performance"
                 ))
-            
+
         except ImportError:
             self.result.add_issue(ValidationIssue(
                 category=ValidationCategory.PERFORMANCE,
@@ -571,11 +571,11 @@ class OllamaValidator:
                 description="Cannot check system resources without psutil",
                 fix_suggestion="Install psutil for system resource monitoring: pip install psutil"
             ))
-    
+
     def _validate_security(self):
         """Validate security and best practices."""
         logger.debug("Validating security...")
-        
+
         # Check if using HTTP (security concern)
         if self.ollama_base_url.startswith('http://'):
             if 'localhost' in self.ollama_base_url or '127.0.0.1' in self.ollama_base_url:
@@ -590,7 +590,7 @@ class OllamaValidator:
                 ))
         else:
             self.result.add_passed_check("Encrypted connection")
-        
+
         # Check for production considerations
         if 'localhost' not in self.ollama_base_url and '127.0.0.1' not in self.ollama_base_url:
             self.result.add_issue(ValidationIssue(
@@ -600,43 +600,43 @@ class OllamaValidator:
                 description="Using remote Ollama server",
                 fix_suggestion="Ensure network security and access controls are properly configured"
             ))
-    
+
     def _generate_recommendations(self):
         """Generate actionable recommendations based on validation results."""
         recommendations = []
-        
+
         # Based on critical issues
         if self.result.has_critical_issues:
             recommendations.append("🚨 Address critical issues before proceeding with GenOps integration")
-        
+
         # Based on missing dependencies
-        missing_deps = [issue for issue in self.result.issues 
-                       if issue.category == ValidationCategory.DEPENDENCIES 
+        missing_deps = [issue for issue in self.result.issues
+                       if issue.category == ValidationCategory.DEPENDENCIES
                        and issue.level in [ValidationLevel.ERROR, ValidationLevel.CRITICAL]]
-        
+
         if missing_deps:
             recommendations.append("📦 Install missing dependencies to enable full functionality")
-        
+
         # Based on model availability
         if self.result.system_info.get('available_models_count', 0) == 0:
             recommendations.append("🤖 Pull at least one model to test GenOps integration: ollama pull llama3.2")
-        
+
         # Based on performance metrics
         memory_gb = self.result.performance_metrics.get('system_memory_gb', 0)
         if memory_gb > 0 and memory_gb < 8:
             recommendations.append("💾 Consider upgrading to 8GB+ RAM for better model performance")
-        
+
         # Based on security
-        security_issues = [issue for issue in self.result.issues 
+        security_issues = [issue for issue in self.result.issues
                           if issue.category == ValidationCategory.SECURITY]
         if security_issues:
             recommendations.append("🔒 Review security recommendations for production deployment")
-        
+
         # Success recommendations
         if self.result.success and not self.result.has_errors:
             recommendations.append("✅ Your setup looks good! You can proceed with GenOps Ollama integration")
             recommendations.append("📚 Check out the quickstart guide for next steps")
-        
+
         self.result.recommendations = recommendations
 
 
@@ -666,7 +666,7 @@ def quick_validate(ollama_base_url: str = "http://localhost:11434") -> bool:
         True if basic validation passes, False otherwise
     """
     validator = OllamaValidator(
-        ollama_base_url=ollama_base_url, 
+        ollama_base_url=ollama_base_url,
         include_performance_tests=False
     )
     result = validator.validate_all()
@@ -684,7 +684,7 @@ def print_validation_result(result: ValidationResult, detailed: bool = False):
     print("\n" + "="*60)
     print("🔍 GenOps Ollama Validation Results")
     print("="*60)
-    
+
     # Overall status
     if result.success and not result.has_errors:
         print("✅ Overall Status: PASSED")
@@ -694,12 +694,12 @@ def print_validation_result(result: ValidationResult, detailed: bool = False):
         print("❌ Overall Status: ERRORS FOUND")
     else:
         print("⚠️ Overall Status: WARNINGS")
-    
+
     print(f"📊 Score: {result.score:.1f}% ({result.passed_checks}/{result.total_checks} checks passed)")
-    
+
     # System information
     if result.system_info:
-        print(f"\n📋 System Information:")
+        print("\n📋 System Information:")
         for key, value in result.system_info.items():
             if isinstance(value, list):
                 if value:
@@ -711,10 +711,10 @@ def print_validation_result(result: ValidationResult, detailed: bool = False):
                             print(f"    - ... and {len(value) - 5} more")
             else:
                 print(f"  • {key}: {value}")
-    
+
     # Performance metrics
     if result.performance_metrics:
-        print(f"\n⚡ Performance Metrics:")
+        print("\n⚡ Performance Metrics:")
         for key, value in result.performance_metrics.items():
             if isinstance(value, float):
                 if 'time' in key or 'latency' in key:
@@ -727,17 +727,17 @@ def print_validation_result(result: ValidationResult, detailed: bool = False):
                     print(f"  • {key}: {value:.2f}")
             else:
                 print(f"  • {key}: {value}")
-    
+
     # Issues by category
     if result.issues:
-        print(f"\n🔍 Validation Issues:")
-        
+        print("\n🔍 Validation Issues:")
+
         categories = {}
         for issue in result.issues:
             if issue.category not in categories:
                 categories[issue.category] = []
             categories[issue.category].append(issue)
-        
+
         for category, issues in categories.items():
             print(f"\n  {category.value.title()}:")
             for issue in issues:
@@ -746,13 +746,13 @@ def print_validation_result(result: ValidationResult, detailed: bool = False):
                     print(f"      💡 Fix: {issue.fix_suggestion}")
                 if detailed and issue.technical_details:
                     print(f"      🔧 Technical: {issue.technical_details}")
-    
+
     # Recommendations
     if result.recommendations:
-        print(f"\n💡 Recommendations:")
+        print("\n💡 Recommendations:")
         for rec in result.recommendations:
             print(f"  {rec}")
-    
+
     print("\n" + "="*60)
 
 
@@ -764,6 +764,6 @@ __all__ = [
     "ValidationLevel",
     "ValidationCategory",
     "validate_setup",
-    "quick_validate", 
+    "quick_validate",
     "print_validation_result"
 ]

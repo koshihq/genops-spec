@@ -19,24 +19,19 @@ Features:
 """
 
 import logging
-import os
 import sys
 import time
-import json
-import yaml
-from decimal import Decimal
-from typing import List, Dict, Any, Optional
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Any, Dict, List
 
 # Core Haystack imports
 try:
-    from haystack import Pipeline
-    from haystack.components.generators import OpenAIGenerator
+    from haystack import Document, Pipeline
     from haystack.components.builders import PromptBuilder
+    from haystack.components.generators import OpenAIGenerator
     from haystack.components.retrievers import InMemoryBM25Retriever
     from haystack.document_stores.in_memory import InMemoryDocumentStore
-    from haystack import Document
 except ImportError as e:
     print(f"❌ Haystack not installed: {e}")
     print("Please install Haystack: pip install haystack-ai")
@@ -46,9 +41,9 @@ except ImportError as e:
 try:
     from genops.providers.haystack import (
         GenOpsHaystackAdapter,
-        validate_haystack_setup,
+        analyze_pipeline_costs,
         print_validation_result,
-        analyze_pipeline_costs
+        validate_haystack_setup,
     )
 except ImportError as e:
     print(f"❌ GenOps not installed: {e}")
@@ -91,18 +86,18 @@ class DeploymentConfiguration:
 
 class ProductionHealthChecker:
     """Production health checking and monitoring."""
-    
+
     def __init__(self, adapter: GenOpsHaystackAdapter):
         self.adapter = adapter
         self.last_check_time = None
         self.consecutive_failures = 0
-        
+
     def check_health(self) -> HealthCheckResult:
         """Comprehensive health check for production deployment."""
         start_time = time.time()
         errors = []
         dependencies = {}
-        
+
         # Check GenOps adapter health
         try:
             if self.adapter:
@@ -113,7 +108,7 @@ class ProductionHealthChecker:
         except Exception as e:
             dependencies["genops_adapter"] = "unhealthy"
             errors.append(f"GenOps adapter error: {str(e)}")
-        
+
         # Check Haystack framework
         try:
             test_pipeline = Pipeline()
@@ -124,7 +119,7 @@ class ProductionHealthChecker:
         except Exception as e:
             dependencies["haystack"] = "unhealthy"
             errors.append(f"Haystack framework error: {str(e)}")
-        
+
         # Check AI provider connectivity (mock for demo)
         try:
             # In production, this would test actual provider connectivity
@@ -132,7 +127,7 @@ class ProductionHealthChecker:
         except Exception as e:
             dependencies["ai_providers"] = "degraded"
             errors.append(f"AI provider connectivity issue: {str(e)}")
-        
+
         # Check telemetry export
         try:
             # Mock telemetry health check
@@ -140,9 +135,9 @@ class ProductionHealthChecker:
         except Exception as e:
             dependencies["telemetry_export"] = "degraded"
             errors.append(f"Telemetry export issue: {str(e)}")
-        
+
         response_time_ms = (time.time() - start_time) * 1000
-        
+
         # Determine overall status
         if not errors:
             status = "healthy"
@@ -152,9 +147,9 @@ class ProductionHealthChecker:
             self.consecutive_failures += 1
         else:
             status = "degraded"
-        
+
         self.last_check_time = time.time()
-        
+
         return HealthCheckResult(
             status=status,
             timestamp=time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
@@ -166,7 +161,7 @@ class ProductionHealthChecker:
                 "uptime_seconds": time.time() - start_time
             }
         )
-    
+
     def is_ready(self) -> bool:
         """Readiness probe for Kubernetes deployments."""
         try:
@@ -178,7 +173,7 @@ class ProductionHealthChecker:
 
 class ProductionPipelineManager:
     """Manages production AI pipelines with scaling and monitoring."""
-    
+
     def __init__(self, deployment_config: DeploymentConfiguration):
         self.config = deployment_config
         self.pipelines = {}
@@ -189,7 +184,7 @@ class ProductionPipelineManager:
             "error_rate": 0.0,
             "throughput_per_second": 0.0
         }
-        
+
     def initialize(self) -> bool:
         """Initialize production pipeline manager."""
         try:
@@ -202,23 +197,23 @@ class ProductionPipelineManager:
                 monthly_budget_limit=25000.0,
                 governance_policy="enforcing"
             )
-            
+
             # Initialize health checker
             self.health_checker = ProductionHealthChecker(adapter)
-            
+
             # Create production pipelines
             self._create_production_pipelines(adapter)
-            
+
             logger.info(f"Production pipeline manager initialized for {self.config.service_name}")
             return True
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize production manager: {e}")
             return False
-    
+
     def _create_production_pipelines(self, adapter: GenOpsHaystackAdapter):
         """Create optimized production pipelines."""
-        
+
         # Main production pipeline
         main_pipeline = Pipeline()
         main_pipeline.add_component("prompt_builder", PromptBuilder(
@@ -232,7 +227,7 @@ class ProductionPipelineManager:
             Provide a high-quality response following production guidelines:
             """
         ))
-        
+
         main_pipeline.add_component("llm", OpenAIGenerator(
             model="gpt-3.5-turbo",
             generation_kwargs={
@@ -242,10 +237,10 @@ class ProductionPipelineManager:
                 "presence_penalty": 0.1
             }
         ))
-        
+
         main_pipeline.connect("prompt_builder", "llm")
         self.pipelines["main"] = {"pipeline": main_pipeline, "adapter": adapter}
-        
+
         # Fallback pipeline with simpler model
         fallback_pipeline = Pipeline()
         fallback_pipeline.add_component("prompt_builder", PromptBuilder(
@@ -257,28 +252,28 @@ class ProductionPipelineManager:
         ))
         fallback_pipeline.connect("prompt_builder", "llm")
         self.pipelines["fallback"] = {"pipeline": fallback_pipeline, "adapter": adapter}
-        
+
         logger.info("Production pipelines created with failover capability")
-    
+
     def process_request(self, request_data: Dict[str, Any], request_id: str) -> Dict[str, Any]:
         """Process production request with monitoring and fallback."""
         start_time = time.time()
-        
+
         try:
             # Try main pipeline first
             return self._execute_pipeline("main", request_data, request_id)
-            
+
         except Exception as e:
             logger.warning(f"Main pipeline failed for request {request_id}: {e}")
-            
+
             try:
                 # Fallback to simpler pipeline
                 logger.info(f"Using fallback pipeline for request {request_id}")
                 return self._execute_pipeline("fallback", request_data, request_id)
-                
+
             except Exception as fallback_error:
                 logger.error(f"Fallback pipeline also failed for request {request_id}: {fallback_error}")
-                
+
                 # Return error response
                 return {
                     "request_id": request_id,
@@ -286,17 +281,17 @@ class ProductionPipelineManager:
                     "error": "Service temporarily unavailable",
                     "response_time_ms": (time.time() - start_time) * 1000
                 }
-    
+
     def _execute_pipeline(self, pipeline_name: str, request_data: Dict[str, Any], request_id: str) -> Dict[str, Any]:
         """Execute specific pipeline with monitoring."""
         if pipeline_name not in self.pipelines:
             raise ValueError(f"Pipeline {pipeline_name} not found")
-        
+
         start_time = time.time()
         pipeline_config = self.pipelines[pipeline_name]
         pipeline = pipeline_config["pipeline"]
         adapter = pipeline_config["adapter"]
-        
+
         with adapter.track_pipeline(
             f"production-{pipeline_name}",
             request_id=request_id,
@@ -304,7 +299,7 @@ class ProductionPipelineManager:
             environment=self.config.environment,
             pipeline_type=pipeline_name
         ) as context:
-            
+
             result = pipeline.run({
                 "prompt_builder": {
                     "service_name": self.config.service_name,
@@ -313,13 +308,13 @@ class ProductionPipelineManager:
                     "user_request": request_data.get("request", "")
                 }
             })
-            
+
             response_time_ms = (time.time() - start_time) * 1000
-            
+
             # Update performance metrics
             self.performance_metrics["requests_processed"] += 1
             self._update_performance_metrics(response_time_ms, success=True)
-            
+
             return {
                 "request_id": request_id,
                 "status": "success",
@@ -328,26 +323,26 @@ class ProductionPipelineManager:
                 "response_time_ms": response_time_ms,
                 "cost": float(context.get_metrics().total_cost)
             }
-    
+
     def _update_performance_metrics(self, response_time_ms: float, success: bool):
         """Update running performance metrics."""
         # Update average response time
         current_avg = self.performance_metrics["average_response_time"]
         total_requests = self.performance_metrics["requests_processed"]
-        
+
         if total_requests > 0:
             self.performance_metrics["average_response_time"] = (
                 (current_avg * (total_requests - 1) + response_time_ms) / total_requests
             )
         else:
             self.performance_metrics["average_response_time"] = response_time_ms
-        
+
         # Note: Error rate would be calculated over a time window in production
-    
+
     def get_metrics(self) -> Dict[str, Any]:
         """Get current performance metrics."""
         health = self.health_checker.check_health() if self.health_checker else None
-        
+
         return {
             "performance": self.performance_metrics.copy(),
             "health": {
@@ -366,7 +361,7 @@ class ProductionPipelineManager:
 
 def generate_docker_configuration() -> Dict[str, str]:
     """Generate Docker configuration for production deployment."""
-    
+
     dockerfile = """
 # Multi-stage production Dockerfile for Haystack + GenOps AI service
 FROM python:3.9-slim as builder
@@ -507,7 +502,7 @@ volumes:
 
 def generate_kubernetes_manifests() -> Dict[str, str]:
     """Generate Kubernetes deployment manifests."""
-    
+
     deployment = """
 apiVersion: apps/v1
 kind: Deployment
@@ -754,7 +749,7 @@ def demo_production_deployment():
     print("\n" + "="*70)
     print("🚀 Production Deployment Patterns")
     print("="*70)
-    
+
     # Create production configuration
     deployment_config = DeploymentConfiguration(
         service_name="haystack-genops-api",
@@ -771,27 +766,27 @@ def demo_production_deployment():
         min_replicas=2,
         max_replicas=10
     )
-    
-    print(f"🏗️ Production Configuration:")
+
+    print("🏗️ Production Configuration:")
     print(f"   Service: {deployment_config.service_name}")
     print(f"   Version: {deployment_config.version}")
     print(f"   Environment: {deployment_config.environment}")
     print(f"   Replicas: {deployment_config.replicas}")
     print(f"   Resource Requests: {deployment_config.cpu_request} CPU, {deployment_config.memory_request} Memory")
     print(f"   Resource Limits: {deployment_config.cpu_limit} CPU, {deployment_config.memory_limit} Memory")
-    
+
     # Initialize production manager
     pipeline_manager = ProductionPipelineManager(deployment_config)
-    
+
     if not pipeline_manager.initialize():
         print("❌ Failed to initialize production pipeline manager")
         return None
-    
+
     print("✅ Production pipeline manager initialized")
-    
+
     # Simulate production requests
-    print(f"\n📋 Simulating Production Workload:")
-    
+    print("\n📋 Simulating Production Workload:")
+
     test_requests = [
         {"request": "Analyze customer feedback sentiment", "priority": "normal"},
         {"request": "Generate product recommendation summary", "priority": "high"},
@@ -799,16 +794,16 @@ def demo_production_deployment():
         {"request": "Process user query about AI features", "priority": "normal"},
         {"request": "Generate executive summary report", "priority": "high"},
     ]
-    
+
     # Process requests with concurrent execution
     with ThreadPoolExecutor(max_workers=3) as executor:
         futures = []
-        
+
         for i, request_data in enumerate(test_requests, 1):
             request_id = f"req-{i:04d}"
             future = executor.submit(pipeline_manager.process_request, request_data, request_id)
             futures.append((request_id, future))
-        
+
         # Collect results
         results = []
         for request_id, future in futures:
@@ -818,16 +813,16 @@ def demo_production_deployment():
                 print(f"   ✅ {request_id}: {result['status']} ({result.get('response_time_ms', 0):.1f}ms)")
             except Exception as e:
                 print(f"   ❌ {request_id}: Error - {e}")
-    
+
     # Get performance metrics
     metrics = pipeline_manager.get_metrics()
-    
-    print(f"\n📊 Production Metrics:")
+
+    print("\n📊 Production Metrics:")
     print(f"   Requests Processed: {metrics['performance']['requests_processed']}")
     print(f"   Average Response Time: {metrics['performance']['average_response_time']:.1f}ms")
     print(f"   Service Health: {metrics['health']['status']}")
     print(f"   Dependencies: {metrics['health']['dependencies']}")
-    
+
     return pipeline_manager, metrics
 
 
@@ -836,30 +831,30 @@ def demo_containerization_configs():
     print("\n" + "="*70)
     print("🐳 Containerization Configurations")
     print("="*70)
-    
+
     # Generate Docker configurations
     docker_configs = generate_docker_configuration()
-    
+
     print("📦 Docker Configuration Generated:")
     print("   • Multi-stage Dockerfile with security best practices")
     print("   • Production-optimized Python environment")
     print("   • Health checks and monitoring integration")
     print("   • Non-root user execution")
     print("   • Resource limitations and security controls")
-    
-    print(f"\n🔧 Docker Compose Services:")
+
+    print("\n🔧 Docker Compose Services:")
     print("   • haystack-genops-api: Main application service")
     print("   • otel-collector: OpenTelemetry telemetry collection")
     print("   • prometheus: Metrics storage and monitoring")
     print("   • grafana: Visualization and alerting dashboard")
-    
+
     # Show sample Dockerfile section
     dockerfile_lines = docker_configs["Dockerfile"].split('\n')
-    print(f"\n📄 Sample Dockerfile (first 15 lines):")
+    print("\n📄 Sample Dockerfile (first 15 lines):")
     for line in dockerfile_lines[:15]:
         if line.strip():
             print(f"   {line}")
-    
+
     return docker_configs
 
 
@@ -868,10 +863,10 @@ def demo_kubernetes_deployment():
     print("\n" + "="*70)
     print("☸️ Kubernetes Deployment Patterns")
     print("="*70)
-    
+
     # Generate Kubernetes manifests
     k8s_manifests = generate_kubernetes_manifests()
-    
+
     print("🚀 Kubernetes Resources Generated:")
     print("   • Deployment: Multi-replica application deployment")
     print("   • Service: Internal load balancing and service discovery")
@@ -879,26 +874,26 @@ def demo_kubernetes_deployment():
     print("   • Ingress: External traffic routing with SSL termination")
     print("   • ConfigMap: OpenTelemetry collector configuration")
     print("   • Monitoring: Integrated observability stack")
-    
-    print(f"\n⚡ Scaling Configuration:")
+
+    print("\n⚡ Scaling Configuration:")
     print("   • Min Replicas: 2 (high availability)")
     print("   • Max Replicas: 10 (burst capacity)")
     print("   • CPU Target: 70% utilization")
     print("   • Memory Target: 80% utilization")
-    
-    print(f"\n🛡️ Security Configuration:")
+
+    print("\n🛡️ Security Configuration:")
     print("   • Non-root container execution")
     print("   • Read-only root filesystem")
     print("   • Dropped capabilities (ALL)")
     print("   • Resource limits and requests")
     print("   • Network policies for isolation")
-    
-    print(f"\n💊 Health Checks:")
+
+    print("\n💊 Health Checks:")
     print("   • Liveness Probe: /health endpoint (30s interval)")
     print("   • Readiness Probe: /ready endpoint (15s interval)")
     print("   • Startup grace period: 60s")
     print("   • Graceful shutdown handling")
-    
+
     return k8s_manifests
 
 
@@ -907,28 +902,28 @@ def demo_monitoring_and_alerting():
     print("\n" + "="*70)
     print("📈 Production Monitoring and Alerting")
     print("="*70)
-    
+
     print("🔍 Observability Stack:")
     print("   • OpenTelemetry: Unified telemetry collection")
     print("   • Prometheus: Metrics storage and alerting")
     print("   • Grafana: Visualization and dashboards")
     print("   • Jaeger: Distributed tracing analysis")
-    
-    print(f"\n📊 Key Metrics Monitored:")
+
+    print("\n📊 Key Metrics Monitored:")
     print("   • Request rate and response time")
     print("   • Error rates and success rates")
     print("   • AI model costs and budget utilization")
     print("   • System resources (CPU, memory, disk)")
     print("   • Service dependencies health")
-    
-    print(f"\n🚨 Alerting Scenarios:")
+
+    print("\n🚨 Alerting Scenarios:")
     print("   • High error rate (>5% for 5 minutes)")
     print("   • Slow response time (>2s P95 for 10 minutes)")
     print("   • Budget overrun (>90% daily budget)")
     print("   • Service dependency failures")
     print("   • Resource exhaustion (CPU >80%, Memory >85%)")
-    
-    print(f"\n🎯 SLA Monitoring:")
+
+    print("\n🎯 SLA Monitoring:")
     print("   • Availability: 99.9% uptime target")
     print("   • Performance: P95 < 2 seconds")
     print("   • Error Budget: <0.1% error rate")
@@ -939,40 +934,40 @@ def main():
     """Run the comprehensive production deployment patterns demonstration."""
     print("🚀 Production Deployment Patterns with Haystack + GenOps")
     print("="*70)
-    
+
     # Validate environment setup
     print("🔍 Validating setup...")
     result = validate_haystack_setup()
-    
+
     if not result.is_valid:
         print("❌ Setup validation failed!")
         print_validation_result(result)
         return 1
     else:
         print("✅ Environment validated and ready")
-    
+
     try:
         # Production deployment demonstration
         pipeline_manager, metrics = demo_production_deployment()
-        
+
         # Containerization patterns
         docker_configs = demo_containerization_configs()
-        
-        # Kubernetes deployment patterns  
+
+        # Kubernetes deployment patterns
         k8s_manifests = demo_kubernetes_deployment()
-        
+
         # Monitoring and alerting
         demo_monitoring_and_alerting()
-        
+
         print("\n🎉 Production Deployment Patterns demonstration completed!")
         print("\n🚀 Next Steps:")
         print("   • Try performance_optimization.py for speed improvements")
         print("   • Review generated configurations for your deployment")
         print("   • Customize monitoring and alerting for your requirements")
         print("   • Deploy to your production environment with confidence! 🚀")
-        
+
         return 0
-        
+
     except KeyboardInterrupt:
         print("\n\n⚠️ Demonstration interrupted by user")
         return 1

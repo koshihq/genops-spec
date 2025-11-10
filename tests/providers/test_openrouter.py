@@ -3,9 +3,9 @@
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
-from tests.utils.mock_providers import MockOpenAIClient
 
 from genops.providers.openrouter import GenOpsOpenRouterAdapter
+from tests.utils.mock_providers import MockOpenAIClient
 
 
 # Mock OpenAI exception classes for testing
@@ -247,12 +247,14 @@ class TestGenOpsOpenRouterAdapter:
             def mock_calculate_cost_with_fallback(*args):
                 # Simulate the try/except ImportError logic in _calculate_cost
                 try:
-                    from genops.providers.openrouter_pricing import calculate_openrouter_cost
+                    from genops.providers.openrouter_pricing import (
+                        calculate_openrouter_cost,
+                    )
                     raise ImportError("Mock import error")  # Force ImportError
                 except ImportError:
                     # Call the actual fallback calculation
                     return adapter._fallback_cost_calculation(*args)
-            
+
             mock_method.side_effect = mock_calculate_cost_with_fallback
             cost = adapter._calculate_cost("openai/gpt-4o", "openai", 100, 50)
 

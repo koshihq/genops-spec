@@ -3,9 +3,9 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
-from tests.utils.mock_providers import MockAnthropicClient, MockProviderFactory
 
 from genops.providers.anthropic import GenOpsAnthropicAdapter
+from tests.utils.mock_providers import MockAnthropicClient, MockProviderFactory
 
 
 class TestGenOpsAnthropicAdapter:

@@ -57,22 +57,22 @@ Example usage:
 """
 
 import logging
+import os
 import time
 import uuid
-import json
-import os
+from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Union, Iterator, Callable
 from enum import Enum
+from typing import Any, Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
 # Import Langfuse with graceful failure
 try:
     from langfuse import Langfuse
-    from langfuse.decorators import observe
     from langfuse.client import StatefulClient
+    from langfuse.decorators import observe
     HAS_LANGFUSE = True
 except ImportError:
     HAS_LANGFUSE = False
@@ -85,7 +85,7 @@ class LangfuseObservationType(Enum):
     """Langfuse observation types for different operations."""
     GENERATION = "generation"
     TRACE = "trace"
-    SPAN = "span" 
+    SPAN = "span"
     EVENT = "event"
 
 class GovernancePolicy(Enum):
@@ -105,14 +105,14 @@ class LangfuseUsage:
     total_tokens: int
     cost: float
     latency_ms: float
-    
+
     # GenOps governance attributes
     team: Optional[str] = None
     project: Optional[str] = None
     customer_id: Optional[str] = None
     cost_center: Optional[str] = None
     environment: str = "production"
-    
+
     # Budget and policy tracking
     budget_remaining: Optional[float] = None
     policy_violations: List[str] = field(default_factory=list)
@@ -137,7 +137,7 @@ class GenOpsLangfuseAdapter:
     governance features including cost attribution, budget enforcement, and
     policy compliance tracking.
     """
-    
+
     def __init__(
         self,
         langfuse_public_key: Optional[str] = None,
@@ -168,27 +168,27 @@ class GenOpsLangfuseAdapter:
             raise ImportError(
                 "Langfuse package not found. Install with: pip install langfuse"
             )
-        
+
         # Initialize Langfuse client
         self.langfuse = Langfuse(
             public_key=langfuse_public_key or os.getenv("LANGFUSE_PUBLIC_KEY"),
             secret_key=langfuse_secret_key or os.getenv("LANGFUSE_SECRET_KEY"),
             host=langfuse_base_url or os.getenv("LANGFUSE_BASE_URL", "https://cloud.langfuse.com")
         )
-        
+
         # GenOps governance configuration
         self.team = team
-        self.project = project  
+        self.project = project
         self.environment = environment
         self.enable_governance = enable_governance
         self.budget_limits = budget_limits or {}
         self.policy_mode = policy_mode
-        
+
         # Governance tracking
         self.current_costs = {"daily": 0.0, "monthly": 0.0}
         self.operation_count = 0
         self.policy_violations = []
-        
+
         # Cost tracking configuration
         self.cost_per_token = {
             "gpt-4": {"input": 0.00003, "output": 0.00006},
@@ -197,7 +197,7 @@ class GenOpsLangfuseAdapter:
             "claude-3-sonnet": {"input": 0.000003, "output": 0.000015},
             "claude-3-haiku": {"input": 0.00000025, "output": 0.00000125}
         }
-        
+
         logger.info(f"GenOps Langfuse adapter initialized for team='{team}', project='{project}'")
 
     def _calculate_cost(self, model: str, input_tokens: int, output_tokens: int) -> float:
@@ -205,7 +205,7 @@ class GenOpsLangfuseAdapter:
         if model not in self.cost_per_token:
             # Default cost estimation for unknown models
             return (input_tokens + output_tokens) * 0.00001
-        
+
         pricing = self.cost_per_token[model]
         input_cost = input_tokens * pricing["input"]
         output_cost = output_tokens * pricing["output"]
@@ -215,34 +215,34 @@ class GenOpsLangfuseAdapter:
         """Check if operation complies with budget limits."""
         if not self.budget_limits:
             return True
-        
+
         daily_limit = self.budget_limits.get("daily", float('inf'))
         monthly_limit = self.budget_limits.get("monthly", float('inf'))
-        
+
         if self.current_costs["daily"] + estimated_cost > daily_limit:
             self.policy_violations.append(f"Daily budget exceeded: ${self.current_costs['daily'] + estimated_cost:.6f} > ${daily_limit:.6f}")
             return False
-            
+
         if self.current_costs["monthly"] + estimated_cost > monthly_limit:
             self.policy_violations.append(f"Monthly budget exceeded: ${self.current_costs['monthly'] + estimated_cost:.6f} > ${monthly_limit:.6f}")
             return False
-            
+
         return True
 
     def _extract_governance_attributes(self, kwargs: Dict[str, Any]) -> Dict[str, Any]:
         """Extract GenOps governance attributes from kwargs."""
         governance_attrs = {}
-        
+
         # Standard governance attributes
         for attr in ["team", "project", "customer_id", "cost_center", "environment", "feature", "user_id"]:
             if attr in kwargs:
                 governance_attrs[attr] = kwargs.pop(attr)
-        
+
         # Use defaults if not provided
         governance_attrs.setdefault("team", self.team)
         governance_attrs.setdefault("project", self.project)
         governance_attrs.setdefault("environment", self.environment)
-        
+
         return governance_attrs
 
     @contextmanager
@@ -262,7 +262,7 @@ class GenOpsLangfuseAdapter:
             Langfuse trace with governance capabilities
         """
         governance_attrs = self._extract_governance_attributes(kwargs)
-        
+
         # Create enhanced Langfuse trace
         trace = self.langfuse.trace(
             name=name,
@@ -275,14 +275,14 @@ class GenOpsLangfuseAdapter:
             tags=kwargs.get("tags", []) + [f"team:{governance_attrs.get('team', 'unknown')}"],
             **{k: v for k, v in kwargs.items() if k not in ["metadata", "tags"]}
         )
-        
+
         start_time = time.time()
         operation_id = str(uuid.uuid4())
-        
+
         try:
             logger.info(f"Starting governed trace: {name} (ID: {operation_id})")
             yield trace
-            
+
         except Exception as e:
             # Log governance violation if applicable
             if self.enable_governance:
@@ -295,10 +295,10 @@ class GenOpsLangfuseAdapter:
                 )
             logger.error(f"Trace {name} failed: {e}")
             raise
-            
+
         finally:
             duration_ms = (time.time() - start_time) * 1000
-            
+
             # Update trace with governance metrics
             if self.enable_governance:
                 trace.update(
@@ -309,7 +309,7 @@ class GenOpsLangfuseAdapter:
                         "genops_policy_violations": len(self.policy_violations)
                     }
                 )
-            
+
             self.operation_count += 1
             logger.info(f"Trace {name} completed in {duration_ms:.2f}ms")
 
@@ -333,23 +333,23 @@ class GenOpsLangfuseAdapter:
             LangfuseResponse with usage and governance information
         """
         governance_attrs = self._extract_governance_attributes(kwargs)
-        
+
         # Estimate cost for budget check
         estimated_input_tokens = len(prompt.split()) * 1.3  # Rough estimation
         estimated_cost = self._calculate_cost(model, int(estimated_input_tokens), 100)
-        
+
         # Budget compliance check
         if max_cost and estimated_cost > max_cost:
             raise ValueError(f"Estimated cost ${estimated_cost:.6f} exceeds max_cost ${max_cost:.6f}")
-        
+
         if self.enable_governance and not self._check_budget_compliance(estimated_cost):
             if self.policy_mode == GovernancePolicy.ENFORCED:
                 raise ValueError(f"Budget limit exceeded. Violations: {self.policy_violations}")
-        
+
         # Create Langfuse generation with governance metadata
         start_time = time.time()
         operation_id = str(uuid.uuid4())
-        
+
         generation = self.langfuse.generation(
             name=f"{model}_generation",
             model=model,
@@ -367,17 +367,17 @@ class GenOpsLangfuseAdapter:
                 "genops_tracked"
             ]
         )
-        
+
         # Simulate LLM call (in real implementation, this would call actual LLM)
         # For demo purposes, we'll create a mock response
         latency_ms = (time.time() - start_time) * 1000
-        
+
         # Mock response data - in real implementation this would come from actual LLM
         mock_response = f"Generated response for: {prompt[:50]}..."
         input_tokens = len(prompt.split())
         output_tokens = len(mock_response.split())
         actual_cost = self._calculate_cost(model, input_tokens, output_tokens)
-        
+
         # Update generation with results
         generation.end(
             output=mock_response,
@@ -394,11 +394,11 @@ class GenOpsLangfuseAdapter:
                 "genops_cost_difference": actual_cost - estimated_cost
             }
         )
-        
+
         # Update governance tracking
         self.current_costs["daily"] += actual_cost
         self.current_costs["monthly"] += actual_cost
-        
+
         # Create usage object
         usage = LangfuseUsage(
             operation_id=operation_id,
@@ -411,14 +411,14 @@ class GenOpsLangfuseAdapter:
             latency_ms=latency_ms,
             **governance_attrs
         )
-        
+
         # Generate cost optimization suggestions
         suggestions = []
         if actual_cost > estimated_cost * 1.5:
             suggestions.append("Consider using a smaller model for similar tasks")
         if latency_ms > 5000:
             suggestions.append("High latency detected - consider caching for repeated queries")
-        
+
         return LangfuseResponse(
             content=mock_response,
             usage=usage,
@@ -448,13 +448,13 @@ class GenOpsLangfuseAdapter:
             Evaluation results with governance metadata
         """
         governance_attrs = self._extract_governance_attributes(kwargs)
-        
+
         start_time = time.time()
-        
+
         try:
             # Run evaluation
             evaluation_result = evaluator_function()
-            
+
             # Create Langfuse score with governance
             score = self.langfuse.score(
                 trace_id=trace_id,
@@ -468,14 +468,14 @@ class GenOpsLangfuseAdapter:
                     "genops_evaluator": evaluator_function.__name__
                 }
             )
-            
+
             return {
                 "score": evaluation_result.get("score", 0.0),
                 "evaluation_id": score.id,
                 "governance": governance_attrs,
                 "duration_ms": (time.time() - start_time) * 1000
             }
-            
+
         except Exception as e:
             logger.error(f"Evaluation {evaluation_name} failed: {e}")
             raise
@@ -548,10 +548,10 @@ def instrument_langfuse(
         environment=environment,
         budget_limits=budget_limits
     )
-    
+
     if auto_instrument:
         _auto_instrument_langfuse(adapter)
-    
+
     logger.info(f"GenOps Langfuse instrumentation enabled for team='{team}', project='{project}'")
     return adapter
 
@@ -561,31 +561,31 @@ def _auto_instrument_langfuse(adapter: GenOpsLangfuseAdapter):
         if not HAS_LANGFUSE:
             logger.warning("Langfuse not available for auto-instrumentation")
             return
-        
+
         # Enhance Langfuse observe decorator with governance
         original_observe = observe
-        
+
         def enhanced_observe(*args, **kwargs):
             """Enhanced observe decorator with GenOps governance."""
             # Add governance metadata to all observations
             if 'metadata' not in kwargs:
                 kwargs['metadata'] = {}
-            
+
             kwargs['metadata'].update({
                 "genops_enabled": True,
                 "genops_team": adapter.team,
                 "genops_project": adapter.project,
                 "genops_environment": adapter.environment
             })
-            
+
             return original_observe(*args, **kwargs)
-        
+
         # Replace the observe decorator globally
         import langfuse.decorators
         langfuse.decorators.observe = enhanced_observe
-        
+
         logger.info("Langfuse observe decorator enhanced with GenOps governance")
-        
+
     except Exception as e:
         logger.warning(f"Failed to auto-instrument Langfuse: {e}")
 

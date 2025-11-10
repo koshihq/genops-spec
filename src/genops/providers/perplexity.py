@@ -11,25 +11,25 @@ Provides comprehensive governance for Perplexity AI operations including:
 
 from __future__ import annotations
 
-import asyncio
 import logging
 import os
 import time
 import uuid
-from contextlib import asynccontextmanager, contextmanager
-from dataclasses import dataclass, asdict
+from collections.abc import Iterator
+from contextlib import contextmanager
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from decimal import Decimal
-from typing import Any, Dict, List, Optional, Union, Tuple, AsyncIterator, Iterator
 from enum import Enum
+from typing import Any, Dict, List, Optional, Union
+
+from genops.core.exceptions import (
+    GenOpsBudgetExceededError,
+    GenOpsConfigurationError,
+)
 
 # Core GenOps imports
 from genops.core.telemetry import GenOpsTelemetry
-from genops.core.exceptions import (
-    GenOpsConfigurationError,
-    GenOpsBudgetExceededError,
-    GenOpsValidationError
-)
 
 # Import Perplexity pricing calculator
 from .perplexity_pricing import PerplexityPricingCalculator
@@ -94,7 +94,7 @@ class PerplexitySearchSession:
     total_cost: Decimal = Decimal('0')
     governance_attributes: Dict[str, Any] = None
     search_results: List[SearchResult] = None
-    
+
     def __post_init__(self):
         if self.governance_attributes is None:
             self.governance_attributes = {}
@@ -113,7 +113,7 @@ class GenOpsPerplexityAdapter:
     - Multi-tenant search operations with governance controls
     - Zero-code auto-instrumentation for existing integrations
     """
-    
+
     def __init__(
         self,
         perplexity_api_key: Optional[str] = None,
@@ -167,24 +167,24 @@ class GenOpsPerplexityAdapter:
         self.default_search_context = default_search_context
         self.perplexity_base_url = perplexity_base_url
         self.tags = tags or {}
-        
+
         # Cost tracking
         self.pricing_calculator = PerplexityPricingCalculator()
         self.daily_costs = Decimal('0')
         self.monthly_costs = Decimal('0')
-        
+
         # Telemetry
         self.telemetry = GenOpsTelemetry(tracer_name="perplexity")
-        
+
         # Active sessions
         self._active_sessions: Dict[str, PerplexitySearchSession] = {}
-        
+
         # Validation
         if not self.perplexity_api_key:
             raise GenOpsConfigurationError(
                 "Perplexity API key required. Set PERPLEXITY_API_KEY environment variable or pass perplexity_api_key parameter."
             )
-        
+
         # Initialize OpenAI client for Perplexity (compatible API)
         if HAS_OPENAI_CLIENT:
             self.client = openai.OpenAI(
@@ -194,9 +194,9 @@ class GenOpsPerplexityAdapter:
         else:
             self.client = None
             logger.warning("OpenAI client not available. Some features may be limited.")
-        
+
         logger.info(f"GenOps Perplexity adapter initialized for team='{self.team}', project='{self.project}'")
-    
+
     def _build_base_tags(self, additional_tags: Optional[Dict[str, str]] = None) -> Dict[str, str]:
         """Build base governance tags for telemetry."""
         base_tags = {
@@ -207,24 +207,24 @@ class GenOpsPerplexityAdapter:
             'governance_enabled': str(self.enable_governance),
             'governance_policy': self.governance_policy
         }
-        
+
         if self.customer_id:
             base_tags['customer_id'] = self.customer_id
         if self.cost_center:
             base_tags['cost_center'] = self.cost_center
-        
+
         # Merge with instance tags and additional tags
         base_tags.update(self.tags)
         if additional_tags:
             base_tags.update(additional_tags)
-        
+
         return base_tags
-    
+
     def _check_budget_limits(self, estimated_cost: Decimal) -> None:
         """Check if operation would exceed budget limits."""
         if not self.enable_governance or self.governance_policy == "advisory":
             return
-        
+
         projected_daily = self.daily_costs + estimated_cost
         if projected_daily > self.daily_budget_limit:
             if self.governance_policy in ["enforced", "strict"]:
@@ -232,7 +232,7 @@ class GenOpsPerplexityAdapter:
                     f"Operation would exceed daily budget limit. "
                     f"Projected: ${projected_daily:.4f}, Limit: ${self.daily_budget_limit:.4f}"
                 )
-        
+
         if self.monthly_budget_limit:
             projected_monthly = self.monthly_costs + estimated_cost
             if projected_monthly > self.monthly_budget_limit:
@@ -241,12 +241,12 @@ class GenOpsPerplexityAdapter:
                         f"Operation would exceed monthly budget limit. "
                         f"Projected: ${projected_monthly:.4f}, Limit: ${self.monthly_budget_limit:.4f}"
                     )
-    
+
     def _update_costs(self, cost: Decimal) -> None:
         """Update cost tracking."""
         self.daily_costs += cost
         self.monthly_costs += cost
-        
+
         # Cost alerting
         if self.enable_cost_alerts:
             daily_utilization = (self.daily_costs / self.daily_budget_limit) * 100
@@ -255,7 +255,7 @@ class GenOpsPerplexityAdapter:
                     f"Perplexity costs approaching daily limit: {daily_utilization:.1f}% "
                     f"(${self.daily_costs:.4f}/${self.daily_budget_limit:.4f})"
                 )
-    
+
     @contextmanager
     def track_search_session(
         self,
@@ -286,7 +286,7 @@ class GenOpsPerplexityAdapter:
                 )
         """
         session_id = str(uuid.uuid4())
-        
+
         # Build governance attributes
         governance_attrs = self._build_base_tags()
         governance_attrs.update({
@@ -296,7 +296,7 @@ class GenOpsPerplexityAdapter:
             'environment': environment or self.environment,
         })
         governance_attrs.update(governance_attributes)
-        
+
         # Create session
         session = PerplexitySearchSession(
             session_id=session_id,
@@ -304,9 +304,9 @@ class GenOpsPerplexityAdapter:
             start_time=datetime.now(timezone.utc),
             governance_attributes=governance_attrs
         )
-        
+
         self._active_sessions[session_id] = session
-        
+
         try:
             logger.info(f"Starting Perplexity search session '{session_name}' ({session_id})")
             yield session
@@ -314,17 +314,17 @@ class GenOpsPerplexityAdapter:
             # Finalize session
             session.end_time = datetime.now(timezone.utc)
             session_duration = (session.end_time - session.start_time).total_seconds()
-            
+
             logger.info(
                 f"Completed Perplexity search session '{session_name}': "
                 f"{session.total_queries} queries, ${session.total_cost:.4f} cost, "
                 f"{session_duration:.1f}s duration"
             )
-            
+
             # Remove from active sessions
             if session_id in self._active_sessions:
                 del self._active_sessions[session_id]
-    
+
     def search_with_governance(
         self,
         query: str,
@@ -370,27 +370,27 @@ class GenOpsPerplexityAdapter:
         """
         if not HAS_OPENAI_CLIENT:
             raise GenOpsConfigurationError("OpenAI client required for Perplexity integration")
-        
+
         start_time = time.time()
-        
+
         # Normalize model
         if isinstance(model, PerplexityModel):
             model_name = model.value
         else:
             model_name = str(model)
-        
+
         search_context = search_context or self.default_search_context
-        
+
         # Estimate cost before operation
         estimated_cost = self.pricing_calculator.estimate_search_cost(
             model=model_name,
             estimated_tokens=max_tokens,
             search_context=search_context
         )
-        
+
         # Budget check
         self._check_budget_limits(estimated_cost)
-        
+
         # Build governance attributes
         operation_attrs = self._build_base_tags()
         operation_attrs.update(governance_attributes)
@@ -402,10 +402,10 @@ class GenOpsPerplexityAdapter:
             'max_tokens': max_tokens,
             'estimated_cost': str(estimated_cost)
         })
-        
+
         # Prepare request
         messages = [{"role": "user", "content": query}]
-        
+
         request_params = {
             "model": model_name,
             "messages": messages,
@@ -413,7 +413,7 @@ class GenOpsPerplexityAdapter:
             "temperature": temperature,
             "stream": False
         }
-        
+
         # Add search-specific parameters
         if return_citations:
             request_params["return_citations"] = True
@@ -423,16 +423,16 @@ class GenOpsPerplexityAdapter:
             request_params["search_domain_filter"] = search_domain_filter
         if search_recency_filter:
             request_params["search_recency_filter"] = search_recency_filter
-        
+
         try:
             # Execute search with telemetry
             with self.telemetry.trace_operation("perplexity.search", **operation_attrs) as span:
                 response = self.client.chat.completions.create(**request_params)
-                
+
                 # Extract response data
                 response_text = response.choices[0].message.content
                 tokens_used = response.usage.total_tokens if hasattr(response, 'usage') else max_tokens
-                
+
                 # Extract citations (Perplexity-specific)
                 citations = []
                 if hasattr(response, 'citations') and response.citations:
@@ -444,17 +444,17 @@ class GenOpsPerplexityAdapter:
                         }
                         for citation in response.citations
                     ]
-                
+
                 # Calculate actual cost
                 actual_cost = self.pricing_calculator.calculate_search_cost(
                     model=model_name,
                     tokens_used=tokens_used,
                     search_context=search_context
                 )
-                
+
                 # Update cost tracking
                 self._update_costs(actual_cost)
-                
+
                 # Update telemetry
                 span.set_attributes({
                     'perplexity.tokens_used': tokens_used,
@@ -462,7 +462,7 @@ class GenOpsPerplexityAdapter:
                     'perplexity.citations_count': len(citations),
                     'perplexity.search_time_seconds': time.time() - start_time
                 })
-                
+
                 # Create result
                 search_result = SearchResult(
                     query=query,
@@ -476,28 +476,28 @@ class GenOpsPerplexityAdapter:
                     governance_metadata=operation_attrs,
                     session_id=session_id
                 )
-                
+
                 # Update session if provided
                 if session_id and session_id in self._active_sessions:
                     session = self._active_sessions[session_id]
                     session.total_queries += 1
                     session.total_cost += actual_cost
                     session.search_results.append(search_result)
-                
+
                 logger.info(
                     f"Perplexity search completed: {tokens_used} tokens, "
                     f"${actual_cost:.4f} cost, {len(citations)} citations"
                 )
-                
+
                 return search_result
-                
+
         except Exception as e:
             logger.error(f"Perplexity search failed: {e}")
             # Update telemetry with error
             if 'span' in locals():
                 span.set_status(trace.Status(trace.StatusCode.ERROR, str(e)))
             raise
-    
+
     def batch_search_with_governance(
         self,
         queries: List[str],
@@ -520,7 +520,7 @@ class GenOpsPerplexityAdapter:
             List[SearchResult]: List of search results
         """
         results = []
-        
+
         for i, query in enumerate(queries):
             try:
                 result = self.search_with_governance(
@@ -533,14 +533,14 @@ class GenOpsPerplexityAdapter:
                     **governance_attributes
                 )
                 results.append(result)
-                
+
             except Exception as e:
                 logger.error(f"Batch search query {i+1}/{len(queries)} failed: {e}")
                 # Continue with remaining queries
                 continue
-        
+
         return results
-    
+
     def get_cost_summary(self) -> Dict[str, Any]:
         """
         Get comprehensive cost summary and analytics.
@@ -555,7 +555,7 @@ class GenOpsPerplexityAdapter:
             'monthly_budget_limit': float(self.monthly_budget_limit) if self.monthly_budget_limit else None,
             'daily_budget_utilization': (self.daily_costs / self.daily_budget_limit * 100) if self.daily_budget_limit > 0 else 0,
             'monthly_budget_utilization': (
-                (self.monthly_costs / self.monthly_budget_limit * 100) 
+                (self.monthly_costs / self.monthly_budget_limit * 100)
                 if self.monthly_budget_limit and self.monthly_budget_limit > 0 else 0
             ),
             'governance_enabled': self.enable_governance,
@@ -565,9 +565,9 @@ class GenOpsPerplexityAdapter:
             'project': self.project,
             'environment': self.environment
         }
-        
+
         return summary
-    
+
     def get_search_cost_analysis(self, projected_queries: int, model: str = "sonar") -> Dict[str, Any]:
         """
         Analyze projected search costs and provide optimization recommendations.
@@ -630,14 +630,14 @@ def auto_instrument(
         )
     """
     global _current_adapter
-    
+
     _current_adapter = GenOpsPerplexityAdapter(
         perplexity_api_key=perplexity_api_key,
         team=team,
         project=project,
         **adapter_kwargs
     )
-    
+
     logger.info("Perplexity auto-instrumentation enabled")
     return _current_adapter
 
@@ -679,7 +679,7 @@ def get_current_adapter() -> Optional[GenOpsPerplexityAdapter]:
 # Export key classes and functions
 __all__ = [
     'GenOpsPerplexityAdapter',
-    'PerplexitySearchSession', 
+    'PerplexitySearchSession',
     'SearchResult',
     'SearchContext',
     'PerplexityModel',

@@ -2,18 +2,19 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import time
 import uuid
-import json
-import requests
-from typing import Any, Dict, List, Optional, Union, Callable
-from dataclasses import dataclass, asdict
 from contextlib import contextmanager
+from dataclasses import asdict, dataclass
+from typing import Any, Dict, List, Optional, Union
 
-from genops.providers.base import BaseFrameworkProvider
+import requests
 from opentelemetry import trace
 from opentelemetry.trace import Status, StatusCode
+
+from genops.providers.base import BaseFrameworkProvider
 
 logger = logging.getLogger(__name__)
 tracer = trace.get_tracer(__name__)
@@ -31,37 +32,37 @@ except ImportError:
 @dataclass
 class OllamaOperation:
     """Represents a single Ollama operation for resource tracking."""
-    
+
     operation_id: str
     operation_type: str  # 'generate', 'chat', 'embed', 'pull_model', 'list_models'
     model: str
     start_time: float
     end_time: Optional[float] = None
-    
+
     # Input/output data
     prompt: Optional[str] = None
     response: Optional[str] = None
     input_tokens: Optional[int] = None
     output_tokens: Optional[int] = None
-    
+
     # Resource metrics (Ollama-specific)
     inference_time_ms: Optional[float] = None
     gpu_memory_mb: Optional[float] = None
     cpu_usage_percent: Optional[float] = None
     model_load_time_ms: Optional[float] = None
-    
+
     # Cost attribution (infrastructure costs)
     infrastructure_cost: Optional[float] = None
     gpu_hours: Optional[float] = None
     cpu_hours: Optional[float] = None
-    
+
     # Governance attributes
     governance_attributes: Optional[Dict[str, Any]] = None
-    
+
     def __post_init__(self):
         if self.governance_attributes is None:
             self.governance_attributes = {}
-    
+
     @property
     def duration_ms(self) -> float:
         """Calculate operation duration in milliseconds."""
@@ -73,30 +74,30 @@ class OllamaOperation:
 @dataclass
 class LocalModelMetrics:
     """Comprehensive metrics for local Ollama model operations."""
-    
+
     model_name: str
     total_operations: int
     total_inference_time_ms: float
-    
+
     # Resource utilization
     avg_gpu_memory_mb: float = 0.0
     avg_cpu_usage_percent: float = 0.0
     avg_inference_latency_ms: float = 0.0
-    
+
     # Token statistics
     total_input_tokens: int = 0
     total_output_tokens: int = 0
     avg_tokens_per_second: float = 0.0
-    
+
     # Infrastructure costs
     total_infrastructure_cost: float = 0.0
     cost_per_operation: float = 0.0
     gpu_hours_consumed: float = 0.0
-    
+
     # Quality metrics
     success_rate: float = 100.0
     error_count: int = 0
-    
+
     # Model efficiency
     tokens_per_gpu_hour: float = 0.0
     operations_per_dollar: float = 0.0
@@ -139,25 +140,25 @@ class GenOpsOllamaAdapter(BaseFrameworkProvider):
             **governance_defaults: Default governance attributes
         """
         super().__init__()
-        
+
         self.ollama_base_url = ollama_base_url.rstrip('/')
         self.telemetry_enabled = telemetry_enabled
         self.cost_tracking_enabled = cost_tracking_enabled
         self.debug = debug
         self.governance_defaults = governance_defaults
-        
+
         # Infrastructure cost rates
         self.gpu_hour_rate = gpu_hour_rate
         self.cpu_hour_rate = cpu_hour_rate
         self.electricity_rate = electricity_rate
-        
+
         # Operation tracking
         self.operations: List[OllamaOperation] = []
         self.model_metrics: Dict[str, LocalModelMetrics] = {}
-        
+
         # Current operation context
         self._governance_context: Dict[str, Any] = {}
-        
+
         # Initialize Ollama client if available
         self.client = None
         if HAS_OLLAMA_CLIENT:
@@ -179,7 +180,7 @@ class GenOpsOllamaAdapter(BaseFrameworkProvider):
                 # Test with HTTP request
                 response = requests.get(f"{self.ollama_base_url}/api/tags", timeout=5)
                 response.raise_for_status()
-            
+
             logger.info(f"Successfully connected to Ollama server at {self.ollama_base_url}")
         except Exception as e:
             logger.error(f"Failed to connect to Ollama server: {e}")
@@ -217,7 +218,7 @@ class GenOpsOllamaAdapter(BaseFrameworkProvider):
                 start_time=time.time(),
                 governance_attributes=self.get_current_governance_context()
             )
-            
+
             with tracer.start_as_current_span("ollama.list_models") as span:
                 span.set_attributes({
                     "genops.operation_id": operation.operation_id,
@@ -226,7 +227,7 @@ class GenOpsOllamaAdapter(BaseFrameworkProvider):
                     "genops.server_url": self.ollama_base_url,
                     **operation.governance_attributes
                 })
-                
+
                 try:
                     if self.client:
                         # Use ollama client
@@ -237,20 +238,20 @@ class GenOpsOllamaAdapter(BaseFrameworkProvider):
                         response = requests.get(f"{self.ollama_base_url}/api/tags", timeout=10)
                         response.raise_for_status()
                         models = response.json().get('models', [])
-                    
+
                     operation.end_time = time.time()
                     span.set_attribute("genops.models_count", len(models))
                     span.set_attribute("genops.success", True)
-                    
+
                     # Calculate infrastructure cost
                     if self.cost_tracking_enabled:
                         operation.infrastructure_cost = self._calculate_operation_cost(operation)
-                    
+
                     self.operations.append(operation)
-                    
+
                     logger.info(f"Listed {len(models)} available Ollama models")
                     return models
-                    
+
                 except Exception as e:
                     operation.end_time = time.time()
                     span.record_exception(e)
@@ -280,7 +281,7 @@ class GenOpsOllamaAdapter(BaseFrameworkProvider):
         # Extract governance attributes
         governance_attrs = {k: v for k, v in kwargs.items() if k.startswith(('team', 'project', 'customer', 'environment'))}
         generation_kwargs = {k: v for k, v in kwargs.items() if not k.startswith(('team', 'project', 'customer', 'environment'))}
-        
+
         with self.governance_context(**governance_attrs):
             operation = OllamaOperation(
                 operation_id=str(uuid.uuid4()),
@@ -290,7 +291,7 @@ class GenOpsOllamaAdapter(BaseFrameworkProvider):
                 start_time=time.time(),
                 governance_attributes=self.get_current_governance_context()
             )
-            
+
             with tracer.start_as_current_span("ollama.generate") as span:
                 span.set_attributes({
                     "genops.operation_id": operation.operation_id,
@@ -301,11 +302,11 @@ class GenOpsOllamaAdapter(BaseFrameworkProvider):
                     "genops.stream": stream,
                     **operation.governance_attributes
                 })
-                
+
                 try:
                     # Record inference start time for latency measurement
                     inference_start = time.time()
-                    
+
                     if self.client:
                         # Use ollama client
                         response = self.client.generate(
@@ -322,7 +323,7 @@ class GenOpsOllamaAdapter(BaseFrameworkProvider):
                             "stream": stream,
                             **generation_kwargs
                         }
-                        
+
                         http_response = requests.post(
                             f"{self.ollama_base_url}/api/generate",
                             json=payload,
@@ -330,27 +331,27 @@ class GenOpsOllamaAdapter(BaseFrameworkProvider):
                         )
                         http_response.raise_for_status()
                         response = http_response.json()
-                    
+
                     inference_end = time.time()
                     operation.inference_time_ms = (inference_end - inference_start) * 1000
                     operation.end_time = time.time()
-                    
+
                     # Extract response details
                     if isinstance(response, dict):
                         operation.response = response.get('response', '')
-                        
+
                         # Extract token counts if available
                         if 'eval_count' in response:
                             operation.output_tokens = response['eval_count']
                         if 'prompt_eval_count' in response:
                             operation.input_tokens = response['prompt_eval_count']
-                    
+
                     # Calculate infrastructure cost
                     if self.cost_tracking_enabled:
                         operation.infrastructure_cost = self._calculate_operation_cost(operation)
                         operation.gpu_hours = operation.duration_ms / (1000 * 3600)  # Convert to hours
                         operation.cpu_hours = operation.duration_ms / (1000 * 3600)
-                    
+
                     # Update telemetry
                     span.set_attributes({
                         "genops.success": True,
@@ -359,23 +360,23 @@ class GenOpsOllamaAdapter(BaseFrameworkProvider):
                         "genops.output_tokens": operation.output_tokens or 0,
                         "genops.infrastructure_cost": operation.infrastructure_cost or 0.0
                     })
-                    
+
                     if operation.response:
                         span.set_attribute("genops.response_length", len(operation.response))
-                    
+
                     # Store operation and update metrics
                     self.operations.append(operation)
                     self._update_model_metrics(model, operation)
-                    
+
                     logger.info(f"Generated text with model {model}: {operation.inference_time_ms:.0f}ms")
                     return response
-                    
+
                 except Exception as e:
                     operation.end_time = time.time()
                     span.record_exception(e)
                     span.set_status(Status(StatusCode.ERROR, str(e)))
                     logger.error(f"Failed to generate with Ollama model {model}: {e}")
-                    
+
                     # Still record the failed operation for metrics
                     self.operations.append(operation)
                     raise
@@ -402,11 +403,11 @@ class GenOpsOllamaAdapter(BaseFrameworkProvider):
         # Extract governance attributes
         governance_attrs = {k: v for k, v in kwargs.items() if k.startswith(('team', 'project', 'customer', 'environment'))}
         chat_kwargs = {k: v for k, v in kwargs.items() if not k.startswith(('team', 'project', 'customer', 'environment'))}
-        
+
         with self.governance_context(**governance_attrs):
             # Create prompt from messages for tracking
             prompt_text = json.dumps(messages) if messages else ""
-            
+
             operation = OllamaOperation(
                 operation_id=str(uuid.uuid4()),
                 operation_type="chat",
@@ -415,7 +416,7 @@ class GenOpsOllamaAdapter(BaseFrameworkProvider):
                 start_time=time.time(),
                 governance_attributes=self.get_current_governance_context()
             )
-            
+
             with tracer.start_as_current_span("ollama.chat") as span:
                 span.set_attributes({
                     "genops.operation_id": operation.operation_id,
@@ -426,11 +427,11 @@ class GenOpsOllamaAdapter(BaseFrameworkProvider):
                     "genops.stream": stream,
                     **operation.governance_attributes
                 })
-                
+
                 try:
                     # Record inference start time
                     inference_start = time.time()
-                    
+
                     if self.client:
                         # Use ollama client
                         response = self.client.chat(
@@ -447,7 +448,7 @@ class GenOpsOllamaAdapter(BaseFrameworkProvider):
                             "stream": stream,
                             **chat_kwargs
                         }
-                        
+
                         http_response = requests.post(
                             f"{self.ollama_base_url}/api/chat",
                             json=payload,
@@ -455,28 +456,28 @@ class GenOpsOllamaAdapter(BaseFrameworkProvider):
                         )
                         http_response.raise_for_status()
                         response = http_response.json()
-                    
+
                     inference_end = time.time()
                     operation.inference_time_ms = (inference_end - inference_start) * 1000
                     operation.end_time = time.time()
-                    
+
                     # Extract response details
                     if isinstance(response, dict):
                         if 'message' in response:
                             operation.response = response['message'].get('content', '')
-                        
+
                         # Extract token counts if available
                         if 'eval_count' in response:
                             operation.output_tokens = response['eval_count']
                         if 'prompt_eval_count' in response:
                             operation.input_tokens = response['prompt_eval_count']
-                    
+
                     # Calculate infrastructure cost
                     if self.cost_tracking_enabled:
                         operation.infrastructure_cost = self._calculate_operation_cost(operation)
                         operation.gpu_hours = operation.duration_ms / (1000 * 3600)
                         operation.cpu_hours = operation.duration_ms / (1000 * 3600)
-                    
+
                     # Update telemetry
                     span.set_attributes({
                         "genops.success": True,
@@ -485,23 +486,23 @@ class GenOpsOllamaAdapter(BaseFrameworkProvider):
                         "genops.output_tokens": operation.output_tokens or 0,
                         "genops.infrastructure_cost": operation.infrastructure_cost or 0.0
                     })
-                    
+
                     if operation.response:
                         span.set_attribute("genops.response_length", len(operation.response))
-                    
+
                     # Store operation and update metrics
                     self.operations.append(operation)
                     self._update_model_metrics(model, operation)
-                    
+
                     logger.info(f"Chat with model {model}: {operation.inference_time_ms:.0f}ms")
                     return response
-                    
+
                 except Exception as e:
                     operation.end_time = time.time()
                     span.record_exception(e)
                     span.set_status(Status(StatusCode.ERROR, str(e)))
                     logger.error(f"Failed to chat with Ollama model {model}: {e}")
-                    
+
                     # Still record the failed operation
                     self.operations.append(operation)
                     raise
@@ -518,25 +519,25 @@ class GenOpsOllamaAdapter(BaseFrameworkProvider):
         """
         if not operation.end_time:
             return 0.0
-        
+
         duration_hours = (operation.end_time - operation.start_time) / 3600
-        
+
         # Base infrastructure cost (GPU + CPU time)
         base_cost = (self.gpu_hour_rate + self.cpu_hour_rate) * duration_hours
-        
+
         # Add electricity cost estimate (rough approximation)
         # Assume 300W GPU + 100W CPU = 0.4kW
         electricity_cost = 0.4 * duration_hours * self.electricity_rate
-        
+
         total_cost = base_cost + electricity_cost
-        
+
         # Adjust based on model complexity (rough heuristic)
         if operation.model:
             if 'large' in operation.model.lower() or '70b' in operation.model.lower():
                 total_cost *= 2.0  # Large models cost more
             elif 'small' in operation.model.lower() or '7b' in operation.model.lower():
                 total_cost *= 0.5  # Small models cost less
-        
+
         return round(total_cost, 6)
 
     def _update_model_metrics(self, model: str, operation: OllamaOperation):
@@ -547,31 +548,31 @@ class GenOpsOllamaAdapter(BaseFrameworkProvider):
                 total_operations=0,
                 total_inference_time_ms=0.0
             )
-        
+
         metrics = self.model_metrics[model]
         metrics.total_operations += 1
-        
+
         if operation.inference_time_ms:
             metrics.total_inference_time_ms += operation.inference_time_ms
             metrics.avg_inference_latency_ms = metrics.total_inference_time_ms / metrics.total_operations
-        
+
         if operation.input_tokens:
             metrics.total_input_tokens += operation.input_tokens
         if operation.output_tokens:
             metrics.total_output_tokens += operation.output_tokens
-        
+
         if operation.infrastructure_cost:
             metrics.total_infrastructure_cost += operation.infrastructure_cost
             metrics.cost_per_operation = metrics.total_infrastructure_cost / metrics.total_operations
-        
+
         if operation.gpu_hours:
             metrics.gpu_hours_consumed += operation.gpu_hours
-            
+
             # Calculate efficiency metrics
             if metrics.gpu_hours_consumed > 0:
                 total_tokens = metrics.total_input_tokens + metrics.total_output_tokens
                 metrics.tokens_per_gpu_hour = total_tokens / metrics.gpu_hours_consumed
-                
+
                 if metrics.total_infrastructure_cost > 0:
                     metrics.operations_per_dollar = metrics.total_operations / metrics.total_infrastructure_cost
 
@@ -598,14 +599,14 @@ class GenOpsOllamaAdapter(BaseFrameworkProvider):
                 "models_used": [],
                 "avg_inference_time_ms": 0.0
             }
-        
+
         total_cost = sum(op.infrastructure_cost or 0.0 for op in self.operations)
         total_inference_time = sum(op.inference_time_ms or 0.0 for op in self.operations)
         models_used = list(set(op.model for op in self.operations))
-        
+
         successful_ops = [op for op in self.operations if op.end_time and op.response]
         success_rate = len(successful_ops) / len(self.operations) * 100
-        
+
         return {
             "total_operations": len(self.operations),
             "total_infrastructure_cost": total_cost,
@@ -652,7 +653,7 @@ def instrument_ollama(
 # Export main classes and functions
 __all__ = [
     "GenOpsOllamaAdapter",
-    "OllamaOperation", 
+    "OllamaOperation",
     "LocalModelMetrics",
     "instrument_ollama"
 ]

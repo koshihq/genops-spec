@@ -823,7 +823,7 @@ def check_common_issues() -> list[ValidationIssue]:
         # Check for common endpoint URLs and provide specific guidance
         parsed_url = urlparse(otel_endpoint)
         if parsed_url.hostname and (
-            parsed_url.hostname == "honeycomb.io" 
+            parsed_url.hostname == "honeycomb.io"
             or parsed_url.hostname.endswith(".honeycomb.io")
         ):
             headers = os.getenv("OTEL_EXPORTER_OTLP_HEADERS")

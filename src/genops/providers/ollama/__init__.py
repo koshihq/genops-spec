@@ -2,37 +2,37 @@
 
 from .adapter import (
     GenOpsOllamaAdapter,
-    OllamaOperation,
     LocalModelMetrics,
+    OllamaOperation,
     instrument_ollama,
 )
-from .resource_monitor import (
-    OllamaResourceMonitor,
-    ResourceMetrics,
-    ModelPerformanceTracker,
-    HardwareMetrics,
-    get_resource_monitor,
-    set_resource_monitor,
-    create_resource_monitor,
-)
 from .model_manager import (
-    OllamaModelManager,
+    ModelComparison,
     ModelInfo,
     ModelOptimizer,
-    ModelComparison,
+    OllamaModelManager,
     get_model_manager,
     set_model_manager,
 )
-from .validation import (
-    validate_ollama_setup,
-    print_validation_result,
-    quick_validate,
-    ValidationResult,
-    ValidationIssue,
-    OllamaValidator,
-)
 from .registration import (
     auto_instrument,
+)
+from .resource_monitor import (
+    HardwareMetrics,
+    ModelPerformanceTracker,
+    OllamaResourceMonitor,
+    ResourceMetrics,
+    create_resource_monitor,
+    get_resource_monitor,
+    set_resource_monitor,
+)
+from .validation import (
+    OllamaValidator,
+    ValidationIssue,
+    ValidationResult,
+    print_validation_result,
+    quick_validate,
+    validate_ollama_setup,
 )
 
 # Auto-register with instrumentation system if available
@@ -46,18 +46,18 @@ except ImportError:
 __all__ = [
     # Main adapter classes
     "GenOpsOllamaAdapter",
-    "OllamaOperation", 
+    "OllamaOperation",
     "LocalModelMetrics",
-    
+
     # Resource monitoring
     "OllamaResourceMonitor",
     "ResourceMetrics",
     "ModelPerformanceTracker",
     "HardwareMetrics",
     "get_resource_monitor",
-    "set_resource_monitor", 
+    "set_resource_monitor",
     "create_resource_monitor",
-    
+
     # Model management
     "OllamaModelManager",
     "ModelInfo",
@@ -65,15 +65,15 @@ __all__ = [
     "ModelComparison",
     "get_model_manager",
     "set_model_manager",
-    
+
     # Validation
     "validate_ollama_setup",
     "print_validation_result",
     "quick_validate",
     "ValidationResult",
-    "ValidationIssue", 
+    "ValidationIssue",
     "OllamaValidator",
-    
+
     # Main factory functions
     "instrument_ollama",
     "auto_instrument",

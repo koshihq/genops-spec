@@ -5,10 +5,9 @@ Provides common fixtures, markers, and test configuration
 for the PromptLayer test suite.
 """
 
-import pytest
-import os
 from unittest.mock import Mock, patch
-from typing import Dict, Any
+
+import pytest
 
 
 @pytest.fixture
@@ -33,7 +32,7 @@ def sample_governance_config():
     """Sample governance configuration for tests."""
     return {
         'team': 'test-team',
-        'project': 'test-project', 
+        'project': 'test-project',
         'environment': 'test',
         'customer_id': 'test-customer',
         'cost_center': 'test-cost-center',
@@ -46,7 +45,7 @@ def sample_governance_config():
 def promptlayer_adapter(mock_promptlayer, sample_governance_config):
     """PromptLayer adapter with mocked client."""
     from genops.providers.promptlayer import GenOpsPromptLayerAdapter
-    
+
     return GenOpsPromptLayerAdapter(
         promptlayer_api_key='pl-test-key',
         **sample_governance_config
@@ -63,7 +62,7 @@ def sample_prompt_operations():
             'expected_cost': 0.015
         },
         {
-            'prompt_name': 'test_prompt_2', 
+            'prompt_name': 'test_prompt_2',
             'input_variables': {'query': 'Test query 2'},
             'expected_cost': 0.025
         },
@@ -93,7 +92,7 @@ def pytest_collection_modifyitems(config, items):
     if config.getoption("--runslow"):
         # Don't skip slow tests
         return
-    
+
     skip_slow = pytest.mark.skip(reason="need --runslow option to run")
     for item in items:
         if "performance" in item.keywords:

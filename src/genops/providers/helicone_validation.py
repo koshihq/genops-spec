@@ -33,17 +33,18 @@ import logging
 import os
 import sys
 import time
-import requests
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Any
 from enum import Enum
+from typing import Any, Dict, List, Optional
+
+import requests
 
 logger = logging.getLogger(__name__)
 
 class ValidationStatus(Enum):
     """Validation status levels."""
     PASSED = "PASSED"
-    WARNING = "WARNING" 
+    WARNING = "WARNING"
     FAILED = "FAILED"
     SKIPPED = "SKIPPED"
 
@@ -69,7 +70,7 @@ class ValidationResult:
 
 class HeliconeValidator:
     """Comprehensive Helicone AI gateway setup validator."""
-    
+
     def __init__(self, include_performance_tests: bool = False):
         """
         Initialize validator.
@@ -79,11 +80,11 @@ class HeliconeValidator:
         """
         self.include_performance_tests = include_performance_tests
         self.result = ValidationResult(overall_status=ValidationStatus.PASSED)
-        
+
         # Check for required dependencies
         self.has_requests = self._check_requests_import()
         self.has_genops_core = self._check_genops_imports()
-        
+
     def _check_requests_import(self) -> bool:
         """Check if requests library is available."""
         try:
@@ -91,7 +92,7 @@ class HeliconeValidator:
             return True
         except ImportError:
             return False
-            
+
     def _check_genops_imports(self) -> bool:
         """Check if GenOps core dependencies are available."""
         try:
@@ -100,11 +101,11 @@ class HeliconeValidator:
         except ImportError:
             return False
 
-    def _add_issue(self, category: str, issue: str, severity: ValidationStatus, 
+    def _add_issue(self, category: str, issue: str, severity: ValidationStatus,
                    fix_suggestion: str, details: Optional[str] = None):
         """Add validation issue to results."""
         validation_issue = ValidationIssue(category, issue, severity, fix_suggestion, details)
-        
+
         if severity == ValidationStatus.FAILED:
             self.result.issues.append(validation_issue)
             self.result.overall_status = ValidationStatus.FAILED
@@ -112,7 +113,7 @@ class HeliconeValidator:
             self.result.warnings.append(validation_issue)
             if self.result.overall_status == ValidationStatus.PASSED:
                 self.result.overall_status = ValidationStatus.WARNING
-        
+
     def _add_passed(self, check_description: str):
         """Add successful validation check."""
         self.result.passed_checks.append(check_description)
@@ -120,7 +121,7 @@ class HeliconeValidator:
     def validate_dependencies(self):
         """Validate Python environment and required dependencies."""
         self.result.total_checks += 4
-        
+
         # Python version check
         python_version = sys.version_info
         if python_version >= (3, 8):
@@ -130,11 +131,11 @@ class HeliconeValidator:
             self._add_issue(
                 "dependencies",
                 f"Python version {python_version.major}.{python_version.minor} may not be supported",
-                ValidationStatus.WARNING, 
+                ValidationStatus.WARNING,
                 "Upgrade to Python 3.8+ for best compatibility",
                 "Helicone gateway works best with Python 3.8 or higher"
             )
-        
+
         # Requests library check
         if self.has_requests:
             self._add_passed("Requests library available for gateway communication")
@@ -151,7 +152,7 @@ class HeliconeValidator:
                 "Install requests: pip install requests",
                 "Requests is required for Helicone gateway communication"
             )
-        
+
         # GenOps core check
         if self.has_genops_core:
             self._add_passed("GenOps core dependencies available")
@@ -163,14 +164,14 @@ class HeliconeValidator:
                 "Install GenOps: pip install genops-ai",
                 "OpenTelemetry provides enhanced telemetry integration"
             )
-        
+
         # Optional dependencies
         optional_deps = {
             'openai': "OpenAI provider integration",
-            'anthropic': "Anthropic provider integration", 
+            'anthropic': "Anthropic provider integration",
             'google-cloud-aiplatform': "Google Vertex AI integration"
         }
-        
+
         for dep, desc in optional_deps.items():
             try:
                 __import__(dep.replace('-', '_'))
@@ -182,10 +183,10 @@ class HeliconeValidator:
     def validate_authentication(self):
         """Validate Helicone and provider API key configuration."""
         self.result.total_checks += 6
-        
+
         # Helicone API key
         helicone_key = os.getenv("HELICONE_API_KEY")
-        
+
         if not helicone_key:
             self._add_issue(
                 "authentication",
@@ -195,10 +196,10 @@ class HeliconeValidator:
                 "Get your API key from https://app.helicone.ai/"
             )
             return
-        
+
         self._add_passed("HELICONE_API_KEY environment variable set")
         self.result.environment_info['helicone_api_key_configured'] = True
-        
+
         # Basic format validation
         if len(helicone_key) < 20:
             self._add_issue(
@@ -210,7 +211,7 @@ class HeliconeValidator:
             )
         else:
             self._add_passed("Helicone API key length appears valid")
-        
+
         # Check provider API keys
         provider_keys = {
             "OPENAI_API_KEY": {
@@ -229,14 +230,14 @@ class HeliconeValidator:
                 "url": "https://cloud.google.com/vertex-ai"
             }
         }
-        
+
         provider_count = 0
         for key_name, info in provider_keys.items():
             key_value = os.getenv(key_name)
-            
+
             if key_value:
                 provider_count += 1
-                
+
                 if info["pattern"] and not key_value.startswith(info["pattern"]):
                     self._add_issue(
                         "authentication",
@@ -247,7 +248,7 @@ class HeliconeValidator:
                     )
                 else:
                     self._add_passed(f"{info['name']} API key configured")
-        
+
         if provider_count == 0:
             self._add_issue(
                 "authentication",
@@ -263,11 +264,11 @@ class HeliconeValidator:
     def validate_gateway_connectivity(self):
         """Test connectivity to Helicone gateway and providers."""
         self.result.total_checks += 4
-        
+
         if not self.has_requests:
             self._add_issue(
                 "connectivity",
-                "Cannot test gateway connectivity - requests library not available", 
+                "Cannot test gateway connectivity - requests library not available",
                 ValidationStatus.SKIPPED,
                 "Install requests library first: pip install requests"
             )
@@ -282,16 +283,16 @@ class HeliconeValidator:
                 "Configure HELICONE_API_KEY first"
             )
             return
-        
+
         # Test Helicone gateway health
         try:
             base_url = "https://ai-gateway.helicone.ai"
             health_url = f"{base_url}/v1/health"
-            
+
             start_time = time.time()
             response = requests.get(health_url, timeout=10)
             request_time = time.time() - start_time
-            
+
             if response.status_code == 200:
                 self._add_passed("Helicone gateway reachable")
                 self.result.environment_info['gateway_response_time'] = round(request_time, 3)
@@ -302,7 +303,7 @@ class HeliconeValidator:
                     ValidationStatus.WARNING,
                     "Check Helicone service status at https://status.helicone.ai/"
                 )
-                
+
         except requests.exceptions.RequestException as e:
             self._add_issue(
                 "connectivity",
@@ -312,14 +313,14 @@ class HeliconeValidator:
                 "Helicone gateway must be accessible for AI requests"
             )
             return
-        
+
         # Test provider routing (if provider keys available)
         self._test_provider_routing()
-    
+
     def _test_provider_routing(self):
         """Test provider routing through Helicone gateway."""
         helicone_key = os.getenv("HELICONE_API_KEY")
-        
+
         # Test OpenAI routing
         openai_key = os.getenv("OPENAI_API_KEY")
         if openai_key:
@@ -329,20 +330,20 @@ class HeliconeValidator:
                     "Helicone-Auth": f"Bearer {helicone_key}",
                     "Content-Type": "application/json"
                 }
-                
+
                 payload = {
                     "model": "gpt-3.5-turbo",
                     "messages": [{"role": "user", "content": "Test"}],
                     "max_tokens": 1
                 }
-                
+
                 response = requests.post(
                     "https://ai-gateway.helicone.ai/v1/chat/completions",
                     headers=headers,
                     json=payload,
                     timeout=30
                 )
-                
+
                 if response.status_code == 200:
                     self._add_passed("OpenAI provider routing successful")
                 else:
@@ -352,7 +353,7 @@ class HeliconeValidator:
                         ValidationStatus.WARNING,
                         "Check OpenAI API key and account status"
                     )
-                    
+
             except Exception as e:
                 self._add_issue(
                     "connectivity",
@@ -360,9 +361,9 @@ class HeliconeValidator:
                     ValidationStatus.WARNING,
                     "Check OpenAI API key configuration"
                 )
-        
+
         # Test Anthropic routing
-        anthropic_key = os.getenv("ANTHROPIC_API_KEY") 
+        anthropic_key = os.getenv("ANTHROPIC_API_KEY")
         if anthropic_key:
             try:
                 headers = {
@@ -371,20 +372,20 @@ class HeliconeValidator:
                     "Content-Type": "application/json",
                     "anthropic-version": "2023-06-01"
                 }
-                
+
                 payload = {
                     "model": "claude-3-haiku-20240307",
                     "messages": [{"role": "user", "content": "Test"}],
                     "max_tokens": 1
                 }
-                
+
                 response = requests.post(
                     "https://ai-gateway.helicone.ai/v1/messages",
                     headers=headers,
                     json=payload,
                     timeout=30
                 )
-                
+
                 if response.status_code == 200:
                     self._add_passed("Anthropic provider routing successful")
                 else:
@@ -394,7 +395,7 @@ class HeliconeValidator:
                         ValidationStatus.WARNING,
                         "Check Anthropic API key and account status"
                     )
-                    
+
             except Exception as e:
                 self._add_issue(
                     "connectivity",
@@ -406,7 +407,7 @@ class HeliconeValidator:
     def validate_models_and_routing(self):
         """Validate model availability and routing intelligence."""
         self.result.total_checks += 3
-        
+
         helicone_key = os.getenv("HELICONE_API_KEY")
         if not helicone_key or not self.has_requests:
             self._add_issue(
@@ -416,17 +417,17 @@ class HeliconeValidator:
                 "Complete authentication and dependency setup first"
             )
             return
-        
+
         # Test multi-provider routing capability
         providers_tested = []
-        
+
         if os.getenv("OPENAI_API_KEY"):
             providers_tested.append("OpenAI")
         if os.getenv("ANTHROPIC_API_KEY"):
             providers_tested.append("Anthropic")
         if os.getenv("GOOGLE_APPLICATION_CREDENTIALS"):
             providers_tested.append("Vertex AI")
-        
+
         if len(providers_tested) >= 2:
             self._add_passed(f"Multi-provider routing available: {', '.join(providers_tested)}")
             self.result.environment_info['routing_providers'] = len(providers_tested)
@@ -447,24 +448,24 @@ class HeliconeValidator:
             )
 
     def validate_performance(self):
-        """Validate gateway performance characteristics.""" 
+        """Validate gateway performance characteristics."""
         if not self.include_performance_tests:
             return
-            
+
         self.result.total_checks += 3
-        
+
         helicone_key = os.getenv("HELICONE_API_KEY")
         openai_key = os.getenv("OPENAI_API_KEY")
-        
+
         if not helicone_key or not openai_key or not self.has_requests:
             self._add_issue(
                 "performance",
-                "Cannot test performance - incomplete setup", 
+                "Cannot test performance - incomplete setup",
                 ValidationStatus.SKIPPED,
                 "Complete authentication setup first"
             )
             return
-        
+
         try:
             # Test gateway latency
             headers = {
@@ -472,13 +473,13 @@ class HeliconeValidator:
                 "Helicone-Auth": f"Bearer {helicone_key}",
                 "Content-Type": "application/json"
             }
-            
+
             payload = {
                 "model": "gpt-3.5-turbo",
                 "messages": [{"role": "user", "content": "Hi"}],
                 "max_tokens": 5
             }
-            
+
             start_time = time.time()
             response = requests.post(
                 "https://ai-gateway.helicone.ai/v1/chat/completions",
@@ -487,11 +488,11 @@ class HeliconeValidator:
                 timeout=30
             )
             response_time = time.time() - start_time
-            
+
             if response.status_code == 200:
-                self._add_passed(f"Gateway performance test successful")
+                self._add_passed("Gateway performance test successful")
                 self.result.environment_info['test_response_time'] = round(response_time, 3)
-                
+
                 if response_time < 2.0:
                     self._add_passed("Gateway latency acceptable (< 2s)")
                 elif response_time < 5.0:
@@ -508,14 +509,14 @@ class HeliconeValidator:
                         ValidationStatus.FAILED,
                         "Investigate network issues or consider self-hosted gateway"
                     )
-                    
+
                 # Parse usage for cost validation
                 result = response.json()
                 usage = result.get("usage", {})
                 if usage:
                     total_tokens = usage.get("total_tokens", 0)
                     self.result.environment_info['test_tokens'] = total_tokens
-                    
+
             else:
                 self._add_issue(
                     "performance",
@@ -523,7 +524,7 @@ class HeliconeValidator:
                     ValidationStatus.WARNING,
                     "Check API keys and account status"
                 )
-                
+
         except Exception as e:
             self._add_issue(
                 "performance",
@@ -535,19 +536,19 @@ class HeliconeValidator:
     def validate_pricing_and_costs(self):
         """Validate pricing configuration and cost calculation."""
         self.result.total_checks += 2
-        
+
         try:
             # Try to import pricing calculator
             from .helicone_pricing import HeliconePricingCalculator
             pricing_calc = HeliconePricingCalculator()
             self._add_passed("Helicone pricing calculator available")
-            
+
             # Test cost calculation
             try:
                 provider_cost, helicone_cost, total_cost = pricing_calc.calculate_gateway_cost(
                     "openai", "gpt-3.5-turbo", 100, 50, 1.0
                 )
-                
+
                 if total_cost > 0:
                     self._add_passed("Gateway cost calculation working")
                     self.result.environment_info['test_total_cost'] = total_cost
@@ -560,15 +561,15 @@ class HeliconeValidator:
                         ValidationStatus.WARNING,
                         "Check pricing calculator configuration"
                     )
-                    
+
             except Exception as calc_error:
                 self._add_issue(
-                    "pricing", 
+                    "pricing",
                     f"Cost calculation failed: {calc_error}",
                     ValidationStatus.WARNING,
                     "Gateway cost tracking may not work correctly"
                 )
-                
+
         except ImportError:
             self._add_issue(
                 "pricing",
@@ -581,14 +582,14 @@ class HeliconeValidator:
     def validate_self_hosted_gateway(self):
         """Validate self-hosted gateway configuration if applicable."""
         self.result.total_checks += 1
-        
+
         # Check if using custom gateway URL
         custom_url = os.getenv("HELICONE_GATEWAY_URL")
         if custom_url:
             try:
                 health_url = f"{custom_url.rstrip('/')}/health"
                 response = requests.get(health_url, timeout=5)
-                
+
                 if response.status_code == 200:
                     self._add_passed("Self-hosted gateway accessible")
                     self.result.environment_info['self_hosted_gateway'] = True
@@ -599,7 +600,7 @@ class HeliconeValidator:
                         ValidationStatus.WARNING,
                         "Check self-hosted gateway deployment and configuration"
                     )
-                    
+
             except Exception as e:
                 self._add_issue(
                     "self_hosted",
@@ -613,9 +614,9 @@ class HeliconeValidator:
     def run_validation(self) -> ValidationResult:
         """Run complete validation suite."""
         start_time = time.time()
-        
+
         logger.info("Starting Helicone gateway validation...")
-        
+
         # Run all validation checks
         self.validate_dependencies()
         self.validate_authentication()
@@ -624,14 +625,14 @@ class HeliconeValidator:
         self.validate_performance()
         self.validate_pricing_and_costs()
         self.validate_self_hosted_gateway()
-        
+
         # Finalize results
         self.result.validation_time = time.time() - start_time
         self.result.environment_info['platform'] = sys.platform
         self.result.environment_info['validation_time'] = round(self.result.validation_time, 2)
-        
+
         logger.info(f"Helicone validation completed in {self.result.validation_time:.2f}s")
-        
+
         return self.result
 
 def validate_setup(include_performance_tests: bool = False) -> ValidationResult:
@@ -661,20 +662,20 @@ def print_validation_result(result: ValidationResult, detailed: bool = False):
         ValidationStatus.FAILED: "❌",
         ValidationStatus.SKIPPED: "⏭️"
     }
-    
+
     status_icon = status_colors.get(result.overall_status, "❓")
-    
-    print(f"\n🛡️ **Helicone AI Gateway Validation Results**")
+
+    print("\n🛡️ **Helicone AI Gateway Validation Results**")
     print(f"{status_icon} **Overall Status: {result.overall_status.value}**")
     print(f"⏱️ **Validation Time:** {result.validation_time:.2f} seconds")
     print(f"📊 **Checks:** {len(result.passed_checks)} passed, {len(result.warnings)} warnings, {len(result.issues)} issues")
-    
+
     # Show successful checks
     if result.passed_checks:
-        print(f"\n✅ **Successful Checks:**")
+        print("\n✅ **Successful Checks:**")
         for check in result.passed_checks:
             print(f"   ✓ {check}")
-    
+
     # Show warnings
     if result.warnings:
         print(f"\n⚠️ **Warnings ({len(result.warnings)}):**")
@@ -684,7 +685,7 @@ def print_validation_result(result: ValidationResult, detailed: bool = False):
             print(f"     Fix: {warning.fix_suggestion}")
             if detailed and warning.details:
                 print(f"     Details: {warning.details}")
-    
+
     # Show critical issues
     if result.issues:
         print(f"\n❌ **Critical Issues ({len(result.issues)}):**")
@@ -694,24 +695,24 @@ def print_validation_result(result: ValidationResult, detailed: bool = False):
             print(f"     Fix: {issue.fix_suggestion}")
             if detailed and issue.details:
                 print(f"     Details: {issue.details}")
-    
+
     # Show environment info (whitelist safe keys only)
     if detailed and result.environment_info:
-        print(f"\n🔧 **Environment Information:**")
+        print("\n🔧 **Environment Information:**")
         # Whitelist of safe keys that contain no sensitive data
         safe_keys = {
             'python_version', 'platform', 'validation_time', 'requests_version',
             'helicone_api_key_configured', 'configured_providers', 'routing_providers',
-            'gateway_response_time', 'test_response_time', 'test_tokens', 
+            'gateway_response_time', 'test_response_time', 'test_tokens',
             'test_total_cost', 'test_provider_cost', 'test_helicone_cost',
             'self_hosted_gateway'
         }
         for key, value in result.environment_info.items():
             if key in safe_keys:
                 print(f"   • {key}: {value}")
-    
+
     # Next steps
-    print(f"\n🚀 **Next Steps:**")
+    print("\n🚀 **Next Steps:**")
     if result.overall_status == ValidationStatus.PASSED:
         print("   ✅ Your Helicone gateway setup is ready! Try the quickstart guide:")
         print("   📖 https://github.com/KoshiHQ/GenOps-AI/blob/main/docs/helicone-quickstart.md")
@@ -738,14 +739,14 @@ def quick_validate() -> bool:
 if __name__ == "__main__":
     # Command-line validation tool
     import argparse
-    
+
     parser = argparse.ArgumentParser(description="Validate Helicone AI gateway + GenOps setup")
     parser.add_argument("--detailed", action="store_true", help="Show detailed output")
     parser.add_argument("--performance", action="store_true", help="Include performance tests")
     parser.add_argument("--quiet", action="store_true", help="Minimal output for automation")
-    
+
     args = parser.parse_args()
-    
+
     if args.quiet:
         # Quiet mode for automation
         success = quick_validate()
@@ -754,7 +755,7 @@ if __name__ == "__main__":
         # Full validation with user-friendly output
         result = validate_setup(include_performance_tests=args.performance)
         print_validation_result(result, detailed=args.detailed)
-        
+
         # Exit with appropriate code
         if result.overall_status == ValidationStatus.FAILED:
             sys.exit(1)

@@ -407,7 +407,8 @@ def simulate_claude_operation(task: str) -> Optional[float]:
             simulated_cost = 0.000234  # Standard task with Haiku
         print(f"🔄 Claude - {task}: ${simulated_cost:.6f}")
         return simulated_cost
-    except:
+    except Exception as e:
+        print(f"Error in Claude operation: {e}")
         return None
 
 def simulate_openai_operation(task: str) -> Optional[float]:
@@ -417,7 +418,8 @@ def simulate_openai_operation(task: str) -> Optional[float]:
         simulated_cost = 0.002300  # GPT-4 cost for comparison
         print(f"🔄 OpenAI - {task}: ${simulated_cost:.6f}")
         return simulated_cost
-    except:
+    except Exception as e:
+        print(f"Error in OpenAI operation: {e}")
         return None
 
 def main():

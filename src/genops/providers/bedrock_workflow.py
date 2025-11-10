@@ -54,10 +54,10 @@ import logging
 import time
 import uuid
 from contextlib import contextmanager
-from dataclasses import dataclass, field, asdict
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Tuple, Union
+from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 try:
     import boto3
@@ -69,9 +69,9 @@ except ImportError:
 try:
     from genops.core.telemetry import GenOpsTelemetry
     from genops.providers.bedrock_cost_aggregator import (
-        create_bedrock_cost_context,
+        BedrockCostContext,
         BedrockCostSummary,
-        BedrockCostContext
+        create_bedrock_cost_context,
     )
     GENOPS_AVAILABLE = True
 except ImportError:
@@ -145,7 +145,7 @@ class BedrockProductionWorkflow:
     Provides comprehensive governance, compliance tracking, and audit trails
     for mission-critical AI workloads with full enterprise integration.
     """
-    
+
     def __init__(
         self,
         workflow_name: str,
@@ -195,7 +195,7 @@ class BedrockProductionWorkflow:
         self.enable_cloudtrail = enable_cloudtrail
         self.enable_cost_allocation_tags = enable_cost_allocation_tags
         self.alert_webhooks = alert_webhooks or []
-        
+
         # Workflow state
         self.status = WorkflowStatus.CREATED
         self.start_time = datetime.now()
@@ -204,7 +204,7 @@ class BedrockProductionWorkflow:
         self.steps: List[WorkflowStep] = []
         self.alerts: List[WorkflowAlert] = []
         self.performance_metrics: List[PerformanceMetric] = []
-        
+
         # Governance attributes
         self.governance_attributes = {
             "workflow_name": workflow_name,
@@ -217,10 +217,10 @@ class BedrockProductionWorkflow:
             "region": region,
             **additional_attributes
         }
-        
+
         if cost_center:
             self.governance_attributes["cost_center"] = cost_center
-        
+
         # Initialize cost tracking context
         self.cost_context: Optional[BedrockCostContext] = None
         if GENOPS_AVAILABLE:
@@ -229,12 +229,12 @@ class BedrockProductionWorkflow:
                 budget_limit=budget_limit,
                 enable_optimization_recommendations=True
             )
-        
+
         # Initialize telemetry
         self.telemetry: Optional[GenOpsTelemetry] = None
         if GENOPS_AVAILABLE:
             self.telemetry = GenOpsTelemetry()
-        
+
         # AWS clients for enterprise features
         self.cloudtrail_client = None
         self.cost_explorer_client = None
@@ -244,48 +244,48 @@ class BedrockProductionWorkflow:
                 self.cost_explorer_client = boto3.client('ce', region_name='us-east-1')  # Cost Explorer is us-east-1 only
             except Exception as e:
                 logger.warning(f"Failed to initialize AWS clients for workflow features: {e}")
-        
+
         logger.info(
             f"Initialized production workflow '{workflow_name}' [{workflow_id}] "
             f"for customer {customer_id} with {compliance_level.value} compliance"
         )
-    
+
     def __enter__(self):
         """Enter the workflow context."""
         self.status = WorkflowStatus.RUNNING
-        
+
         # Start telemetry trace
         if self.telemetry:
             self.span = self.telemetry.trace_operation(
                 operation_name=f"bedrock.workflow.{self.workflow_name}",
                 **self.governance_attributes
             ).__enter__()
-            
+
             # Set workflow-specific attributes
             self.span.set_attribute("bedrock.workflow.name", self.workflow_name)
             self.span.set_attribute("bedrock.workflow.id", self.workflow_id)
             self.span.set_attribute("bedrock.workflow.compliance_level", self.compliance_level.value)
             if self.budget_limit:
                 self.span.set_attribute("bedrock.workflow.budget_limit", self.budget_limit)
-        
+
         # Record workflow start event
         self.record_alert(
             "workflow_started",
             f"Production workflow '{self.workflow_name}' started",
             "info"
         )
-        
+
         return self
-    
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Exit the workflow context with final summary."""
         self.end_time = datetime.now()
-        
+
         # Finalize current step if any
         if self.current_step and self.current_step.status == WorkflowStatus.RUNNING:
             self.current_step.end_time = self.end_time
             self.current_step.status = WorkflowStatus.COMPLETED
-        
+
         # Set final workflow status
         if exc_type is not None:
             self.status = WorkflowStatus.FAILED
@@ -299,20 +299,20 @@ class BedrockProductionWorkflow:
             self.status = WorkflowStatus.COMPLETED
             self.record_alert(
                 "workflow_completed",
-                f"Workflow completed successfully",
+                "Workflow completed successfully",
                 "info"
             )
-        
+
         # Generate final summary and metrics
         duration_seconds = (self.end_time - self.start_time).total_seconds()
         final_cost_summary = self.get_current_cost_summary()
-        
+
         # Record final performance metrics
         self.record_performance_metric("workflow_duration", duration_seconds, "seconds")
         self.record_performance_metric("workflow_total_cost", final_cost_summary.total_cost, "USD")
         self.record_performance_metric("workflow_total_steps", len(self.steps), "count")
         self.record_performance_metric("workflow_total_operations", final_cost_summary.total_operations, "count")
-        
+
         # Close telemetry trace
         if hasattr(self, 'span') and self.span:
             self.span.set_attribute("bedrock.workflow.duration_seconds", duration_seconds)
@@ -320,21 +320,21 @@ class BedrockProductionWorkflow:
             self.span.set_attribute("bedrock.workflow.total_steps", len(self.steps))
             self.span.set_attribute("bedrock.workflow.status", self.status.value)
             self.span.__exit__(exc_type, exc_val, exc_tb)
-        
+
         # Export final audit log
         if self.enable_cloudtrail:
             self._export_audit_log()
-        
+
         # Generate compliance report
         if self.compliance_level != ComplianceLevel.NONE:
             self._generate_compliance_report()
-        
+
         logger.info(
             f"Workflow '{self.workflow_name}' [{self.workflow_id}] {self.status.value}: "
             f"${final_cost_summary.total_cost:.6f} over {duration_seconds:.1f}s "
             f"({len(self.steps)} steps, {final_cost_summary.total_operations} operations)"
         )
-    
+
     def record_step(
         self,
         step_name: str,
@@ -354,7 +354,7 @@ class BedrockProductionWorkflow:
         if self.current_step and self.current_step.status == WorkflowStatus.RUNNING:
             self.current_step.end_time = datetime.now()
             self.current_step.status = WorkflowStatus.COMPLETED
-            
+
             # Update cost from cost context
             if self.cost_context:
                 step_start_time = self.current_step.start_time
@@ -362,7 +362,7 @@ class BedrockProductionWorkflow:
                 self.current_step.cost = sum(op.cost for op in recent_ops)
                 self.current_step.operations_count = len(recent_ops)
                 self.current_step.latency_ms = sum(op.latency_ms for op in recent_ops)
-        
+
         # Create new step
         step_id = str(uuid.uuid4())
         step = WorkflowStep(
@@ -371,10 +371,10 @@ class BedrockProductionWorkflow:
             start_time=datetime.now(),
             metadata=metadata or {}
         )
-        
+
         self.steps.append(step)
         self.current_step = step
-        
+
         # Record step start event
         self.record_alert(
             "step_started",
@@ -382,10 +382,10 @@ class BedrockProductionWorkflow:
             "info",
             step_id=step_id
         )
-        
+
         logger.info(f"Workflow step started: {step_name} [{step_id}]")
         return step_id
-    
+
     def record_alert(
         self,
         alert_type: str,
@@ -413,9 +413,9 @@ class BedrockProductionWorkflow:
             step_id=step_id,
             metadata=metadata or {}
         )
-        
+
         self.alerts.append(alert)
-        
+
         # Log alert
         log_level = {
             "info": logging.INFO,
@@ -423,13 +423,13 @@ class BedrockProductionWorkflow:
             "error": logging.ERROR,
             "critical": logging.CRITICAL
         }.get(severity, logging.INFO)
-        
+
         logger.log(log_level, f"Workflow alert [{alert_type}]: {message}")
-        
+
         # Send to webhooks if configured
         if self.alert_webhooks and severity in ["error", "critical"]:
             self._send_alert_webhooks(alert)
-    
+
     def record_performance_metric(
         self,
         metric_name: str,
@@ -456,15 +456,15 @@ class BedrockProductionWorkflow:
             step_id=step_id,
             tags=tags or {}
         )
-        
+
         self.performance_metrics.append(metric)
-        
+
         # Export to telemetry if available
         if self.telemetry and hasattr(self, 'span') and self.span:
             self.span.set_attribute(f"bedrock.workflow.metric.{metric_name}", value)
-        
+
         logger.debug(f"Recorded metric: {metric_name} = {value} {unit}")
-    
+
     def get_current_cost_summary(self) -> BedrockCostSummary:
         """Get current cost summary from the cost context."""
         if self.cost_context:
@@ -480,7 +480,7 @@ class BedrockProductionWorkflow:
                 total_output_tokens=0,
                 total_latency_ms=0.0
             )
-    
+
     def record_checkpoint(
         self,
         checkpoint_name: str,
@@ -500,7 +500,7 @@ class BedrockProductionWorkflow:
             "compliance_level": self.compliance_level.value,
             "data": data
         }
-        
+
         # Record as performance metric for telemetry export
         self.record_performance_metric(
             f"checkpoint_{checkpoint_name}",
@@ -508,9 +508,9 @@ class BedrockProductionWorkflow:
             "count",
             tags={"checkpoint": checkpoint_name}
         )
-        
+
         logger.info(f"Recorded checkpoint '{checkpoint_name}' with compliance data")
-    
+
     def _send_alert_webhooks(self, alert: WorkflowAlert):
         """Send alert to configured webhooks."""
         webhook_payload = {
@@ -527,7 +527,7 @@ class BedrockProductionWorkflow:
             },
             "governance_attributes": self.governance_attributes
         }
-        
+
         for webhook_url in self.alert_webhooks:
             try:
                 # In a real implementation, this would make HTTP POST request
@@ -535,7 +535,7 @@ class BedrockProductionWorkflow:
                 logger.debug(f"Webhook payload: {json.dumps(webhook_payload)}")
             except Exception as e:
                 logger.error(f"Failed to send alert to webhook {webhook_url}: {e}")
-    
+
     def _export_audit_log(self):
         """Export comprehensive audit log for compliance."""
         audit_data = {
@@ -585,11 +585,11 @@ class BedrockProductionWorkflow:
             ],
             "cost_summary": self.get_current_cost_summary().to_dict() if self.cost_context else None
         }
-        
+
         # In a real implementation, this would be sent to CloudTrail, S3, or other audit system
         logger.info(f"Exported audit log for workflow {self.workflow_id}")
         logger.debug(f"Audit data: {json.dumps(audit_data, indent=2)}")
-    
+
     def _generate_compliance_report(self):
         """Generate compliance report based on the configured compliance level."""
         compliance_data = {
@@ -599,14 +599,14 @@ class BedrockProductionWorkflow:
             "governance_attributes": self.governance_attributes,
             "compliance_checks": []
         }
-        
+
         # Add compliance-specific checks
         if self.compliance_level == ComplianceLevel.SOC2:
             compliance_data["compliance_checks"].extend([
                 {
                     "check": "data_access_logging",
                     "status": "passed",
-                    "details": f"All operations logged with full audit trail"
+                    "details": "All operations logged with full audit trail"
                 },
                 {
                     "check": "cost_attribution",
@@ -614,7 +614,7 @@ class BedrockProductionWorkflow:
                     "details": f"All costs attributed to customer {self.customer_id}"
                 }
             ])
-        
+
         elif self.compliance_level == ComplianceLevel.HIPAA:
             compliance_data["compliance_checks"].extend([
                 {
@@ -628,7 +628,7 @@ class BedrockProductionWorkflow:
                     "details": "Comprehensive audit trail maintained"
                 }
             ])
-        
+
         # In a real implementation, this would be stored in compliance management system
         logger.info(f"Generated {self.compliance_level.value} compliance report for workflow {self.workflow_id}")
         logger.debug(f"Compliance report: {json.dumps(compliance_data, indent=2)}")
@@ -693,10 +693,10 @@ def production_workflow_context(
         except ValueError:
             logger.warning(f"Unknown compliance level '{compliance_level}', using NONE")
             compliance_level = ComplianceLevel.NONE
-    
+
     # Generate unique workflow ID
     workflow_id = f"{workflow_name}_{customer_id}_{int(time.time())}_{uuid.uuid4().hex[:8]}"
-    
+
     # Create workflow context
     workflow = BedrockProductionWorkflow(
         workflow_name=workflow_name,
@@ -714,7 +714,7 @@ def production_workflow_context(
         alert_webhooks=alert_webhooks,
         **additional_attributes
     )
-    
+
     with workflow:
         yield workflow, workflow_id
 

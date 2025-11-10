@@ -17,17 +17,18 @@ Expected result: "✅ Success! GenOps is now tracking your Gemini usage!"
 
 def main():
     print("🚀 Testing GenOps with Google Gemini...")
-    
+
     try:
         # Step 1: Enable GenOps tracking (universal CLAUDE.md standard)
         from genops.providers.gemini import auto_instrument
         auto_instrument()
         print("✅ GenOps auto-instrumentation enabled")
-        
+
         # Step 2: Use Gemini normally - now with GenOps tracking!
-        from google import genai
         import os
-        
+
+        from google import genai
+
         # Check for API key with specific guidance
         api_key = os.getenv("GEMINI_API_KEY")
         if not api_key:
@@ -40,22 +41,22 @@ def main():
             print("   3. python hello_genops_minimal.py")
             print()
             return False
-        
+
         client = genai.Client(api_key=api_key)
-        
+
         response = client.models.generate_content(
             model="gemini-2.5-flash",
             contents="Say hello!"
         )
-        
+
         print("✅ SUCCESS! GenOps is now tracking your Gemini usage!")
         print("💰 Cost tracking, team attribution, and governance are active.")
         print("📊 Your AI operations are now visible in your observability platform.")
         print()
         print("🎯 PHASE 1 COMPLETE - You now have GenOps working!")
-        
+
         return True
-        
+
     except ImportError as e:
         if "genai" in str(e):
             print("❌ Google Gemini SDK not installed")
@@ -68,7 +69,7 @@ def main():
         error_str = str(e).lower()
         print(f"❌ Error: {e}")
         print()
-        
+
         # Provide specific guidance for common errors
         if "authentication" in error_str or "api_key" in error_str:
             print("🔧 API KEY ISSUE:")
@@ -82,12 +83,12 @@ def main():
         else:
             print("🔧 DETAILED DIAGNOSIS:")
             print("   python -c \"from genops.providers.gemini import validate_setup, print_validation_result; print_validation_result(validate_setup(), detailed=True)\"")
-        
+
         return False
 
 if __name__ == "__main__":
     success = main()
-    
+
     if success:
         print("🚀 READY FOR PHASE 2? (Team Attribution & Control)")
         print("   → python basic_tracking.py        # Add team cost tracking")
@@ -99,5 +100,5 @@ if __name__ == "__main__":
         print()
         print("💡 Need help? Check the troubleshooting guide:")
         print("   → examples/gemini/README.md#troubleshooting")
-    
+
     exit(0 if success else 1)

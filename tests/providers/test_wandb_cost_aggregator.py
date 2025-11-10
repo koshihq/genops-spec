@@ -9,20 +9,17 @@ recommendation features for the W&B integration.
 import os
 import sys
 import unittest
-from unittest.mock import Mock, patch, MagicMock
 from datetime import datetime, timedelta
-from typing import Dict, List, Any
+from unittest.mock import patch
 
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
 from genops.providers.wandb_cost_aggregator import (
     WandbCostAggregator,
-    CampaignCostSummary,
-    MultiProviderCostAnalysis,
     calculate_simple_experiment_cost,
+    forecast_experiment_costs,
     generate_cost_optimization_recommendations,
-    forecast_experiment_costs
 )
 
 
@@ -50,10 +47,10 @@ class TestWandbCostAggregator(unittest.TestCase):
             {'experiment_id': 'exp2', 'cost': 20.0, 'duration_hours': 2.0},
             {'experiment_id': 'exp3', 'cost': 30.0, 'duration_hours': 3.0}
         ]
-        
+
         with patch.object(self.aggregator, '_get_experiment_data', return_value=mock_data):
             summary = self.aggregator.get_simple_cost_summary(time_period_days=7)
-            
+
             self.assertEqual(summary['total_cost'], 60.0)
             self.assertEqual(summary['experiment_count'], 3)
             self.assertEqual(summary['average_cost'], 20.0)
@@ -72,13 +69,13 @@ class TestWandbCostAggregator(unittest.TestCase):
             }
             for i in range(1, 6)
         ]
-        
+
         with patch.object(self.aggregator, '_get_experiment_data', return_value=mock_data):
             summary = self.aggregator.get_comprehensive_cost_summary(
                 time_period_days=30,
                 include_forecasting=True
             )
-            
+
             self.assertIn('total_cost', summary)
             self.assertIn('cost_by_experiment_type', summary)
             self.assertIn('cost_trend', summary)
@@ -96,9 +93,9 @@ class TestWandbCostAggregator(unittest.TestCase):
                     {'cost': 35.0, 'experiment_type': 'training'}
                 ]
             }
-            
+
             breakdown = self.aggregator.get_team_cost_breakdown(time_period_days=7)
-            
+
             self.assertEqual(breakdown['team-a']['total_cost'], 40.0)
             self.assertEqual(breakdown['team-b']['total_cost'], 35.0)
 
@@ -108,10 +105,10 @@ class TestWandbCostAggregator(unittest.TestCase):
             {'date': datetime.utcnow() - timedelta(days=i), 'cost': 10.0 + i}
             for i in range(7)
         ]
-        
+
         with patch.object(self.aggregator, '_get_historical_costs', return_value=historical_data):
             forecast = self.aggregator.forecast_costs(days_ahead=7)
-            
+
             self.assertIn('forecasted_cost', forecast)
             self.assertIn('confidence_interval', forecast)
             self.assertIn('trend', forecast)
@@ -124,10 +121,10 @@ class TestWandbCostAggregator(unittest.TestCase):
             {'cost': 50.0, 'accuracy': 0.85, 'duration': 1.5, 'model_type': 'medium'},
             {'cost': 25.0, 'accuracy': 0.80, 'duration': 1.0, 'model_type': 'small'}
         ]
-        
+
         with patch.object(self.aggregator, '_get_experiment_data', return_value=mock_experiments):
             recommendations = self.aggregator.generate_optimization_recommendations()
-            
+
             self.assertIsInstance(recommendations, list)
             if recommendations:
                 rec = recommendations[0]
@@ -147,7 +144,7 @@ class TestCostCalculationFunctions(unittest.TestCase):
             storage_gb=10.0,
             data_transfer_gb=5.0
         )
-        
+
         self.assertGreater(cost, 0)
         self.assertIsInstance(cost, float)
 
@@ -158,25 +155,25 @@ class TestCostCalculationFunctions(unittest.TestCase):
             gpu_type="v100",
             storage_gb=0.0
         )
-        
+
         a100_cost = calculate_simple_experiment_cost(
             compute_hours=1.0,
-            gpu_type="a100", 
+            gpu_type="a100",
             storage_gb=0.0
         )
-        
+
         # A100 should typically be more expensive
         self.assertGreater(a100_cost, v100_cost)
 
     def test_forecast_experiment_costs(self):
         """Test experiment cost forecasting."""
         historical_costs = [10.0, 12.0, 11.0, 15.0, 13.0, 16.0, 14.0]
-        
+
         forecast = forecast_experiment_costs(
             historical_costs=historical_costs,
             forecast_periods=5
         )
-        
+
         self.assertIn('forecasted_costs', forecast)
         self.assertIn('trend', forecast)
         self.assertEqual(len(forecast['forecasted_costs']), 5)
@@ -188,7 +185,7 @@ class TestCostCalculationFunctions(unittest.TestCase):
             lookback_days=30,
             target_savings_percentage=20.0
         )
-        
+
         self.assertIsInstance(recommendations, list)
 
 

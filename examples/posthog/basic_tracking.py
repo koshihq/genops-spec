@@ -17,9 +17,6 @@ Prerequisites:
 
 import os
 import time
-import random
-from datetime import datetime, timezone
-from decimal import Decimal
 
 
 def main():
@@ -35,7 +32,7 @@ def main():
         ("POSTHOG_API_KEY configured", lambda: bool(os.getenv('POSTHOG_API_KEY'))),
         ("GENOPS_TEAM configured", lambda: bool(os.getenv('GENOPS_TEAM')))
     ]
-    
+
     for desc, check in prerequisites:
         try:
             if callable(check):
@@ -55,10 +52,10 @@ def main():
 
     # Initialize GenOps PostHog adapter
     print("\n🎯 Initializing PostHog analytics with governance...")
-    
+
     try:
         from genops.providers.posthog import GenOpsPostHogAdapter
-        
+
         # Configuration from environment
         adapter = GenOpsPostHogAdapter(
             posthog_api_key=os.getenv('POSTHOG_API_KEY'),
@@ -70,9 +67,9 @@ def main():
             enable_cost_alerts=True,
             governance_policy=os.getenv('GENOPS_GOVERNANCE_POLICY', 'advisory')
         )
-        
+
         print(f"✅ Adapter initialized for team '{adapter.team}', project '{adapter.project}'")
-        
+
     except Exception as e:
         print(f"❌ Failed to initialize adapter: {e}")
         print("\n💡 Troubleshooting:")
@@ -81,8 +78,8 @@ def main():
         return
 
     # Demo analytics session with various events
-    print(f"\n📊 Starting analytics session with governance tracking...")
-    
+    print("\n📊 Starting analytics session with governance tracking...")
+
     try:
         with adapter.track_analytics_session(
             session_name="user_onboarding_flow",
@@ -91,9 +88,9 @@ def main():
             feature="onboarding",
             experiment="signup_optimization_v2"
         ) as session:
-            
+
             print(f"📈 Session started: {session.session_name} ({session.session_id[:8]}...)")
-            
+
             # Simulate user onboarding events
             onboarding_events = [
                 ("landing_page_viewed", {"page": "/signup", "source": "google", "campaign": "q4_growth"}),
@@ -109,13 +106,13 @@ def main():
                 ("tutorial_completed", {"completion_rate": 1.0, "feedback_score": 4.5}),
                 ("first_action_taken", {"action_type": "create_project", "success": True})
             ]
-            
+
             total_events = len(onboarding_events)
             for i, (event_name, properties) in enumerate(onboarding_events, 1):
-                
+
                 # Simulate realistic timing
                 time.sleep(0.2)  # Small delay for demo purposes
-                
+
                 # Track event with governance
                 if event_name == "feature_flag_evaluated":
                     # Special handling for feature flag evaluation
@@ -136,19 +133,19 @@ def main():
                         session_id=session.session_id
                     )
                     print(f"  📊 Captured event '{event_name}': ${result['cost']:.6f}")
-                
+
                 # Progress indicator
                 progress = i / total_events * 100
                 print(f"      Progress: [{int(progress/5)*'█'}{(20-int(progress/5))*'░'}] {progress:.1f}%")
-            
-            print(f"\n📈 Analytics session completed successfully!")
-            
+
+            print("\n📈 Analytics session completed successfully!")
+
     except Exception as e:
         print(f"❌ Analytics session failed: {e}")
         return
 
     # Display session summary
-    print(f"\n💰 Session Cost Summary:")
+    print("\n💰 Session Cost Summary:")
     cost_summary = adapter.get_cost_summary()
     print(f"  Total Session Cost: ${cost_summary['daily_costs']:.4f}")
     print(f"  Events Tracked: {session.events_captured}")
@@ -157,7 +154,7 @@ def main():
     print(f"  Session Duration: {(session.end_time - session.start_time).total_seconds():.1f} seconds")
     print(f"  Events per Second: {session.events_captured / (session.end_time - session.start_time).total_seconds():.2f}")
 
-    print(f"\n📊 Governance Metrics:")
+    print("\n📊 Governance Metrics:")
     print(f"  Team: {cost_summary['team']}")
     print(f"  Project: {cost_summary['project']}")
     print(f"  Environment: {cost_summary['environment']}")
@@ -169,43 +166,43 @@ def main():
 
     # Budget analysis
     daily_remaining = cost_summary['daily_budget_limit'] - cost_summary['daily_costs']
-    print(f"\n💳 Budget Analysis:")
+    print("\n💳 Budget Analysis:")
     print(f"  Daily Budget: ${cost_summary['daily_budget_limit']:.2f}")
     print(f"  Used Today: ${cost_summary['daily_costs']:.4f}")
     print(f"  Remaining: ${daily_remaining:.4f}")
-    
+
     if daily_remaining > 10:
-        print(f"  💚 Budget Status: Healthy")
+        print("  💚 Budget Status: Healthy")
     elif daily_remaining > 1:
-        print(f"  💛 Budget Status: Monitor usage")
+        print("  💛 Budget Status: Monitor usage")
     else:
-        print(f"  🔴 Budget Status: Approaching limit")
+        print("  🔴 Budget Status: Approaching limit")
 
     # Recommendations
-    print(f"\n💡 Analytics Insights & Recommendations:")
-    
+    print("\n💡 Analytics Insights & Recommendations:")
+
     # Calculate some basic analytics
     avg_cost_per_event = session.total_cost / session.events_captured if session.events_captured > 0 else 0
     events_per_dollar = 1 / avg_cost_per_event if avg_cost_per_event > 0 else 0
-    
+
     print(f"  📈 Events per dollar: {events_per_dollar:,.0f}")
     print(f"  ⚡ Processing efficiency: {session.events_captured / (session.end_time - session.start_time).total_seconds():.1f} events/sec")
-    
+
     if events_per_dollar > 50000:
-        print(f"  ✅ Excellent cost efficiency - you're in PostHog's free tier!")
+        print("  ✅ Excellent cost efficiency - you're in PostHog's free tier!")
     elif events_per_dollar > 10000:
-        print(f"  👍 Good cost efficiency - optimized pricing tier")
+        print("  👍 Good cost efficiency - optimized pricing tier")
     else:
-        print(f"  💡 Consider volume discounts for higher event volumes")
+        print("  💡 Consider volume discounts for higher event volumes")
 
     # Next steps
-    print(f"\n🚀 Next Steps:")
-    print(f"  1. Explore feature flags: python advanced_features.py")
-    print(f"  2. Learn cost optimization: python cost_optimization.py")
-    print(f"  3. See production patterns: python production_patterns.py")
-    print(f"  4. Try auto-instrumentation: python auto_instrumentation.py")
+    print("\n🚀 Next Steps:")
+    print("  1. Explore feature flags: python advanced_features.py")
+    print("  2. Learn cost optimization: python cost_optimization.py")
+    print("  3. See production patterns: python production_patterns.py")
+    print("  4. Try auto-instrumentation: python auto_instrumentation.py")
 
-    print(f"\n✅ Basic tracking example completed successfully!")
+    print("\n✅ Basic tracking example completed successfully!")
 
 
 if __name__ == "__main__":

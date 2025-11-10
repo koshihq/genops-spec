@@ -48,7 +48,7 @@ def main():
     # Quick environment check
     print("\n🌍 Environment Check:")
     print("-" * 30)
-    
+
     # Check OpenLLMetry dependencies
     try:
         import openllmetry
@@ -59,7 +59,7 @@ def main():
         print("❌ OpenLLMetry: Not installed")
         print("   💡 Fix: Run 'pip install openllmetry' or 'pip install genops[traceloop]'")
         return False
-    
+
     # Check Traceloop SDK
     try:
         from traceloop.sdk import Traceloop
@@ -67,18 +67,18 @@ def main():
     except ImportError:
         print("⚠️  Traceloop SDK: Not available (OpenLLMetry only)")
         print("   💡 For commercial features: pip install traceloop-sdk")
-    
+
     # Check Traceloop platform configuration (optional)
     traceloop_api_key = os.getenv('TRACELOOP_API_KEY')
     traceloop_base_url = os.getenv('TRACELOOP_BASE_URL', 'https://app.traceloop.com')
-    
+
     if traceloop_api_key:
         print("✅ TRACELOOP_API_KEY: Found (commercial platform access)")
         print(f"🌐 TRACELOOP_BASE_URL: {traceloop_base_url}")
     else:
         print("ℹ️  TRACELOOP_API_KEY: Not configured (open-source mode)")
         print("   💡 For commercial features, get your key at: https://app.traceloop.com")
-    
+
     # Check LLM provider keys
     providers_found = []
     provider_keys = {
@@ -86,21 +86,21 @@ def main():
         'Anthropic': 'ANTHROPIC_API_KEY',
         'Groq': 'GROQ_API_KEY'
     }
-    
+
     for provider, env_var in provider_keys.items():
         if os.getenv(env_var):
             providers_found.append(provider)
             print(f"✅ {provider}: Found and validated")
         else:
             print(f"⚠️  {provider}: Not configured ({env_var})")
-    
+
     if not providers_found:
         print("\n❌ No LLM provider API keys found! You need at least one.")
         print("   • OpenAI: https://platform.openai.com/api-keys")
         print("   • Anthropic: https://console.anthropic.com/")
         print("   • Groq: https://console.groq.com/ (free tier available)")
         return False
-    
+
     print(f"\n✅ Found {len(providers_found)} configured providers: {', '.join(providers_found)}")
 
     # Run comprehensive validation
@@ -119,24 +119,24 @@ def main():
                 print("\n🔍 Enhanced Observability Stack Active:")
                 print("   • OpenLLMetry tracing ✅ Open-source LLM observability foundation")
                 print("   • GenOps governance ✅ Enhanced with cost intelligence and policy enforcement")
-                
+
                 if traceloop_api_key:
                     print("   • Traceloop platform ✅ Commercial insights and enterprise features")
                 else:
                     print("   • Traceloop platform ⚠️  Available with API key (optional)")
-                
+
                 for provider in providers_found:
                     print(f"   • {provider} ✅ Ready for governed LLM operations")
-                
+
                 print("\n📚 Next steps:")
                 print("   • Run 'python basic_tracking.py' for OpenLLMetry + GenOps foundation")
                 print("   • Run 'python auto_instrumentation.py' for zero-code integration")
                 print("   • Run 'python traceloop_platform.py' for commercial platform features")
-                
+
                 print("\n💡 Quick Test:")
                 print("   Try this command to test your enhanced observability:")
                 print("   python -c \"from genops.providers.traceloop import instrument_traceloop; print('Enhanced observability ready!')\"")
-                
+
             else:
                 print("⚠️  Setup validation completed with warnings.")
                 print("   Review the detailed output above for specific issues.")
@@ -164,10 +164,10 @@ def demonstrate_quick_integration():
     """Show a quick integration example."""
     print("\n🚀 Quick Integration Demo")
     print("-" * 25)
-    
+
     try:
         from genops.providers.traceloop import instrument_traceloop
-        
+
         # Test basic adapter creation
         print("✅ Creating GenOps Traceloop adapter...")
         adapter = instrument_traceloop(
@@ -175,10 +175,10 @@ def demonstrate_quick_integration():
             project="setup-check",
             environment="development"
         )
-        
+
         print("✅ Enhanced Traceloop + OpenLLMetry observability ready!")
         print("\n🔍 Integration Features Available:")
-        
+
         integration_features = [
             "🔍 OpenLLMetry Foundation - Open-source observability with OpenTelemetry standards",
             "💰 Cost Intelligence - Real-time cost tracking integrated with observability",
@@ -189,12 +189,12 @@ def demonstrate_quick_integration():
             "📈 Business Intelligence - Cost optimization insights and recommendations",
             "🏭 Traceloop Platform - Enterprise insights and advanced analytics (with API key)"
         ]
-        
+
         for feature in integration_features:
             print(f"   {feature}")
-            
+
         return True
-        
+
     except Exception as e:
         print(f"❌ Integration demo failed: {e}")
         return False
@@ -203,13 +203,13 @@ def demonstrate_quick_integration():
 if __name__ == "__main__":
     """Main entry point."""
     print(f"🕒 Started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    
+
     success = main()
-    
+
     if success:
         # Show quick integration demo
         demonstrate_quick_integration()
-        
+
         print("\n" + "🌟" * 30)
         print("Your Traceloop + OpenLLMetry + GenOps integration is ready!")
         print("Enhanced LLM observability with governance intelligence!")

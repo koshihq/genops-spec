@@ -32,9 +32,9 @@ Usage:
 """
 
 import logging
-from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -103,7 +103,7 @@ GEMINI_MODELS: Dict[str, GeminiModelInfo] = {
         knowledge_cutoff="January 2025",
         description="Most capable reasoning model for complex problem solving"
     ),
-    
+
     "gemini-2.5-flash": GeminiModelInfo(
         model_id="gemini-2.5-flash",
         display_name="Gemini 2.5 Flash",
@@ -121,7 +121,7 @@ GEMINI_MODELS: Dict[str, GeminiModelInfo] = {
         knowledge_cutoff="January 2025",
         description="Best price-performance model for large-scale processing"
     ),
-    
+
     "gemini-2.5-flash-lite": GeminiModelInfo(
         model_id="gemini-2.5-flash-lite",
         display_name="Gemini 2.5 Flash-Lite",
@@ -139,7 +139,7 @@ GEMINI_MODELS: Dict[str, GeminiModelInfo] = {
         knowledge_cutoff="January 2025",
         description="Most cost-efficient model optimized for low latency"
     ),
-    
+
     "gemini-1.5-pro": GeminiModelInfo(
         model_id="gemini-1.5-pro",
         display_name="Gemini 1.5 Pro",
@@ -157,7 +157,7 @@ GEMINI_MODELS: Dict[str, GeminiModelInfo] = {
         knowledge_cutoff="April 2024",
         description="Previous generation Pro model with extended context"
     ),
-    
+
     "gemini-1.5-flash": GeminiModelInfo(
         model_id="gemini-1.5-flash",
         display_name="Gemini 1.5 Flash",
@@ -175,7 +175,7 @@ GEMINI_MODELS: Dict[str, GeminiModelInfo] = {
         knowledge_cutoff="April 2024",
         description="Previous generation Flash model"
     ),
-    
+
     # Free tier models (limited capabilities and rate limits)
     "gemini-1.5-flash-free": GeminiModelInfo(
         model_id="gemini-1.5-flash-free",
@@ -223,26 +223,26 @@ def calculate_gemini_cost(
         model_info = GEMINI_MODELS["gemini-2.5-flash"]
     else:
         model_info = GEMINI_MODELS[model_id]
-    
+
     # Override tier if specified
     if tier:
         if tier == GeminiTier.FREE:
             return 0.0  # Free tier has no cost
         # For other tiers, use the model's base pricing
-    
+
     # Calculate input cost (per million tokens)
     input_cost = (input_tokens / 1_000_000) * model_info.input_price_per_1m_tokens
-    
+
     # Calculate output cost (per million tokens)
     output_cost = (output_tokens / 1_000_000) * model_info.output_price_per_1m_tokens
-    
+
     # Calculate context cache cost if applicable
     context_cache_cost = 0.0
     if context_cache_tokens and model_info.context_cache_price_per_1m_tokens:
         context_cache_cost = (context_cache_tokens / 1_000_000) * model_info.context_cache_price_per_1m_tokens
-    
+
     total_cost = input_cost + output_cost + context_cache_cost
-    
+
     return round(total_cost, 8)  # Round to 8 decimal places for precision
 
 
@@ -265,24 +265,24 @@ def calculate_gemini_cost_breakdown(
         GeminiCostBreakdown with detailed cost information
     """
     model_info = GEMINI_MODELS.get(model_id, GEMINI_MODELS["gemini-2.5-flash"])
-    
+
     # Calculate individual cost components
     input_cost = (input_tokens / 1_000_000) * model_info.input_price_per_1m_tokens
     output_cost = (output_tokens / 1_000_000) * model_info.output_price_per_1m_tokens
-    
+
     context_cache_cost = 0.0
     if context_cache_tokens and model_info.context_cache_price_per_1m_tokens:
         context_cache_cost = (context_cache_tokens / 1_000_000) * model_info.context_cache_price_per_1m_tokens
-    
+
     total_cost = input_cost + output_cost + context_cache_cost
-    
+
     # Calculate cost per 1k tokens for comparison
     total_tokens = input_tokens + output_tokens + (context_cache_tokens or 0)
     cost_per_1k_tokens = (total_cost / total_tokens) * 1000 if total_tokens > 0 else 0.0
-    
+
     # Estimate cost for 1k requests of similar size
     estimated_cost_1k_requests = total_cost * 1000
-    
+
     return GeminiCostBreakdown(
         model_id=model_id,
         input_tokens=input_tokens,
@@ -323,10 +323,10 @@ def list_gemini_models(tier: Optional[GeminiTier] = None) -> List[GeminiModelInf
         List of GeminiModelInfo objects
     """
     models = list(GEMINI_MODELS.values())
-    
+
     if tier:
         models = [model for model in models if model.tier == tier]
-    
+
     return sorted(models, key=lambda m: m.input_price_per_1m_tokens)
 
 
@@ -351,13 +351,13 @@ def compare_gemini_models(
         List of comparison results sorted by specified criteria
     """
     comparisons = []
-    
+
     for model_id in models:
         breakdown = calculate_gemini_cost_breakdown(
             model_id, input_tokens, output_tokens, context_cache_tokens
         )
         model_info = get_gemini_model_info(model_id)
-        
+
         comparison = {
             "model_id": model_id,
             "display_name": model_info.display_name if model_info else model_id,
@@ -373,11 +373,11 @@ def compare_gemini_models(
             "description": model_info.description if model_info else "Unknown model"
         }
         comparisons.append(comparison)
-    
+
     # Sort by specified criteria
     reverse = sort_by != "model_id"  # Sort ascending for model_id, descending for costs
     comparisons.sort(key=lambda x: x[sort_by], reverse=reverse)
-    
+
     return comparisons
 
 
@@ -403,7 +403,7 @@ def get_cost_optimization_recommendations(
     """
     recommendations = []
     current_cost = calculate_gemini_cost(model_id, input_tokens, output_tokens)
-    
+
     # Get alternative models based on use case
     if use_case == "code":
         alternatives = ["gemini-2.5-pro", "gemini-2.5-flash"]
@@ -413,27 +413,27 @@ def get_cost_optimization_recommendations(
         alternatives = ["gemini-2.5-pro", "gemini-2.5-flash"]
     else:  # general
         alternatives = ["gemini-2.5-flash", "gemini-2.5-flash-lite"]
-    
+
     # Remove current model from alternatives
     alternatives = [m for m in alternatives if m != model_id]
-    
+
     for alt_model in alternatives:
         alt_cost = calculate_gemini_cost(alt_model, input_tokens, output_tokens)
         alt_info = get_gemini_model_info(alt_model)
-        
+
         if not alt_info:
             continue
-            
+
         savings = current_cost - alt_cost
         savings_percent = (savings / current_cost) * 100 if current_cost > 0 else 0
-        
+
         # Skip if no meaningful savings or if over budget
         if savings <= 0.000001:  # Less than $0.000001 savings
             continue
-            
+
         if budget_constraint and alt_cost > budget_constraint:
             continue
-        
+
         recommendation = {
             "model_id": alt_model,
             "display_name": alt_info.display_name,
@@ -446,7 +446,7 @@ def get_cost_optimization_recommendations(
             "tier": alt_info.tier,
             "trade_offs": []
         }
-        
+
         # Add trade-off analysis
         current_info = get_gemini_model_info(model_id)
         if current_info:
@@ -454,12 +454,12 @@ def get_cost_optimization_recommendations(
                 recommendation["trade_offs"].append("Smaller context window")
             if not alt_info.supports_code_execution and current_info.supports_code_execution:
                 recommendation["trade_offs"].append("No code execution support")
-        
+
         recommendations.append(recommendation)
-    
+
     # Sort by savings potential
     recommendations.sort(key=lambda x: x["savings_percent"], reverse=True)
-    
+
     return recommendations
 
 
@@ -484,12 +484,12 @@ def estimate_monthly_cost(
         Dictionary with monthly cost estimates and breakdowns
     """
     cost_per_operation = calculate_gemini_cost(model_id, avg_input_tokens, avg_output_tokens)
-    
+
     daily_cost = cost_per_operation * daily_operations
     monthly_cost = daily_cost * days_per_month
-    
+
     model_info = get_gemini_model_info(model_id)
-    
+
     return {
         "model_id": model_id,
         "model_name": model_info.display_name if model_info else model_id,
@@ -508,7 +508,7 @@ def estimate_monthly_cost(
 # Export main functions and classes
 __all__ = [
     'GeminiModelInfo',
-    'GeminiCostBreakdown', 
+    'GeminiCostBreakdown',
     'GeminiTier',
     'GEMINI_MODELS',
     'calculate_gemini_cost',

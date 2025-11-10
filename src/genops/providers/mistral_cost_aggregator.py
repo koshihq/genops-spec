@@ -25,14 +25,14 @@ Usage:
     insights = aggregator.get_cost_optimization_insights()
 """
 
+import json
 import logging
 import time
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Tuple
+from datetime import datetime
 from enum import Enum
-import json
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +64,7 @@ class OperationRecord:
     output_cost: float
     total_cost: float
     request_time: float
-    
+
     # Governance attributes
     team: Optional[str] = None
     project: Optional[str] = None
@@ -72,7 +72,7 @@ class OperationRecord:
     environment: str = "development"
     session_id: Optional[str] = None
     operation_id: Optional[str] = None
-    
+
     # Performance metrics
     tokens_per_second: float = 0.0
     cost_per_token: float = 0.0
@@ -87,7 +87,7 @@ class CostSummary:
     average_cost_per_operation: float
     average_cost_per_token: float
     time_window: str
-    
+
     # Cost breakdowns
     cost_by_model: Dict[str, float] = field(default_factory=dict)
     cost_by_operation: Dict[str, float] = field(default_factory=dict)
@@ -95,16 +95,16 @@ class CostSummary:
     cost_by_project: Dict[str, float] = field(default_factory=dict)
     cost_by_customer: Dict[str, float] = field(default_factory=dict)
     cost_by_environment: Dict[str, float] = field(default_factory=dict)
-    
+
     # Performance metrics
     total_request_time: float = 0.0
     average_tokens_per_second: float = 0.0
     efficiency_trends: Dict[str, float] = field(default_factory=dict)
-    
+
     # Time-based analysis
     cost_trend: List[Tuple[str, float]] = field(default_factory=list)
     peak_usage_times: List[str] = field(default_factory=list)
-    
+
     # European AI advantages
     gdpr_compliance_cost_savings: float = 0.0
     eu_data_residency_value: float = 0.0
@@ -120,7 +120,7 @@ class OptimizationInsight:
     recommended_actions: List[str]
     confidence_score: float  # 0.0 to 1.0
     implementation_effort: str  # low, medium, high
-    
+
     # Supporting data
     current_state: Dict[str, Any] = field(default_factory=dict)
     target_state: Dict[str, Any] = field(default_factory=dict)
@@ -128,7 +128,7 @@ class OptimizationInsight:
 
 class MistralCostAggregator:
     """Advanced cost aggregation and analytics for Mistral AI operations."""
-    
+
     def __init__(
         self,
         retention_days: int = 90,
@@ -149,15 +149,15 @@ class MistralCostAggregator:
         self.enable_real_time_alerts = enable_real_time_alerts
         self.cost_alert_threshold = cost_alert_threshold
         self.efficiency_alert_threshold = efficiency_alert_threshold
-        
+
         # Storage for operation records
         self.operations: List[OperationRecord] = []
-        
+
         # Real-time aggregations
         self.current_session_cost = 0.0
         self.current_session_operations = 0
         self.session_start_time = time.time()
-        
+
         # Cost tracking by dimensions
         self.cost_by_model = defaultdict(float)
         self.cost_by_team = defaultdict(float)
@@ -165,16 +165,16 @@ class MistralCostAggregator:
         self.cost_by_customer = defaultdict(float)
         self.cost_by_environment = defaultdict(float)
         self.cost_by_operation_type = defaultdict(float)
-        
+
         # Performance tracking
         self.token_efficiency_history = []
         self.cost_efficiency_history = []
-        
+
         # Budgets and limits
         self.team_budgets: Dict[str, float] = {}
         self.project_budgets: Dict[str, float] = {}
         self.customer_budgets: Dict[str, float] = {}
-        
+
         logger.info("Mistral cost aggregator initialized")
 
     def record_operation(
@@ -199,7 +199,7 @@ class MistralCostAggregator:
             Operation ID for reference
         """
         current_time = time.time()
-        
+
         # Create operation record
         record = OperationRecord(
             timestamp=current_time,
@@ -212,7 +212,7 @@ class MistralCostAggregator:
             output_cost=cost_breakdown.get('output_cost', 0.0),
             total_cost=cost_breakdown.get('total_cost', 0.0),
             request_time=performance_metrics.get('request_time', 0.0) if performance_metrics else 0.0,
-            
+
             # Governance
             team=governance_attrs.get('team'),
             project=governance_attrs.get('project'),
@@ -220,50 +220,50 @@ class MistralCostAggregator:
             environment=governance_attrs.get('environment', 'development'),
             session_id=governance_attrs.get('session_id'),
             operation_id=governance_attrs.get('operation_id'),
-            
+
             # Performance
             tokens_per_second=performance_metrics.get('tokens_per_second', 0.0) if performance_metrics else 0.0,
             cost_per_token=cost_breakdown.get('cost_per_token', 0.0),
             efficiency_score=performance_metrics.get('efficiency_score', 1.0) if performance_metrics else 1.0
         )
-        
+
         # Store the record
         self.operations.append(record)
-        
+
         # Update real-time aggregations
         self._update_real_time_aggregations(record)
-        
+
         # Check for alerts
         if self.enable_real_time_alerts:
             self._check_alerts(record)
-        
+
         # Cleanup old records
         self._cleanup_old_records()
-        
+
         return record.operation_id or f"op_{int(current_time * 1000)}"
 
     def _update_real_time_aggregations(self, record: OperationRecord):
         """Update real-time cost aggregations."""
         self.current_session_cost += record.total_cost
         self.current_session_operations += 1
-        
+
         # Update dimensional aggregations
         self.cost_by_model[record.model] += record.total_cost
         self.cost_by_operation_type[record.operation_type] += record.total_cost
-        
+
         if record.team:
             self.cost_by_team[record.team] += record.total_cost
         if record.project:
             self.cost_by_project[record.project] += record.total_cost
         if record.customer_id:
             self.cost_by_customer[record.customer_id] += record.total_cost
-        
+
         self.cost_by_environment[record.environment] += record.total_cost
-        
+
         # Track efficiency
         if record.tokens_per_second > 0:
             self.token_efficiency_history.append((record.timestamp, record.tokens_per_second))
-        
+
         if record.cost_per_token > 0:
             self.cost_efficiency_history.append((record.timestamp, record.cost_per_token))
 
@@ -272,18 +272,18 @@ class MistralCostAggregator:
         # Cost threshold alerts
         if record.total_cost > self.cost_alert_threshold / 100:  # Per operation threshold
             logger.warning(f"High-cost operation detected: ${record.total_cost:.6f} for {record.model}")
-        
+
         # Session cost alerts
         if self.current_session_cost > self.cost_alert_threshold:
             logger.warning(f"Session cost threshold exceeded: ${self.current_session_cost:.2f}")
-        
+
         # Team budget alerts
         if record.team and record.team in self.team_budgets:
             team_cost = self.cost_by_team[record.team]
             team_budget = self.team_budgets[record.team]
             if team_cost > team_budget * 0.8:  # 80% of budget
                 logger.warning(f"Team {record.team} approaching budget: ${team_cost:.2f}/${team_budget:.2f}")
-        
+
         # Efficiency alerts
         if record.efficiency_score < self.efficiency_alert_threshold:
             logger.warning(f"Low efficiency operation: {record.efficiency_score:.2f} for {record.model}")
@@ -316,16 +316,16 @@ class MistralCostAggregator:
         current_time = time.time()
         window_seconds = self._get_time_window_seconds(time_window)
         start_time = current_time - window_seconds
-        
+
         # Filter operations
         filtered_ops = [
-            op for op in self.operations 
+            op for op in self.operations
             if op.timestamp >= start_time and
             (not team or op.team == team) and
             (not project or op.project == project) and
             (not customer_id or op.customer_id == customer_id)
         ]
-        
+
         if not filtered_ops:
             return CostSummary(
                 total_cost=0.0,
@@ -335,17 +335,17 @@ class MistralCostAggregator:
                 average_cost_per_token=0.0,
                 time_window=time_window.value
             )
-        
+
         # Calculate aggregated metrics
         total_cost = sum(op.total_cost for op in filtered_ops)
         total_operations = len(filtered_ops)
         total_tokens = sum(op.total_tokens for op in filtered_ops)
         total_request_time = sum(op.request_time for op in filtered_ops)
-        
+
         avg_cost_per_op = total_cost / max(total_operations, 1)
         avg_cost_per_token = total_cost / max(total_tokens, 1)
         avg_tokens_per_sec = sum(op.tokens_per_second for op in filtered_ops) / max(total_operations, 1)
-        
+
         # Build dimensional breakdowns
         cost_by_model = defaultdict(float)
         cost_by_operation = defaultdict(float)
@@ -353,7 +353,7 @@ class MistralCostAggregator:
         cost_by_project = defaultdict(float)
         cost_by_customer = defaultdict(float)
         cost_by_environment = defaultdict(float)
-        
+
         for op in filtered_ops:
             cost_by_model[op.model] += op.total_cost
             cost_by_operation[op.operation_type] += op.total_cost
@@ -364,14 +364,14 @@ class MistralCostAggregator:
             if op.customer_id:
                 cost_by_customer[op.customer_id] += op.total_cost
             cost_by_environment[op.environment] += op.total_cost
-        
+
         # Calculate cost trend
         cost_trend = self._calculate_cost_trend(filtered_ops, time_window)
-        
+
         # Estimate European AI advantages
         gdpr_savings = total_cost * 0.1  # 10% estimated compliance cost savings
         eu_residency_value = total_cost * 0.05  # 5% estimated data residency value
-        
+
         return CostSummary(
             total_cost=total_cost,
             total_operations=total_operations,
@@ -404,31 +404,31 @@ class MistralCostAggregator:
         return window_map.get(window, 86400)  # Default to day
 
     def _calculate_cost_trend(
-        self, 
-        operations: List[OperationRecord], 
+        self,
+        operations: List[OperationRecord],
         time_window: TimeWindow
     ) -> List[Tuple[str, float]]:
         """Calculate cost trend over time."""
         if not operations:
             return []
-        
+
         # Group operations by time buckets
         bucket_size = self._get_time_window_seconds(time_window) // 10  # 10 data points
         cost_by_bucket = defaultdict(float)
-        
+
         min_time = min(op.timestamp for op in operations)
-        
+
         for op in operations:
             bucket = int((op.timestamp - min_time) // bucket_size)
             cost_by_bucket[bucket] += op.total_cost
-        
+
         # Convert to time series
         trend = []
         for bucket in sorted(cost_by_bucket.keys()):
             timestamp = min_time + (bucket * bucket_size)
             time_str = datetime.fromtimestamp(timestamp).strftime('%H:%M' if time_window == TimeWindow.HOUR else '%m-%d')
             trend.append((time_str, cost_by_bucket[bucket]))
-        
+
         return trend
 
     def get_cost_optimization_insights(
@@ -447,58 +447,58 @@ class MistralCostAggregator:
             List of optimization insights with recommendations
         """
         insights = []
-        
+
         # Get recent operations for analysis
         cutoff_time = time.time() - (lookback_days * 24 * 3600)
         recent_ops = [op for op in self.operations if op.timestamp >= cutoff_time]
-        
+
         if not recent_ops:
             return insights
-        
+
         # Analyze model usage patterns
         insights.extend(self._analyze_model_optimization(recent_ops, min_savings_threshold))
-        
+
         # Analyze token efficiency
         insights.extend(self._analyze_token_efficiency(recent_ops, min_savings_threshold))
-        
+
         # Analyze usage patterns
         insights.extend(self._analyze_usage_patterns(recent_ops, min_savings_threshold))
-        
+
         # European AI advantages
         insights.extend(self._analyze_european_advantages(recent_ops, min_savings_threshold))
-        
+
         # Sort by potential savings (highest first)
         insights.sort(key=lambda x: x.potential_savings_usd, reverse=True)
-        
+
         return insights
 
     def _analyze_model_optimization(
-        self, 
-        operations: List[OperationRecord], 
+        self,
+        operations: List[OperationRecord],
         min_savings: float
     ) -> List[OptimizationInsight]:
         """Analyze model selection for cost optimization."""
         insights = []
-        
+
         # Group by model and calculate stats
         model_stats = defaultdict(lambda: {"cost": 0.0, "operations": 0, "tokens": 0})
-        
+
         for op in operations:
             stats = model_stats[op.model]
             stats["cost"] += op.total_cost
             stats["operations"] += 1
             stats["tokens"] += op.total_tokens
-        
+
         # Find expensive models with alternatives
         total_cost = sum(stats["cost"] for stats in model_stats.values())
-        
+
         for model, stats in model_stats.items():
             if stats["cost"] < total_cost * 0.1:  # Skip models with <10% of total cost
                 continue
-            
+
             # Check for more cost-effective alternatives
             avg_tokens_per_op = stats["tokens"] / max(stats["operations"], 1)
-            
+
             # Suggest cheaper alternatives based on usage patterns
             if model == "mistral-large-latest" and avg_tokens_per_op < 2000:
                 potential_savings = stats["cost"] * 0.6  # ~60% savings with medium
@@ -519,14 +519,14 @@ class MistralCostAggregator:
                         current_state={"model": model, "cost": stats["cost"]},
                         target_state={"model": "mistral-medium-latest", "estimated_cost": stats["cost"] * 0.4}
                     ))
-            
+
             elif model == "mistral-medium-latest" and avg_tokens_per_op < 1000:
                 potential_savings = stats["cost"] * 0.4  # ~40% savings with small
                 if potential_savings >= min_savings:
                     insights.append(OptimizationInsight(
                         category="model_selection",
                         priority="medium",
-                        insight=f"Consider mistral-small-latest for simple queries",
+                        insight="Consider mistral-small-latest for simple queries",
                         potential_savings_usd=potential_savings,
                         potential_savings_percent=40.0,
                         recommended_actions=[
@@ -539,23 +539,23 @@ class MistralCostAggregator:
                         current_state={"model": model, "avg_tokens": avg_tokens_per_op},
                         target_state={"model": "mistral-small-latest", "complexity": "simple"}
                     ))
-        
+
         return insights
 
     def _analyze_token_efficiency(
-        self, 
-        operations: List[OperationRecord], 
+        self,
+        operations: List[OperationRecord],
         min_savings: float
     ) -> List[OptimizationInsight]:
         """Analyze token usage efficiency."""
         insights = []
-        
+
         # Calculate token efficiency metrics
         high_output_ops = [op for op in operations if op.output_tokens > op.input_tokens * 2]
-        
+
         if len(high_output_ops) > len(operations) * 0.2:  # >20% of operations
             output_cost_waste = sum(op.output_cost * 0.3 for op in high_output_ops)  # 30% potential reduction
-            
+
             if output_cost_waste >= min_savings:
                 insights.append(OptimizationInsight(
                     category="token_efficiency",
@@ -575,35 +575,35 @@ class MistralCostAggregator:
                         "avg_output_input_ratio": sum(op.output_tokens / max(op.input_tokens, 1) for op in high_output_ops) / len(high_output_ops)
                     }
                 ))
-        
+
         return insights
 
     def _analyze_usage_patterns(
-        self, 
-        operations: List[OperationRecord], 
+        self,
+        operations: List[OperationRecord],
         min_savings: float
     ) -> List[OptimizationInsight]:
         """Analyze usage patterns for optimization opportunities."""
         insights = []
-        
+
         # Analyze time-based usage patterns
         usage_by_hour = defaultdict(int)
         for op in operations:
             hour = datetime.fromtimestamp(op.timestamp).hour
             usage_by_hour[hour] += 1
-        
+
         # Find peak usage times
         if usage_by_hour:
-            peak_hours = [hour for hour, count in usage_by_hour.items() 
+            peak_hours = [hour for hour, count in usage_by_hour.items()
                          if count > sum(usage_by_hour.values()) / len(usage_by_hour) * 1.5]
-            
+
             if len(peak_hours) < 8:  # Concentrated usage
                 # Suggest batch processing for cost optimization
                 batch_savings = sum(op.total_cost for op in operations) * 0.15  # 15% batch discount
-                
+
                 if batch_savings >= min_savings:
                     insights.append(OptimizationInsight(
-                        category="usage_patterns", 
+                        category="usage_patterns",
                         priority="low",
                         insight="Usage concentrated in specific hours - batch processing could reduce costs",
                         potential_savings_usd=batch_savings,
@@ -617,23 +617,23 @@ class MistralCostAggregator:
                         implementation_effort="high",
                         supporting_metrics={"peak_hours": peak_hours, "concentration_ratio": len(peak_hours) / 24}
                     ))
-        
+
         return insights
 
     def _analyze_european_advantages(
-        self, 
-        operations: List[OperationRecord], 
+        self,
+        operations: List[OperationRecord],
         min_savings: float
     ) -> List[OptimizationInsight]:
         """Analyze European AI provider advantages."""
         insights = []
-        
+
         total_cost = sum(op.total_cost for op in operations)
-        
+
         if total_cost > min_savings:
             # GDPR compliance savings
             gdpr_savings = total_cost * 0.1  # 10% estimated compliance cost savings
-            
+
             insights.append(OptimizationInsight(
                 category="european_advantages",
                 priority="high",
@@ -653,11 +653,11 @@ class MistralCostAggregator:
                     "regulatory_benefits": "GDPR compliant"
                 }
             ))
-            
+
             # Cost competitiveness vs US providers
             if total_cost > 50.0:  # For significant workloads
                 competitive_savings = total_cost * 0.2  # 20% competitive advantage
-                
+
                 insights.append(OptimizationInsight(
                     category="european_advantages",
                     priority="medium",
@@ -673,7 +673,7 @@ class MistralCostAggregator:
                     implementation_effort="medium",
                     supporting_metrics={"cost_competitiveness": "vs_us_providers", "market_position": "european_ai"}
                 ))
-        
+
         return insights
 
     def set_budget(self, budget_type: str, identifier: str, amount: float):
@@ -684,7 +684,7 @@ class MistralCostAggregator:
             self.project_budgets[identifier] = amount
         elif budget_type == "customer":
             self.customer_budgets[identifier] = amount
-        
+
         logger.info(f"Budget set for {budget_type} '{identifier}': ${amount:.2f}")
 
     def get_budget_status(self) -> Dict[str, Any]:
@@ -694,7 +694,7 @@ class MistralCostAggregator:
             "projects": {},
             "customers": {}
         }
-        
+
         # Team budget status
         for team, budget in self.team_budgets.items():
             current_cost = self.cost_by_team.get(team, 0.0)
@@ -704,8 +704,8 @@ class MistralCostAggregator:
                 "remaining": budget - current_cost,
                 "utilization_percent": (current_cost / budget) * 100 if budget > 0 else 0
             }
-        
-        # Project budget status  
+
+        # Project budget status
         for project, budget in self.project_budgets.items():
             current_cost = self.cost_by_project.get(project, 0.0)
             status["projects"][project] = {
@@ -714,7 +714,7 @@ class MistralCostAggregator:
                 "remaining": budget - current_cost,
                 "utilization_percent": (current_cost / budget) * 100 if budget > 0 else 0
             }
-        
+
         # Customer budget status
         for customer, budget in self.customer_budgets.items():
             current_cost = self.cost_by_customer.get(customer, 0.0)
@@ -724,7 +724,7 @@ class MistralCostAggregator:
                 "remaining": budget - current_cost,
                 "utilization_percent": (current_cost / budget) * 100 if budget > 0 else 0
             }
-        
+
         return status
 
     def export_analytics_data(self, format: str = "json") -> str:
@@ -751,7 +751,7 @@ class MistralCostAggregator:
                 "total_records": len(self.operations)
             }
         }
-        
+
         if format.lower() == "json":
             return json.dumps(data, indent=2)
         else:
@@ -773,18 +773,18 @@ if __name__ == "__main__":
     # Demo and testing
     print("Mistral AI Cost Aggregator Demo")
     print("=" * 40)
-    
+
     aggregator = MistralCostAggregator()
-    
+
     # Simulate some operations
     import random
     models = ["mistral-small-latest", "mistral-medium-latest", "mistral-large-latest"]
     teams = ["ai-team", "research-team", "product-team"]
-    
+
     for i in range(10):
         model = random.choice(models)
         team = random.choice(teams)
-        
+
         cost_breakdown = {
             "input_tokens": random.randint(100, 1000),
             "output_tokens": random.randint(50, 500),
@@ -794,11 +794,11 @@ if __name__ == "__main__":
             "total_cost": 0.0,  # Will be calculated
             "cost_per_token": 0.0
         }
-        
+
         cost_breakdown["total_tokens"] = cost_breakdown["input_tokens"] + cost_breakdown["output_tokens"]
         cost_breakdown["total_cost"] = cost_breakdown["input_cost"] + cost_breakdown["output_cost"]
         cost_breakdown["cost_per_token"] = cost_breakdown["total_cost"] / cost_breakdown["total_tokens"]
-        
+
         aggregator.record_operation(
             model=model,
             operation_type="chat",
@@ -806,18 +806,18 @@ if __name__ == "__main__":
             team=team,
             project="demo-project"
         )
-    
+
     # Get summary
     summary = aggregator.get_cost_summary(TimeWindow.DAY)
     print(f"Total cost: ${summary.total_cost:.6f}")
     print(f"Total operations: {summary.total_operations}")
     print(f"Cost by model: {summary.cost_by_model}")
     print(f"Cost by team: {summary.cost_by_team}")
-    
+
     # Get insights
     insights = aggregator.get_cost_optimization_insights(min_savings_threshold=0.001)  # Low threshold for demo
     if insights:
-        print(f"\nOptimization Insights:")
+        print("\nOptimization Insights:")
         for insight in insights[:2]:  # Top 2
             print(f"  • {insight.insight}")
             print(f"    Potential savings: ${insight.potential_savings_usd:.6f}")

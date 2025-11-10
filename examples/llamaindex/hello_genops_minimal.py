@@ -17,25 +17,26 @@ Expected result: "✅ SUCCESS! GenOps is now tracking your RAG pipeline!"
 
 def main():
     print("🚀 Testing GenOps with LlamaIndex RAG...")
-    
+
     try:
         # Step 1: Enable GenOps tracking (universal CLAUDE.md standard)
         from genops.providers.llamaindex import auto_instrument
         auto_instrument()
         print("✅ GenOps auto-instrumentation enabled")
-        
+
         # Step 2: Configure LlamaIndex (check for available API keys)
         import os
+
         from llama_index.core import Settings
-        
+
         # Detect which LLM provider is available
         llm_configured = False
         embed_configured = False
-        
+
         if os.getenv("OPENAI_API_KEY"):
             try:
-                from llama_index.llms.openai import OpenAI
                 from llama_index.embeddings.openai import OpenAIEmbedding
+                from llama_index.llms.openai import OpenAI
                 Settings.llm = OpenAI(model="gpt-3.5-turbo")
                 Settings.embed_model = OpenAIEmbedding()
                 print("✅ OpenAI models configured")
@@ -43,7 +44,7 @@ def main():
                 embed_configured = True
             except ImportError:
                 print("❌ OpenAI package not installed: pip install openai")
-                
+
         elif os.getenv("ANTHROPIC_API_KEY"):
             try:
                 from llama_index.llms.anthropic import Anthropic
@@ -56,17 +57,17 @@ def main():
                     from llama_index.embeddings.huggingface import HuggingFaceEmbedding
                     Settings.embed_model = HuggingFaceEmbedding(model_name="sentence-transformers/all-MiniLM-L6-v2")
                     embed_configured = True
-                
+
                 Settings.llm = Anthropic(model="claude-3-haiku-20240307")
                 print("✅ Anthropic LLM configured")
                 llm_configured = True
             except ImportError:
                 print("❌ Anthropic package not installed: pip install anthropic")
-                
+
         elif os.getenv("GOOGLE_API_KEY"):
             try:
-                from llama_index.llms.gemini import Gemini
                 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+                from llama_index.llms.gemini import Gemini
                 Settings.llm = Gemini(model="gemini-pro")
                 Settings.embed_model = HuggingFaceEmbedding(model_name="sentence-transformers/all-MiniLM-L6-v2")
                 print("✅ Google Gemini configured")
@@ -74,11 +75,11 @@ def main():
                 embed_configured = True
             except ImportError:
                 print("❌ Google AI package not installed: pip install google-generativeai")
-        
+
         if not llm_configured:
             print("❌ No API key found. Set one of:")
             print("   export OPENAI_API_KEY='sk-your-openai-key-here'")
-            print("   export ANTHROPIC_API_KEY='sk-ant-your-anthropic-key-here'") 
+            print("   export ANTHROPIC_API_KEY='sk-ant-your-anthropic-key-here'")
             print("   export GOOGLE_API_KEY='your-google-api-key-here'")
             print()
             print("🔧 QUICK FIX:")
@@ -86,15 +87,15 @@ def main():
             print("   2. Set environment variable")
             print("   3. python hello_genops_minimal.py")
             return False
-        
+
         if not embed_configured:
             print("⚠️ Using fallback embedding model")
-        
+
         # Step 3: Create a simple RAG pipeline with GenOps tracking
         from llama_index.core import Document, VectorStoreIndex
-        
+
         print("📄 Creating sample documents...")
-        
+
         # Sample documents about GenOps and RAG
         documents = [
             Document(text="""
@@ -116,16 +117,16 @@ def main():
             and vector stores for flexible deployment options.
             """)
         ]
-        
+
         print("🔍 Building vector index (this will use embeddings)...")
         index = VectorStoreIndex.from_documents(documents)
-        
+
         print("🤖 Creating query engine...")
         query_engine = index.as_query_engine()
-        
+
         print("💬 Running test query...")
         response = query_engine.query("What is GenOps and how does it help with RAG applications?")
-        
+
         print("✅ SUCCESS! GenOps is now tracking your RAG pipeline!")
         print("💰 Cost tracking, team attribution, and governance are active.")
         print("📊 Your RAG operations are now visible in your observability platform.")
@@ -133,9 +134,9 @@ def main():
         print(f"🤖 RAG Response: {response.response[:200] if response.response else 'Success'}...")
         print()
         print("🎯 PHASE 1 COMPLETE - You now have GenOps working with LlamaIndex!")
-        
+
         return True
-        
+
     except ImportError as e:
         error_str = str(e).lower()
         if "llama_index" in error_str or "llama-index" in error_str:
@@ -148,12 +149,12 @@ def main():
             print(f"❌ Import error: {e}")
             print("🔧 QUICK FIX: pip install llama-index openai anthropic")
         return False
-        
+
     except Exception as e:
         error_str = str(e).lower()
         print(f"❌ Error: {e}")
         print()
-        
+
         # Provide specific guidance for common errors
         if "api key" in error_str or "authentication" in error_str:
             print("🔧 API KEY ISSUE:")
@@ -173,12 +174,12 @@ def main():
         else:
             print("🔧 DETAILED DIAGNOSIS:")
             print("   python -c \"from genops.providers.llamaindex.validation import validate_setup, print_validation_result; print_validation_result(validate_setup(), detailed=True)\"")
-        
+
         return False
 
 if __name__ == "__main__":
     success = main()
-    
+
     if success:
         print("🚀 READY FOR PHASE 2? (RAG Pipeline Optimization)")
         print("   → python rag_pipeline_tracking.py     # Complete RAG monitoring")
@@ -190,5 +191,5 @@ if __name__ == "__main__":
         print()
         print("💡 Need help? Check the troubleshooting guide:")
         print("   → examples/llamaindex/README.md#troubleshooting")
-    
+
     exit(0 if success else 1)

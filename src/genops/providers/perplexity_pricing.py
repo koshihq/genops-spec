@@ -16,10 +16,9 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 from enum import Enum
-from typing import Dict, Any, Optional, Union, List
-from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional, Union
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +26,7 @@ logger = logging.getLogger(__name__)
 class PerplexityModel(Enum):
     """Perplexity AI models with pricing characteristics."""
     SONAR = "sonar"
-    SONAR_PRO = "sonar-pro" 
+    SONAR_PRO = "sonar-pro"
     SONAR_REASONING = "sonar-reasoning"
     SONAR_REASONING_PRO = "sonar-reasoning-pro"
     SONAR_DEEP_RESEARCH = "sonar-deep-research"
@@ -53,7 +52,7 @@ class TokenPricing:
 class RequestPricing:
     """Request pricing structure by search context."""
     low_context_per_thousand: Decimal
-    medium_context_per_thousand: Decimal  
+    medium_context_per_thousand: Decimal
     high_context_per_thousand: Decimal
 
 
@@ -89,10 +88,10 @@ class PerplexityPricingCalculator:
     - Request fees that depend on search context depth
     - Volume discounts and optimization analysis
     """
-    
+
     def __init__(self):
         """Initialize the pricing calculator with current Perplexity rates."""
-        
+
         # Token pricing by model (per 1M tokens)
         self.token_pricing = {
             PerplexityModel.SONAR.value: TokenPricing(
@@ -120,7 +119,7 @@ class PerplexityPricingCalculator:
                 reasoning_per_million=Decimal('10.00')
             )
         }
-        
+
         # Request pricing by model and search context (per 1K requests)
         self.request_pricing = {
             PerplexityModel.SONAR.value: RequestPricing(
@@ -149,12 +148,12 @@ class PerplexityPricingCalculator:
                 high_context_per_thousand=Decimal('20.00')
             )
         }
-        
+
         # Search API pricing (separate from chat completions)
         self.search_api_flat_rate = Decimal('5.00')  # per 1K requests, no token costs
-        
+
         logger.info("Perplexity pricing calculator initialized with current rates")
-    
+
     def calculate_token_cost(
         self,
         model: str,
@@ -179,32 +178,32 @@ class PerplexityPricingCalculator:
         if model not in self.token_pricing:
             logger.warning(f"Unknown model {model}, using Sonar pricing")
             model = PerplexityModel.SONAR.value
-        
+
         pricing = self.token_pricing[model]
         total_cost = Decimal('0')
-        
+
         # Input tokens
         if input_tokens > 0:
             input_cost = (Decimal(str(input_tokens)) / Decimal('1000000')) * pricing.input_per_million
             total_cost += input_cost
-        
+
         # Output tokens
         if output_tokens > 0:
             output_cost = (Decimal(str(output_tokens)) / Decimal('1000000')) * pricing.output_per_million
             total_cost += output_cost
-        
+
         # Citation tokens (for supported models)
         if citation_tokens > 0 and pricing.citation_per_million:
             citation_cost = (Decimal(str(citation_tokens)) / Decimal('1000000')) * pricing.citation_per_million
             total_cost += citation_cost
-        
+
         # Reasoning tokens (for supported models)
         if reasoning_tokens > 0 and pricing.reasoning_per_million:
             reasoning_cost = (Decimal(str(reasoning_tokens)) / Decimal('1000000')) * pricing.reasoning_per_million
             total_cost += reasoning_cost
-        
+
         return total_cost.quantize(Decimal('0.000001'), rounding=ROUND_HALF_UP)
-    
+
     def calculate_request_cost(
         self,
         model: str,
@@ -225,15 +224,15 @@ class PerplexityPricingCalculator:
         if model not in self.request_pricing:
             logger.warning(f"Unknown model {model}, using Sonar pricing")
             model = PerplexityModel.SONAR.value
-        
+
         pricing = self.request_pricing[model]
-        
+
         # Normalize search context
         if isinstance(search_context, SearchContext):
             context = search_context.value
         else:
             context = str(search_context).lower()
-        
+
         # Get request rate based on context
         if context == SearchContext.LOW.value:
             rate_per_thousand = pricing.low_context_per_thousand
@@ -244,11 +243,11 @@ class PerplexityPricingCalculator:
         else:
             logger.warning(f"Unknown search context {context}, using medium")
             rate_per_thousand = pricing.medium_context_per_thousand
-        
+
         # Calculate cost
         request_cost = (Decimal(str(request_count)) / Decimal('1000')) * rate_per_thousand
         return request_cost.quantize(Decimal('0.000001'), rounding=ROUND_HALF_UP)
-    
+
     def calculate_search_cost(
         self,
         model: str,
@@ -277,7 +276,7 @@ class PerplexityPricingCalculator:
         output_tokens = int(tokens_used * (1 - input_token_ratio - citation_token_ratio - reasoning_token_ratio))
         citation_tokens = int(tokens_used * citation_token_ratio)
         reasoning_tokens = int(tokens_used * reasoning_token_ratio)
-        
+
         # Calculate token cost
         token_cost = self.calculate_token_cost(
             model=model,
@@ -286,17 +285,17 @@ class PerplexityPricingCalculator:
             citation_tokens=citation_tokens,
             reasoning_tokens=reasoning_tokens
         )
-        
+
         # Calculate request cost
         request_cost = self.calculate_request_cost(
             model=model,
             search_context=search_context,
             request_count=1
         )
-        
+
         total_cost = token_cost + request_cost
         return total_cost.quantize(Decimal('0.000001'), rounding=ROUND_HALF_UP)
-    
+
     def estimate_search_cost(
         self,
         model: str,
@@ -319,7 +318,7 @@ class PerplexityPricingCalculator:
             tokens_used=estimated_tokens,
             search_context=search_context
         )
-    
+
     def get_detailed_cost_breakdown(
         self,
         model: str,
@@ -344,22 +343,22 @@ class PerplexityPricingCalculator:
             output_tokens=int(tokens_used * 0.6),  # Estimated output ratio
             citation_tokens=int(tokens_used * 0.1)  # Estimated citation ratio
         )
-        
+
         request_cost = self.calculate_request_cost(
             model=model,
             search_context=search_context,
             request_count=1
         )
-        
+
         total_cost = token_cost + request_cost
         cost_per_token = total_cost / Decimal(str(tokens_used)) if tokens_used > 0 else Decimal('0')
-        
+
         # Get pricing details
         token_pricing = self.token_pricing.get(model, self.token_pricing[PerplexityModel.SONAR.value])
         request_pricing = self.request_pricing.get(model, self.request_pricing[PerplexityModel.SONAR.value])
-        
+
         context_str = search_context.value if isinstance(search_context, SearchContext) else str(search_context)
-        
+
         pricing_details = {
             'model': model,
             'token_pricing': {
@@ -375,7 +374,7 @@ class PerplexityPricingCalculator:
             },
             'context_used': context_str
         }
-        
+
         return SearchCostBreakdown(
             model=model,
             tokens_used=tokens_used,
@@ -386,7 +385,7 @@ class PerplexityPricingCalculator:
             cost_per_token=cost_per_token,
             pricing_details=pricing_details
         )
-    
+
     def analyze_search_costs(
         self,
         projected_queries: int,
@@ -416,12 +415,12 @@ class PerplexityPricingCalculator:
             tokens_used=average_tokens_per_query,
             search_context=search_context
         )
-        
+
         total_projected_cost = cost_per_query * Decimal(str(projected_queries))
-        
+
         # Analyze different optimization scenarios
         optimization_opportunities = []
-        
+
         # Model optimization
         if model != PerplexityModel.SONAR.value:
             sonar_cost = self.calculate_search_cost(
@@ -431,7 +430,7 @@ class PerplexityPricingCalculator:
             )
             sonar_total = sonar_cost * Decimal(str(projected_queries))
             savings = total_projected_cost - sonar_total
-            
+
             if savings > 0:
                 optimization_opportunities.append({
                     'optimization_type': 'model_downgrade',
@@ -441,7 +440,7 @@ class PerplexityPricingCalculator:
                     'trade_offs': 'Lower accuracy, fewer features',
                     'priority_score': min(100, float(savings / total_projected_cost * 100))
                 })
-        
+
         # Search context optimization
         if search_context != SearchContext.LOW:
             low_context_cost = self.calculate_search_cost(
@@ -451,7 +450,7 @@ class PerplexityPricingCalculator:
             )
             low_context_total = low_context_cost * Decimal(str(projected_queries))
             context_savings = total_projected_cost - low_context_total
-            
+
             if context_savings > 0:
                 optimization_opportunities.append({
                     'optimization_type': 'search_context_reduction',
@@ -461,7 +460,7 @@ class PerplexityPricingCalculator:
                     'trade_offs': 'Less comprehensive search results',
                     'priority_score': min(100, float(context_savings / total_projected_cost * 50))
                 })
-        
+
         # Token optimization
         reduced_tokens = int(average_tokens_per_query * 0.7)  # 30% reduction
         reduced_token_cost = self.calculate_search_cost(
@@ -471,7 +470,7 @@ class PerplexityPricingCalculator:
         )
         reduced_token_total = reduced_token_cost * Decimal(str(projected_queries))
         token_savings = total_projected_cost - reduced_token_total
-        
+
         if token_savings > 0:
             optimization_opportunities.append({
                 'optimization_type': 'token_optimization',
@@ -481,13 +480,13 @@ class PerplexityPricingCalculator:
                 'trade_offs': 'Shorter responses, less detail',
                 'priority_score': min(100, float(token_savings / total_projected_cost * 75))
             })
-        
+
         # Budget analysis
         budget_analysis = {}
         if current_daily_costs is not None and daily_budget_limit is not None:
             remaining_budget = daily_budget_limit - current_daily_costs
             budget_utilization = (current_daily_costs / daily_budget_limit * 100) if daily_budget_limit > 0 else 0
-            
+
             budget_analysis = {
                 'current_daily_costs': float(current_daily_costs),
                 'daily_budget_limit': float(daily_budget_limit),
@@ -495,23 +494,23 @@ class PerplexityPricingCalculator:
                 'budget_utilization_percent': float(budget_utilization),
                 'projected_cost_fits_budget': total_projected_cost <= remaining_budget
             }
-        
+
         # Generate recommendations
         recommendations = []
-        
+
         if optimization_opportunities:
             top_opportunity = max(optimization_opportunities, key=lambda x: x['priority_score'])
             recommendations.append(
                 f"Consider {top_opportunity['optimization_type']}: {top_opportunity['description']} "
                 f"(${top_opportunity['potential_savings_total']:.4f} potential savings)"
             )
-        
+
         if budget_analysis and budget_analysis.get('budget_utilization_percent', 0) > 80:
             recommendations.append("High budget utilization detected. Consider implementing cost controls.")
-        
+
         if projected_queries > 1000:
             recommendations.append("High query volume detected. Consider batch processing or query caching.")
-        
+
         return CostAnalysis(
             current_cost_structure={
                 'cost_per_query': float(cost_per_query),
@@ -531,7 +530,7 @@ class PerplexityPricingCalculator:
             budget_analysis=budget_analysis,
             recommendations=recommendations
         )
-    
+
     def calculate_search_api_cost(self, request_count: int) -> Decimal:
         """
         Calculate cost for Search API usage (flat rate, no token costs).
@@ -588,10 +587,10 @@ def estimate_monthly_perplexity_costs(
     """
     calculator = PerplexityPricingCalculator()
     cost_per_query = calculator.calculate_search_cost(model, average_tokens, search_context)
-    
+
     daily_cost = cost_per_query * Decimal(str(daily_queries))
     monthly_cost = daily_cost * Decimal('30')
-    
+
     return {
         'cost_per_query': float(cost_per_query),
         'daily_cost': float(daily_cost),

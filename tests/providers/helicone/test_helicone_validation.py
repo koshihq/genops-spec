@@ -9,16 +9,16 @@ Tests the validation functionality including:
 - Error diagnosis and troubleshooting
 """
 
-import pytest
 from unittest.mock import Mock, patch
-from typing import Dict, Any
+
+import pytest
 
 # Import the modules under test
 try:
     from genops.providers.helicone_validation import (
-        validate_setup,
         print_validation_result,
-        quick_validate
+        quick_validate,
+        validate_setup,
     )
     HELICONE_VALIDATION_AVAILABLE = True
 except ImportError:
@@ -39,7 +39,7 @@ class TestHeliconeValidation:
         mock_get.return_value = mock_response
 
         result = validate_setup()
-        
+
         assert result is not None
         # Add specific assertions based on ValidationResult structure
 
@@ -50,7 +50,7 @@ class TestHeliconeValidation:
         mock_get.side_effect = Exception("Connection failed")
 
         result = validate_setup()
-        
+
         assert result is not None
         # Add specific assertions for failure cases
 

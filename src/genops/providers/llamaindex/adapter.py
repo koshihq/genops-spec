@@ -5,22 +5,21 @@ from __future__ import annotations
 import logging
 import time
 import uuid
-from typing import Any, Dict, List, Optional, Union, Callable
-from dataclasses import dataclass, asdict
 from contextlib import contextmanager
+from dataclasses import asdict, dataclass
+from typing import Any, Dict, List, Optional
 
-from genops.providers.base import BaseFrameworkProvider
 from opentelemetry import trace
 from opentelemetry.trace import Status, StatusCode
 
+from genops.providers.base import BaseFrameworkProvider
+
 from .error_handling import (
-    get_health_monitor,
-    graceful_degradation,
-    with_retry,
-    RetryConfig,
     CircuitBreakerOpenError,
+    GracefulDegradationError,
+    RetryConfig,
     RetryExhaustedError,
-    GracefulDegradationError
+    get_health_monitor,
 )
 
 logger = logging.getLogger(__name__)
@@ -28,12 +27,12 @@ tracer = trace.get_tracer(__name__)
 
 try:
     import llama_index
-    from llama_index.core.callbacks import BaseCallbackHandler, CallbackManager
     from llama_index.core import Settings
+    from llama_index.core.agent import BaseAgent
+    from llama_index.core.callbacks import BaseCallbackHandler, CallbackManager
     from llama_index.core.query_engine import BaseQueryEngine
     from llama_index.core.response import Response
     from llama_index.core.schema import NodeWithScore, QueryBundle
-    from llama_index.core.agent import BaseAgent
 
     HAS_LLAMAINDEX = True
 except ImportError:
@@ -45,7 +44,7 @@ except ImportError:
 @dataclass
 class LlamaIndexOperation:
     """Represents a single LlamaIndex operation for cost tracking."""
-    
+
     operation_id: str
     operation_type: str  # 'query', 'embed', 'retrieve', 'synthesize', 'agent_step'
     start_time: float
@@ -73,7 +72,7 @@ class LlamaIndexOperation:
 @dataclass
 class RAGPipelineMetrics:
     """Metrics for a complete RAG pipeline operation."""
-    
+
     query_id: str
     total_cost: float
     operations: List[LlamaIndexOperation]
@@ -98,7 +97,7 @@ class GenOpsLlamaIndexCallback(BaseCallbackHandler):
     def on_event_start(self, event_type: str, payload: Optional[Dict[str, Any]] = None, **kwargs) -> str:
         """Called when any LlamaIndex event starts."""
         event_id = str(uuid.uuid4())
-        
+
         operation = LlamaIndexOperation(
             operation_id=event_id,
             operation_type=event_type,
@@ -106,9 +105,9 @@ class GenOpsLlamaIndexCallback(BaseCallbackHandler):
             input_data=payload or {},
             governance_attributes=self.adapter.get_current_governance_context()
         )
-        
+
         self.operations[event_id] = operation
-        
+
         # Start telemetry span
         with tracer.start_as_current_span(f"llamaindex.{event_type}") as span:
             span.set_attributes({
@@ -117,7 +116,7 @@ class GenOpsLlamaIndexCallback(BaseCallbackHandler):
                 "genops.framework": "llamaindex",
                 **operation.governance_attributes
             })
-        
+
         return event_id
 
     def on_event_end(self, event_type: str, payload: Optional[Dict[str, Any]] = None, event_id: Optional[str] = None, **kwargs) -> None:
@@ -126,11 +125,11 @@ class GenOpsLlamaIndexCallback(BaseCallbackHandler):
             operation = self.operations[event_id]
             operation.end_time = time.time()
             operation.output_data = payload or {}
-            
+
             # Extract cost information if available
             if payload:
                 self._extract_cost_info(operation, payload)
-            
+
             # Record in cost aggregator if available
             if hasattr(self.adapter, 'cost_aggregator') and self.adapter.cost_aggregator:
                 self.adapter.cost_aggregator.add_llamaindex_operation(operation)
@@ -141,7 +140,7 @@ class GenOpsLlamaIndexCallback(BaseCallbackHandler):
             "prompts": prompts,
             "model_info": serialized
         })
-        
+
         # Extract provider and model information
         if event_id in self.operations:
             operation = self.operations[event_id]
@@ -150,9 +149,9 @@ class GenOpsLlamaIndexCallback(BaseCallbackHandler):
     def on_llm_end(self, response: Any, **kwargs) -> None:
         """Called when LLM processing ends."""
         # Find the most recent LLM operation
-        llm_ops = [op for op in self.operations.values() 
+        llm_ops = [op for op in self.operations.values()
                   if op.operation_type == "llm_call" and op.end_time is None]
-        
+
         if llm_ops:
             operation = llm_ops[-1]  # Most recent
             self.on_event_end("llm_call", {"response": response}, operation.operation_id)
@@ -166,9 +165,9 @@ class GenOpsLlamaIndexCallback(BaseCallbackHandler):
 
     def on_retrieve_end(self, nodes: List[NodeWithScore], **kwargs) -> None:
         """Called when retrieval ends."""
-        retrieve_ops = [op for op in self.operations.values() 
+        retrieve_ops = [op for op in self.operations.values()
                        if op.operation_type == "retrieve" and op.end_time is None]
-        
+
         if retrieve_ops:
             operation = retrieve_ops[-1]
             self.on_event_end("retrieve", {
@@ -182,7 +181,7 @@ class GenOpsLlamaIndexCallback(BaseCallbackHandler):
         if "usage" in payload:
             usage = payload["usage"]
             operation.tokens_consumed = usage.get("total_tokens", 0)
-            
+
         if "cost" in payload:
             operation.cost_usd = payload["cost"]
 
@@ -191,7 +190,7 @@ class GenOpsLlamaIndexCallback(BaseCallbackHandler):
         # Common provider detection patterns
         model_name = model_info.get("model_name", "").lower()
         class_name = model_info.get("class_name", "").lower()
-        
+
         if "openai" in model_name or "openai" in class_name:
             operation.provider = "openai"
             operation.model = model_info.get("model_name", "gpt-3.5-turbo")
@@ -237,28 +236,28 @@ class GenOpsLlamaIndexAdapter(BaseFrameworkProvider):
             **governance_defaults: Default governance attributes (team, project, etc.)
         """
         super().__init__()
-        
+
         if not HAS_LLAMAINDEX:
             raise ImportError(
                 "LlamaIndex not found. Install with: pip install llama-index>=0.10.0"
             )
-        
+
         self.telemetry_enabled = telemetry_enabled
         self.cost_tracking_enabled = cost_tracking_enabled
         self.debug = debug
         self.governance_defaults = governance_defaults
-        
+
         # Initialize callback handler
         self.callback_handler = GenOpsLlamaIndexCallback(self)
-        
+
         # Cost aggregator (will be injected)
         self.cost_aggregator = None
-        
+
         # Error handling and health monitoring
         self.health_monitor = get_health_monitor()
         self.retry_config = RetryConfig(max_retries=3, base_delay=1.0, max_delay=30.0)
         self.enable_graceful_degradation = governance_defaults.get("enable_graceful_degradation", True)
-        
+
         # Current operation context
         self._governance_context: Dict[str, Any] = {}
 
@@ -277,7 +276,7 @@ class GenOpsLlamaIndexAdapter(BaseFrameworkProvider):
             self._governance_context = old_context
 
     def instrument_query_engine(
-        self, 
+        self,
         query_engine: BaseQueryEngine,
         **governance_attrs
     ) -> BaseQueryEngine:
@@ -301,7 +300,7 @@ class GenOpsLlamaIndexAdapter(BaseFrameworkProvider):
                 query_engine.callback_manager = CallbackManager([self.callback_handler])
             else:
                 query_engine.callback_manager.handlers.append(self.callback_handler)
-        
+
         # Set governance context for this query engine
         with self.governance_context(**governance_attrs):
             return query_engine
@@ -356,10 +355,10 @@ class GenOpsLlamaIndexAdapter(BaseFrameworkProvider):
         with self.governance_context(**governance_attrs):
             # Instrument the query engine
             instrumented_engine = self.instrument_query_engine(query_engine, **governance_attrs)
-            
+
             # Get primary provider for error handling
             primary_provider = governance_attrs.get("provider", "primary")
-            
+
             # Execute query with telemetry and error handling
             with tracer.start_as_current_span("llamaindex.query") as span:
                 span.set_attributes({
@@ -368,57 +367,57 @@ class GenOpsLlamaIndexAdapter(BaseFrameworkProvider):
                     "genops.primary_provider": primary_provider,
                     **self.get_current_governance_context()
                 })
-                
+
                 def _execute_query():
                     """Internal query execution with error handling."""
                     return instrumented_engine.query(query)
-                
+
                 try:
                     # Use health monitor for error protection
                     response = self.health_monitor.call_with_protection(
                         primary_provider,
                         _execute_query
                     )
-                    
+
                     span.set_attribute("genops.success", True)
                     span.set_attribute("genops.provider_used", primary_provider)
-                    
+
                     if hasattr(response, 'response') and response.response:
                         span.set_attribute("genops.response_length", len(str(response.response)))
-                    
+
                     return response
-                    
+
                 except (CircuitBreakerOpenError, RetryExhaustedError) as e:
                     # Handle provider failures with graceful degradation
                     if self.enable_graceful_degradation and fallback_providers:
                         logger.warning(f"Primary provider {primary_provider} failed: {e}. Attempting graceful degradation.")
-                        
+
                         try:
                             fallback_response = self._handle_graceful_degradation(
                                 query_engine, query, primary_provider, fallback_providers, span
                             )
                             return fallback_response
-                            
+
                         except GracefulDegradationError as degradation_error:
                             span.record_exception(degradation_error)
                             span.set_status(Status(StatusCode.ERROR, f"All providers failed: {degradation_error}"))
                             logger.error(f"Graceful degradation failed: {degradation_error}")
                             raise
-                    
+
                     # No fallback available or disabled
                     span.record_exception(e)
                     span.set_status(Status(StatusCode.ERROR, str(e)))
                     span.set_attribute("genops.error_type", "provider_failure")
                     logger.error(f"Provider failure in LlamaIndex query: {e}")
                     raise
-                    
+
                 except Exception as e:
                     span.record_exception(e)
                     span.set_status(Status(StatusCode.ERROR, str(e)))
                     span.set_attribute("genops.error_type", "unknown")
                     logger.error(f"Unexpected error in LlamaIndex query: {e}")
                     raise
-    
+
     def _handle_graceful_degradation(
         self,
         query_engine: BaseQueryEngine,
@@ -429,50 +428,50 @@ class GenOpsLlamaIndexAdapter(BaseFrameworkProvider):
     ) -> Response:
         """Handle graceful degradation to fallback providers."""
         healthy_fallbacks = []
-        
+
         for provider in fallback_providers:
             if provider != failed_provider and provider in self.health_monitor.get_healthy_providers():
                 healthy_fallbacks.append(provider)
-        
+
         if not healthy_fallbacks:
             raise GracefulDegradationError("No healthy fallback providers available")
-        
+
         # Try fallback providers in order
         last_error = None
-        
+
         for fallback_provider in healthy_fallbacks:
             try:
                 logger.info(f"Attempting fallback to provider: {fallback_provider}")
                 span.add_event("fallback_attempt", {"provider": fallback_provider})
-                
+
                 def _fallback_query():
                     # In a full implementation, this might involve switching models/providers
                     # For now, we retry with the same engine but track the fallback
                     return query_engine.query(query)
-                
+
                 response = self.health_monitor.call_with_protection(
                     fallback_provider,
                     _fallback_query
                 )
-                
+
                 # Success with fallback provider
                 span.set_attribute("genops.success", True)
                 span.set_attribute("genops.provider_used", fallback_provider)
                 span.set_attribute("genops.fallback_used", True)
                 span.add_event("fallback_success", {"provider": fallback_provider})
-                
+
                 logger.info(f"Successfully failed over to provider: {fallback_provider}")
                 return response
-                
+
             except Exception as e:
                 last_error = e
                 span.add_event("fallback_failed", {"provider": fallback_provider, "error": str(e)})
                 logger.warning(f"Fallback provider {fallback_provider} failed: {e}")
                 continue
-        
+
         # All fallbacks failed
         raise GracefulDegradationError(f"All fallback providers failed. Last error: {last_error}")
-    
+
     def _handle_chat_graceful_degradation(
         self,
         agent: BaseAgent,
@@ -483,53 +482,53 @@ class GenOpsLlamaIndexAdapter(BaseFrameworkProvider):
     ) -> str:
         """Handle graceful degradation for agent chat interactions."""
         healthy_fallbacks = []
-        
+
         for provider in fallback_providers:
             if provider != failed_provider and provider in self.health_monitor.get_healthy_providers():
                 healthy_fallbacks.append(provider)
-        
+
         if not healthy_fallbacks:
             raise GracefulDegradationError("No healthy fallback providers available")
-        
+
         # Try fallback providers in order
         last_error = None
-        
+
         for fallback_provider in healthy_fallbacks:
             try:
                 logger.info(f"Attempting chat fallback to provider: {fallback_provider}")
                 span.add_event("fallback_attempt", {"provider": fallback_provider})
-                
+
                 def _fallback_chat():
                     # In a full implementation, this might involve switching models/providers
                     # For now, we retry with the same agent but track the fallback
                     return agent.chat(message)
-                
+
                 response = self.health_monitor.call_with_protection(
                     fallback_provider,
                     _fallback_chat
                 )
-                
+
                 # Success with fallback provider
                 span.set_attribute("genops.success", True)
                 span.set_attribute("genops.provider_used", fallback_provider)
                 span.set_attribute("genops.fallback_used", True)
                 span.add_event("fallback_success", {"provider": fallback_provider})
-                
+
                 logger.info(f"Successfully failed over to provider: {fallback_provider}")
-                
+
                 if hasattr(response, 'response'):
                     return str(response.response)
                 return str(response)
-                
+
             except Exception as e:
                 last_error = e
                 span.add_event("fallback_failed", {"provider": fallback_provider, "error": str(e)})
                 logger.warning(f"Fallback provider {fallback_provider} failed: {e}")
                 continue
-        
+
         # All fallbacks failed
         raise GracefulDegradationError(f"All chat fallback providers failed. Last error: {last_error}")
-    
+
     def get_system_health(self) -> Dict[str, Any]:
         """Get system health status for monitoring."""
         return self.health_monitor.get_system_health()
@@ -556,10 +555,10 @@ class GenOpsLlamaIndexAdapter(BaseFrameworkProvider):
         with self.governance_context(**governance_attrs):
             # Instrument the agent
             instrumented_agent = self.instrument_agent(agent, **governance_attrs)
-            
+
             # Get primary provider for error handling
             primary_provider = governance_attrs.get("provider", "primary")
-            
+
             # Execute chat with telemetry and error handling
             with tracer.start_as_current_span("llamaindex.chat") as span:
                 span.set_attributes({
@@ -568,54 +567,54 @@ class GenOpsLlamaIndexAdapter(BaseFrameworkProvider):
                     "genops.primary_provider": primary_provider,
                     **self.get_current_governance_context()
                 })
-                
+
                 def _execute_chat():
                     """Internal chat execution with error handling."""
                     return instrumented_agent.chat(message)
-                
+
                 try:
                     # Use health monitor for error protection
                     response = self.health_monitor.call_with_protection(
                         primary_provider,
                         _execute_chat
                     )
-                    
+
                     span.set_attribute("genops.success", True)
                     span.set_attribute("genops.provider_used", primary_provider)
-                    
+
                     if hasattr(response, 'response'):
                         response_str = str(response.response)
                         span.set_attribute("genops.response_length", len(response_str))
                         return response_str
-                    
+
                     response_str = str(response)
                     span.set_attribute("genops.response_length", len(response_str))
                     return response_str
-                    
+
                 except (CircuitBreakerOpenError, RetryExhaustedError) as e:
                     # Handle provider failures with graceful degradation
                     if self.enable_graceful_degradation and fallback_providers:
                         logger.warning(f"Primary provider {primary_provider} failed: {e}. Attempting graceful degradation.")
-                        
+
                         try:
                             fallback_response = self._handle_chat_graceful_degradation(
                                 agent, message, primary_provider, fallback_providers, span
                             )
                             return fallback_response
-                            
+
                         except GracefulDegradationError as degradation_error:
                             span.record_exception(degradation_error)
                             span.set_status(Status(StatusCode.ERROR, f"All providers failed: {degradation_error}"))
                             logger.error(f"Graceful degradation failed: {degradation_error}")
                             raise
-                    
+
                     # No fallback available or disabled
                     span.record_exception(e)
                     span.set_status(Status(StatusCode.ERROR, str(e)))
                     span.set_attribute("genops.error_type", "provider_failure")
                     logger.error(f"Provider failure in LlamaIndex chat: {e}")
                     raise
-                    
+
                 except Exception as e:
                     span.record_exception(e)
                     span.set_status(Status(StatusCode.ERROR, str(e)))
@@ -626,13 +625,13 @@ class GenOpsLlamaIndexAdapter(BaseFrameworkProvider):
     def get_operation_summary(self) -> Dict[str, Any]:
         """Get summary of all tracked operations."""
         operations = self.callback_handler.operations
-        
+
         total_cost = sum(op.cost_usd for op in operations.values() if op.cost_usd)
         total_tokens = sum(op.tokens_consumed for op in operations.values() if op.tokens_consumed)
-        
+
         providers = set(op.provider for op in operations.values() if op.provider)
         operation_types = set(op.operation_type for op in operations.values())
-        
+
         return {
             "total_operations": len(operations),
             "total_cost_usd": total_cost,
@@ -686,10 +685,10 @@ def auto_instrument():
     if not HAS_LLAMAINDEX:
         logger.warning("LlamaIndex not available for auto-instrumentation")
         return
-    
+
     # Create global adapter instance
     global_adapter = GenOpsLlamaIndexAdapter()
-    
+
     # Add global callback handler to Settings
     if not hasattr(Settings, 'callback_manager') or Settings.callback_manager is None:
         Settings.callback_manager = CallbackManager([global_adapter.callback_handler])
@@ -697,14 +696,14 @@ def auto_instrument():
         # Add to existing callback manager
         if global_adapter.callback_handler not in Settings.callback_manager.handlers:
             Settings.callback_manager.handlers.append(global_adapter.callback_handler)
-    
+
     logger.info("GenOps auto-instrumentation enabled for LlamaIndex")
 
 
 # Export main classes and functions
 __all__ = [
     "GenOpsLlamaIndexAdapter",
-    "GenOpsLlamaIndexCallback", 
+    "GenOpsLlamaIndexCallback",
     "LlamaIndexOperation",
     "RAGPipelineMetrics",
     "instrument_llamaindex",

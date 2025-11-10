@@ -17,15 +17,14 @@ Features:
     - Production deployment recommendations
 """
 
+import json
 import os
 import sys
-import json
-from typing import Dict, List, Any, Optional
-from dataclasses import dataclass, asdict
-from pathlib import Path
+from dataclasses import asdict, dataclass
+from typing import Any, Dict, List
 
 try:
-    from genops.providers.fireworks import GenOpsFireworksAdapter, FireworksModel
+    from genops.providers.fireworks import FireworksModel, GenOpsFireworksAdapter
     from genops.providers.fireworks_pricing import FireworksPricingCalculator
     from genops.providers.fireworks_validation import validate_fireworks_setup
 except ImportError as e:
@@ -41,50 +40,50 @@ class WizardConfig:
     team_name: str
     project_name: str
     environment: str
-    
+
     # API and authentication
     api_key_configured: bool
-    
+
     # Use case and requirements
     primary_use_case: str
     expected_daily_volume: int
     complexity_preference: str
-    
+
     # Budget and governance
     daily_budget_limit: float
     monthly_budget_limit: float
     governance_policy: str
     enable_cost_alerts: bool
-    
+
     # Model preferences
     recommended_models: List[str]
     fallback_models: List[str]
-    
+
     # Features enabled
     enable_batch_processing: bool
     enable_streaming: bool
     enable_multimodal: bool
-    
+
     def save_to_file(self, filepath: str):
         """Save configuration to JSON file."""
         with open(filepath, 'w') as f:
             json.dump(asdict(self), f, indent=2)
-    
+
     @classmethod
     def load_from_file(cls, filepath: str) -> 'WizardConfig':
         """Load configuration from JSON file."""
-        with open(filepath, 'r') as f:
+        with open(filepath) as f:
             data = json.load(f)
         return cls(**data)
 
 
 class InteractiveSetupWizard:
     """Interactive setup wizard for Fireworks AI integration."""
-    
+
     def __init__(self):
         self.pricing_calc = FireworksPricingCalculator()
         self.config = None
-        
+
     def welcome(self):
         """Welcome message and wizard introduction."""
         print("🧙‍♂️ Fireworks AI + GenOps Interactive Setup Wizard")
@@ -104,52 +103,52 @@ class InteractiveSetupWizard:
         print("• Enterprise compliance (SOC 2, GDPR, HIPAA)")
         print("• 50% cost savings with batch processing")
         print()
-        
+
         response = input("Ready to get started? (y/n): ").lower()
         if response != 'y':
             print("Come back anytime! 👋")
             sys.exit(0)
-    
+
     def collect_team_info(self) -> Dict[str, str]:
         """Collect team and project information."""
         print("\n" + "=" * 60)
         print("📋 Step 1: Team & Project Information")
         print("=" * 60)
-        
+
         print("\nFor cost attribution and governance, we'll set up your team identity:")
-        
+
         team_name = input("Team name (e.g., 'ml-engineering', 'product-team'): ").strip()
         if not team_name:
             team_name = "demo-team"
             print(f"Using default: {team_name}")
-        
+
         project_name = input("Project name (e.g., 'chat-bot', 'content-generation'): ").strip()
         if not project_name:
             project_name = "fireworks-integration"
             print(f"Using default: {project_name}")
-        
+
         environments = ["development", "staging", "production"]
         print(f"\nEnvironment options: {', '.join(environments)}")
         environment = input("Environment (default: development): ").strip()
         if environment not in environments:
             environment = "development"
             print(f"Using default: {environment}")
-        
+
         return {
             "team_name": team_name,
             "project_name": project_name,
             "environment": environment
         }
-    
+
     def setup_api_key(self) -> bool:
         """Guide API key setup and validation."""
         print("\n" + "=" * 60)
         print("🔑 Step 2: API Key Configuration")
         print("=" * 60)
-        
+
         if os.getenv("FIREWORKS_API_KEY"):
             print("✅ FIREWORKS_API_KEY is already configured!")
-            
+
             # Test the existing key
             print("🔍 Testing your API key...")
             try:
@@ -161,11 +160,11 @@ class InteractiveSetupWizard:
                     print("❌ API key validation failed")
                     print("Please check your key and try again")
                     return False
-                    
+
             except Exception as e:
                 print(f"❌ API validation error: {e}")
                 return False
-        
+
         print("🔗 To get started with Fireworks AI:")
         print("1. Visit: https://fireworks.ai/")
         print("2. Create an account (free $1 credit)")
@@ -174,16 +173,16 @@ class InteractiveSetupWizard:
         print()
         print("⚠️  Don't have your API key yet?")
         print("   You can continue setup and test later with: python setup_validation.py")
-        
+
         continue_anyway = input("\nContinue setup without API key? (y/n): ").lower()
         return continue_anyway == 'y'
-    
+
     def collect_use_case_info(self) -> Dict[str, Any]:
         """Collect information about intended use case."""
         print("\n" + "=" * 60)
         print("🎯 Step 3: Use Case & Requirements")
         print("=" * 60)
-        
+
         # Primary use case
         use_cases = {
             "1": ("chat", "Chat applications and conversational AI"),
@@ -194,15 +193,15 @@ class InteractiveSetupWizard:
             "6": ("embeddings", "Search, recommendations, and similarity matching"),
             "7": ("mixed", "Mixed workload with multiple use cases")
         }
-        
+
         print("\nWhat's your primary use case?")
         for key, (_, description) in use_cases.items():
             print(f"  {key}. {description}")
-        
+
         choice = input("\nSelect use case (1-7): ").strip()
         primary_use_case = use_cases.get(choice, ("mixed", "Mixed workload"))[0]
         print(f"Selected: {use_cases.get(choice, ('mixed', 'Mixed workload'))[1]}")
-        
+
         # Expected volume
         volumes = {
             "1": (100, "Light usage (≤100 operations/day)"),
@@ -211,15 +210,15 @@ class InteractiveSetupWizard:
             "4": (100000, "Enterprise volume (≤100K operations/day)"),
             "5": (1000000, "High-scale production (1M+ operations/day)")
         }
-        
+
         print("\nExpected daily volume:")
         for key, (_, description) in volumes.items():
             print(f"  {key}. {description}")
-        
+
         volume_choice = input("\nSelect volume (1-5): ").strip()
         expected_volume = volumes.get(volume_choice, (1000, "Moderate usage"))[0]
         print(f"Selected: {volumes.get(volume_choice, (1000, 'Moderate usage'))[1]}")
-        
+
         # Complexity preference
         complexity_options = {
             "1": ("speed", "Fastest inference (smaller models, <2s responses)"),
@@ -227,38 +226,38 @@ class InteractiveSetupWizard:
             "3": ("quality", "Best quality (larger models, detailed responses)"),
             "4": ("cost", "Most cost-effective (optimize for minimum cost)")
         }
-        
+
         print("\nWhat's most important to you?")
         for key, (_, description) in complexity_options.items():
             print(f"  {key}. {description}")
-        
+
         complexity_choice = input("\nSelect priority (1-4): ").strip()
         complexity_preference = complexity_options.get(complexity_choice, ("balanced", "Balanced"))[0]
         print(f"Selected: {complexity_options.get(complexity_choice, ('balanced', 'Balanced'))[1]}")
-        
+
         return {
             "primary_use_case": primary_use_case,
             "expected_daily_volume": expected_volume,
             "complexity_preference": complexity_preference
         }
-    
+
     def setup_budgets_governance(self, daily_volume: int) -> Dict[str, Any]:
         """Setup budgets and governance policies."""
         print("\n" + "=" * 60)
         print("💰 Step 4: Budget & Governance Setup")
         print("=" * 60)
-        
+
         # Estimate costs based on volume
         estimated_daily_cost = (daily_volume * 500 * 0.0002) / 1000  # Rough estimate
         suggested_daily_budget = estimated_daily_cost * 2  # 2x buffer
         suggested_monthly_budget = suggested_daily_budget * 30
-        
+
         print(f"\n📊 Cost Estimation (based on {daily_volume} operations/day):")
         print(f"   Estimated daily cost: ~${estimated_daily_cost:.2f}")
         print(f"   Suggested daily budget: ${suggested_daily_budget:.2f}")
         print(f"   Suggested monthly budget: ${suggested_monthly_budget:.2f}")
         print("   (Includes safety buffer for experimentation)")
-        
+
         # Daily budget
         daily_input = input(f"\nDaily budget limit (${suggested_daily_budget:.2f}): ").strip()
         try:
@@ -266,86 +265,86 @@ class InteractiveSetupWizard:
         except ValueError:
             daily_budget = suggested_daily_budget
             print(f"Using suggested: ${daily_budget:.2f}")
-        
-        # Monthly budget  
+
+        # Monthly budget
         monthly_input = input(f"Monthly budget limit (${daily_budget * 30:.2f}): ").strip()
         try:
             monthly_budget = float(monthly_input) if monthly_input else daily_budget * 30
         except ValueError:
             monthly_budget = daily_budget * 30
             print(f"Using calculated: ${monthly_budget:.2f}")
-        
+
         # Governance policy
         policies = {
             "1": ("advisory", "Advisory (warnings only, never blocks)"),
             "2": ("enforcing", "Enforcing (blocks operations at budget limits)"),
             "3": ("monitoring", "Monitoring only (track but no alerts)")
         }
-        
+
         print("\nGovernance policy:")
         for key, (_, description) in policies.items():
             print(f"  {key}. {description}")
-        
+
         policy_choice = input("\nSelect policy (1-3, default: advisory): ").strip()
         governance_policy = policies.get(policy_choice, ("advisory", "Advisory"))[0]
         print(f"Selected: {policies.get(policy_choice, ('advisory', 'Advisory'))[1]}")
-        
+
         # Cost alerts
         enable_alerts = input("\nEnable cost alerts? (Y/n): ").lower()
         enable_cost_alerts = enable_alerts != 'n'
-        
+
         return {
             "daily_budget_limit": daily_budget,
             "monthly_budget_limit": monthly_budget,
             "governance_policy": governance_policy,
             "enable_cost_alerts": enable_cost_alerts
         }
-    
+
     def recommend_models(self, use_case: str, volume: int, complexity: str) -> Dict[str, List[str]]:
         """Generate personalized model recommendations."""
         print("\n" + "=" * 60)
         print("🧠 Step 5: Personalized Model Recommendations")
         print("=" * 60)
-        
-        print(f"Based on your requirements:")
+
+        print("Based on your requirements:")
         print(f"• Use case: {use_case}")
         print(f"• Daily volume: {volume:,} operations")
         print(f"• Priority: {complexity}")
-        
+
         # Get recommendations from pricing calculator
         budget_per_operation = 0.001 if complexity == "cost" else 0.01
-        
+
         try:
             recommendation = self.pricing_calc.recommend_model(
                 task_complexity="simple" if use_case in ["chat", "content"] else "moderate",
                 budget_per_operation=budget_per_operation,
                 prefer_batch=volume > 1000
             )
-            
+
             if recommendation.recommended_model:
                 primary_model = recommendation.recommended_model
                 alternatives = recommendation.alternatives[:3]
-                
-                print(f"\n🎯 Primary recommendation:")
+
+                print("\n🎯 Primary recommendation:")
                 print(f"   {primary_model.split('/')[-1]}")
                 print(f"   Estimated cost: ${recommendation.estimated_cost:.6f} per operation")
                 print(f"   Reasoning: {recommendation.reasoning}")
-                
+
                 if alternatives:
-                    print(f"\n🔄 Alternative models:")
+                    print("\n🔄 Alternative models:")
                     for alt in alternatives:
                         alt_model = alt['model']
                         alt_cost = alt['cost']
                         print(f"   • {alt_model.split('/')[-1]} (${alt_cost:.6f})")
-                
+
                 return {
                     "recommended_models": [primary_model],
                     "fallback_models": [alt['model'] for alt in alternatives]
                 }
-            
+
         except Exception as e:
             print(f"⚠️  Could not generate recommendations: {e}")
-        
+
         # Fallback recommendations
         fallback_recommendations = {
             "chat": ["accounts/fireworks/models/llama-v3p1-8b-instruct"],
@@ -355,31 +354,31 @@ class InteractiveSetupWizard:
             "multimodal": ["accounts/fireworks/models/llama-v3p2-11b-vision-instruct"],
             "embeddings": ["accounts/fireworks/models/nomic-embed-text-v1p5"]
         }
-        
+
         recommended = fallback_recommendations.get(use_case, ["accounts/fireworks/models/llama-v3p1-8b-instruct"])
         fallbacks = ["accounts/fireworks/models/llama-v3p2-1b-instruct"]
-        
-        print(f"\n🎯 Recommended models:")
+
+        print("\n🎯 Recommended models:")
         for model in recommended:
             print(f"   • {model.split('/')[-1]}")
-        
+
         return {
             "recommended_models": recommended,
             "fallback_models": fallbacks
         }
-    
+
     def configure_features(self, use_case: str, volume: int) -> Dict[str, bool]:
         """Configure advanced features based on use case."""
         print("\n" + "=" * 60)
         print("⚡ Step 6: Advanced Features Configuration")
         print("=" * 60)
-        
+
         print("🔥 Fireworks AI Advanced Features:")
         print("• Batch processing: 50% cost savings for bulk operations")
         print("• Streaming responses: Real-time response generation")
         print("• Multimodal: Vision, audio, and document processing")
         print()
-        
+
         # Batch processing (auto-enable for high volume)
         if volume >= 1000:
             enable_batch = True
@@ -387,7 +386,7 @@ class InteractiveSetupWizard:
         else:
             batch_input = input("Enable batch processing? (y/N): ").lower()
             enable_batch = batch_input == 'y'
-        
+
         # Streaming (common for chat applications)
         if use_case in ["chat", "content"]:
             streaming_input = input("Enable streaming responses? (Y/n): ").lower()
@@ -395,7 +394,7 @@ class InteractiveSetupWizard:
         else:
             streaming_input = input("Enable streaming responses? (y/N): ").lower()
             enable_streaming = streaming_input == 'y'
-        
+
         # Multimodal (auto-enable if selected use case)
         if use_case == "multimodal":
             enable_multimodal = True
@@ -403,21 +402,21 @@ class InteractiveSetupWizard:
         else:
             multimodal_input = input("Enable multimodal capabilities? (y/N): ").lower()
             enable_multimodal = multimodal_input == 'y'
-        
+
         return {
             "enable_batch_processing": enable_batch,
             "enable_streaming": enable_streaming,
             "enable_multimodal": enable_multimodal
         }
-    
+
     def generate_sample_code(self, config: WizardConfig):
         """Generate personalized sample code."""
         print("\n" + "=" * 60)
         print("💻 Step 7: Your Personalized Code")
         print("=" * 60)
-        
+
         print("Generating code tailored to your configuration...")
-        
+
         # Basic setup code
         setup_code = f"""
 # Generated by Fireworks AI Setup Wizard
@@ -438,7 +437,7 @@ adapter = GenOpsFireworksAdapter(
 # Your recommended model
 recommended_model = FireworksModel.{config.recommended_models[0].split('/')[-1].upper().replace('-', '_')}
 """
-        
+
         # Use case specific code
         use_case_examples = {
             "chat": '''
@@ -496,32 +495,32 @@ def generate_code(description, language="python"):
     return result.response
 '''
         }
-        
+
         example_code = use_case_examples.get(config.primary_use_case, use_case_examples["chat"])
-        
+
         full_code = setup_code + example_code
-        
+
         # Save to file
         output_file = f"{config.team_name}_{config.project_name}_example.py"
         with open(output_file, 'w') as f:
             f.write(full_code)
-        
+
         print(f"✅ Sample code saved to: {output_file}")
         print("\n📝 Your personalized example:")
         print("─" * 40)
         print(example_code.strip())
         print("─" * 40)
-        
+
         return output_file
-    
+
     def save_configuration(self, config: WizardConfig):
         """Save wizard configuration for future use."""
         config_file = f"{config.team_name}_{config.project_name}_config.json"
         config.save_to_file(config_file)
-        
+
         print(f"\n💾 Configuration saved to: {config_file}")
         print("   You can load this later or share with your team")
-        
+
         # Generate .env file template
         env_file = f"{config.team_name}_{config.project_name}.env"
         env_content = f"""# Fireworks AI + GenOps Configuration
@@ -545,70 +544,70 @@ GENOPS_ENABLE_BATCH_PROCESSING={str(config.enable_batch_processing).lower()}
 GENOPS_ENABLE_STREAMING={str(config.enable_streaming).lower()}
 GENOPS_ENABLE_MULTIMODAL={str(config.enable_multimodal).lower()}
 """
-        
+
         with open(env_file, 'w') as f:
             f.write(env_content)
-        
+
         print(f"📄 Environment template saved to: {env_file}")
-        
+
         return config_file, env_file
-    
+
     def show_next_steps(self, config: WizardConfig, files_created: List[str]):
         """Show recommended next steps."""
         print("\n" + "=" * 60)
         print("🚀 Next Steps & Recommendations")
         print("=" * 60)
-        
+
         print("📁 Files created for you:")
         for file in files_created:
             print(f"   • {file}")
-        
-        print(f"\n✅ Immediate next steps:")
-        
+
+        print("\n✅ Immediate next steps:")
+
         if not config.api_key_configured:
             print("   1. 🔑 Set your FIREWORKS_API_KEY:")
             print("      export FIREWORKS_API_KEY='your-key-here'")
-            
+
         print("   2. 🧪 Test your setup:")
         print("      python setup_validation.py")
-        
+
         print("   3. ▶️  Run your personalized example:")
         print(f"      python {config.team_name}_{config.project_name}_example.py")
-        
+
         print("\n🎯 Explore more examples:")
         print("   • python basic_tracking.py - Simple operations with governance")
         print("   • python cost_optimization.py - Intelligent cost optimization")
         print("   • python advanced_features.py - Multimodal and streaming")
-        
+
         if config.expected_daily_volume > 1000:
             print("   • python production_patterns.py - Enterprise deployment patterns")
-        
+
         print("\n📚 Learn more:")
         print("   • Check docs/fireworks-quickstart.md for 5-minute tutorial")
         print("   • Read docs/integrations/fireworks.md for comprehensive guide")
-        
-        print(f"\n⚡ Expected benefits for your setup:")
+
+        print("\n⚡ Expected benefits for your setup:")
         if config.enable_batch_processing:
             print("   • 50% cost savings with batch processing")
         print("   • 4x faster inference with Fireattention optimization")
-        
+
         # Budget guidance
         monthly_estimate = config.expected_daily_volume * 500 * 0.0002 * 30 / 1000
         if monthly_estimate < config.monthly_budget_limit:
             buffer_percentage = ((config.monthly_budget_limit - monthly_estimate) / config.monthly_budget_limit) * 100
             print(f"   • ~{buffer_percentage:.0f}% budget buffer for experimentation")
-        
+
         print(f"   • Complete cost attribution for {config.team_name} team")
         print("   • Automatic governance and compliance tracking")
-        
+
         print("\n🎉 Welcome to Fireworks AI with GenOps governance!")
-    
+
     def run_wizard(self):
         """Run the complete interactive setup wizard."""
         try:
             # Welcome and introduction
             self.welcome()
-            
+
             # Collect information step by step
             team_info = self.collect_team_info()
             api_configured = self.setup_api_key()
@@ -616,14 +615,14 @@ GENOPS_ENABLE_MULTIMODAL={str(config.enable_multimodal).lower()}
             budget_info = self.setup_budgets_governance(use_case_info["expected_daily_volume"])
             model_info = self.recommend_models(
                 use_case_info["primary_use_case"],
-                use_case_info["expected_daily_volume"], 
+                use_case_info["expected_daily_volume"],
                 use_case_info["complexity_preference"]
             )
             features_info = self.configure_features(
                 use_case_info["primary_use_case"],
                 use_case_info["expected_daily_volume"]
             )
-            
+
             # Create configuration
             self.config = WizardConfig(
                 api_key_configured=api_configured,
@@ -633,17 +632,17 @@ GENOPS_ENABLE_MULTIMODAL={str(config.enable_multimodal).lower()}
                 **model_info,
                 **features_info
             )
-            
+
             # Generate personalized outputs
             sample_file = self.generate_sample_code(self.config)
             config_file, env_file = self.save_configuration(self.config)
-            
+
             # Show next steps
             files_created = [sample_file, config_file, env_file]
             self.show_next_steps(self.config, files_created)
-            
+
             return 0
-            
+
         except KeyboardInterrupt:
             print("\n\n⚠️ Setup wizard interrupted by user")
             print("Run the wizard again anytime: python interactive_setup_wizard.py")

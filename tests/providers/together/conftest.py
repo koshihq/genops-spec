@@ -6,12 +6,12 @@ Provides shared fixtures, test configuration, and utilities
 for comprehensive Together AI provider testing.
 """
 
-import pytest
 import os
 import sys
-from unittest.mock import Mock, patch, MagicMock
 from decimal import Decimal
-from typing import Dict, Any
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 # Add project root to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
@@ -19,7 +19,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 try:
     from src.genops.providers.together import GenOpsTogetherAdapter, TogetherModel
     from src.genops.providers.together_pricing import TogetherPricingCalculator
-    from src.genops.providers.together_validation import ValidationResult, ValidationError
+    from src.genops.providers.together_validation import (
+        ValidationError,
+        ValidationResult,
+    )
 except ImportError:
     # Skip all tests if Together AI provider is not available
     pytest.skip("Together AI provider not available", allow_module_level=True)
@@ -55,10 +58,10 @@ def mock_together_client(mock_together_response):
     """Fixture providing fully mocked Together client."""
     with patch('src.genops.providers.together.Together') as mock_together:
         client = MagicMock()
-        
+
         # Mock chat completions
         client.chat.completions.create.return_value = mock_together_response
-        
+
         # Mock models list
         client.models.list.return_value = MagicMock(data=[
             {"id": "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo", "object": "model"},
@@ -68,7 +71,7 @@ def mock_together_client(mock_together_response):
             {"id": "deepseek-ai/DeepSeek-Coder-V2-Instruct", "object": "model"},
             {"id": "Qwen/Qwen2.5-VL-72B-Instruct", "object": "model"}
         ])
-        
+
         mock_together.return_value = client
         yield client
 
@@ -150,7 +153,7 @@ def validation_failure_result():
                 remediation="Set TOGETHER_API_KEY environment variable with your API key"
             ),
             ValidationError(
-                code="DEPENDENCY_MISSING", 
+                code="DEPENDENCY_MISSING",
                 message="Together AI client library not installed",
                 remediation="Install with: pip install together"
             )
@@ -166,20 +169,20 @@ def clean_environment():
     """Auto-use fixture to ensure clean test environment."""
     # Store original environment
     original_env = os.environ.copy()
-    
+
     # Set up test environment variables if not present
     test_env_vars = {
         "GENOPS_TEAM": "test-team",
-        "GENOPS_PROJECT": "test-project", 
+        "GENOPS_PROJECT": "test-project",
         "GENOPS_ENVIRONMENT": "test"
     }
-    
+
     for key, value in test_env_vars.items():
         if key not in os.environ:
             os.environ[key] = value
-    
+
     yield
-    
+
     # Restore original environment
     os.environ.clear()
     os.environ.update(original_env)
@@ -205,7 +208,7 @@ def performance_test_data():
         "medium_message": [{"role": "user", "content": "Please explain machine learning in simple terms for a beginner audience."}],
         "large_message": [{"role": "user", "content": "Write a comprehensive analysis of artificial intelligence trends, including deep learning, natural language processing, computer vision, and their applications across various industries like healthcare, finance, automotive, and entertainment. Include both current developments and future predictions."}],
         "batch_messages": [
-            [{"role": "user", "content": f"Batch message {i}"}] 
+            [{"role": "user", "content": f"Batch message {i}"}]
             for i in range(50)
         ]
     }
@@ -273,14 +276,14 @@ def assert_valid_governance_result(result):
     assert hasattr(result, 'cost')
     assert hasattr(result, 'model_used')
     assert hasattr(result, 'governance_attributes')
-    
+
     assert result.response is not None
     assert result.tokens_used > 0
     assert isinstance(result.cost, Decimal)
     assert result.cost > 0
     assert result.model_used is not None
     assert isinstance(result.governance_attributes, dict)
-    
+
     # Check essential governance attributes
     required_attrs = ["team", "project", "environment"]
     for attr in required_attrs:
@@ -294,10 +297,10 @@ def assert_valid_cost_summary(summary):
         "daily_costs", "daily_budget_limit", "daily_budget_utilization",
         "governance_policy", "operations_count"
     ]
-    
+
     for key in required_keys:
         assert key in summary
-    
+
     assert isinstance(summary["daily_costs"], (int, float, Decimal))
     assert summary["daily_costs"] >= 0
     assert isinstance(summary["daily_budget_limit"], (int, float))
@@ -314,7 +317,7 @@ def assert_valid_pricing_calculation(cost, expected_min=0, expected_max=float('i
     assert isinstance(cost, Decimal)
     assert cost > 0
     assert expected_min <= float(cost) <= expected_max
-    
+
     # Cost should have reasonable precision (at least 6 decimal places)
     cost_str = str(cost)
     if '.' in cost_str:

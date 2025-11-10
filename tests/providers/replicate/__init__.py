@@ -45,7 +45,7 @@ MOCK_RESPONSES = {
     },
     "image_generation": {
         "content": ["https://example.com/generated_image.png"],
-        "model": "black-forest-labs/flux-schnell", 
+        "model": "black-forest-labs/flux-schnell",
         "images_generated": 1,
         "processing_time_ms": 3000
     },

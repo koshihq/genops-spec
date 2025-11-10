@@ -26,8 +26,7 @@ import sys
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Optional, Any, Tuple
-import json
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +34,7 @@ logger = logging.getLogger(__name__)
 class ValidationStatus(Enum):
     """Validation result status levels."""
     PASSED = "PASSED"
-    WARNING = "WARNING"  
+    WARNING = "WARNING"
     FAILED = "FAILED"
     SKIPPED = "SKIPPED"
 
@@ -72,13 +71,13 @@ class ValidationSummary:
     skipped_checks: int
     results: List[ValidationResult] = field(default_factory=list)
     total_execution_time_ms: float = 0.0
-    
+
     def add_result(self, result: ValidationResult):
         """Add a validation result to the summary."""
         self.results.append(result)
         self.total_checks += 1
         self.total_execution_time_ms += result.execution_time_ms
-        
+
         if result.status == ValidationStatus.PASSED:
             self.passed_checks += 1
         elif result.status == ValidationStatus.WARNING:
@@ -87,7 +86,7 @@ class ValidationSummary:
             self.failed_checks += 1
         elif result.status == ValidationStatus.SKIPPED:
             self.skipped_checks += 1
-            
+
         # Update overall status
         if self.failed_checks > 0:
             self.overall_status = ValidationStatus.FAILED
@@ -100,7 +99,7 @@ class ValidationSummary:
 def validate_dependencies() -> List[ValidationResult]:
     """Validate required dependencies are available."""
     results = []
-    
+
     # Check Python version
     start_time = time.time()
     python_version = sys.version_info
@@ -115,13 +114,13 @@ def validate_dependencies() -> List[ValidationResult]:
     else:
         results.append(ValidationResult(
             category=ValidationCategory.DEPENDENCIES,
-            check_name="python_version", 
+            check_name="python_version",
             status=ValidationStatus.FAILED,
             message=f"Python {python_version.major}.{python_version.minor} is too old",
             fix_suggestion="Upgrade to Python 3.8 or newer",
             execution_time_ms=(time.time() - start_time) * 1000
         ))
-    
+
     # Check OpenLLMetry availability
     start_time = time.time()
     try:
@@ -145,7 +144,7 @@ def validate_dependencies() -> List[ValidationResult]:
             fix_suggestion="Install with: pip install openllmetry",
             execution_time_ms=(time.time() - start_time) * 1000
         ))
-    
+
     # Check Traceloop SDK availability (optional)
     start_time = time.time()
     try:
@@ -166,7 +165,7 @@ def validate_dependencies() -> List[ValidationResult]:
             fix_suggestion="For commercial features: pip install traceloop-sdk",
             execution_time_ms=(time.time() - start_time) * 1000
         ))
-    
+
     # Check OpenTelemetry availability
     start_time = time.time()
     try:
@@ -188,7 +187,7 @@ def validate_dependencies() -> List[ValidationResult]:
             fix_suggestion="Install with: pip install opentelemetry-api opentelemetry-sdk",
             execution_time_ms=(time.time() - start_time) * 1000
         ))
-    
+
     # Check GenOps availability
     start_time = time.time()
     try:
@@ -210,26 +209,26 @@ def validate_dependencies() -> List[ValidationResult]:
             fix_suggestion="Install with: pip install genops[traceloop]",
             execution_time_ms=(time.time() - start_time) * 1000
         ))
-    
+
     return results
 
 
 def validate_configuration() -> List[ValidationResult]:
     """Validate configuration and environment variables."""
     results = []
-    
+
     # Check AI provider API keys
     providers = {
         "OpenAI": "OPENAI_API_KEY",
-        "Anthropic": "ANTHROPIC_API_KEY", 
+        "Anthropic": "ANTHROPIC_API_KEY",
         "Groq": "GROQ_API_KEY"
     }
-    
+
     provider_count = 0
     for provider_name, env_var in providers.items():
         start_time = time.time()
         api_key = os.getenv(env_var)
-        
+
         if api_key:
             provider_count += 1
             results.append(ValidationResult(
@@ -248,7 +247,7 @@ def validate_configuration() -> List[ValidationResult]:
                 fix_suggestion=f"Set {env_var} environment variable",
                 execution_time_ms=(time.time() - start_time) * 1000
             ))
-    
+
     # Check if at least one provider is configured
     start_time = time.time()
     if provider_count > 0:
@@ -269,12 +268,12 @@ def validate_configuration() -> List[ValidationResult]:
             fix_suggestion="Set at least one provider API key (OPENAI_API_KEY, ANTHROPIC_API_KEY, etc.)",
             execution_time_ms=(time.time() - start_time) * 1000
         ))
-    
+
     # Check Traceloop platform configuration (optional)
     start_time = time.time()
     traceloop_api_key = os.getenv('TRACELOOP_API_KEY')
     traceloop_base_url = os.getenv('TRACELOOP_BASE_URL', 'https://app.traceloop.com')
-    
+
     if traceloop_api_key:
         results.append(ValidationResult(
             category=ValidationCategory.CONFIGURATION,
@@ -293,12 +292,12 @@ def validate_configuration() -> List[ValidationResult]:
             fix_suggestion="For commercial features, set TRACELOOP_API_KEY",
             execution_time_ms=(time.time() - start_time) * 1000
         ))
-    
+
     # Check GenOps configuration
     start_time = time.time()
     genops_team = os.getenv('GENOPS_TEAM')
     genops_project = os.getenv('GENOPS_PROJECT')
-    
+
     if genops_team and genops_project:
         results.append(ValidationResult(
             category=ValidationCategory.CONFIGURATION,
@@ -317,28 +316,28 @@ def validate_configuration() -> List[ValidationResult]:
             fix_suggestion="Set GENOPS_TEAM and GENOPS_PROJECT environment variables",
             execution_time_ms=(time.time() - start_time) * 1000
         ))
-    
+
     return results
 
 
 def validate_connectivity() -> List[ValidationResult]:
     """Validate connectivity to external services."""
     results = []
-    
+
     # Test OpenAI connectivity (if configured)
     if os.getenv('OPENAI_API_KEY'):
         start_time = time.time()
         try:
             import openai
             client = openai.OpenAI()
-            
+
             # Simple test call
             response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[{"role": "user", "content": "Test"}],
                 max_tokens=1
             )
-            
+
             results.append(ValidationResult(
                 category=ValidationCategory.CONNECTIVITY,
                 check_name="openai_connectivity",
@@ -346,7 +345,7 @@ def validate_connectivity() -> List[ValidationResult]:
                 message="OpenAI API connectivity verified",
                 execution_time_ms=(time.time() - start_time) * 1000
             ))
-            
+
         except Exception as e:
             results.append(ValidationResult(
                 category=ValidationCategory.CONNECTIVITY,
@@ -357,21 +356,21 @@ def validate_connectivity() -> List[ValidationResult]:
                 fix_suggestion="Check API key and network connectivity",
                 execution_time_ms=(time.time() - start_time) * 1000
             ))
-    
+
     # Test Anthropic connectivity (if configured)
     if os.getenv('ANTHROPIC_API_KEY'):
         start_time = time.time()
         try:
             import anthropic
             client = anthropic.Anthropic()
-            
+
             # Simple test call
             response = client.messages.create(
                 model="claude-3-haiku-20240307",
                 messages=[{"role": "user", "content": "Test"}],
                 max_tokens=1
             )
-            
+
             results.append(ValidationResult(
                 category=ValidationCategory.CONNECTIVITY,
                 check_name="anthropic_connectivity",
@@ -379,7 +378,7 @@ def validate_connectivity() -> List[ValidationResult]:
                 message="Anthropic API connectivity verified",
                 execution_time_ms=(time.time() - start_time) * 1000
             ))
-            
+
         except Exception as e:
             results.append(ValidationResult(
                 category=ValidationCategory.CONNECTIVITY,
@@ -390,25 +389,25 @@ def validate_connectivity() -> List[ValidationResult]:
                 fix_suggestion="Check API key and network connectivity",
                 execution_time_ms=(time.time() - start_time) * 1000
             ))
-    
+
     return results
 
 
 def validate_governance() -> List[ValidationResult]:
     """Validate GenOps governance functionality."""
     results = []
-    
+
     # Test GenOps adapter creation
     start_time = time.time()
     try:
         from genops.providers.traceloop import instrument_traceloop
-        
+
         adapter = instrument_traceloop(
             team="validation-test",
             project="governance-check",
             environment="test"
         )
-        
+
         results.append(ValidationResult(
             category=ValidationCategory.GOVERNANCE,
             check_name="genops_adapter_creation",
@@ -416,7 +415,7 @@ def validate_governance() -> List[ValidationResult]:
             message="GenOps adapter created successfully",
             execution_time_ms=(time.time() - start_time) * 1000
         ))
-        
+
     except Exception as e:
         results.append(ValidationResult(
             category=ValidationCategory.GOVERNANCE,
@@ -427,12 +426,11 @@ def validate_governance() -> List[ValidationResult]:
             fix_suggestion="Check GenOps installation and configuration",
             execution_time_ms=(time.time() - start_time) * 1000
         ))
-    
+
     # Test auto-instrumentation
     start_time = time.time()
     try:
-        from genops.providers.traceloop import auto_instrument
-        
+
         # Test auto-instrumentation (non-destructive)
         results.append(ValidationResult(
             category=ValidationCategory.GOVERNANCE,
@@ -441,7 +439,7 @@ def validate_governance() -> List[ValidationResult]:
             message="Auto-instrumentation functionality available",
             execution_time_ms=(time.time() - start_time) * 1000
         ))
-        
+
     except Exception as e:
         results.append(ValidationResult(
             category=ValidationCategory.GOVERNANCE,
@@ -452,24 +450,24 @@ def validate_governance() -> List[ValidationResult]:
             fix_suggestion="Check OpenLLMetry installation and compatibility",
             execution_time_ms=(time.time() - start_time) * 1000
         ))
-    
+
     return results
 
 
 def validate_performance() -> List[ValidationResult]:
     """Validate performance baseline."""
     results = []
-    
+
     # Test governance overhead
     start_time = time.time()
     try:
         from genops.providers.traceloop import instrument_traceloop
-        
+
         adapter = instrument_traceloop(
             team="perf-test",
             project="baseline"
         )
-        
+
         # Measure governance overhead
         governance_start = time.time()
         with adapter.track_operation(
@@ -479,9 +477,9 @@ def validate_performance() -> List[ValidationResult]:
             # Simulate minimal operation
             time.sleep(0.001)
             span.update_cost(0.001)
-            
+
         governance_time = (time.time() - governance_start) * 1000
-        
+
         if governance_time < 50:  # Less than 50ms overhead
             results.append(ValidationResult(
                 category=ValidationCategory.PERFORMANCE,
@@ -501,7 +499,7 @@ def validate_performance() -> List[ValidationResult]:
                 fix_suggestion="Check system performance and configuration",
                 execution_time_ms=(time.time() - start_time) * 1000
             ))
-            
+
     except Exception as e:
         results.append(ValidationResult(
             category=ValidationCategory.PERFORMANCE,
@@ -511,7 +509,7 @@ def validate_performance() -> List[ValidationResult]:
             details={"error": str(e)},
             execution_time_ms=(time.time() - start_time) * 1000
         ))
-    
+
     return results
 
 
@@ -537,31 +535,31 @@ def validate_setup(
         failed_checks=0,
         skipped_checks=0
     )
-    
+
     # Run all validation categories
     all_results = []
-    
+
     # Dependencies validation (always run)
     all_results.extend(validate_dependencies())
-    
+
     # Configuration validation (always run)
     all_results.extend(validate_configuration())
-    
+
     # Connectivity validation (optional)
     if include_connectivity_tests:
         all_results.extend(validate_connectivity())
-    
+
     # Governance validation (always run)
     all_results.extend(validate_governance())
-    
+
     # Performance validation (optional)
     if include_performance_tests:
         all_results.extend(validate_performance())
-    
+
     # Add all results to summary
     for result in all_results:
         summary.add_result(result)
-    
+
     return summary
 
 
@@ -576,7 +574,7 @@ def print_validation_result(summary: ValidationSummary, detailed: bool = False):
     # Header
     print("\n🔍 Traceloop + OpenLLMetry + GenOps Validation Results")
     print("=" * 55)
-    
+
     # Overall status
     status_symbols = {
         ValidationStatus.PASSED: "✅",
@@ -584,19 +582,19 @@ def print_validation_result(summary: ValidationSummary, detailed: bool = False):
         ValidationStatus.FAILED: "❌",
         ValidationStatus.SKIPPED: "⏸️"
     }
-    
+
     symbol = status_symbols.get(summary.overall_status, "❓")
     print(f"\n{symbol} Overall Status: {summary.overall_status.value}")
-    
+
     # Summary stats
-    print(f"\n📊 Check Summary:")
+    print("\n📊 Check Summary:")
     print(f"   Total checks: {summary.total_checks}")
     print(f"   ✅ Passed: {summary.passed_checks}")
     print(f"   ⚠️  Warnings: {summary.warning_checks}")
     print(f"   ❌ Failed: {summary.failed_checks}")
     print(f"   ⏸️  Skipped: {summary.skipped_checks}")
     print(f"   ⏱️  Total time: {summary.total_execution_time_ms:.1f}ms")
-    
+
     # Results by category
     if detailed:
         categories = {}
@@ -605,39 +603,39 @@ def print_validation_result(summary: ValidationSummary, detailed: bool = False):
             if category not in categories:
                 categories[category] = []
             categories[category].append(result)
-        
+
         for category_name, results in categories.items():
             print(f"\n📋 {category_name.title()} Checks:")
             print("-" * 30)
-            
+
             for result in results:
                 symbol = status_symbols.get(result.status, "❓")
                 print(f"   {symbol} {result.check_name}: {result.message}")
-                
+
                 if result.status == ValidationStatus.FAILED and result.fix_suggestion:
                     print(f"      💡 Fix: {result.fix_suggestion}")
-                
+
                 if result.details and len(str(result.details)) < 100:
                     print(f"      ℹ️  Details: {result.details}")
-                    
+
                 if detailed and result.execution_time_ms > 10:
                     print(f"      ⏱️  Time: {result.execution_time_ms:.1f}ms")
-    
+
     # Next steps
     if summary.overall_status == ValidationStatus.PASSED:
-        print(f"\n🎉 Validation Complete - Ready to use!")
+        print("\n🎉 Validation Complete - Ready to use!")
         print("   Next steps:")
         print("   • Run example scripts to see governance in action")
         print("   • Configure team and project settings")
         print("   • Explore advanced features and commercial platform")
     elif summary.overall_status == ValidationStatus.WARNING:
-        print(f"\n⚠️  Validation Complete with Warnings")
+        print("\n⚠️  Validation Complete with Warnings")
         print("   You can proceed, but some features may not be available.")
         print("   Review warnings above and apply suggested fixes.")
     else:
-        print(f"\n❌ Validation Failed")
+        print("\n❌ Validation Failed")
         print("   Please fix the failed checks above before proceeding.")
-    
+
     print()
 
 

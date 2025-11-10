@@ -6,20 +6,18 @@ Tests cover core adapter functionality, context management, governance patterns,
 and error handling scenarios as required by CLAUDE.md standards.
 """
 
-import pytest
 import time
 from decimal import Decimal
-from unittest.mock import Mock, MagicMock, patch, call
-from typing import Dict, Any
+from unittest.mock import Mock, patch
+
+import pytest
 
 # Core test imports
 from genops.providers.haystack_adapter import (
+    GenOpsComponentMixin,
     GenOpsHaystackAdapter,
     HaystackComponentResult,
     HaystackPipelineResult,
-    HaystackSessionContext,
-    HaystackPipelineContext,
-    GenOpsComponentMixin
 )
 
 
@@ -29,7 +27,7 @@ class TestGenOpsHaystackAdapter:
     def test_adapter_initialization_with_defaults(self):
         """Test adapter creates with default values."""
         adapter = GenOpsHaystackAdapter(team="test-team", project="test-project")
-        
+
         assert adapter.team == "test-team"
         assert adapter.project == "test-project"
         assert adapter.environment == "development"
@@ -46,7 +44,7 @@ class TestGenOpsHaystackAdapter:
             governance_policy="enforcing",
             monthly_budget_limit=5000.0
         )
-        
+
         assert adapter.team == "custom-team"
         assert adapter.project == "custom-project"
         assert adapter.environment == "production"
@@ -58,7 +56,7 @@ class TestGenOpsHaystackAdapter:
         """Test adapter rejects invalid governance policy."""
         with pytest.raises(ValueError, match="Invalid governance policy"):
             GenOpsHaystackAdapter(
-                team="test-team", 
+                team="test-team",
                 project="test-project",
                 governance_policy="invalid-policy"
             )
@@ -101,7 +99,7 @@ class TestHaystackPipelineContext:
     def test_pipeline_context_creation(self, adapter):
         """Test pipeline context manager creation."""
         context = adapter.track_pipeline("test-pipeline")
-        
+
         assert context.pipeline_name == "test-pipeline"
         assert context.customer_id is None
         assert context.use_case is None
@@ -115,7 +113,7 @@ class TestHaystackPipelineContext:
             use_case="document-qa",
             feature="rag-system"
         )
-        
+
         assert context.pipeline_name == "test-pipeline"
         assert context.customer_id == "customer-123"
         assert context.use_case == "document-qa"
@@ -127,7 +125,7 @@ class TestHaystackPipelineContext:
             assert context.pipeline_id is not None
             assert isinstance(context.pipeline_id, str)
             assert len(context.pipeline_id) > 0
-            
+
             # Verify context is tracking
             assert hasattr(context, 'start_time')
             assert context.start_time is not None
@@ -144,9 +142,9 @@ class TestHaystackPipelineContext:
                 provider_name="OpenAI",
                 model_name="gpt-3.5-turbo"
             )
-            
+
             context.add_component_result(component_result)
-            
+
             assert len(context.component_results) == 1
             assert context.component_results[0].component_name == "test-component"
 
@@ -156,12 +154,12 @@ class TestHaystackPipelineContext:
             # Add mock component results
             context.add_component_result(HaystackComponentResult(
                 component_name="component1",
-                component_type="Generator", 
+                component_type="Generator",
                 execution_time_seconds=1.0,
                 cost=Decimal("0.003"),
                 provider_name="OpenAI"
             ))
-            
+
             context.add_component_result(HaystackComponentResult(
                 component_name="component2",
                 component_type="Retriever",
@@ -169,7 +167,7 @@ class TestHaystackPipelineContext:
                 cost=Decimal("0.002"),
                 provider_name="OpenAI"
             ))
-            
+
         metrics = context.get_metrics()
         assert metrics.total_cost == Decimal("0.005")
         assert metrics.total_components == 2
@@ -191,7 +189,7 @@ class TestHaystackPipelineContext:
                 raise ValueError("Test exception")
         except ValueError:
             pass  # Expected exception
-        
+
         # Context should still have metrics available
         metrics = context.get_metrics()
         assert metrics.total_cost == Decimal("0.003")
@@ -208,7 +206,7 @@ class TestHaystackSessionContext:
     def test_session_context_creation(self, adapter):
         """Test session context manager creation."""
         session = adapter.track_session("test-session")
-        
+
         assert session.session_name == "test-session"
         assert session.customer_id is None
         assert session.use_case is None
@@ -221,7 +219,7 @@ class TestHaystackSessionContext:
             customer_id="customer-456",
             use_case="multi-pipeline-analysis"
         )
-        
+
         assert session.session_name == "test-session"
         assert session.customer_id == "customer-456"
         assert session.use_case == "multi-pipeline-analysis"
@@ -245,9 +243,9 @@ class TestHaystackSessionContext:
                     cost=Decimal("0.005"),
                     provider_name="OpenAI"
                 ))
-            
+
             session.add_pipeline_result(p1.get_metrics())
-            
+
             # Track second pipeline
             with adapter.track_pipeline("pipeline2") as p2:
                 p2.add_component_result(HaystackComponentResult(
@@ -257,9 +255,9 @@ class TestHaystackSessionContext:
                     cost=Decimal("0.002"),
                     provider_name="Anthropic"
                 ))
-            
+
             session.add_pipeline_result(p2.get_metrics())
-            
+
             assert session.total_pipelines == 2
             assert session.total_cost == Decimal("0.007")
 
@@ -276,7 +274,7 @@ class TestHaystackComponentResult:
             cost=Decimal("0.01"),
             provider_name="OpenAI"
         )
-        
+
         assert result.component_name == "test-generator"
         assert result.component_type == "Generator"
         assert result.execution_time_seconds == 2.5
@@ -287,7 +285,7 @@ class TestHaystackComponentResult:
         """Test component result with optional fields."""
         result = HaystackComponentResult(
             component_name="test-generator",
-            component_type="Generator", 
+            component_type="Generator",
             execution_time_seconds=2.5,
             cost=Decimal("0.01"),
             provider_name="OpenAI",
@@ -296,7 +294,7 @@ class TestHaystackComponentResult:
             success=True,
             error_message=None
         )
-        
+
         assert result.model_name == "gpt-4"
         assert result.tokens_used == 150
         assert result.success is True
@@ -313,7 +311,7 @@ class TestHaystackComponentResult:
             success=False,
             error_message="Rate limit exceeded"
         )
-        
+
         assert result.success is False
         assert result.error_message == "Rate limit exceeded"
 
@@ -331,7 +329,7 @@ class TestHaystackPipelineResult:
             cost_by_provider={"OpenAI": Decimal("0.01"), "Anthropic": Decimal("0.005")},
             cost_by_component={"gen1": Decimal("0.01"), "ret1": Decimal("0.005")}
         )
-        
+
         assert result.pipeline_name == "test-pipeline"
         assert result.total_cost == Decimal("0.015")
         assert result.total_components == 3
@@ -349,7 +347,7 @@ class TestHaystackPipelineResult:
             cost_by_provider={"OpenAI": Decimal("0.015")},
             cost_by_component={"generator": Decimal("0.012"), "retriever": Decimal("0.003")}
         )
-        
+
         assert result.most_expensive_component == "generator"
 
     def test_pipeline_result_empty_components(self):
@@ -362,7 +360,7 @@ class TestHaystackPipelineResult:
             cost_by_provider={},
             cost_by_component={}
         )
-        
+
         assert result.most_expensive_component is None
 
 
@@ -376,9 +374,9 @@ class TestGenOpsComponentMixin:
             def __init__(self):
                 super().__init__()
                 self.component_config = {}
-        
+
         component = MockHaystackComponent()
-        
+
         assert hasattr(component, '_genops_adapter')
         assert hasattr(component, 'set_genops_adapter')
         assert hasattr(component, 'track_execution')
@@ -389,10 +387,10 @@ class TestGenOpsComponentMixin:
             def __init__(self):
                 super().__init__()
                 self.component_config = {}
-        
+
         component = MockHaystackComponent()
         adapter = GenOpsHaystackAdapter(team="test", project="test")
-        
+
         component.set_genops_adapter(adapter)
         assert component._genops_adapter == adapter
 
@@ -402,17 +400,17 @@ class TestGenOpsComponentMixin:
             def __init__(self):
                 super().__init__()
                 self.component_config = {}
-            
+
             def run(self, **kwargs):
                 with self.track_execution("MockComponent") as context:
                     # Simulate component execution
                     time.sleep(0.1)
                     return {"result": "test"}
-        
+
         component = MockHaystackComponent()
         adapter = GenOpsHaystackAdapter(team="test", project="test")
         component.set_genops_adapter(adapter)
-        
+
         result = component.run(test_input="value")
         assert result["result"] == "test"
 
@@ -424,14 +422,14 @@ class TestAdapterBudgetEnforcement:
         """Test adapter warns about budget in advisory mode."""
         adapter = GenOpsHaystackAdapter(
             team="test-team",
-            project="test-project", 
+            project="test-project",
             daily_budget_limit=0.01,  # Very low limit
             governance_policy="advisory"
         )
-        
+
         # Mock cost aggregator to report high costs
         adapter.cost_aggregator.get_daily_costs = Mock(return_value=Decimal("0.015"))
-        
+
         # Should not raise exception in advisory mode
         with adapter.track_pipeline("test-pipeline") as context:
             context.add_component_result(HaystackComponentResult(
@@ -450,10 +448,10 @@ class TestAdapterBudgetEnforcement:
             daily_budget_limit=0.01,  # Very low limit
             governance_policy="enforcing"
         )
-        
+
         # Mock cost aggregator to report high costs
         adapter.cost_aggregator.get_daily_costs = Mock(return_value=Decimal("0.015"))
-        
+
         # Should raise exception in enforcing mode
         with pytest.raises(RuntimeError, match="Daily budget limit exceeded"):
             with adapter.track_pipeline("test-pipeline") as context:
@@ -477,12 +475,12 @@ class TestAdapterTelemetryIntegration:
         mock_trace.get_tracer.return_value = mock_tracer
         mock_tracer.start_as_current_span.return_value.__enter__ = Mock(return_value=mock_span)
         mock_tracer.start_as_current_span.return_value.__exit__ = Mock(return_value=None)
-        
+
         adapter = GenOpsHaystackAdapter(team="test-team", project="test-project")
-        
+
         with adapter.track_pipeline("test-pipeline"):
             pass
-        
+
         # Verify telemetry spans were created
         mock_trace.get_tracer.assert_called()
         mock_tracer.start_as_current_span.assert_called()
@@ -495,16 +493,16 @@ class TestAdapterTelemetryIntegration:
         mock_trace.get_tracer.return_value = mock_tracer
         mock_tracer.start_as_current_span.return_value.__enter__ = Mock(return_value=mock_span)
         mock_tracer.start_as_current_span.return_value.__exit__ = Mock(return_value=None)
-        
+
         adapter = GenOpsHaystackAdapter(
             team="test-team",
             project="test-project",
             environment="production"
         )
-        
+
         with adapter.track_pipeline("test-pipeline", customer_id="cust-123"):
             pass
-        
+
         # Verify governance attributes were set
         mock_span.set_attribute.assert_any_call("genops.team", "test-team")
         mock_span.set_attribute.assert_any_call("genops.project", "test-project")
@@ -524,10 +522,10 @@ class TestAdapterErrorHandling:
     def test_adapter_handles_cost_aggregator_failures(self):
         """Test adapter handles cost aggregator failures."""
         adapter = GenOpsHaystackAdapter(team="test", project="test")
-        
+
         # Mock cost aggregator to raise exception
         adapter.cost_aggregator.add_component_cost = Mock(side_effect=Exception("Cost calc failed"))
-        
+
         # Should not crash pipeline execution
         with adapter.track_pipeline("test-pipeline") as context:
             context.add_component_result(HaystackComponentResult(
@@ -541,10 +539,10 @@ class TestAdapterErrorHandling:
     def test_adapter_handles_monitor_failures(self):
         """Test adapter handles monitor failures."""
         adapter = GenOpsHaystackAdapter(team="test", project="test")
-        
+
         # Mock monitor to raise exception
         adapter.monitor.start_pipeline_execution = Mock(side_effect=Exception("Monitor failed"))
-        
+
         # Should not crash pipeline execution
         with adapter.track_pipeline("test-pipeline"):
             pass
@@ -552,7 +550,7 @@ class TestAdapterErrorHandling:
     def test_adapter_context_manager_cleanup_on_exception(self):
         """Test adapter cleans up properly on exception."""
         adapter = GenOpsHaystackAdapter(team="test", project="test")
-        
+
         try:
             with adapter.track_pipeline("test-pipeline") as context:
                 # Add some results
@@ -566,7 +564,7 @@ class TestAdapterErrorHandling:
                 raise ValueError("Test exception")
         except ValueError:
             pass
-        
+
         # Context should still be accessible and have results
         metrics = context.get_metrics()
         assert metrics.total_cost == Decimal("0.005")
