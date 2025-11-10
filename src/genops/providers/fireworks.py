@@ -36,6 +36,7 @@ from genops.core.telemetry import GenOpsTelemetry
 from .fireworks_pricing import FireworksPricingCalculator
 
 logger = logging.getLogger(__name__)
+# CodeQL fix verification - trigger re-analysis
 
 # Optional Fireworks AI dependencies
 try:
