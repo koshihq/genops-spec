@@ -32,12 +32,66 @@ Features:
 """
 
 import logging
+import sys
 from typing import Any
 
 logger = logging.getLogger(__name__)
 
 # Lazy import registry to avoid circular dependencies
 _import_cache = {}
+
+# Sentinel class for lazy-loaded symbols (satisfies static analysis while enabling lazy loading)
+class _LazyImportSentinel:
+    """Sentinel class indicating a symbol should be lazy-loaded."""
+    def __init__(self, name):
+        self.name = name
+    def __repr__(self):
+        return f"<LazyImport: {self.name}>"
+
+# Placeholder definitions for exported symbols (satisfies static analysis while maintaining lazy loading)
+# These sentinels will be replaced by actual imports when accessed
+
+# Core classes
+GenOpsHaystackAdapter = _LazyImportSentinel("GenOpsHaystackAdapter")
+HaystackMonitor = _LazyImportSentinel("HaystackMonitor")
+HaystackCostAggregator = _LazyImportSentinel("HaystackCostAggregator")
+
+# Data classes
+HaystackComponentResult = _LazyImportSentinel("HaystackComponentResult")
+HaystackPipelineResult = _LazyImportSentinel("HaystackPipelineResult")
+HaystackSessionContext = _LazyImportSentinel("HaystackSessionContext")
+ComponentExecutionMetrics = _LazyImportSentinel("ComponentExecutionMetrics")
+PipelineExecutionMetrics = _LazyImportSentinel("PipelineExecutionMetrics")
+RAGWorkflowMetrics = _LazyImportSentinel("RAGWorkflowMetrics")
+AgentWorkflowMetrics = _LazyImportSentinel("AgentWorkflowMetrics")
+ComponentCostEntry = _LazyImportSentinel("ComponentCostEntry")
+CostAnalysisResult = _LazyImportSentinel("CostAnalysisResult")
+ProviderCostSummary = _LazyImportSentinel("ProviderCostSummary")
+CostOptimizationRecommendation = _LazyImportSentinel("CostOptimizationRecommendation")
+
+# Auto-instrumentation
+auto_instrument = _LazyImportSentinel("auto_instrument")
+disable_auto_instrumentation = _LazyImportSentinel("disable_auto_instrumentation")
+configure_auto_instrumentation = _LazyImportSentinel("configure_auto_instrumentation")
+is_instrumented = _LazyImportSentinel("is_instrumented")
+TemporaryInstrumentation = _LazyImportSentinel("TemporaryInstrumentation")
+
+# Validation functions
+validate_haystack_setup = _LazyImportSentinel("validate_haystack_setup")
+print_validation_result = _LazyImportSentinel("print_validation_result")
+ValidationResult = _LazyImportSentinel("ValidationResult")
+ValidationIssue = _LazyImportSentinel("ValidationIssue")
+
+# Monitoring functions
+get_current_adapter = _LazyImportSentinel("get_current_adapter")
+get_current_monitor = _LazyImportSentinel("get_current_monitor")
+get_cost_summary = _LazyImportSentinel("get_cost_summary")
+get_execution_metrics = _LazyImportSentinel("get_execution_metrics")
+get_instrumentation_stats = _LazyImportSentinel("get_instrumentation_stats")
+
+# Mixins and utilities
+GenOpsComponentMixin = _LazyImportSentinel("GenOpsComponentMixin")
+ProviderType = _LazyImportSentinel("ProviderType")
 
 # Check for Haystack availability
 try:
@@ -320,6 +374,28 @@ def get_agent_insights(monitor: 'HaystackMonitor', pipeline_id: str) -> dict:
         "cost_by_tool": {k: float(v) for k, v in agent_metrics.cost_by_tool.items()}
     }
 
+
+# Custom module type to handle lazy loading
+class LazyModule(type(sys.modules[__name__])):
+    """Custom module type that handles lazy loading sentinels."""
+    
+    def __getattribute__(self, name):
+        """Override attribute access to handle lazy loading sentinels."""
+        # Get the attribute using the default behavior
+        value = super().__getattribute__(name)
+        
+        # If it's a sentinel, perform the lazy loading
+        if isinstance(value, _LazyImportSentinel):
+            # Use the module's __getattr__ to get the actual value
+            actual_value = self.__getattr__(name)
+            # Update the module's dict to avoid repeated lazy loading
+            setattr(self, name, actual_value)
+            return actual_value
+        
+        return value
+
+# Apply the custom module type to this module
+sys.modules[__name__].__class__ = LazyModule
 
 # Lazy loading implementation to avoid circular imports
 def __getattr__(name: str) -> Any:
