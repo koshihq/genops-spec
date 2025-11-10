@@ -200,6 +200,34 @@ Local Models: $0.00 (3% of total)
 
 ---
 
+## 🌟 Featured Integration: Haystack AI
+
+**Comprehensive RAG & Agent Workflow Governance** - Our most complete integration with enterprise-ready patterns.
+
+```python
+# Zero-code setup for existing Haystack pipelines
+from genops.providers.haystack import auto_instrument
+auto_instrument(team="ai-research", project="rag-system")
+
+# Your existing code works unchanged - governance added automatically!
+pipeline = Pipeline()
+pipeline.add_component("retriever", BM25Retriever(...))
+pipeline.add_component("llm", OpenAIGenerator(...))
+result = pipeline.run({"query": "What is RAG?"})
+
+# ✅ Automatic cost tracking, budget controls, performance monitoring
+```
+
+**What makes this special:**
+- **🎯 Specialized patterns**: RAG workflows, agent systems, multi-provider optimization
+- **📚 Complete documentation**: [2,900+ line integration guide](docs/integrations/haystack.md) with 7 production-ready examples
+- **⚡ 5-minute setup**: From zero to full governance in under 5 minutes
+- **🏗️ Production-ready**: Enterprise deployment patterns, monitoring, scaling strategies
+
+**[→ Try the 5-minute Haystack quickstart](docs/integrations/haystack.md)** | **[📊 Browse 7 examples](examples/haystack/)**
+
+---
+
 ## 🔧 How Teams Use GenOps Framework
 
 **Individual Developer Pattern**
@@ -232,6 +260,7 @@ As governance needs grow beyond what the framework can handle alone, teams typic
 - ✅ [Replicate](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/replicate) (<a href="https://replicate.com/" target="_blank">↗</a>)
 - ✅ [LangChain](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/langchain) (<a href="https://python.langchain.com/" target="_blank">↗</a>)
 - ✅ [LlamaIndex](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/llamaindex) (<a href="https://www.llamaindex.ai/" target="_blank">↗</a>)
+- ✅ [Haystack AI](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/integrations/haystack.md) (<a href="https://haystack.deepset.ai/" target="_blank">↗</a>) - Complete RAG & agent workflow governance
 - ✅ [Ollama](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/ollama) (<a href="https://ollama.com/" target="_blank">↗</a>)
 - ✅ [Cohere](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/cohere) (<a href="https://cohere.com/" target="_blank">↗</a>)
 - ✅ [Mistral](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/mistral) (<a href="https://mistral.ai/" target="_blank">↗</a>)
@@ -245,7 +274,6 @@ As governance needs grow beyond what the framework can handle alone, teams typic
 - ✅ [Perplexity AI](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/perplexity) (<a href="https://www.perplexity.ai/" target="_blank">↗</a>)
 - ✅ [Together AI](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/together) (<a href="https://www.together.ai/" target="_blank">↗</a>)
 - ✅ [Fireworks AI](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/fireworks) (<a href="https://fireworks.ai/" target="_blank">↗</a>)
-- ☐ Haystack (<a href="https://haystack.deepset.ai/" target="_blank">↗</a>)
 - ☐ CrewAI (<a href="https://www.crewai.com/" target="_blank">↗</a>)
 - ☐ AutoGen (<a href="https://github.com/microsoft/autogen" target="_blank">↗</a>)
 - ☐ Dust (<a href="https://dust.tt/" target="_blank">↗</a>)
