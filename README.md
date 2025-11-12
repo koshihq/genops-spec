@@ -282,7 +282,7 @@ As governance needs grow beyond what the framework can handle alone, teams typic
 
 ### 🧠 AI & LLM Ecosystem
 - ✅ [OpenRouter](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/openrouter) (<a href="https://openrouter.ai/" target="_blank">↗</a>)
-- ✅ [LiteLLM](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/litellm-quickstart.md) (<a href="https://docs.litellm.ai/" target="_blank">↗</a>) - **Highest-leverage integration**: Unified interface to 100+ LLM providers
+- ✅ [LiteLLM](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/litellm-quickstart.md) (<a href="https://docs.litellm.ai/" target="_blank">↗</a>)
 - ✅ [OpenAI](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/openai) (<a href="https://openai.com/" target="_blank">↗</a>)
 - ✅ [Anthropic](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/anthropic) (<a href="https://www.anthropic.com/" target="_blank">↗</a>)
 - ✅ [Hugging Face](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/huggingface) (<a href="https://huggingface.co/docs/inference-providers/index" target="_blank">↗</a>)
@@ -291,7 +291,7 @@ As governance needs grow beyond what the framework can handle alone, teams typic
 - ✅ [Replicate](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/replicate) (<a href="https://replicate.com/" target="_blank">↗</a>)
 - ✅ [LangChain](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/langchain) (<a href="https://python.langchain.com/" target="_blank">↗</a>)
 - ✅ [LlamaIndex](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/llamaindex) (<a href="https://www.llamaindex.ai/" target="_blank">↗</a>)
-- ✅ [Haystack AI](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/integrations/haystack.md) (<a href="https://haystack.deepset.ai/" target="_blank">↗</a>) - Complete RAG & agent workflow governance
+- ✅ [Haystack AI](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/integrations/haystack.md) (<a href="https://haystack.deepset.ai/" target="_blank">↗</a>)
 - ✅ [Ollama](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/ollama) (<a href="https://ollama.com/" target="_blank">↗</a>)
 - ✅ [Cohere](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/cohere) (<a href="https://cohere.com/" target="_blank">↗</a>)
 - ✅ [Mistral](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/mistral) (<a href="https://mistral.ai/" target="_blank">↗</a>)
@@ -305,7 +305,7 @@ As governance needs grow beyond what the framework can handle alone, teams typic
 - ✅ [Perplexity AI](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/perplexity) (<a href="https://www.perplexity.ai/" target="_blank">↗</a>)
 - ✅ [Together AI](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/together) (<a href="https://www.together.ai/" target="_blank">↗</a>)
 - ✅ [Fireworks AI](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/fireworks) (<a href="https://fireworks.ai/" target="_blank">↗</a>)
-- ✅ [CrewAI](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/quickstart/crewai-quickstart.md) (<a href="https://www.crewai.com/" target="_blank">↗</a>) - Multi-agent workflow governance
+- ✅ [CrewAI](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/quickstart/crewai-quickstart.md) (<a href="https://www.crewai.com/" target="_blank">↗</a>)
 - ☐ AutoGen (<a href="https://github.com/microsoft/autogen" target="_blank">↗</a>)
 - ☐ Dust (<a href="https://dust.tt/" target="_blank">↗</a>)
 - ☐ Flowise (<a href="https://flowiseai.com/" target="_blank">↗</a>)
