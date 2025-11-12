@@ -153,7 +153,7 @@ class ProductionLiteLLMManager:
                     self.health_status[provider] = {
                         'healthy': False,
                         'last_check': time.time(),
-                        'error': str(e)
+                        'error': '[Error details redacted for security]'
                     }
     
     def _check_provider_health(self, provider: str) -> bool:
@@ -322,7 +322,7 @@ def demo_performance_optimization():
             return {
                 "request_id": request_id,
                 "status": "failed",
-                "error": str(e)[:50]
+                "error": "[Error details redacted for security]"
             }
     
     # Process requests concurrently
@@ -576,7 +576,7 @@ def demo_circuit_breaker_patterns():
                 result = cb.call(simulate_api_call, provider, fail_rate)
                 print(f"      ✅ {provider}: {result} (state: {cb.state})")
             except Exception as e:
-                print(f"      ❌ {provider}: {str(e)[:50]}... (state: {cb.state})")
+                print(f"      ❌ {provider}: [Error details redacted for security] (state: {cb.state})")
     
     print(f"\n   📊 Circuit Breaker States:")
     for provider, cb in circuit_breakers.items():
@@ -644,7 +644,7 @@ def main():
     except Exception as e:
         print(f"\n❌ Demo failed: {e}")
         import traceback
-        traceback.print_exc()
+        print("💡 For debugging, check your API key configuration")
         return 1
 
 

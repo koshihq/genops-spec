@@ -301,7 +301,7 @@ def demo_smart_model_selection():
                 print(f"   📊 Tokens used: {tokens_used}")
                 
         except Exception as e:
-            print(f"   ⚠️  API call failed: {str(e)[:80]}...")
+            print(f"   ⚠️  API call failed: [Error details redacted for security]")
         
         print()
 
@@ -410,9 +410,8 @@ def main():
         return 1
         
     except Exception as e:
-        print(f"\n❌ Demo failed: {e}")
-        import traceback
-        traceback.print_exc()
+        print(f"\n❌ Demo failed: [Error details redacted for security]")
+        print("💡 For debugging, check your API key configuration")
         return 1
 
 

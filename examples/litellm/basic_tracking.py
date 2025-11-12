@@ -42,7 +42,7 @@ def check_setup():
         from genops.providers.litellm import track_completion, get_usage_stats
         print("✅ LiteLLM and GenOps available")
     except ImportError as e:
-        print(f"❌ Import error: {e}")
+        print(f"❌ Import error: [Error details redacted for security]")
         print("💡 Install: pip install litellm genops[litellm]")
         return False
     
@@ -112,7 +112,7 @@ def demo_basic_context_manager():
             print(f"   🏷️ Team: {context.team}, Project: {context.project}")
             
     except Exception as e:
-        print(f"   ⚠️ Request failed: {str(e)[:80]}...")
+        print(f"   ⚠️ Request failed: [Error details redacted for security]")
         print("   (This is expected if no API key configured)")
 
 
@@ -198,7 +198,7 @@ def demo_conditional_tracking():
                 print(f"   ✅ Tracked with tags: {context.custom_tags}")
                 
         except Exception as e:
-            print(f"   ⚠️ Request simulation failed: {str(e)[:60]}...")
+            print(f"   ⚠️ Request simulation failed: [Error details redacted for security]")
 
 
 def demo_performance_patterns():
@@ -329,7 +329,7 @@ def demo_custom_attribution():
                 print(f"   ✅ Attribution configured")
                 
         except Exception as e:
-            print(f"   ⚠️ Attribution setup failed: {str(e)[:60]}...")
+            print(f"   ⚠️ Attribution setup failed: [Error details redacted for security]")
 
 
 def demo_usage_analytics():
@@ -468,7 +468,7 @@ def demo_advanced_patterns():
                 print(f"   ✅ Custom tracking context active")
                 
         except Exception as e:
-            print(f"   ⚠️ Advanced pattern failed: {str(e)[:60]}...")
+            print(f"   ⚠️ Advanced pattern failed: [Error details redacted for security]")
 
 
 def main():
@@ -524,9 +524,8 @@ def main():
         return 1
         
     except Exception as e:
-        print(f"\n❌ Demo failed: {e}")
-        import traceback
-        traceback.print_exc()
+        print(f"\n❌ Demo failed: [Error details redacted for security]")
+        print("💡 For debugging, check your API key configuration")
         return 1
 
 

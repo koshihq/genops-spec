@@ -158,7 +158,7 @@ def demo_zero_code_instrumentation():
                 print(f"✅ {provider} request completed")
                 
         except Exception as e:
-            print(f"⚠️  {provider} request failed: {str(e)[:100]}...")
+            print(f"⚠️  {provider} request failed: [Error details redacted for security]")
             print(f"   (This is normal if API key not configured)")
     
     print("\n📋 Step 3: View GenOps governance data")
@@ -284,9 +284,8 @@ def main():
         return 1
         
     except Exception as e:
-        print(f"\n❌ Demo failed: {e}")
-        import traceback
-        traceback.print_exc()
+        print(f"\n❌ Demo failed: [Error details redacted for security]")
+        print("💡 For debugging, check your API key configuration")
         return 1
 
 

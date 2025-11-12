@@ -579,7 +579,7 @@ def demo_real_time_optimization():
                     print(f"   💰 Saved: ${savings_rec['potential_savings']:.6f} vs {baseline_model}")
                 
         except Exception as e:
-            print(f"   ⚠️ Request failed: {str(e)[:60]}...")
+            print(f"   ⚠️ Request failed: [Error details redacted for security]")
     
     # Show optimization results
     print(f"\n📊 Optimization Results:")
@@ -717,9 +717,8 @@ def main():
         return 1
         
     except Exception as e:
-        print(f"\n❌ Demo failed: {e}")
-        import traceback
-        traceback.print_exc()
+        print(f"\n❌ Demo failed: [Error details redacted for security]")
+        print("💡 For debugging, check your API key configuration")
         return 1
 
 

@@ -394,7 +394,7 @@ def validate_environment_configuration() -> List[ValidationIssue]:
             issues.append(ValidationIssue(
                 component="Environment",
                 status=ValidationStatus.SUCCESS,
-                message=f"{description}: {env_var}={os.getenv(env_var)[:50]}..."
+                message=f"{description}: {env_var}=[CONFIGURED]"
             ))
         else:
             issues.append(ValidationIssue(
