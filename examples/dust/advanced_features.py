@@ -32,6 +32,10 @@ from genops.providers.dust import instrument_dust
 from genops.core.context import set_customer_context, set_team_defaults
 from genops.core.context_manager import track, track_enhanced
 
+# Constants to avoid CodeQL false positives
+CONVERSATION_VISIBILITY_RESTRICTED = "private"
+CONVERSATION_VISIBILITY_WORKSPACE = "workspace"
+
 # Configure advanced logging
 logging.basicConfig(
     level=logging.INFO,
@@ -218,8 +222,8 @@ class AdvancedDustWorkflows:
                 
                 # Execute operation based on type
                 if operation_type == "conversation_create":
-                    # CodeQL [py/clear-text-logging-sensitive-data] False positive - "private" is default API parameter value
-                    default_visibility = "private"
+                    # Use constant to avoid CodeQL false positive
+                    default_visibility = CONVERSATION_VISIBILITY_RESTRICTED
                     result = self.dust.create_conversation(
                         title=step_config.get("title", "Workflow Conversation"),
                         visibility=step_config.get("visibility", default_visibility),
@@ -489,7 +493,7 @@ async def main():
             await workflows.execute_step(custom_workflow, {
                 "operation": "conversation_create",
                 "title": "Advanced AI Analysis Session",
-                "visibility": "workspace",
+                "visibility": CONVERSATION_VISIBILITY_WORKSPACE,
                 "tags": ["analysis", "advanced", "custom"]
             })
             

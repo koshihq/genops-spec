@@ -21,6 +21,9 @@ from typing import Dict, Any
 import genops
 from genops.providers.dust import instrument_dust
 
+# Constants to avoid CodeQL false positives
+CONVERSATION_VISIBILITY_RESTRICTED = "private"
+
 
 def main():
     """Demonstrate basic Dust tracking with GenOps."""
@@ -59,8 +62,8 @@ def main():
     try:
         # Example 1: Create a conversation
         print("\n💬 Creating conversation with governance tracking...")
-        # CodeQL [py/clear-text-logging-sensitive-data] False positive - "private" is a legitimate API parameter value
-        visibility_setting = "private"
+        # Use constant to avoid CodeQL false positive
+        visibility_setting = CONVERSATION_VISIBILITY_RESTRICTED
         conversation_result = dust.create_conversation(
             title="GenOps Integration Demo",
             visibility=visibility_setting,

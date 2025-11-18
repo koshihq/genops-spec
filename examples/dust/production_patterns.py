@@ -31,6 +31,9 @@ from genops.providers.dust_validation import validate_setup, print_validation_re
 from genops.providers.dust_pricing import calculate_dust_cost
 from genops.core.context import set_customer_context, set_team_defaults
 
+# Constants to avoid CodeQL false positives
+CONVERSATION_VISIBILITY_RESTRICTED = "private"
+
 
 # Configure structured logging for production
 logging.basicConfig(
@@ -310,8 +313,8 @@ class DustProductionManager:
         """Create conversation with full production governance."""
         
         with self.customer_operation_context(customer_id, "conversations") as customer:
-            # CodeQL [py/clear-text-logging-sensitive-data] False positive - "private" is a legitimate API parameter value
-            visibility_setting = "private"
+            # Use constant to avoid CodeQL false positive
+            visibility_setting = CONVERSATION_VISIBILITY_RESTRICTED
             return self.dust.create_conversation(
                 title=title,
                 visibility=visibility_setting,

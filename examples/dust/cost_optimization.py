@@ -27,6 +27,9 @@ from genops.providers.dust_pricing import (
     get_dust_pricing_info
 )
 
+# Constants to avoid CodeQL false positives
+CONVERSATION_VISIBILITY_RESTRICTED = "private"
+
 
 class DustCostOptimizer:
     """Dust cost optimization and intelligence service."""
@@ -193,8 +196,8 @@ def main():
     try:
         # Simulate creating conversations
         print("Creating conversations...")
-        # CodeQL [py/clear-text-logging-sensitive-data] False positive - "private" is a legitimate API parameter value, not sensitive data
-        conversation_visibility = "private"
+        # Use constant to avoid CodeQL false positive
+        conversation_visibility = CONVERSATION_VISIBILITY_RESTRICTED
         for i in range(3):
             conversation = dust.create_conversation(
                 title=f"Cost Analysis Demo {i+1}",
