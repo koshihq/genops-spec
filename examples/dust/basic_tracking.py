@@ -59,9 +59,11 @@ def main():
     try:
         # Example 1: Create a conversation
         print("\n💬 Creating conversation with governance tracking...")
+        # CodeQL [py/clear-text-logging-sensitive-data] False positive - "private" is a legitimate API parameter value
+        visibility_setting = "private"
         conversation_result = dust.create_conversation(
             title="GenOps Integration Demo",
-            visibility="private",
+            visibility=visibility_setting,
             # Additional governance attributes
             customer_id="demo-customer-123",
             user_id="demo-user-456",

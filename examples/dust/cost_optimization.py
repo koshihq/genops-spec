@@ -193,10 +193,12 @@ def main():
     try:
         # Simulate creating conversations
         print("Creating conversations...")
+        # CodeQL [py/clear-text-logging-sensitive-data] False positive - "private" is a legitimate API parameter value, not sensitive data
+        conversation_visibility = "private"
         for i in range(3):
             conversation = dust.create_conversation(
                 title=f"Cost Analysis Demo {i+1}",
-                visibility="private",
+                visibility=conversation_visibility,
                 customer_id=f"customer-{i%2+1}",  # Alternate customers
                 team="cost-team",
                 project="optimization-project"

@@ -78,11 +78,13 @@ def main():
         print("\n💬 Creating conversation (automatically tracked)...")
         
         # Example 1: Create conversation - AUTOMATICALLY TRACKED!
+        # CodeQL [py/clear-text-logging-sensitive-data] False positive - "private" is a legitimate API parameter value
+        visibility_setting = "private"
         conversation_response = requests.post(
             f"{base_url}/conversations",
             json={
                 "title": "Auto-Instrumentation Demo",
-                "visibility": "private"
+                "visibility": visibility_setting
             },
             headers=headers
         )

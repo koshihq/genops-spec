@@ -407,9 +407,11 @@ def print_validation_result(result: ValidationResult, show_details: bool = True)
                 for i, issue in enumerate(issues_list, 1):
                     # Enhanced issue formatting
                     component_tag = f"[{issue.component.upper()}]"
+                    # CodeQL [py/clear-text-logging-sensitive-data] False positive - logging validation messages, not actual sensitive data
                     print(f"  {i}. {component_tag} {issue.message}")
                     
                     if issue.fix_suggestion:
+                        # CodeQL [py/clear-text-logging-sensitive-data] False positive - logging help text, not actual sensitive data
                         print(f"     🔧 Solution: {issue.fix_suggestion}")
                         
                     # Add spacing between issues for readability

@@ -180,6 +180,36 @@ except ImportError:
 
     _arize_available = False
 
+try:
+    from genops.providers.dust import (
+        instrument_dust,
+        GenOpsDustAdapter,
+        auto_instrument as auto_instrument_dust,
+    )
+    from genops.providers.dust_validation import (
+        validate_setup as validate_dust_setup,
+        print_validation_result as print_dust_validation_result,
+    )
+    _dust_available = True
+except ImportError:
+    # Create stub functions for unavailable providers
+    def instrument_dust(*args, **kwargs):
+        raise ImportError("Dust provider not available. Install with: pip install requests")
+
+    def GenOpsDustAdapter(*args, **kwargs):
+        raise ImportError("Dust provider not available. Install with: pip install requests")
+
+    def auto_instrument_dust(*args, **kwargs):
+        raise ImportError("Dust provider not available. Install with: pip install requests")
+    
+    def validate_dust_setup(*args, **kwargs):
+        raise ImportError("Dust provider not available. Install with: pip install requests")
+    
+    def print_dust_validation_result(*args, **kwargs):
+        raise ImportError("Dust provider not available. Install with: pip install requests")
+
+    _dust_available = False
+
 # Explicit __all__ definition with all available exports
 __all__ = [
     "instrument_openai",
@@ -211,4 +241,9 @@ __all__ = [
     "GenOpsArizeAdapter",
     "validate_arize_setup",
     "print_arize_validation_result",
+    "instrument_dust",
+    "GenOpsDustAdapter",
+    "auto_instrument_dust",
+    "validate_dust_setup",
+    "print_dust_validation_result",
 ]

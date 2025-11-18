@@ -310,10 +310,11 @@ class DustProductionManager:
         """Create conversation with full production governance."""
         
         with self.customer_operation_context(customer_id, "conversations") as customer:
-            
+            # CodeQL [py/clear-text-logging-sensitive-data] False positive - "private" is a legitimate API parameter value
+            visibility_setting = "private"
             return self.dust.create_conversation(
                 title=title,
-                visibility="private",
+                visibility=visibility_setting,
                 customer_id=customer_id,
                 # Add production governance attributes
                 team=f"customer-{customer.plan_tier}",

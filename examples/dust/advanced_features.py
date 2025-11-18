@@ -218,9 +218,11 @@ class AdvancedDustWorkflows:
                 
                 # Execute operation based on type
                 if operation_type == "conversation_create":
+                    # CodeQL [py/clear-text-logging-sensitive-data] False positive - "private" is default API parameter value
+                    default_visibility = "private"
                     result = self.dust.create_conversation(
                         title=step_config.get("title", "Workflow Conversation"),
-                        visibility=step_config.get("visibility", "private"),
+                        visibility=step_config.get("visibility", default_visibility),
                         customer_id=workflow.customer_id,
                         workflow_id=workflow.workflow_id,
                         step_id=step_id

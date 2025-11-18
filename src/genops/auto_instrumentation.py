@@ -96,6 +96,19 @@ class GenOpsInstrumentor:
                 "provider_type": "ml_observability",
                 "framework_type": "monitoring",
             }
+        
+        # Add Dust AI to registry
+        try:
+            from genops.providers.dust import auto_instrument as dust_auto_instrument
+            self.provider_patches["dust"] = {
+                "patch": lambda **kwargs: dust_auto_instrument(**kwargs),
+                "unpatch": lambda: None,  # Dust uses different instrumentation pattern
+                "module": "requests",  # Dust uses requests for HTTP client
+                "provider_type": "ai_agent_platform",
+                "framework_type": "conversation",
+            }
+        except ImportError:
+            pass  # Dust provider not available
 
         # Framework providers will be added dynamically as they're implemented
         self.framework_registry = {}

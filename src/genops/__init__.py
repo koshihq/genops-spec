@@ -41,6 +41,14 @@ except ImportError:
     def instrument_langfuse(*args, **kwargs):
         raise ImportError("Langfuse provider not available. Install with: pip install 'genops[langfuse]'")
     _langfuse_available = False
+
+try:
+    from genops.providers import instrument_dust
+    _dust_available = True
+except ImportError:
+    def instrument_dust(*args, **kwargs):
+        raise ImportError("Dust provider not available. Install with: pip install requests")
+    _dust_available = False
 from genops.core.context_manager import track, track_enhanced
 
 # Multi-provider cost aggregation
@@ -98,6 +106,7 @@ __all__ = [
     # Provider integrations
     "instrument_helicone",
     "instrument_langfuse",
+    "instrument_dust",
     # Attribution context management
     "set_default_attributes",
     "get_default_attributes",
