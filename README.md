@@ -310,7 +310,7 @@ As governance needs grow beyond what the framework can handle alone, teams typic
 - ✅ [AutoGen](docs/integrations/autogen.md) (<a href="https://github.com/microsoft/autogen" target="_blank">↗</a>)
 - ✅ [Dust](docs/dust-quickstart.md) (<a href="https://dust.tt/" target="_blank">↗</a>)
 - ✅ [Flowise](docs/flowise-quickstart.md) (<a href="https://flowiseai.com/" target="_blank">↗</a>)
-- ☐ Griptape (<a href="https://www.griptape.ai/" target="_blank">↗</a>)
+- ✅ [Griptape](docs/griptape-quickstart.md) (<a href="https://www.griptape.ai/" target="_blank">↗</a>)
 - ☐ SkyRouter (<a href="https://skyrouter.ai/" target="_blank">↗</a>)
 - ☐ Databricks Unity Catalog (<a href="https://docs.databricks.com/en/data-governance/unity-catalog/index.html" target="_blank">↗</a>)
 - ☐ ElevenLabs (<a href="https://elevenlabs.io/" target="_blank">↗</a>)
