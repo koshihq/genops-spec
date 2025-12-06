@@ -285,7 +285,6 @@ def _validate_authentication(raindrop_api_key: Optional[str], issues: List[Valid
         recommendations.append("API key format appears valid")
     
     # Check for common environment variable issues
-    import os
     raw_key = os.getenv("RAINDROP_API_KEY")
     if raw_key != api_key:
         warnings.append(ValidationIssue(
