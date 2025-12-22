@@ -6,7 +6,7 @@
 
 GenOps AI is the open-source standard that gives you **human-in-the-loop control** over AI systems in production, built on <a href="https://opentelemetry.io" target="_blank">OpenTelemetry</a>.
 
-**Runtime governance for all your existing AI model providers, tools/systems, and frameworks**: standard telemetry + policy enforcement that enables you to control, govern, and intervene in AI operations as they happen — not after the fact.
+**Runtime governance for all your existing AI model providers, tools/systems, and frameworks**: standard telemetry + policy enforcement that enables you to control, govern, and intervene in AI operations as they happen in real time — not after the fact.
 
 <div align="center">
   
@@ -291,14 +291,14 @@ As governance requirements grow, teams scale from individual oversight to organi
 - ✅ [PromptLayer](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/promptlayer) (<a href="https://promptlayer.com/" target="_blank">↗</a>)
 - ✅ [Weights & Biases](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/wandb) (<a href="https://wandb.ai/" target="_blank">↗</a>)
 - ✅ [Arize AI](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/arize) (<a href="https://arize.com/" target="_blank">↗</a>)
-- ✅ [Raindrop AI](docs/raindrop-quickstart.md) (<a href="https://www.raindrop.ai/" target="_blank">↗</a>)
+- ✅ [Raindrop AI](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/raindrop-quickstart.md) (<a href="https://www.raindrop.ai/" target="_blank">↗</a>)
 - ✅ [PostHog](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/posthog) (<a href="https://posthog.com/" target="_blank">↗</a>)
 - ✅ [Langfuse](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/langfuse) (<a href="https://langfuse.com/" target="_blank">↗</a>)
-- ✅ [AutoGen](docs/integrations/autogen.md) (<a href="https://github.com/microsoft/autogen" target="_blank">↗</a>)
-- ✅ [Dust](docs/dust-quickstart.md) (<a href="https://dust.tt/" target="_blank">↗</a>)
-- ✅ [Flowise](docs/flowise-quickstart.md) (<a href="https://flowiseai.com/" target="_blank">↗</a>)
-- ✅ [Griptape](docs/griptape-quickstart.md) (<a href="https://www.griptape.ai/" target="_blank">↗</a>)
-- ✅ [SkyRouter](https://github.com/KoshiHQ/GenOps-AI/blob/feat/raindrop-ai-integration/docs/skyrouter-quickstart.md) (<a href="https://skyrouter.ai/" target="_blank">↗</a>)
+- ✅ [AutoGen](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/integrations/autogen.md) (<a href="https://github.com/microsoft/autogen" target="_blank">↗</a>)
+- ✅ [Dust](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/dust-quickstart.md) (<a href="https://dust.tt/" target="_blank">↗</a>)
+- ✅ [Flowise](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/flowise-quickstart.md) (<a href="https://flowiseai.com/" target="_blank">↗</a>)
+- ✅ [Griptape](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/griptape-quickstart.md) (<a href="https://www.griptape.ai/" target="_blank">↗</a>)
+- ✅ [SkyRouter](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/skyrouter-quickstart.md) (<a href="https://skyrouter.ai/" target="_blank">↗</a>)
 - ☐ Databricks Unity Catalog (<a href="https://docs.databricks.com/en/data-governance/unity-catalog/index.html" target="_blank">↗</a>)
 - ☐ ElevenLabs (<a href="https://elevenlabs.io/" target="_blank">↗</a>)
 - ☐ Deepgram (<a href="https://deepgram.com/" target="_blank">↗</a>)
@@ -416,7 +416,7 @@ Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for detai
 **5-minute contributions welcome!** Every small improvement helps the community grow.
 
 **Looking for bigger challenges?**
-- 🏗️ [Provider integrations](https://github.com/KoshiHQ/GenOps-AI/issues?q=is%3Aissue+is%3Aopen+label%3Aprovider) - Add Mistral, Replicate, LlamaIndex support
+- 🏗️ [Provider integrations](https://github.com/KoshiHQ/GenOps-AI/issues?q=is%3Aissue+is%3Aopen+label%3Aprovider) - Add new provider integrations
 - 📊 [Dashboard templates](https://github.com/KoshiHQ/GenOps-AI/issues?q=is%3Aissue+is%3Aopen+label%3Adashboard) - Pre-built observability dashboards
 - 🤖 [Cross-stack tracking patterns](https://github.com/KoshiHQ/GenOps-AI/issues?q=is%3Aissue+is%3Aopen+label%3Agovernance) - Real-world cost tracking scenarios
 
