@@ -73,12 +73,29 @@ Complete integration guide for SkyRouter multi-model routing platform with GenOp
 - [API Reference](#api-reference)
 
 **🚀 Advanced Guides:**
-- **[Cost Intelligence & ROI Guide](../cost-intelligence-guide.md)** - ROI templates, cost optimization, and budget forecasting
-- **[Production Deployment Patterns](../examples/skyrouter/enterprise_patterns.py)** - Enterprise architecture and scaling patterns
+- **[Performance Benchmarks Guide](../skyrouter-performance-benchmarks.md)** - Performance optimization and scaling patterns
+- **[Production Deployment Patterns](../../examples/skyrouter/enterprise_patterns.py)** - Enterprise architecture and scaling patterns
 
 ## Overview
 
-The GenOps SkyRouter integration provides comprehensive governance for multi-model AI routing operations across 150+ models. SkyRouter is an AI routing platform that provides unified access to multiple LLM providers with intelligent routing, cost optimization, and agent-specific features for AI applications.
+The GenOps SkyRouter integration provides comprehensive governance for multi-model AI routing operations across 150+ models. 
+
+### What is SkyRouter?
+
+SkyRouter is an AI routing platform that provides unified access to multiple LLM providers with intelligent routing, cost optimization, and agent-specific features for AI applications. It enables developers to:
+
+- **Route intelligently** across 150+ models from different providers
+- **Optimize costs** automatically based on request complexity and budget constraints  
+- **Build agent workflows** with multi-model coordination
+- **Scale globally** with regional model deployments and failover strategies
+
+### Why Add GenOps Governance?
+
+While SkyRouter handles intelligent routing, GenOps adds the missing governance layer:
+- **Cost transparency** - See exactly what each routing decision costs
+- **Team attribution** - Track spend by team, project, and customer across all models
+- **Budget enforcement** - Set limits and get alerts before overspending
+- **Compliance tracking** - Audit trail for all routing decisions and model usage
 
 ### 🚀 Quick Value Proposition
 
@@ -140,28 +157,31 @@ auto_instrument(
     daily_budget_limit=200.0
 )
 
-# Your existing SkyRouter code now includes governance
-import skyrouter
+# Your existing SkyRouter routing is automatically tracked with governance
+from genops.providers.skyrouter import GenOpsSkyRouterAdapter
 
-client = skyrouter.Client(api_key="your-api-key")
+# The adapter handles SkyRouter API calls with governance
+adapter = GenOpsSkyRouterAdapter(api_key="your-api-key")
 
 # Multi-model routing with automatic governance
-response = client.route_to_best_model(
-    candidates=["gpt-4", "claude-3-sonnet", "gemini-pro"],
-    prompt="Explain quantum computing to a 10-year-old",
-    routing_strategy="cost_optimized",
-    fallback_models=["gpt-3.5-turbo", "llama-2"]
-)
+with adapter.track_routing_session("intelligent-routing") as session:
+    response = session.track_multi_model_routing(
+        models=["gpt-4", "claude-3-sonnet", "gemini-pro"],
+        input_data={"prompt": "Explain quantum computing to a 10-year-old"},
+        routing_strategy="cost_optimized",
+        fallback_models=["gpt-3.5-turbo", "llama-2"]
+    )
 
 # Agent workflow with automatic governance
-workflow_result = client.run_agent_workflow(
-    workflow_name="customer_support",
-    steps=[
-        {"model": "gpt-3.5-turbo", "task": "classify_intent"},
-        {"model": "claude-3-sonnet", "task": "draft_response"},
-        {"model": "gpt-4", "task": "quality_review"}
-    ]
-)
+with adapter.track_routing_session("agent-workflow") as session:
+    workflow_result = session.track_agent_workflow(
+        workflow_name="customer_support",
+        agent_steps=[
+            {"model": "gpt-3.5-turbo", "task": "classify_intent"},
+            {"model": "claude-3-sonnet", "task": "draft_response"},
+            {"model": "gpt-4", "task": "quality_review"}
+        ]
+    )
 # ✅ Automatically tracked with cost attribution and governance
 ```
 
@@ -522,7 +542,7 @@ def setup_custom_alerts(adapter: GenOpsSkyRouterAdapter):
 ### Setup Validation
 
 ```python
-from genops.providers.skyrouter_validation import validate_setup, print_validation_result
+from genops.providers.skyrouter import validate_setup, print_validation_result
 
 # Comprehensive validation
 result = validate_setup()
@@ -530,7 +550,7 @@ print_validation_result(result, verbose=True)
 
 # Interactive validation for missing config
 if not result.is_valid:
-    from genops.providers.skyrouter_validation import validate_setup_interactive
+    from genops.providers.skyrouter import validate_setup_interactive
     interactive_result = validate_setup_interactive()
 ```
 
@@ -712,6 +732,6 @@ def validate_setup_interactive() -> ValidationResult
 
 **📖 Additional Resources:**
 - [Performance Optimization Guide](../skyrouter-performance-benchmarks.md) - Benchmarks, scaling, and optimization
-- [Cost Intelligence Guide](../cost-intelligence-guide.md) - ROI calculation and optimization
-- [Enterprise Governance Templates](../enterprise-governance-templates.md) - Compliance patterns
-- [Production Monitoring Guide](../production-monitoring-guide.md) - Dashboard and alerting setup
+- [SkyRouter Quickstart Guide](../skyrouter-quickstart.md) - 5-minute setup guide
+- [Interactive Examples](../../examples/skyrouter/) - Hands-on examples and patterns
+- [GitHub Discussions](https://github.com/KoshiHQ/GenOps-AI/discussions) - Community support

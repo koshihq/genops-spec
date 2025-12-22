@@ -2,7 +2,7 @@
 
 Add cost tracking and team attribution to your existing SkyRouter multi-model routing in under 5 minutes with zero code changes.
 
-> 📖 **Navigation:** **Start Here** → [Complete Guide](integrations/skyrouter.md) → [Examples](../examples/skyrouter/)
+> 📖 **Navigation:** **Start Here** → [Complete Guide](integrations/skyrouter.md) → [Examples](../../examples/skyrouter/)
 
 ⏱️ **Total time: 4-5 minutes** | 🎯 **Success rate: 95%+** | 🔧 **Zero code changes required**
 
@@ -12,9 +12,21 @@ Add cost tracking and team attribution to your existing SkyRouter multi-model ro
 
 **What you'll get:** Automatic cost tracking and team attribution for your existing SkyRouter multi-model routing with zero code changes
 
-**Next steps:** After completing this guide, you'll be ready to explore [interactive examples](../examples/skyrouter/) or dive into [advanced features](integrations/skyrouter.md)
+**Next steps:** After completing this guide, you'll be ready to explore [interactive examples](../../examples/skyrouter/) or dive into [advanced features](integrations/skyrouter.md)
 
 ## Prerequisites ⏱️ 30 seconds
+
+### What You'll Need
+
+**Before starting:**
+- Python 3.9+ installed
+- A SkyRouter account and API key ([Sign up here](https://skyrouter.ai))
+- 5 minutes of your time
+
+**What is SkyRouter?**
+SkyRouter is an AI routing platform that provides intelligent access to 150+ AI models from different providers. It automatically routes your requests to the best model based on cost, performance, and availability.
+
+### Install Dependencies
 
 ```bash
 # Install dependencies
@@ -63,7 +75,7 @@ auto_instrument()  # ✨ This enables governance for ALL SkyRouter operations
 **✅ Success check:**
 ```python
 # Run this to confirm auto-instrumentation is active
-from genops.providers.skyrouter_validation import validate_setup
+from genops.providers.skyrouter import validate_setup
 result = validate_setup()
 if result.is_valid:
     print("✅ Auto-instrumentation active!")
@@ -73,7 +85,7 @@ else:
         print(f"  • {error.message}")
         if error.fix_suggestion:
             print(f"    💡 Fix: {error.fix_suggestion}")
-    print("\n🔧 Run 'python -c \"from genops.providers.skyrouter_validation import validate_setup_interactive; validate_setup_interactive()\"' for guided setup")
+    print("\n🔧 Run 'python -c \"from genops.providers.skyrouter import validate_setup_interactive; validate_setup_interactive()\"' for guided setup")
 ```
 
 **🔧 If you see errors:**
@@ -86,31 +98,38 @@ else:
 Your existing SkyRouter code now automatically includes cost tracking and team attribution:
 
 ```python
-# Your existing SkyRouter multi-model routing - no changes needed!
+# Your existing SkyRouter multi-model routing - auto-instrumented with governance!
+from genops.providers.skyrouter import GenOpsSkyRouterAdapter
 
-# Single model call with automatic governance
-response = skyrouter.complete(
-    model="gpt-4",
-    messages=[{"role": "user", "content": "Explain quantum computing"}],
-    routing_strategy="cost_optimized"
-)
+# Initialize the adapter (this happens automatically with auto_instrument())
+adapter = GenOpsSkyRouterAdapter()
+
+# Single model call with automatic governance  
+with adapter.track_routing_session("single-model") as session:
+    response = session.track_model_call(
+        model="gpt-4",
+        input_data={"prompt": "Explain quantum computing"},
+        route_optimization="cost_optimized"
+    )
 
 # Multi-model routing with automatic governance
-response = skyrouter.route_to_best_model(
-    candidates=["gpt-4", "claude-3-sonnet", "gemini-pro"],
-    prompt="Write a product description",
-    optimization="balanced"
-)
+with adapter.track_routing_session("multi-model") as session:
+    response = session.track_multi_model_routing(
+        models=["gpt-4", "claude-3-sonnet", "gemini-pro"],
+        input_data={"prompt": "Write a product description"},
+        routing_strategy="balanced"
+    )
 
 # Agent workflow with automatic governance  
-agent_result = skyrouter.run_agent_workflow(
-    workflow_name="customer_support",
-    steps=[
-        {"model": "gpt-3.5-turbo", "task": "classify_intent"},
-        {"model": "claude-3-sonnet", "task": "generate_response"},
-        {"model": "gpt-4", "task": "quality_check"}
-    ]
-)
+with adapter.track_routing_session("agent-workflow") as session:
+    agent_result = session.track_agent_workflow(
+        workflow_name="customer_support",
+        agent_steps=[
+            {"model": "gpt-3.5-turbo", "task": "classify_intent"},
+            {"model": "claude-3-sonnet", "task": "generate_response"},
+            {"model": "gpt-4", "task": "quality_check"}
+        ]
+    )
 
 # 🎉 All operations are now automatically tracked with:
 # • Cost tracking across 150+ models (see exactly what each operation costs)
@@ -203,9 +222,9 @@ In just 5 minutes, you've added enterprise-grade governance to your SkyRouter mu
 ## 🚀 Next Steps
 
 ### **Immediate Actions (5 minutes each)**
-1. **[Try Examples](../examples/skyrouter/)** - Explore 6 hands-on examples with multi-model patterns
-2. **[Route Optimization](../examples/skyrouter/route_optimization.py)** - Analyze your multi-model spend and get recommendations
-3. **[Agent Workflows](../examples/skyrouter/agent_workflows.py)** - See enterprise multi-agent routing patterns
+1. **[Try Examples](../../examples/skyrouter/)** - Explore 6 hands-on examples with multi-model patterns
+2. **[Route Optimization](../../examples/skyrouter/route_optimization.py)** - Analyze your multi-model spend and get recommendations
+3. **[Agent Workflows](../../examples/skyrouter/agent_workflows.py)** - See enterprise multi-agent routing patterns
 
 ### **This Week (30 minutes total)**
 1. **[Complete Integration Guide](integrations/skyrouter.md)** - Full documentation with advanced multi-model features
@@ -249,14 +268,14 @@ export SKYROUTER_API_KEY="your-complete-api-key-here"
 # Problem: Setup validation issues
 # Comprehensive diagnosis:
 python -c "
-from genops.providers.skyrouter_validation import validate_setup, print_validation_result
+from genops.providers.skyrouter import validate_setup, print_validation_result
 result = validate_setup()
 print_validation_result(result, verbose=True)
 "
 
 # If you see issues, run interactive setup:
 python -c "
-from genops.providers.skyrouter_validation import validate_setup_interactive
+from genops.providers.skyrouter import validate_setup_interactive
 validate_setup_interactive()
 "
 ```
@@ -370,7 +389,7 @@ try:
     print('✅ GenOps import successful')
     from genops.providers import skyrouter
     print('✅ SkyRouter provider import successful')
-    from genops.providers.skyrouter_validation import validate_setup
+    from genops.providers.skyrouter import validate_setup
     print('✅ Validation module import successful')
     result = validate_setup()
     print(f'✅ Validation result: {\"VALID\" if result.is_valid else \"ISSUES FOUND\"}')
@@ -388,10 +407,10 @@ except Exception as e:
 
 ---
 
-**🔙 Want a different integration?** Check out our [full integration list](../README.md#ai--llm-ecosystem) with 25+ supported platforms.
+**🔙 Want a different integration?** Check out our [full integration list](../../README.md#ai--llm-ecosystem) with 25+ supported platforms.
 
 **📊 Ready for production?** See [Production Deployment Patterns](integrations/skyrouter.md#production-deployment) for enterprise-ready multi-model configurations.
 
-**💰 Want to optimize routing costs?** Try the [Route Optimization Example](../examples/skyrouter/route_optimization.py) for immediate multi-model savings recommendations.
+**💰 Want to optimize routing costs?** Try the [Route Optimization Example](../../examples/skyrouter/route_optimization.py) for immediate multi-model savings recommendations.
 
 **⚡ Need performance optimization?** Check the [Performance Benchmarking Guide](skyrouter-performance-benchmarks.md) for scaling and optimization strategies across 150+ models.
