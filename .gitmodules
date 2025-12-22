@@ -1,0 +1,4 @@
+[submodule "GenOps-AI"]
+	path = GenOps-AI
+	url = https://github.com/KoshiHQ/GenOps-AI.git
+	branch = feat/raindrop-ai-integration
