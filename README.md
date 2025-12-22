@@ -2,11 +2,11 @@
   <img width="500" src="./assets/brand/genops-logo-optimized.jpg" alt="GenOps: Open Runtime Governance for AI Systems" style="max-width: 100%;">
 </p>
 
-# 🧭 GenOps: Runtime Governance for AI Systems
+# 🧭 GenOps AI: Runtime Governance for AI Workloads
 
-GenOps is the open-source platform that gives you **human-in-the-loop control** over AI systems in production, built on [OpenTelemetry](https://opentelemetry.io) standards.
+GenOps AI is the open-source standard that gives you **human-in-the-loop control** over AI systems in production, built on <a href="https://opentelemetry.io" target="_blank">OpenTelemetry</a>.
 
-**Think of it as runtime governance for AI**: standard telemetry + policy enforcement that enables you to control, govern, and intervene in AI operations as they happen — not after the fact.
+**Runtime governance for all your existing AI model providers, tools/systems, and frameworks**: standard telemetry + policy enforcement that enables you to control, govern, and intervene in AI operations as they happen — not after the fact.
 
 <div align="center">
   
