@@ -299,7 +299,7 @@ As governance requirements grow, teams scale from individual oversight to organi
 - ✅ [Flowise](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/flowise-quickstart.md) (<a href="https://flowiseai.com/" target="_blank">↗</a>)
 - ✅ [Griptape](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/griptape-quickstart.md) (<a href="https://www.griptape.ai/" target="_blank">↗</a>)
 - ✅ [SkyRouter](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/skyrouter-quickstart.md) (<a href="https://skyrouter.ai/" target="_blank">↗</a>)
-- ☐ Databricks Unity Catalog (<a href="https://docs.databricks.com/en/data-governance/unity-catalog/index.html" target="_blank">↗</a>)
+- ✅ [Databricks Unity Catalog](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/databricks_unity_catalog) (<a href="https://docs.databricks.com/en/data-governance/unity-catalog/index.html" target="_blank">↗</a>)
 - ☐ ElevenLabs (<a href="https://elevenlabs.io/" target="_blank">↗</a>)
 - ☐ Deepgram (<a href="https://deepgram.com/" target="_blank">↗</a>)
 - ☐ OpenAI Whisper (<a href="https://openai.com/research/whisper" target="_blank">↗</a>)
