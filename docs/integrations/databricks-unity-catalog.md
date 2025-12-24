@@ -1,5 +1,7 @@
 # Databricks Unity Catalog Integration Guide
 
+> **📍 Navigation**: [Examples](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/databricks_unity_catalog) → [Quickstart](https://github.com/KoshiHQ/GenOps-AI/blob/main/docs/databricks-unity-catalog-quickstart.md) → **Integration Guide** → [Production Deployment](https://github.com/KoshiHQ/GenOps-AI/blob/main/docs/production/databricks-unity-catalog-deployment.md)
+
 Complete guide for implementing GenOps governance with Databricks Unity Catalog across enterprise data platforms.
 
 ## Overview
@@ -598,10 +600,10 @@ adapter = instrument_databricks_unity_catalog(**debug_config)
 
 ### Getting Help
 
-- **📚 Quick Start**: [5-Minute Quickstart Guide](../databricks-unity-catalog-quickstart.md)
+- **📚 Quick Start**: [5-Minute Quickstart Guide](https://github.com/KoshiHQ/GenOps-AI/blob/main/docs/databricks-unity-catalog-quickstart.md)
 - **💬 Community Support**: [GitHub Discussions](https://github.com/KoshiHQ/GenOps-AI/discussions)
 - **🐛 Bug Reports**: [GitHub Issues](https://github.com/KoshiHQ/GenOps-AI/issues)
-- **📖 Examples**: [Complete Example Suite](../../examples/databricks_unity_catalog/)
+- **📖 Examples**: [Complete Example Suite](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/databricks_unity_catalog/)
 
 ### Contributing
 
@@ -611,8 +613,8 @@ We welcome contributions! Common contribution areas:
 - New observability platform integrations
 - Performance improvements for high-volume workloads
 
-See [CONTRIBUTING.md](../../CONTRIBUTING.md) for development setup and guidelines.
+See [CONTRIBUTING.md](https://github.com/KoshiHQ/GenOps-AI/blob/main/CONTRIBUTING.md) for development setup and guidelines.
 
 ---
 
-**Next Steps**: Ready to get started? Try the [5-Minute Quickstart Guide](../databricks-unity-catalog-quickstart.md) or explore the [complete example suite](../../examples/databricks_unity_catalog/).
+**Next Steps**: Ready to get started? Try the [5-Minute Quickstart Guide](https://github.com/KoshiHQ/GenOps-AI/blob/main/docs/databricks-unity-catalog-quickstart.md) or explore the [complete example suite](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/databricks_unity_catalog/).

@@ -20,25 +20,37 @@ import logging
 from pathlib import Path
 from typing import Dict, Any
 
-# Add the GenOps providers path to the Python path
-sys.path.append(str(Path(__file__).parent.parent.parent / "src"))
-
 # Configure basic logging
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 logger = logging.getLogger(__name__)
 
+# Try to import GenOps - handle both pip install and repo development
 try:
+    # First try normal pip install import
     from genops.providers.databricks_unity_catalog import (
         instrument_databricks_unity_catalog,
         create_workspace_cost_context,
         get_governance_monitor
     )
     from genops.providers.databricks_unity_catalog_pricing import get_pricing_calculator
-except ImportError as e:
-    print(f"❌ Error importing GenOps Databricks Unity Catalog provider: {e}")
-    print("💡 Make sure you have installed genops[databricks]:")
-    print("   pip install genops[databricks]")
-    sys.exit(1)
+    _GENOPS_AVAILABLE = True
+except ImportError:
+    try:
+        # Fallback to development repo structure
+        sys.path.append(str(Path(__file__).parent.parent.parent / "src"))
+        from genops.providers.databricks_unity_catalog import (
+            instrument_databricks_unity_catalog,
+            create_workspace_cost_context,
+            get_governance_monitor
+        )
+        from genops.providers.databricks_unity_catalog_pricing import get_pricing_calculator
+        _GENOPS_AVAILABLE = True
+    except ImportError as e:
+        print(f"❌ Error importing GenOps Databricks Unity Catalog provider: {e}")
+        print("💡 Make sure you have installed genops[databricks]:")
+        print("   pip install genops[databricks]")
+        print("   Or run from the repository root directory")
+        sys.exit(1)
 
 
 def check_configuration() -> Dict[str, str]:

@@ -2,7 +2,12 @@
 
 **Get enterprise data governance in 2 minutes** with zero code changes to your existing Databricks applications.
 
-## ⚡ Quick Start (2 minutes)
+> **🎯 New to GenOps?** Follow this learning path:
+> 1. **START HERE** ↓ Try the 2-minute quick start
+> 2. Then read our [5-minute quickstart guide](https://github.com/KoshiHQ/GenOps-AI/blob/main/docs/databricks-unity-catalog-quickstart.md)
+> 3. Explore the [complete integration guide](https://github.com/KoshiHQ/GenOps-AI/blob/main/docs/integrations/databricks-unity-catalog.md) for production
+
+## ⚡ Quick Start (2 minutes) ← START HERE
 
 **Already have Databricks credentials?** Try this immediately:
 
@@ -11,7 +16,7 @@ pip install genops[databricks]
 python quick_demo.py
 ```
 
-**Don't have credentials yet?** Follow the [5-minute setup guide](../../docs/databricks-unity-catalog-quickstart.md).
+**Don't have credentials yet?** Follow the [5-minute setup guide](https://github.com/KoshiHQ/GenOps-AI/blob/main/docs/databricks-unity-catalog-quickstart.md).
 
 ## 🎯 What You Get
 
@@ -49,8 +54,8 @@ python quick_demo.py
 
 ### 📚 Complete Documentation
 
-- **[5-Minute Quickstart](../../docs/databricks-unity-catalog-quickstart.md)** - Get started fast
-- **[Complete Integration Guide](../../docs/integrations/databricks-unity-catalog.md)** - Everything you need to know
+- **[5-Minute Quickstart](https://github.com/KoshiHQ/GenOps-AI/blob/main/docs/databricks-unity-catalog-quickstart.md)** - Get started fast
+- **[Complete Integration Guide](https://github.com/KoshiHQ/GenOps-AI/blob/main/docs/integrations/databricks-unity-catalog.md)** - Everything you need to know
 
 ## 🏃 Running Examples
 
@@ -88,7 +93,7 @@ export DATABRICKS_TOKEN="your_personal_access_token"
 - Verify your user has Unity Catalog permissions
 
 **❌ Still having issues?**
-- 🚀 Try the [5-Minute Quickstart](../../docs/databricks-unity-catalog-quickstart.md)
+- 🚀 Try the [5-Minute Quickstart](https://github.com/KoshiHQ/GenOps-AI/blob/main/docs/databricks-unity-catalog-quickstart.md)
 - 📧 [GitHub Issues](https://github.com/KoshiHQ/GenOps-AI/issues) with error details
 - 💬 [Community Discussions](https://github.com/KoshiHQ/GenOps-AI/discussions)
 

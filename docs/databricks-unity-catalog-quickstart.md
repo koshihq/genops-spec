@@ -1,5 +1,7 @@
 # 5-Minute Databricks Unity Catalog Quickstart
 
+> **📍 Navigation**: [Examples](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/databricks_unity_catalog) → **Quickstart** → [Integration Guide](https://github.com/KoshiHQ/GenOps-AI/blob/main/docs/integrations/databricks-unity-catalog.md) → [Production Deployment](https://github.com/KoshiHQ/GenOps-AI/blob/main/docs/production/databricks-unity-catalog-deployment.md)
+
 Get GenOps governance tracking working with Databricks Unity Catalog in **5 minutes or less**.
 
 ## What You'll Get
@@ -136,7 +138,7 @@ python basic_tracking.py
 ### 📚 Learn More
 
 - **[Complete Examples](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/databricks_unity_catalog)** - Advanced features and production patterns
-- **[Integration Guide](integrations/databricks-unity-catalog.md)** - Comprehensive documentation
+- **[Integration Guide](https://github.com/KoshiHQ/GenOps-AI/blob/main/docs/integrations/databricks-unity-catalog.md)** - Comprehensive documentation
 - **[Community Support](https://github.com/KoshiHQ/GenOps-AI/discussions)** - Questions and discussions
 
 ### 🏭 Production Deployment

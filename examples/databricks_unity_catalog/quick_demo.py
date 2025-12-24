@@ -16,8 +16,19 @@ Expected time: Under 2 minutes to see governance results
 import sys
 from pathlib import Path
 
-# Add the GenOps providers path to the Python path
-sys.path.append(str(Path(__file__).parent.parent.parent / "src"))
+# Try to import GenOps - handle both pip install and repo development
+try:
+    # First try normal pip install import
+    from genops.providers.databricks_unity_catalog.registration import auto_instrument_databricks
+    _GENOPS_AVAILABLE = True
+except ImportError:
+    try:
+        # Fallback to development repo structure
+        sys.path.append(str(Path(__file__).parent.parent.parent / "src"))
+        from genops.providers.databricks_unity_catalog.registration import auto_instrument_databricks
+        _GENOPS_AVAILABLE = True
+    except ImportError:
+        _GENOPS_AVAILABLE = False
 
 def main():
     """Quick demonstration with immediate value and minimal setup."""
@@ -29,13 +40,12 @@ def main():
     # Step 1: Check if basic requirements are met
     print("1️⃣ Checking requirements...")
     
-    try:
-        from genops.providers.databricks_unity_catalog.registration import auto_instrument_databricks
-        print("   ✅ GenOps Databricks provider available")
-    except ImportError:
+    if not _GENOPS_AVAILABLE:
         print("   ❌ GenOps Databricks provider not found")
         print("   💡 Install with: pip install genops[databricks]")
         return False
+    else:
+        print("   ✅ GenOps Databricks provider available")
     
     # Step 2: Auto-configure with intelligent defaults
     print("\n2️⃣ Auto-configuring governance...")
@@ -50,8 +60,12 @@ def main():
         print()
         print("   🔧 Using demo mode with simulated data...")
         # Fall back to demo mode
-        from genops.providers.databricks_unity_catalog import instrument_databricks_unity_catalog
-        adapter = instrument_databricks_unity_catalog(workspace_url="demo://localhost")
+        try:
+            from genops.providers.databricks_unity_catalog import instrument_databricks_unity_catalog
+            adapter = instrument_databricks_unity_catalog(workspace_url="demo://localhost")
+        except ImportError:
+            print("   ⚠️ Failed to import GenOps adapter - using mock mode")
+            adapter = None
     else:
         print("   ✅ Auto-configuration successful!")
     
@@ -132,7 +146,10 @@ def main():
     print("\n4️⃣ Viewing governance results...")
     
     try:
-        from genops.providers.databricks_unity_catalog import get_cost_aggregator
+        if _GENOPS_AVAILABLE:
+            from genops.providers.databricks_unity_catalog import get_cost_aggregator
+        else:
+            raise ImportError("GenOps not available")
         
         # Add some demo costs for illustration
         cost_aggregator = get_cost_aggregator()
@@ -180,7 +197,10 @@ def main():
     print("\n5️⃣ Demonstrating data lineage...")
     
     try:
-        from genops.providers.databricks_unity_catalog import get_governance_monitor
+        if _GENOPS_AVAILABLE:
+            from genops.providers.databricks_unity_catalog import get_governance_monitor
+        else:
+            raise ImportError("GenOps not available")
         
         governance_monitor = get_governance_monitor("demo-metastore")
         
