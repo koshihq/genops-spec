@@ -22,6 +22,7 @@ class BaseFrameworkProvider(ABC):
     FRAMEWORK_TYPE_MULTIMODAL = "multimodal"        # NeMo
     FRAMEWORK_TYPE_AUTOML = "automl"                # NNI, Optuna
     FRAMEWORK_TYPE_DISTRIBUTED = "distributed"     # Horovod, Ray
+    FRAMEWORK_TYPE_DATA_PLATFORM = "data_platform"  # Databricks Unity Catalog, WandB
 
     def __init__(self, client: Any | None = None, **kwargs):
         """

@@ -1,0 +1,347 @@
+# GenOps Databricks Unity Catalog High Availability Configuration
+# Multi-workspace deployment with automatic failover
+
+genops:
+  providers:
+    databricks_unity_catalog:
+      # High availability architecture
+      mode: "high_availability"
+      
+      # Primary workspace configuration
+      primary_workspace:
+        workspace_url: "${PRIMARY_DATABRICKS_HOST}"
+        metastore_id: "${PRIMARY_METASTORE_ID}"
+        region: "${PRIMARY_REGION}"
+        
+        # Health monitoring
+        health_check:
+          enabled: true
+          interval_seconds: 30
+          timeout_seconds: 10
+          failure_threshold: 3
+          
+          endpoints:
+            - "/api/2.0/clusters/list"
+            - "/api/2.1/unity-catalog/metastores"
+            - "/api/2.0/sql/warehouses"
+        
+        # Performance monitoring
+        performance_monitoring:
+          enabled: true
+          latency_threshold_ms: 5000
+          error_rate_threshold: 0.05  # 5%
+          availability_threshold: 0.99  # 99%
+      
+      # Secondary workspace configuration
+      secondary_workspace:
+        workspace_url: "${SECONDARY_DATABRICKS_HOST}"
+        metastore_id: "${SECONDARY_METASTORE_ID}"
+        region: "${SECONDARY_REGION}"
+        
+        # Replication settings
+        replication:
+          sync_interval_seconds: 30
+          batch_size: 1000
+          enable_incremental_sync: true
+          
+          # Data to replicate
+          replicated_data:
+            - governance_policies
+            - cost_configurations
+            - lineage_mappings
+            - compliance_rules
+      
+      # Failover configuration
+      failover:
+        enabled: true
+        mode: "automatic"  # or "manual"
+        
+        # Trigger conditions
+        triggers:
+          primary_workspace_down: true
+          high_latency: true
+          high_error_rate: true
+          manual_trigger: true
+        
+        # Failover thresholds
+        thresholds:
+          max_response_time_ms: 10000
+          max_error_rate: 0.10  # 10%
+          min_availability: 0.95  # 95%
+          
+        # Failover process
+        process:
+          validation_checks: true
+          warm_up_time_seconds: 60
+          traffic_shift_duration_seconds: 300  # 5 minutes
+          rollback_enabled: true
+          
+        # Notifications
+        notifications:
+          enabled: true
+          channels:
+            - type: "slack"
+              webhook: "${SLACK_WEBHOOK_URL}"
+              channel: "#platform-alerts"
+            - type: "email"
+              recipients: ["sre@company.com", "data-platform@company.com"]
+            - type: "pagerduty"
+              service_key: "${PAGERDUTY_SERVICE_KEY}"
+              severity: "critical"
+      
+      # Disaster recovery workspace (optional)
+      dr_workspace:
+        enabled: true
+        workspace_url: "${DR_DATABRICKS_HOST}"
+        metastore_id: "${DR_METASTORE_ID}"
+        region: "${DR_REGION}"
+        
+        # DR-specific settings
+        backup_schedule: "0 */6 * * *"  # Every 6 hours
+        restore_priority: "low"
+        auto_activate: false  # Manual DR activation
+      
+      # Load balancing
+      load_balancing:
+        enabled: true
+        strategy: "weighted_round_robin"  # or "least_connections", "failover_only"
+        
+        weights:
+          primary: 80    # 80% traffic to primary
+          secondary: 20  # 20% traffic to secondary
+          
+        # Health-based weight adjustment
+        dynamic_weights: true
+        weight_adjustment_interval: 60  # seconds
+      
+      # Data consistency
+      consistency:
+        mode: "eventual"  # or "strong", "weak"
+        max_lag_seconds: 30
+        
+        # Conflict resolution
+        conflict_resolution: "primary_wins"  # or "last_write_wins", "manual"
+        
+        # Consistency checks
+        validation:
+          enabled: true
+          check_interval_seconds: 300  # 5 minutes
+          max_divergence_threshold: 0.01  # 1%
+      
+      # Cross-workspace governance
+      cross_workspace:
+        enable_unified_lineage: true
+        enable_unified_cost_reporting: true
+        enable_unified_policy_enforcement: true
+        
+        # Governance coordination
+        coordination:
+          master_workspace: "primary"
+          policy_sync_interval: 300  # 5 minutes
+          lineage_merge_strategy: "union"
+          cost_aggregation_strategy: "sum"
+
+  # Monitoring for HA deployment
+  monitoring:
+    high_availability:
+      enabled: true
+      
+      # Workspace health metrics
+      workspace_health:
+        check_interval: 30
+        metrics:
+          - connectivity
+          - response_time
+          - error_rate
+          - resource_availability
+          
+      # Failover metrics
+      failover_metrics:
+        track_failover_events: true
+        track_failover_duration: true
+        track_data_loss: true
+        track_recovery_time: true
+      
+      # Multi-workspace cost tracking
+      cost_tracking:
+        aggregate_across_workspaces: true
+        track_failover_costs: true
+        optimize_for_availability: true
+      
+      # Alerting rules specific to HA
+      alerts:
+        workspace_down:
+          severity: "critical"
+          threshold: 3  # failures
+          notification_delay: 0  # immediate
+          
+        failover_triggered:
+          severity: "critical" 
+          notification_delay: 0
+          include_logs: true
+          
+        data_lag_high:
+          severity: "warning"
+          threshold: 300  # 5 minutes
+          notification_delay: 300
+          
+        cost_spike_during_failover:
+          severity: "warning"
+          threshold_multiplier: 2.0
+          notification_delay: 900  # 15 minutes
+
+# Kubernetes HA deployment
+kubernetes:
+  # Multi-region deployment
+  regions:
+    primary:
+      name: "${PRIMARY_K8S_REGION}"
+      cluster: "${PRIMARY_K8S_CLUSTER}"
+      replicas: 5
+      
+    secondary: 
+      name: "${SECONDARY_K8S_REGION}"
+      cluster: "${SECONDARY_K8S_CLUSTER}"
+      replicas: 3
+      
+    dr:
+      name: "${DR_K8S_REGION}"
+      cluster: "${DR_K8S_CLUSTER}"
+      replicas: 1  # Minimal DR capacity
+  
+  # Pod disruption budgets
+  pod_disruption_budget:
+    enabled: true
+    min_available: 2  # Always maintain 2 pods minimum
+    max_unavailable: 50%  # Don't take down more than 50% at once
+  
+  # Node affinity for multi-AZ deployment
+  node_affinity:
+    required:
+      - matchExpressions:
+        - key: "topology.kubernetes.io/zone"
+          operator: "In"
+          values: ["us-west-2a", "us-west-2b", "us-west-2c"]
+  
+  # Resource management for HA
+  resources:
+    primary_region:
+      requests:
+        memory: "1Gi"
+        cpu: "1000m"
+      limits:
+        memory: "4Gi"
+        cpu: "4000m"
+        
+    secondary_region:
+      requests:
+        memory: "512Mi"
+        cpu: "500m"
+      limits:
+        memory: "2Gi" 
+        cpu: "2000m"
+
+# Network configuration for HA
+network:
+  # Multi-region VPC setup
+  vpc_configuration:
+    primary_vpc: "${PRIMARY_VPC_ID}"
+    secondary_vpc: "${SECONDARY_VPC_ID}"
+    dr_vpc: "${DR_VPC_ID}"
+    
+    # VPC peering for cross-region communication
+    vpc_peering:
+      primary_secondary:
+        enabled: true
+        peering_connection_id: "${PRIMARY_SECONDARY_PEERING_ID}"
+      
+      primary_dr:
+        enabled: true
+        peering_connection_id: "${PRIMARY_DR_PEERING_ID}"
+  
+  # Load balancer configuration
+  load_balancer:
+    type: "application"  # ALB for intelligent routing
+    scheme: "internal"
+    
+    health_check:
+      path: "/health"
+      interval: 30
+      timeout: 5
+      healthy_threshold: 2
+      unhealthy_threshold: 5
+    
+    # Geographic routing
+    routing_policy:
+      - priority: 1
+        condition: "primary_healthy"
+        target: "primary_workspace"
+        weight: 100
+        
+      - priority: 2
+        condition: "primary_unhealthy"
+        target: "secondary_workspace"
+        weight: 100
+        
+      - priority: 3
+        condition: "both_unhealthy"
+        target: "maintenance_page"
+        weight: 100
+
+# Backup strategy for HA
+backup:
+  strategy: "multi_region"
+  
+  # Cross-region replication
+  cross_region_replication:
+    enabled: true
+    
+    # Backup destinations per region
+    destinations:
+      primary_region:
+        s3_bucket: "${PRIMARY_BACKUP_BUCKET}"
+        replication_target: "${SECONDARY_BACKUP_BUCKET}"
+        
+      secondary_region:
+        s3_bucket: "${SECONDARY_BACKUP_BUCKET}"
+        replication_target: "${DR_BACKUP_BUCKET}"
+  
+  # Recovery testing
+  recovery_testing:
+    enabled: true
+    schedule: "0 2 * * 0"  # Weekly on Sunday at 2 AM
+    automated_validation: true
+    
+    test_scenarios:
+      - primary_workspace_failure
+      - secondary_workspace_failure
+      - partial_data_loss
+      - network_partition
+
+# Disaster recovery procedures
+disaster_recovery:
+  # RTO/RPO targets
+  targets:
+    recovery_time_objective: 300  # 5 minutes
+    recovery_point_objective: 60  # 1 minute max data loss
+  
+  # Automated DR procedures
+  automation:
+    enabled: true
+    
+    procedures:
+      workspace_failure:
+        detection_time: 180  # 3 minutes
+        failover_time: 120   # 2 minutes
+        validation_time: 60  # 1 minute
+        
+      data_corruption:
+        detection_time: 300  # 5 minutes
+        restore_time: 600    # 10 minutes
+        validation_time: 300 # 5 minutes
+  
+  # DR testing schedule
+  testing:
+    full_dr_test: "0 2 1 * *"    # Monthly on 1st at 2 AM
+    partial_test: "0 2 * * 0"    # Weekly on Sunday at 2 AM
+    network_test: "0 2 * * 3"    # Weekly on Wednesday at 2 AM
