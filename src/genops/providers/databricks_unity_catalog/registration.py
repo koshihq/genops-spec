@@ -66,7 +66,12 @@ def auto_register() -> None:
 
 def auto_instrument_databricks() -> Optional[Any]:
     """
-    Automatically instrument existing Databricks operations.
+    Automatically instrument existing Databricks operations with zero-code setup.
+    
+    Features:
+    - Auto-detects Databricks configuration from environment
+    - Enables governance tracking with intelligent defaults
+    - Works with existing code without modification
     
     Returns:
         Instrumented adapter if successful, None otherwise
@@ -83,18 +88,154 @@ def auto_instrument_databricks() -> Optional[Any]:
         # Import our adapter
         from .adapter import instrument_databricks_unity_catalog
         
+        # Auto-detect configuration with intelligent defaults
+        auto_config = _detect_databricks_configuration()
+        
+        if not auto_config.get('workspace_url'):
+            logger.warning("Databricks workspace URL not found in environment")
+            return None
+        
         # Create adapter with auto-detected configuration
-        adapter = instrument_databricks_unity_catalog()
+        adapter = instrument_databricks_unity_catalog(
+            workspace_url=auto_config['workspace_url'],
+            **auto_config.get('governance_attrs', {})
+        )
         
-        # Attempt to patch common Databricks operations
-        patch_databricks_operations(adapter)
+        # Enable auto-patching of common operations
+        if auto_config.get('enable_auto_patching', True):
+            patch_databricks_operations(adapter)
         
-        logger.info("Databricks Unity Catalog auto-instrumentation enabled")
+        logger.info(
+            f"Databricks Unity Catalog auto-instrumentation enabled for "
+            f"workspace: {auto_config['workspace_url']}"
+        )
         return adapter
         
     except Exception as e:
         logger.warning(f"Databricks Unity Catalog auto-instrumentation failed: {e}")
         return None
+
+
+def _detect_databricks_configuration() -> Dict[str, Any]:
+    """
+    Auto-detect Databricks configuration from environment with intelligent defaults.
+    
+    Returns:
+        Dictionary with detected configuration
+    """
+    import os
+    
+    config = {}
+    
+    # Primary configuration detection
+    workspace_url = (
+        os.getenv('DATABRICKS_HOST') or 
+        os.getenv('DATABRICKS_WORKSPACE_URL') or
+        os.getenv('DATABRICKS_SERVER_HOSTNAME')
+    )
+    
+    access_token = (
+        os.getenv('DATABRICKS_TOKEN') or
+        os.getenv('DATABRICKS_ACCESS_TOKEN') or
+        os.getenv('DATABRICKS_PAT')
+    )
+    
+    if workspace_url:
+        config['workspace_url'] = workspace_url.rstrip('/')
+        
+        # Normalize workspace URL format
+        if not workspace_url.startswith(('http://', 'https://')):
+            config['workspace_url'] = f"https://{workspace_url}"
+    
+    # Governance attributes with intelligent defaults
+    governance_attrs = {}
+    
+    # Team attribution (multiple sources)
+    team = (
+        os.getenv('GENOPS_TEAM') or
+        os.getenv('DATABRICKS_TEAM') or
+        os.getenv('TEAM_NAME') or
+        os.getenv('USER', 'unknown-team')  # Fallback to system user
+    )
+    if team and team != 'unknown-team':
+        governance_attrs['team'] = team
+    
+    # Project attribution
+    project = (
+        os.getenv('GENOPS_PROJECT') or
+        os.getenv('DATABRICKS_PROJECT') or
+        os.getenv('PROJECT_NAME') or
+        'auto-detected'
+    )
+    governance_attrs['project'] = project
+    
+    # Environment detection
+    environment = (
+        os.getenv('GENOPS_ENVIRONMENT') or
+        os.getenv('DATABRICKS_ENV') or
+        os.getenv('ENVIRONMENT') or
+        os.getenv('ENV') or
+        _detect_environment_from_url(workspace_url) or
+        'development'
+    )
+    governance_attrs['environment'] = environment
+    
+    # Cost center (optional)
+    cost_center = (
+        os.getenv('GENOPS_COST_CENTER') or
+        os.getenv('DATABRICKS_COST_CENTER') or
+        os.getenv('COST_CENTER')
+    )
+    if cost_center:
+        governance_attrs['cost_center'] = cost_center
+    
+    # User identification
+    user_id = (
+        os.getenv('GENOPS_USER_ID') or
+        os.getenv('DATABRICKS_USER_ID') or
+        os.getenv('USER') or
+        'auto-detected-user'
+    )
+    governance_attrs['user_id'] = user_id
+    
+    config['governance_attrs'] = governance_attrs
+    
+    # Feature toggles with intelligent defaults
+    config['enable_auto_patching'] = _str_to_bool(
+        os.getenv('GENOPS_ENABLE_AUTO_PATCHING', 'true')
+    )
+    config['enable_cost_tracking'] = _str_to_bool(
+        os.getenv('GENOPS_ENABLE_COST_TRACKING', 'true')
+    )
+    config['enable_lineage_tracking'] = _str_to_bool(
+        os.getenv('GENOPS_ENABLE_LINEAGE_TRACKING', 'true')
+    )
+    
+    return config
+
+
+def _detect_environment_from_url(workspace_url: Optional[str]) -> Optional[str]:
+    """Intelligently detect environment from workspace URL."""
+    if not workspace_url:
+        return None
+    
+    url_lower = workspace_url.lower()
+    
+    if any(env in url_lower for env in ['prod', 'production']):
+        return 'production'
+    elif any(env in url_lower for env in ['stage', 'staging']):
+        return 'staging'
+    elif any(env in url_lower for env in ['dev', 'development']):
+        return 'development'
+    elif any(env in url_lower for env in ['test', 'testing']):
+        return 'testing'
+    
+    return None
+
+
+def _str_to_bool(value: str) -> bool:
+    """Convert string environment variable to boolean."""
+    return value.lower() in ('true', '1', 'yes', 'on', 'enabled')
 
 
 def patch_databricks_operations(adapter: Any) -> None:
