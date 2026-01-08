@@ -2,11 +2,11 @@
   <img width="500" src="./assets/brand/genops-logo-optimized.jpg" alt="GenOps: Open Runtime Governance for AI Systems" style="max-width: 100%;">
 </p>
 
-# 🧭 GenOps AI: Runtime Governance for AI Workloads
+# 🧭 GenOps AI: Runtime Authority Control for AI Systems
 
-GenOps AI is the open-source standard that gives you **human-in-the-loop control** over AI systems in production, built on <a href="https://opentelemetry.io" target="_blank">OpenTelemetry</a>.
+GenOps AI extends <a href="https://opentelemetry.io" target="_blank">OpenTelemetry</a> with **runtime authority control** for production AI workloads, the missing control plane that enables organizations to deploy autonomous AI systems with governance built into the infrastructure.
 
-**Runtime governance for all your existing AI model providers, tools/systems, and frameworks**: standard telemetry + policy enforcement that enables you to control, govern, and intervene in AI operations as they happen in real time — not after the fact.
+**Authority control across all your existing AI providers, frameworks, and tools**: Standard OTLP telemetry + governance enforcement that prevents cost overruns, policy violations, and compliance failures before they occur, not after.
 
 <div align="center">
   
@@ -22,118 +22,120 @@ GenOps AI is the open-source standard that gives you **human-in-the-loop control
 
 ---
 
-## 🚨 The Problem: AI Systems Running Wild in Production
+## 🚨 The Problem: The Missing Authority Control Plane
 
-You've deployed AI systems that work great in development. But in production, you've lost **human control** over what's happening inside your AI stack...
+Modern AI infrastructure stacks have sophisticated layers for execution, orchestration, and observability. **But there's no native control plane for authority.**
 
-Sound familiar?
+Your AI systems operate with unlimited authority:
 
-- 🤖 **AI black boxes** — Your models are making decisions, but you can't intervene when things go wrong
-- 💸 **Runaway costs** — AI spend spiraling with no way to enforce budgets or limits in real-time
-- 🚫 **No guardrails** — AI systems operating without policy enforcement or human oversight
-- ⚡ **After-the-fact alerts** — You find out about problems hours later, not when you can actually do something
-- 🤷‍♂️ **Zero governance** — Great observability dashboards, but no way to actually *control* what's happening
+- 💸 **No IAM equivalent for AI actions** - AI agents make resource decisions without delegated authority constraints
+- 🚫 **No RBAC for autonomous systems** - AI operations bypass the role-based controls you use everywhere else
+- ⚡ **Observability ≠ Control** - Great dashboards showing what happened, no infrastructure to prevent what shouldn't happen
+- 🤷‍♂️ **Governance gap** - Policies exist in documents, not in runtime enforcement systems
+- 📊 **Cost attribution without prevention** - You can measure AI spend but can't constrain it at execution time
 
-The result: You have visibility into your AI systems but no ability to govern them when it matters.
-
-**You need runtime control that lets humans stay in the loop of AI decision-making.**
+**Modern AI stacks need the same authority infrastructure that cloud systems have had for decades.**
 
 ## 👥 Who This Is For
 
 **If you're building with AI, GenOps is for you:**
 
 **🧑‍💻 Individual Developers**
-- Keep human control over your AI experiments with runtime guardrails
-- Enforce budget limits and policy constraints as your code runs
-- Intervene in AI operations before they cause problems
-- Share governance patterns with your team without enterprise overhead
+- Add runtime budget constraints to AI experiments without changing existing code
+- Prevent cost overruns with automatic intervention policies
+- Track AI operations with standard observability tools
+- Share governance patterns across projects with team-wide visibility
 
 **👨‍💼 Team Leads & Senior Engineers**
-- Maintain oversight and control over your team's AI systems in production
-- Enforce spending limits and usage policies across all AI operations
-- Get real-time alerts with the power to take action immediately
-- Demonstrate responsible AI governance to management
+- Implement authority boundaries for autonomous AI systems
+- Enforce budget allocation and usage policies at the infrastructure level
+- Get real-time governance telemetry through existing observability platforms
+- Enable confident AI adoption with built-in constraint enforcement
 
 **🛠️ Platform Engineers**
-- Build AI governance into your infrastructure with human-in-the-loop controls
-- Support multiple teams with unified policy enforcement
-- Use familiar OpenTelemetry patterns for runtime governance
-- Scale from individual oversight to organization-wide AI control
+- Extend OpenTelemetry with AI governance semantics using familiar patterns
+- Build authority control into infrastructure without application-specific changes
+- Support multiple teams with unified policy enforcement across all AI providers
+- Scale from individual budget controls to organization-wide authority management
 
 **Start individual. Scale with your team. Grow into your organization.**
 
 ---
 
-## 💡 The GenOps Solution
+## 💡 The GenOps AI Solution: Infrastructure-Native Authority Control
 
-GenOps adds the **runtime governance layer** your AI stack is missing — enabling human control without replacing the tools you already love:
+GenOps AI fills the **missing authority control plane** in modern AI infrastructure, using the same patterns that enabled confident cloud adoption:
 
-- **Real-time policy enforcement** across LLM providers, AI frameworks, routing tools, vector databases, and more
-- **Budget guardrails** with automatic intervention when limits are exceeded
-- **Human-in-the-loop controls** that let you govern AI operations as they happen
-- **Runtime intervention** — standard OpenTelemetry telemetry + governance actions
+- **Authority boundaries** that constrain AI system decision-making at the infrastructure level
+- **Runtime budget enforcement** with automatic intervention before overruns occur
+- **Policy constraints** that prevent unauthorized operations across all AI providers and frameworks
+- **Governance telemetry** that extends OpenTelemetry with cost, compliance, and policy semantics
 
-Because GenOps uses standard OpenTelemetry, it integrates with whatever AI tools and observability platforms you're already using. Keep your existing tools, add the governance layer that gives you control.
+**The FinOps model for AI systems**: Just as cloud infrastructure needed cost control to enable confident scaling, AI systems need authority control to enable confident autonomy.
+
+Because GenOps AI extends standard OpenTelemetry, it enhances your existing observability stack without replacing tools or creating vendor lock-in.
 
 ---
 
 ## ⚙️ What GenOps Delivers
 
-**🏛️ Runtime Governance & Control**
-- Enforce policies and budgets across ALL your AI tools as operations happen
-- Automatic intervention that spans LLM providers + AI frameworks + routing services + vector databases
-- Human-in-the-loop controls with team-based access and approval workflows
-- Works with any combination of AI tools you're using
+**🏛️ Authority Control Infrastructure**
+- Runtime policy enforcement across all AI providers, frameworks, and tools
+- Automatic constraint application that prevents unauthorized operations before they execute
+- Governance workflows with approval gates for high-impact AI operations
+- Cross-provider authority management that works with any AI tool combination
 
-**💰 Intelligent Budget Enforcement**
-- Automatically halt spending when limits are exceeded across all providers
-- Real-time cost controls regardless of which tools you use
-- Per-project, per-team, per-customer budget enforcement across all providers
-- Proactive budget governance with human approval gates
+**💰 Budget Authority Enforcement**
+- Prevent cost overruns with automatic intervention at configurable budget thresholds
+- Real-time cost constraints that operate independently of AI provider billing
+- Multi-dimensional budget enforcement: per-team, per-project, per-customer allocation
+- Cost attribution and optimization intelligence across all AI operations
 
-**📊 Governance Dashboards & Controls**  
-- Ready-to-use policy controls integrated with your existing observability tools
-- Cost controls, usage policies, and intervention capabilities
-- Answers questions like "who can approve this AI operation?" and "should we stop this request?"
-- Real-time governance actions with audit trails for compliance
+**📊 Governance Observability**  
+- Authority control telemetry integrated with existing observability platforms (Datadog, Grafana, Honeycomb)
+- Cost, policy, and compliance metrics using standard OpenTelemetry semantic conventions
+- Real-time governance dashboards that show authority boundaries and constraint violations
+- Complete audit trails for compliance reporting and organizational accountability
 
-**🔧 Zero-Friction Integration**
-- 30-second setup with auto-instrumentation that detects your AI libraries
-- Works with whatever AI tools you already use (LLM providers, AI frameworks, routing services, etc.)
-- Standard OpenTelemetry output compatible with 15+ observability platforms
-- No vendor lock-in or tool replacement required - enhances your existing stack
-
----
-
-## 🔄 Governance vs. Observability: The Critical Difference
-
-**Traditional AI Observability Tools:**
-- 📊 Show you what happened *after* AI operations complete
-- 📈 Great dashboards and analytics, but no way to intervene
-- ⚠️ Alert you to problems when it's too late to prevent them
-- 📋 Track costs and usage for reporting purposes
-
-**GenOps Runtime Governance:**
-- 🛑 **Intervenes in AI operations as they happen** with human-controlled policies
-- ⚡ **Enforces budgets and constraints in real-time** before problems occur
-- 🎯 **Enables human decision-making** at critical points in AI workflows
-- 🔒 **Prevents** runaway costs, policy violations, and ungoverned AI behavior
-
-**The result:** Move from "What happened?" to "What should happen?" — shifting from reactive monitoring to proactive human control of AI systems.
+**🔧 Infrastructure-Native Integration**
+- Zero-code auto-instrumentation that extends existing AI applications with governance
+- Standard OTLP telemetry output compatible with 15+ observability platforms
+- Provider-agnostic approach that works across OpenAI, Anthropic, Bedrock, Gemini, and more
+- No application changes required - governance becomes part of the infrastructure layer
 
 ---
 
-## 🚀 Defining the Open Standard for AI Governance
+## 🔄 Authority Control vs. Observability: The Infrastructure Gap
 
-GenOps is pioneering the **next generation of AI control systems** by extending OpenTelemetry into the governance domain.
+**Traditional AI Observability Platforms:**
+- 📊 Excellent at showing what happened *after* AI operations complete
+- 📈 Comprehensive dashboards and cost attribution for analysis
+- ⚠️ Alert on problems that have already occurred
+- 📋 Track usage and performance for optimization
 
-**Why this matters:**
-- 📐 **Shaping the standard** — Building the open-source foundation that will define how AI governance works
-- 🏗️ **Architecture for the future** — Human-centric AI governance patterns that scale from startups to enterprises  
-- 🤝 **Community-driven** — Open development with transparent standards and contribution pathways
-- 🌍 **Vendor-neutral** — No lock-in to any specific AI provider or observability platform
+**GenOps AI Authority Control:**
+- 🛑 **Constrains AI operations before they execute** using infrastructure-level policies
+- ⚡ **Enforces budget and resource limits at runtime** preventing overruns
+- 🎯 **Enables governance boundaries** that autonomous AI systems cannot exceed
+- 🔒 **Prevents** unauthorized operations through authority constraint enforcement
 
-**Join us in defining how humans maintain control over AI systems in production.**
+**The critical difference:** Observability tools answer "What happened?" while GenOps AI answers "What is *allowed* to happen?" 
+
+**Both are essential**: Observability for understanding, GenOps AI for control. They complement each other in production AI infrastructure.
+
+---
+
+## 🚀 The Missing Standard: Authority Control for AI Infrastructure
+
+GenOps AI extends OpenTelemetry semantic conventions into the governance domain, creating the open standard for AI authority control that the industry needs.
+
+**Why this approach matters:**
+- 📐 **Standards-based foundation** - Building on OpenTelemetry ensures interoperability and prevents vendor lock-in
+- 🏗️ **Infrastructure-first architecture** - Authority control becomes part of the platform, not bolted onto applications
+- 🤝 **Community-driven development** - Open-source approach with transparent governance and contribution pathways
+- 🌍 **Provider-agnostic** - Works across all AI providers, frameworks, and observability platforms
+
+**The inevitable evolution**: Just as FinOps emerged to control cloud costs, GenOps AI provides the authority control that AI systems require for confident autonomous operation.
 
 ---
 
@@ -141,13 +143,13 @@ GenOps is pioneering the **next generation of AI control systems** by extending 
 
 **Keep the tools you love, add the governance layer that gives you control:**
 
-**Already using LLM providers directly?** GenOps adds runtime budget enforcement and policy controls without changing your code.
+**Already using LLM providers directly?** GenOps AI adds runtime authority constraints without changing your application code.
 
-**Already using AI frameworks or routing tools?** GenOps enables human-in-the-loop governance across all your AI operations.
+**Already using AI frameworks or routing tools?** GenOps AI provides governance infrastructure that works across all your existing tools.
 
-**Already using observability platforms?** GenOps extends your existing dashboards with governance controls and intervention capabilities.
+**Already using observability platforms?** GenOps AI extends your existing telemetry with governance semantics and control capabilities.
 
-**The result**: Runtime governance across all your AI tools without migration pain or vendor lock-in.
+**The result**: Authority control infrastructure for your entire AI stack without migration complexity or vendor lock-in.
 
 ---
 
@@ -162,11 +164,11 @@ pip install genops
 ```python
 from genops import GenOps
 
-# Enable runtime governance with human controls
+# Enable runtime authority control with budget constraints
 GenOps.init(
     daily_budget_limit=100.0,      # Automatically halt operations at $100/day
-    require_approval_over=50.0,    # Require human approval for requests >$50
-    enable_policy_enforcement=True  # Enable real-time policy checks
+    require_approval_over=50.0,    # Authority escalation for requests >$50
+    enable_policy_enforcement=True  # Enable real-time constraint checking
 )
 
 # Your existing AI code now has governance controls
@@ -192,7 +194,7 @@ GenOps automatically captures governance telemetry with control actions:
     "genops.governance.policy_check": "passed",
     "genops.governance.budget_remaining": 97.50,
     "genops.governance.approval_required": false,
-    "genops.governance.human_intervention": "none",
+    "genops.governance.authority_constraint": "budget_limit",
     "genops.provider": "openai",
     "genops.model": "gpt-4",
     "genops.team": "engineering",
@@ -207,7 +209,7 @@ GenOps automatically captures governance telemetry with control actions:
 
 ## 💡 What You'll See in 5 Minutes
 
-After the 3-step setup above, GenOps immediately provides real-time governance and human control:
+After the 3-step setup above, GenOps AI immediately provides runtime authority control and constraint enforcement:
 
 ### **Runtime Governance Dashboard**
 ```
@@ -221,21 +223,21 @@ After the 3-step setup above, GenOps immediately provides real-time governance a
 └─────────────────┴──────────┴─────────────┴─────────────┘
 ```
 
-### **Human-in-the-Loop Controls**
+### **Authority Control Actions**
 ```
-🎯 Pending Governance Actions
-→ High-cost request from 'product' team requires approval ($52.30)
-→ Budget threshold exceeded for 'marketing' - operations paused
-→ Policy violation detected in 'research' workflow - human review needed
+🎯 Active Governance Constraints
+→ High-cost request from 'product' team requires authority escalation ($52.30)
+→ Budget threshold exceeded for 'marketing' - operations automatically paused
+→ Policy violation detected in 'research' workflow - constraint enforcement applied
 ```
 
 ### **Real-Time Intervention**
 ```
-🚨 GOVERNANCE ACTION: Team 'marketing' budget limit reached
-   ├── All AI operations automatically paused
-   ├── Team lead notified for budget increase approval  
-   ├── 3 pending requests waiting for human decision
-   └── ✅ Human approved budget increase - operations resumed
+🚨 AUTHORITY CONTROL: Team 'marketing' budget constraint activated
+   ├── All AI operations automatically paused by infrastructure
+   ├── Budget authority escalation triggered
+   ├── 3 pending requests held pending approval workflow
+   └── ✅ Authority boundary updated - operations resumed
 ```
 
 **This works with your existing observability tools** - tracking data appears in Datadog traces, Grafana dashboards, or wherever you already monitor your applications.
@@ -244,23 +246,23 @@ After the 3-step setup above, GenOps immediately provides real-time governance a
 
 ---
 
-## 🔧 How Teams Use GenOps Governance
+## 🔧 Authority Control Architecture Patterns
 
-**Individual Developer Control**
-Start by adding governance policies to your personal AI projects. GenOps provides immediate budget enforcement and policy controls across your development work.
+**Individual Developer Authority**
+Add budget and policy constraints to personal AI projects without changing application code. GenOps AI provides immediate authority boundary enforcement across all AI operations.
 
-**Team Governance Pattern**  
-Share governance policies across team members with human-in-the-loop approval workflows. Multiple developers operate under unified governance controls with shared oversight dashboards.
+**Team Authority Coordination**  
+Unified authority policies across team members with shared budget pools and escalation workflows. Multiple developers operate within consistent constraint frameworks with centralized governance telemetry.
 
-**Organization Control Scaling**
-As governance requirements grow, teams scale from individual oversight to organization-wide AI control systems with enterprise policy automation, compliance workflows, and centralized human decision-making.
+**Organization Authority Infrastructure**
+Scale authority control from individual constraints to organization-wide AI governance with enterprise policy frameworks, compliance automation, and centralized constraint management.
 
-**Common Governance Progression:**
-1. **Individual**: Implement GenOps governance policies for personal AI projects
-2. **Team**: Standardize on GenOps control systems across team members  
-3. **Organization**: Scale governance foundation to enterprise control platforms
+**Authority Control Evolution:**
+1. **Individual**: Budget and policy constraints for personal AI operations
+2. **Team**: Shared authority boundaries with unified constraint enforcement
+3. **Organization**: Enterprise authority infrastructure with compliance integration
 
-**When you need organization-wide AI governance, the OpenTelemetry foundation scales to enterprise control systems.**
+**The OpenTelemetry foundation ensures authority control scales from individual developers to enterprise infrastructure without platform lock-in.**
 
 ---
 
@@ -355,17 +357,17 @@ As governance requirements grow, teams scale from individual oversight to organi
 
 ### **Team Collaboration**
 Share insights and optimize together:
-- **Cost transparency** — Everyone sees what AI requests actually cost
-- **Performance comparison** — Compare models and prompts across the team
-- **Debugging support** — Help teammates troubleshoot AI issues faster
-- **Best practices sharing** — Learn what works from your team's real usage
+- **Cost transparency** - Everyone sees what AI requests actually cost
+- **Performance comparison** - Compare models and prompts across the team
+- **Debugging support** - Help teammates troubleshoot AI issues faster
+- **Best practices sharing** - Learn what works from your team's real usage
 
 ### **Scales with Your Growth**
 Built to grow from individual to organization:
-- **Individual projects** — Track your personal AI usage and costs
-- **Team visibility** — Share insights without enterprise overhead
-- **Department adoption** — Proven patterns that work at scale
-- **Organization readiness** — When you need more, we're ready to help
+- **Individual projects** - Track your personal AI usage and costs
+- **Team visibility** - Share insights without enterprise overhead
+- **Department adoption** - Proven patterns that work at scale
+- **Organization readiness** - When you need more, we're ready to help
 
 ---
 
@@ -393,16 +395,16 @@ Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for detai
 
 ## 🌟 **Why GenOps Framework?**
 
-**Because great AI tools shouldn't run without human oversight and control.**
+**Because autonomous AI systems need the same authority infrastructure that cloud systems have.**
 
-- **vs Routing tools**: We don't replace routing — we add governance controls and human oversight to it
-- **vs Monitoring platforms**: We don't replace monitoring — we add AI governance actions and policy enforcement to it  
-- **vs Analytics dashboards**: We don't replace analytics — we add human-controlled budget enforcement to it
-- **vs Build-it-yourself**: Standard OpenTelemetry approach with governance extensions instead of custom control scripts
+- **vs Routing tools**: We don't replace routing, we add authority constraints to the infrastructure layer
+- **vs Monitoring platforms**: We don't replace monitoring, we add governance telemetry and constraint enforcement
+- **vs Analytics dashboards**: We don't replace analytics, we add runtime budget and policy enforcement
+- **vs Build-it-yourself**: Standard OpenTelemetry approach with governance extensions instead of custom constraint systems
 
-**The only platform that adds cross-stack AI governance WITHOUT replacing your existing tools.**
+**The only platform that adds authority control infrastructure WITHOUT replacing your existing AI tools.**
 
-*When you're ready to scale AI governance across larger teams, GenOps provides the control foundation for unified human oversight and policy enforcement platforms.*
+*When you're ready to scale authority control across larger teams, GenOps AI provides the governance infrastructure foundation for enterprise AI systems with confidence and constraints.*
 
 ---
 
