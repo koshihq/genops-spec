@@ -2,11 +2,12 @@
   <img width="500" src="./assets/brand/genops-logo-optimized.jpg" alt="GenOps: Open Runtime Governance for AI Systems" style="max-width: 100%;">
 </p>
 
-# 🧭 GenOps AI: Runtime Authority Control for AI Systems
+# GenOps AI: Runtime Authority Control for AI Systems
 
 GenOps AI extends <a href="https://opentelemetry.io" target="_blank">OpenTelemetry</a> with **runtime authority control** for production AI workloads, the missing control plane that enables organizations to deploy autonomous AI systems with governance built into the infrastructure.
 
-**Authority control across all your existing AI providers, frameworks, and tools**: Standard OTLP telemetry + governance enforcement that prevents cost overruns, policy violations, and compliance failures before they occur, not after.
+For comprehensive operational foundations and architectural context, see: 📄 [**GenOps AI Technical Whitepaper**](https://github.com/KoshiHQ/genops-whitepaper/)
+<br><br>
 
 <div align="center">
   
@@ -22,37 +23,37 @@ GenOps AI extends <a href="https://opentelemetry.io" target="_blank">OpenTelemet
 
 ---
 
-## 🚨 The Problem: The Missing Authority Control Plane
+## The Problem: The Missing Authority Control Plane
 
 Modern AI infrastructure stacks have sophisticated layers for execution, orchestration, and observability. **But there's no native control plane for authority.**
 
 Your AI systems operate with unlimited authority:
 
-- 💸 **No IAM equivalent for AI actions** - AI agents make resource decisions without delegated authority constraints
-- 🚫 **No RBAC for autonomous systems** - AI operations bypass the role-based controls you use everywhere else
-- ⚡ **Observability ≠ Control** - Great dashboards showing what happened, no infrastructure to prevent what shouldn't happen
-- 🤷‍♂️ **Governance gap** - Policies exist in documents, not in runtime enforcement systems
-- 📊 **Cost attribution without prevention** - You can measure AI spend but can't constrain it at execution time
+- **No IAM equivalent for AI actions** - AI agents make resource decisions without delegated authority constraints
+- **No RBAC for autonomous systems** - AI operations bypass the role-based controls you use everywhere else
+- **Observability ≠ Control** - Great dashboards showing what happened, no infrastructure to prevent what shouldn't happen
+- **Governance gap** - Policies exist in documents, not in runtime enforcement systems
+- **Cost attribution without prevention** - You can measure AI spend but can't constrain it at execution time
 
 **Modern AI stacks need the same authority infrastructure that cloud systems have had for decades.**
 
-## 👥 Who This Is For
+## Who This Is For
 
 **If you're building with AI, GenOps is for you:**
 
-**🧑‍💻 Individual Developers**
+**Individual Developers**
 - Add runtime budget constraints to AI experiments without changing existing code
 - Prevent cost overruns with automatic intervention policies
 - Track AI operations with standard observability tools
 - Share governance patterns across projects with team-wide visibility
 
-**👨‍💼 Team Leads & Senior Engineers**
+**Team Leads & Senior Engineers**
 - Implement authority boundaries for autonomous AI systems
 - Enforce budget allocation and usage policies at the infrastructure level
 - Get real-time governance telemetry through existing observability platforms
 - Enable confident AI adoption with built-in constraint enforcement
 
-**🛠️ Platform Engineers**
+**Platform Engineers**
 - Extend OpenTelemetry with AI governance semantics using familiar patterns
 - Build authority control into infrastructure without application-specific changes
 - Support multiple teams with unified policy enforcement across all AI providers
@@ -62,7 +63,7 @@ Your AI systems operate with unlimited authority:
 
 ---
 
-## 💡 The GenOps AI Solution: Infrastructure-Native Authority Control
+## The GenOps AI Solution: Infrastructure-Native Authority Control
 
 GenOps AI fills the **missing authority control plane** in modern AI infrastructure, using the same patterns that enabled confident cloud adoption:
 
@@ -77,27 +78,27 @@ Because GenOps AI extends standard OpenTelemetry, it enhances your existing obse
 
 ---
 
-## ⚙️ What GenOps Delivers
+## What GenOps Delivers
 
-**🏛️ Authority Control Infrastructure**
+**Authority Control Infrastructure**
 - Runtime policy enforcement across all AI providers, frameworks, and tools
 - Automatic constraint application that prevents unauthorized operations before they execute
 - Governance workflows with approval gates for high-impact AI operations
 - Cross-provider authority management that works with any AI tool combination
 
-**💰 Budget Authority Enforcement**
+**Budget Authority Enforcement**
 - Prevent cost overruns with automatic intervention at configurable budget thresholds
 - Real-time cost constraints that operate independently of AI provider billing
 - Multi-dimensional budget enforcement: per-team, per-project, per-customer allocation
 - Cost attribution and optimization intelligence across all AI operations
 
-**📊 Governance Observability**  
+**Governance Observability**  
 - Authority control telemetry integrated with existing observability platforms (Datadog, Grafana, Honeycomb)
 - Cost, policy, and compliance metrics using standard OpenTelemetry semantic conventions
 - Real-time governance dashboards that show authority boundaries and constraint violations
 - Complete audit trails for compliance reporting and organizational accountability
 
-**🔧 Infrastructure-Native Integration**
+**Infrastructure-Native Integration**
 - Zero-code auto-instrumentation that extends existing AI applications with governance
 - Standard OTLP telemetry output compatible with 15+ observability platforms
 - Provider-agnostic approach that works across OpenAI, Anthropic, Bedrock, Gemini, and more
@@ -105,19 +106,19 @@ Because GenOps AI extends standard OpenTelemetry, it enhances your existing obse
 
 ---
 
-## 🔄 Authority Control vs. Observability: The Infrastructure Gap
+## Authority Control vs. Observability: The Infrastructure Gap
 
 **Traditional AI Observability Platforms:**
-- 📊 Excellent at showing what happened *after* AI operations complete
-- 📈 Comprehensive dashboards and cost attribution for analysis
-- ⚠️ Alert on problems that have already occurred
-- 📋 Track usage and performance for optimization
+- Excellent at showing what happened *after* AI operations complete
+- Comprehensive dashboards and cost attribution for analysis
+- Alert on problems that have already occurred
+- Track usage and performance for optimization
 
 **GenOps AI Authority Control:**
-- 🛑 **Constrains AI operations before they execute** using infrastructure-level policies
-- ⚡ **Enforces budget and resource limits at runtime** preventing overruns
-- 🎯 **Enables governance boundaries** that autonomous AI systems cannot exceed
-- 🔒 **Prevents** unauthorized operations through authority constraint enforcement
+- **Constrains AI operations before they execute** using infrastructure-level policies
+- **Enforces budget and resource limits at runtime** preventing overruns
+- **Enables governance boundaries** that autonomous AI systems cannot exceed
+- **Prevents** unauthorized operations through authority constraint enforcement
 
 **The critical difference:** Observability tools answer "What happened?" while GenOps AI answers "What is *allowed* to happen?" 
 
@@ -125,21 +126,21 @@ Because GenOps AI extends standard OpenTelemetry, it enhances your existing obse
 
 ---
 
-## 🚀 The Missing Standard: Authority Control for AI Infrastructure
+## The Missing Standard: Authority Control for AI Infrastructure
 
 GenOps AI extends OpenTelemetry semantic conventions into the governance domain, creating the open standard for AI authority control that the industry needs.
 
 **Why this approach matters:**
-- 📐 **Standards-based foundation** - Building on OpenTelemetry ensures interoperability and prevents vendor lock-in
-- 🏗️ **Infrastructure-first architecture** - Authority control becomes part of the platform, not bolted onto applications
-- 🤝 **Community-driven development** - Open-source approach with transparent governance and contribution pathways
-- 🌍 **Provider-agnostic** - Works across all AI providers, frameworks, and observability platforms
+- **Standards-based foundation** - Building on OpenTelemetry ensures interoperability and prevents vendor lock-in
+- **Infrastructure-first architecture** - Authority control becomes part of the platform, not bolted onto applications
+- **Community-driven development** - Open-source approach with transparent governance and contribution pathways
+- **Provider-agnostic** - Works across all AI providers, frameworks, and observability platforms
 
 **The inevitable evolution**: Just as FinOps emerged to control cloud costs, GenOps AI provides the authority control that AI systems require for confident autonomous operation.
 
 ---
 
-## 🤝 Works with Your Existing Stack
+## Works with Your Existing Stack
 
 **Keep the tools you love, add the governance layer that gives you control:**
 
@@ -153,7 +154,7 @@ GenOps AI extends OpenTelemetry semantic conventions into the governance domain,
 
 ---
 
-## 📦 Quick Start
+## Quick Start
 
 ### 1. Install the SDK
 ```bash
@@ -207,25 +208,25 @@ GenOps automatically captures governance telemetry with control actions:
 
 ---
 
-## 💡 What You'll See in 5 Minutes
+## What You'll See in 5 Minutes
 
 After the 3-step setup above, GenOps AI immediately provides runtime authority control and constraint enforcement:
 
 ### **Runtime Governance Dashboard**
 ```
-🛡️ AI Governance Status (Real-Time)
+AI Governance Status (Real-Time)
 ┌─────────────────┬──────────┬─────────────┬─────────────┐
 │ Team            │ Budget   │ Used        │ Status      │
 ├─────────────────┼──────────┼─────────────┼─────────────┤
-│ engineering     │ $100.00  │ $76.60      │ ✅ Active   │
-│ product         │ $75.00   │ $15.80      │ ✅ Active   │
-│ marketing       │ $50.00   │ $48.20      │ ⚠️  Warning │
+│ engineering     │ $100.00  │ $76.60      │ Active      │
+│ product         │ $75.00   │ $15.80      │ Active      │
+│ marketing       │ $50.00   │ $48.20      │ Warning     │
 └─────────────────┴──────────┴─────────────┴─────────────┘
 ```
 
 ### **Authority Control Actions**
 ```
-🎯 Active Governance Constraints
+Active Governance Constraints
 → High-cost request from 'product' team requires authority escalation ($52.30)
 → Budget threshold exceeded for 'marketing' - operations automatically paused
 → Policy violation detected in 'research' workflow - constraint enforcement applied
@@ -233,11 +234,11 @@ After the 3-step setup above, GenOps AI immediately provides runtime authority c
 
 ### **Real-Time Intervention**
 ```
-🚨 AUTHORITY CONTROL: Team 'marketing' budget constraint activated
+AUTHORITY CONTROL: Team 'marketing' budget constraint activated
    ├── All AI operations automatically paused by infrastructure
    ├── Budget authority escalation triggered
    ├── 3 pending requests held pending approval workflow
-   └── ✅ Authority boundary updated - operations resumed
+   └── Authority boundary updated - operations resumed
 ```
 
 **This works with your existing observability tools** - tracking data appears in Datadog traces, Grafana dashboards, or wherever you already monitor your applications.
@@ -246,7 +247,7 @@ After the 3-step setup above, GenOps AI immediately provides runtime authority c
 
 ---
 
-## 🔧 Authority Control Architecture Patterns
+## Authority Control Architecture Patterns
 
 **Individual Developer Authority**
 Add budget and policy constraints to personal AI projects without changing application code. GenOps AI provides immediate authority boundary enforcement across all AI operations.
@@ -266,9 +267,9 @@ Scale authority control from individual constraints to organization-wide AI gove
 
 ---
 
-## 🔌 Integrations & Support
+## Integrations & Support
 
-### 🧠 AI & LLM Ecosystem
+### AI & LLM Ecosystem
 - ✅ [OpenAI](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/openai) (<a href="https://openai.com/" target="_blank">↗</a>)
 - ✅ [Anthropic](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/anthropic) (<a href="https://www.anthropic.com/" target="_blank">↗</a>)
 - ✅ [Google Gemini](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/gemini) (<a href="https://deepmind.google/technologies/gemini/" target="_blank">↗</a>)
@@ -311,7 +312,7 @@ Scale authority control from individual constraints to organization-wide AI gove
 
 ---
 
-### 🏗️ Platform & Infrastructure
+### Platform & Infrastructure
 - ✅ [Kubernetes](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/kubernetes-getting-started.md) (<a href="https://kubernetes.io/" target="_blank">↗</a>)
 - ✅ [OpenTelemetry Collector](https://github.com/KoshiHQ/GenOps-AI/tree/main/observability) (<a href="https://opentelemetry.io/docs/collector/" target="_blank">↗</a>)
 - ✅ [Datadog](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/observability/datadog_integration.py) (<a href="https://www.datadoghq.com/" target="_blank">↗</a>)
@@ -353,7 +354,7 @@ Scale authority control from individual constraints to organization-wide AI gove
 
 ---
 
-## 🚀 Ready for Production
+## Ready for Production
 
 ### **Team Collaboration**
 Share insights and optimize together:
@@ -371,7 +372,7 @@ Built to grow from individual to organization:
 
 ---
 
-## 🤝 **Community & Support**
+## **Community & Support**
 
 ### **Contributing**
 We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for:
@@ -380,20 +381,20 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for:
 - Community guidelines and code of conduct
 
 ### **Getting Help**
-- 📖 **Documentation**: [GitHub Docs](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs)
-- 📊 **Performance Guide**: [Performance Benchmarking](https://github.com/KoshiHQ/GenOps-AI/blob/main/docs/performance-benchmarking.md)
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/KoshiHQ/GenOps-AI/discussions)
-- 🐛 **Issues**: [GitHub Issues](https://github.com/KoshiHQ/GenOps-AI/issues)
+- **Documentation**: [GitHub Docs](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs)
+- **Performance Guide**: [Performance Benchmarking](https://github.com/KoshiHQ/GenOps-AI/blob/main/docs/performance-benchmarking.md)
+- **Discussions**: [GitHub Discussions](https://github.com/KoshiHQ/GenOps-AI/discussions)
+- **Issues**: [GitHub Issues](https://github.com/KoshiHQ/GenOps-AI/issues)
 
 ---
 
-## 📄 **License**
+## **License**
 
 Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for details.
 
 ---
 
-## 🌟 **Why GenOps Framework?**
+## **Why GenOps Framework?**
 
 **Because autonomous AI systems need the same authority infrastructure that cloud systems have.**
 
@@ -408,40 +409,40 @@ Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for detai
 
 ---
 
-## 🤝 **Community & Quick Wins**
+## **Community & Quick Wins**
 
 **New to open source?** Start here:
-- 🐛 [Good first issues](https://github.com/KoshiHQ/GenOps-AI/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) - Perfect for newcomers
-- 📚 [Documentation improvements](https://github.com/KoshiHQ/GenOps-AI/issues?q=is%3Aissue+is%3Aopen+label%3Adocumentation) - Help others learn
-- 🔧 [Help fix our CI tests!](https://github.com/KoshiHQ/GenOps-AI/issues?q=is%3Aissue+is%3Aopen+label%3Aci-fix) - Great for contributors who love debugging
+- [Good first issues](https://github.com/KoshiHQ/GenOps-AI/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) - Perfect for newcomers
+- [Documentation improvements](https://github.com/KoshiHQ/GenOps-AI/issues?q=is%3Aissue+is%3Aopen+label%3Adocumentation) - Help others learn
+- [Help fix our CI tests!](https://github.com/KoshiHQ/GenOps-AI/issues?q=is%3Aissue+is%3Aopen+label%3Aci-fix) - Great for contributors who love debugging
 
 **5-minute contributions welcome!** Every small improvement helps the community grow.
 
 **Looking for bigger challenges?**
-- 🏗️ [Provider integrations](https://github.com/KoshiHQ/GenOps-AI/issues?q=is%3Aissue+is%3Aopen+label%3Aprovider) - Add new provider integrations
-- 📊 [Dashboard templates](https://github.com/KoshiHQ/GenOps-AI/issues?q=is%3Aissue+is%3Aopen+label%3Adashboard) - Pre-built observability dashboards
-- 🤖 [Cross-stack tracking patterns](https://github.com/KoshiHQ/GenOps-AI/issues?q=is%3Aissue+is%3Aopen+label%3Agovernance) - Real-world cost tracking scenarios
+- [Provider integrations](https://github.com/KoshiHQ/GenOps-AI/issues?q=is%3Aissue+is%3Aopen+label%3Aprovider) - Add new provider integrations
+- [Dashboard templates](https://github.com/KoshiHQ/GenOps-AI/issues?q=is%3Aissue+is%3Aopen+label%3Adashboard) - Pre-built observability dashboards
+- [Cross-stack tracking patterns](https://github.com/KoshiHQ/GenOps-AI/issues?q=is%3Aissue+is%3Aopen+label%3Agovernance) - Real-world cost tracking scenarios
 
 ---
 
-## 🚀 **Project Status & Contributing**
+## **Project Status & Contributing**
 
 GenOps is actively developed with comprehensive cross-stack AI tracking features ready for production use:
 
-### ✅ **Current Status**
-- ✅ **Core functionality**: Security scans pass, package installation works
-- ✅ **Production examples**: All cost tracking scenarios and integrations functional
-- ✅ **OpenTelemetry compliance**: Standard OTLP telemetry export working
-- 🤝 **Community contributions welcome**: [See open issues](https://github.com/KoshiHQ/GenOps-AI/issues) for opportunities
+### **Current Status**
+- **Core functionality**: Security scans pass, package installation works
+- **Production examples**: All cost tracking scenarios and integrations functional
+- **OpenTelemetry compliance**: Standard OTLP telemetry export working
+- **Community contributions welcome**: [See open issues](https://github.com/KoshiHQ/GenOps-AI/issues) for opportunities
 
-### 🆘 **Need Help?**
-- 💬 **Questions**: [GitHub Discussions](https://github.com/KoshiHQ/GenOps-AI/discussions)
-- 🐛 **Issues**: [GitHub Issues](https://github.com/KoshiHQ/GenOps-AI/issues)
-- 🤝 **Contributing**: [Contributing Guide](CONTRIBUTING.md)
+### **Need Help?**
+- **Questions**: [GitHub Discussions](https://github.com/KoshiHQ/GenOps-AI/discussions)
+- **Issues**: [GitHub Issues](https://github.com/KoshiHQ/GenOps-AI/issues)
+- **Contributing**: [Contributing Guide](CONTRIBUTING.md)
 
 ---
 
-## ✨ Contributors
+## Contributors
 
 Thanks goes to these wonderful people who have contributed to GenOps AI:
 
@@ -456,7 +457,7 @@ This project follows the [all-contributors](https://github.com/all-contributors/
 
 ---
 
-## 🏷️ **Trademark & Brand Guidelines**
+## **Trademark & Brand Guidelines**
 
 ### **GenOps AI Trademark Usage**
 
@@ -474,13 +475,13 @@ The "GenOps AI" name and associated branding are trademarks used to identify thi
 - Using GenOps branding for unrelated products or services
 - Implying official endorsement without permission
 
-**📄 License Note:** The GenOps AI code is licensed under Apache 2.0, but trademark rights are separate from code rights. You're free to use, modify, and distribute the code under Apache 2.0, but please respect our trademark guidelines when naming your projects or products.
+**License Note:** The GenOps AI code is licensed under Apache 2.0, but trademark rights are separate from code rights. You're free to use, modify, and distribute the code under Apache 2.0, but please respect our trademark guidelines when naming your projects or products.
 
 For questions about trademark usage, please open an issue or contact the maintainers.
 
 ---
 
-## 📄 **Legal & Licensing**
+## **Legal & Licensing**
 
 - **Code License**: [Apache License 2.0](LICENSE) - Permissive open source license
 - **Contributor Agreement**: All contributions require [DCO sign-off](CONTRIBUTING.md#developer-certificate-of-origin-dco)
@@ -496,7 +497,7 @@ For questions about trademark usage, please open an issue or contact the maintai
   pip install genops
   ```
   
-  <p>⭐ <strong>Star us on GitHub</strong> if you find GenOps AI useful!</p>
+  <p><strong>Star us on GitHub</strong> if you find GenOps AI useful!</p>
   
   [![GitHub stars](https://img.shields.io/github/stars/KoshiHQ/GenOps-AI?style=social)](https://github.com/KoshiHQ/GenOps-AI/stargazers)
 </div>
