@@ -322,7 +322,7 @@ Scale authority control from individual constraints to organization-wide AI gove
 - ✅ [Honeycomb](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/observability/honeycomb_integration.py) (<a href="https://www.honeycomb.io/" target="_blank">↗</a>)
 - ✅ [Prometheus](https://github.com/KoshiHQ/GenOps-AI/tree/main/observability/prometheus.yml) (<a href="https://prometheus.io/" target="_blank">↗</a>)
 - ✅ [Tempo](https://github.com/KoshiHQ/GenOps-AI/tree/main/observability/tempo-config.yaml) (<a href="https://grafana.com/oss/tempo/" target="_blank">↗</a>)
-- ✅ [Collibra](src/genops/providers/collibra/) (<a href="https://www.collibra.com/" target="_blank">↗</a>)
+- ✅ [Collibra](docs/quickstarts/collibra-quickstart.md) (<a href="https://www.collibra.com/" target="_blank">↗</a>)
 - ☐ Docker (<a href="https://www.docker.com/" target="_blank">↗</a>)
 - ☐ AWS Lambda (<a href="https://aws.amazon.com/lambda/" target="_blank">↗</a>)
 - ☐ Google Cloud Run (<a href="https://cloud.google.com/run" target="_blank">↗</a>)
