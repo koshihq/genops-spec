@@ -275,6 +275,7 @@ Scale authority control from individual constraints to organization-wide AI gove
 - ✅ [Google Gemini](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/gemini) (<a href="https://deepmind.google/technologies/gemini/" target="_blank">↗</a>)
 - ✅ [Hugging Face](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/huggingface) (<a href="https://huggingface.co/docs/inference-providers/index" target="_blank">↗</a>)
 - ✅ [AWS Bedrock](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/bedrock) (<a href="https://aws.amazon.com/bedrock/" target="_blank">↗</a>)
+- ✅ [Anyscale](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/anyscale-quickstart.md) (<a href="https://www.anyscale.com/endpoints" target="_blank">↗</a>)
 - ✅ [OpenRouter](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/openrouter) (<a href="https://openrouter.ai/" target="_blank">↗</a>)
 - ✅ [LiteLLM](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/litellm-quickstart.md) (<a href="https://docs.litellm.ai/" target="_blank">↗</a>)
 - ✅ [Vercel AI SDK](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/vercel-ai-sdk-quickstart.md) (<a href="https://ai-sdk.dev/" target="_blank">↗</a>)
