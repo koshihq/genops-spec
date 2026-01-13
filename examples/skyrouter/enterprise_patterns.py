@@ -159,12 +159,7 @@ def demonstrate_multi_environment_setup():
                 environment=env_config.environment.value,
                 daily_budget_limit=env_config.daily_budget_limit,
                 governance_policy=env_config.governance_policy,
-                enable_cost_alerts=env_config.enable_cost_alerts,
-                compliance_config={
-                    "frameworks": [cf.value for cf in env_config.compliance_frameworks],
-                    "audit_logging": True if env_config.compliance_frameworks else False,
-                    "data_encryption": True if env_config.environment == Environment.PRODUCTION else False
-                }
+                enable_cost_alerts=env_config.enable_cost_alerts
             )
             
             adapters[env_config.environment] = adapter
@@ -220,14 +215,7 @@ def demonstrate_high_availability_patterns():
             project="enterprise-ha-dr",
             environment="production",
             daily_budget_limit=1000.0,
-            governance_policy="strict",
-            ha_config={
-                "region": "us-east-1",
-                "availability_zones": ["us-east-1a", "us-east-1b", "us-east-1c"],
-                "failover_enabled": True,
-                "backup_regions": ["us-west-2"],
-                "replication_lag_threshold": "5s"
-            }
+            governance_policy="strict"
         )
         
         # Disaster recovery environment
@@ -236,15 +224,7 @@ def demonstrate_high_availability_patterns():
             project="enterprise-ha-dr",
             environment="disaster_recovery",
             daily_budget_limit=500.0,
-            governance_policy="strict",
-            ha_config={
-                "region": "us-west-2",
-                "availability_zones": ["us-west-2a", "us-west-2b"],
-                "primary_region": "us-east-1",
-                "failover_mode": "automatic",
-                "rto_target": "15m",  # Recovery Time Objective
-                "rpo_target": "5m"    # Recovery Point Objective
-            }
+            governance_policy="strict"
         )
         
         print("🏗️ High-Availability Configuration:")
@@ -415,13 +395,7 @@ def demonstrate_compliance_frameworks():
                 project="enterprise-compliance",
                 environment="production",
                 daily_budget_limit=200.0,
-                governance_policy="strict",
-                compliance_config={
-                    "framework": framework.value,
-                    "requirements": config,
-                    "audit_mode": True,
-                    "data_classification": "sensitive"
-                }
+                governance_policy="strict"
             )
             
             compliant_adapters[framework] = adapter
@@ -506,15 +480,7 @@ def demonstrate_production_monitoring():
             project="monitoring-demo",
             environment="production",
             daily_budget_limit=1000.0,
-            governance_policy="strict",
-            monitoring_config={
-                "metrics_collection": "comprehensive",
-                "alert_channels": ["slack", "pagerduty", "email"],
-                "sla_monitoring": True,
-                "performance_tracking": True,
-                "cost_anomaly_detection": True,
-                "real_time_dashboards": True
-            }
+            governance_policy="strict"
         )
         
         print("📈 Production Monitoring Configuration:")
@@ -666,9 +632,7 @@ def demonstrate_auto_scaling_patterns():
             project="load-balancing-demo",
             environment="production",
             daily_budget_limit=2000.0,
-            governance_policy="strict",
-            scaling_config=scaling_config,
-            load_balancer_config=lb_config
+            governance_policy="strict"
         )
         
         print("📊 Auto-Scaling Configuration:")
@@ -834,13 +798,7 @@ def demonstrate_cost_governance_enterprise():
                 daily_budget_limit=dept_config['daily_budget'],
                 governance_policy="strict",
                 cost_center=dept_config['cost_center'],
-                enable_cost_alerts=True,
-                cost_tracking_config={
-                    "department": dept_name,
-                    "teams": dept_config['teams'],
-                    "alert_threshold": 0.8,  # 80% of budget
-                    "approval_required_threshold": 0.9  # 90% of budget
-                }
+                enable_cost_alerts=True
             )
             
             department_adapters[dept_name] = adapter

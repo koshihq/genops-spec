@@ -226,7 +226,7 @@ try:
 
         # Successful operation
         print("Step 1: Successful operation...")
-        response = adapter.completion_create(
+        _ = adapter.completion_create(
             model="meta-llama/Llama-2-7b-chat-hf",
             messages=[{"role": "user", "content": "Test successful operation"}],
             max_tokens=20
