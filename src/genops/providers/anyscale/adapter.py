@@ -210,6 +210,72 @@ class GenOpsAnyscaleAdapter(BaseFrameworkProvider):
                    f"circuit_breaker={'enabled' if enable_circuit_breaker else 'disabled'}, "
                    f"sampling={sampling_rate*100:.0f}%)")
 
+    # Security methods for secret protection and input validation
+
+    def _sanitize_error_message(self, error: Exception) -> str:
+        """Remove sensitive information from error messages."""
+        import re
+        error_str = str(error)
+        # Redact anything that looks like a bearer token
+        error_str = re.sub(r'Bearer\s+\S+', 'Bearer [REDACTED]', error_str)
+        # Redact API keys
+        error_str = re.sub(r'api[_-]?key["\']?\s*[:=]\s*["\']?\S+', 'api_key=[REDACTED]', error_str, flags=re.IGNORECASE)
+        return error_str
+
+    def _sanitize_response_text(self, text: str, max_length: int = 200) -> str:
+        """Sanitize API response text before logging."""
+        import re
+        if not text:
+            return "No response text"
+        truncated = text[:max_length]
+        sanitized = re.sub(r'Bearer\s+\S+', 'Bearer [REDACTED]', truncated)
+        sanitized = re.sub(r'"token":\s*"\S+"', '"token": "[REDACTED]"', sanitized)
+        return sanitized
+
+    def _build_headers(self) -> dict:
+        """Build HTTP headers with secret protection."""
+        auth_value = "Bearer " + self.anyscale_api_key
+        return {
+            "Authorization": auth_value,
+            "Content-Type": "application/json"
+        }
+
+    def _validate_endpoint(self, endpoint: str) -> str:
+        """Validate endpoint path to prevent injection."""
+        if not endpoint.startswith('/'):
+            endpoint = '/' + endpoint
+        if '://' in endpoint:
+            raise ValueError("Endpoint must not contain protocol")
+        if '..' in endpoint:
+            raise ValueError("Endpoint must not contain '..'")
+        return endpoint
+
+    def _validate_completion_response(self, response_data: dict) -> dict:
+        """Validate completion response structure."""
+        required_fields = ['choices', 'usage']
+        for field in required_fields:
+            if field not in response_data:
+                raise ValueError(f"Invalid response: missing '{field}'")
+        if not isinstance(response_data['choices'], list) or not response_data['choices']:
+            raise ValueError("Invalid response: 'choices' must be non-empty list")
+        usage = response_data.get('usage', {})
+        for token_field in ['prompt_tokens', 'completion_tokens', 'total_tokens']:
+            if token_field in usage:
+                value = usage[token_field]
+                if not isinstance(value, int) or value < 0 or value > 1000000:
+                    raise ValueError(f"Invalid token count for {token_field}: {value}")
+        return response_data
+
+    def _validate_embeddings_response(self, response_data: dict) -> dict:
+        """Validate embeddings response structure."""
+        required_fields = ['data', 'usage']
+        for field in required_fields:
+            if field not in response_data:
+                raise ValueError(f"Invalid response: missing '{field}'")
+        if not isinstance(response_data['data'], list) or not response_data['data']:
+            raise ValueError("Invalid response: 'data' must be non-empty list")
+        return response_data
+
     # BaseFrameworkProvider abstract method implementations
 
     def setup_governance_attributes(self) -> None:
@@ -564,9 +630,10 @@ class GenOpsAnyscaleAdapter(BaseFrameworkProvider):
 
             except Exception as e:
                 operation.end_time = time.time()
-                span.set_status(Status(StatusCode.ERROR, str(e)))
+                sanitized_error = self._sanitize_error_message(e)
+                span.set_status(Status(StatusCode.ERROR, sanitized_error))
                 span.record_exception(e)
-                logger.error(f"Completion failed: {e}")
+                logger.error(f"Completion failed: {sanitized_error}")
                 raise
 
     def embeddings_create(
@@ -669,9 +736,10 @@ class GenOpsAnyscaleAdapter(BaseFrameworkProvider):
 
             except Exception as e:
                 operation.end_time = time.time()
-                span.set_status(Status(StatusCode.ERROR, str(e)))
+                sanitized_error = self._sanitize_error_message(e)
+                span.set_status(Status(StatusCode.ERROR, sanitized_error))
                 span.record_exception(e)
-                logger.error(f"Embeddings failed: {e}")
+                logger.error(f"Embeddings failed: {sanitized_error}")
                 raise
 
     def _make_http_request(self, endpoint: str, data: Dict[str, Any]) -> Dict[str, Any]:
@@ -679,16 +747,24 @@ class GenOpsAnyscaleAdapter(BaseFrameworkProvider):
         if not HAS_REQUESTS:
             raise ImportError("requests library required for HTTP API calls")
 
-        url = f"{self.anyscale_base_url}{endpoint}"
-        headers = {
-            "Authorization": f"Bearer {self.anyscale_api_key}",
-            "Content-Type": "application/json"
-        }
+        # Validate endpoint to prevent injection
+        validated_endpoint = self._validate_endpoint(endpoint)
+        url = f"{self.anyscale_base_url}{validated_endpoint}"
+
+        # Use header builder to prevent secret exposure
+        headers = self._build_headers()
 
         response = requests.post(url, json=data, headers=headers, timeout=60)
         response.raise_for_status()
 
-        return response.json()
+        # Validate response structure based on endpoint type
+        response_json = response.json()
+        if '/completions' in endpoint:
+            return self._validate_completion_response(response_json)
+        elif '/embeddings' in endpoint:
+            return self._validate_embeddings_response(response_json)
+
+        return response_json
 
     def _parse_sdk_response(self, response: Any) -> Dict[str, Any]:
         """Parse OpenAI SDK response to dict."""

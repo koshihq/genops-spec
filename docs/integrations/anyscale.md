@@ -141,6 +141,7 @@ else:
 **Automatically instrument existing OpenAI SDK applications with zero code changes:**
 
 ```python
+import os
 from genops.providers.anyscale import auto_instrument
 
 # Enable automatic instrumentation with default governance attributes
@@ -324,11 +325,11 @@ from genops.providers.anyscale import AnyscalePricing
 pricing = AnyscalePricing()
 
 # Get pricing for specific model
-model_info = pricing.get_model_info("meta-llama/Llama-2-70b-chat-hf")
-print(f"Model: {model_info.model_name}")
-print(f"Input cost: ${model_info.input_cost_per_million}/M tokens")
-print(f"Output cost: ${model_info.output_cost_per_million}/M tokens")
-print(f"Context window: {model_info.context_window} tokens")
+model_pricing = pricing.get_model_pricing("meta-llama/Llama-2-70b-chat-hf")
+print(f"Model: {model_pricing.model_name}")
+print(f"Input cost: ${model_pricing.input_cost_per_million}/M tokens")
+print(f"Output cost: ${model_pricing.output_cost_per_million}/M tokens")
+print(f"Context window: {model_pricing.context_window} tokens")
 
 # Get cost-effective alternatives
 alternatives = pricing.get_model_alternatives("meta-llama/Llama-2-70b-chat-hf")
@@ -1009,6 +1010,7 @@ def create_resilient_session():
 
 ```python
 # Export Anyscale telemetry to Datadog
+import os
 
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 from opentelemetry.sdk.trace import TracerProvider
@@ -1112,6 +1114,7 @@ def monitored_completion(**kwargs):
 
 ```python
 # Export to Honeycomb for observability
+import os
 
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from opentelemetry.sdk.trace import TracerProvider

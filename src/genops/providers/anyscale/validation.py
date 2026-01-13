@@ -2,6 +2,7 @@
 
 import logging
 import os
+import re
 import sys
 from typing import List, Dict, Any
 from dataclasses import dataclass, field
@@ -112,6 +113,22 @@ class AnyscaleValidator:
         """
         self.anyscale_api_key = anyscale_api_key or os.getenv("ANYSCALE_API_KEY")
         self.anyscale_base_url = anyscale_base_url or "https://api.endpoints.anyscale.com/v1"
+
+    # Security methods for secret protection
+
+    def _sanitize_response_text(self, text: str, max_length: int = 200) -> str:
+        """Sanitize API response text before logging."""
+        if not text:
+            return "No response text"
+        truncated = text[:max_length]
+        sanitized = re.sub(r'Bearer\s+\S+', 'Bearer [REDACTED]', truncated)
+        sanitized = re.sub(r'"token":\s*"\S+"', '"token": "[REDACTED]"', sanitized)
+        return sanitized
+
+    def _build_headers(self) -> dict:
+        """Build HTTP headers with secret protection."""
+        auth_value = "Bearer " + self.anyscale_api_key
+        return {"Authorization": auth_value}
 
     def validate(self) -> ValidationResult:
         """
@@ -306,7 +323,7 @@ class AnyscaleValidator:
             if HAS_REQUESTS:
                 response = requests.get(
                     f"{self.anyscale_base_url}/models",
-                    headers={"Authorization": f"Bearer {self.anyscale_api_key}"},
+                    headers=self._build_headers(),
                     timeout=10
                 )
 
@@ -327,7 +344,7 @@ class AnyscaleValidator:
                         title="Authentication Failed",
                         description="API key rejected by Anyscale",
                         fix_suggestion="Verify your API key from Anyscale console Credentials page",
-                        technical_details=f"HTTP {response.status_code}: {response.text}"
+                        technical_details=f"HTTP {response.status_code}: {self._sanitize_response_text(response.text)}"
                     ))
                 else:
                     result.add_issue(ValidationIssue(
@@ -336,7 +353,7 @@ class AnyscaleValidator:
                         title="API Response Error",
                         description=f"Unexpected response: HTTP {response.status_code}",
                         fix_suggestion="Check Anyscale service status",
-                        technical_details=response.text[:200]
+                        technical_details=self._sanitize_response_text(response.text, 200)
                     ))
 
         except requests.exceptions.Timeout:
@@ -377,7 +394,7 @@ class AnyscaleValidator:
         try:
             response = requests.get(
                 f"{self.anyscale_base_url}/models",
-                headers={"Authorization": f"Bearer {self.anyscale_api_key}"},
+                headers=self._build_headers(),
                 timeout=10
             )
 
