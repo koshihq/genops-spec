@@ -203,3 +203,6 @@ benchmarks/results/
 .genops_dev
 dev.json
 local_config.json
+
+# Claude Code instructions (keep local only)
+CLAUDE.md
