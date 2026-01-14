@@ -29,9 +29,28 @@ Usage:
 """
 
 import os
+import sys
 import time
 from typing import Dict, List
 from dataclasses import dataclass, field
+
+
+def validate_cribl_connection():
+    """Validate Cribl setup before running demos."""
+    print("=" * 70)
+    print("STEP 0: Validating Cribl Stream Setup")
+    print("=" * 70 + "\n")
+
+    from genops.providers.cribl.validation import validate_setup, print_validation_result
+
+    result = validate_setup()
+    print_validation_result(result)
+
+    if not result.is_valid:
+        print("\n❌ Setup validation failed - please fix errors above before continuing")
+        sys.exit(1)
+
+    print("\n✅ Validation passed - proceeding with demos...\n")
 
 
 def setup_genops_cribl_integration():
@@ -556,6 +575,9 @@ def main():
 
     print("This demo shows how GenOps governance telemetry flows through Cribl")
     print("for intelligent routing to multiple observability and compliance platforms.\n")
+
+    # Validate Cribl setup before proceeding
+    validate_cribl_connection()
 
     # Print architecture
     print_integration_architecture()

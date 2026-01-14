@@ -117,6 +117,38 @@ python test_genops_cribl.py
    Check Cribl UI: Data → Sources → genops_otlp_source → Live Data
 ```
 
+### Step 2.5: Validate Setup (30 seconds)
+
+Before sending telemetry, verify your setup is correct:
+
+```python
+from genops.providers.cribl.validation import validate_setup, print_validation_result
+
+# Check your Cribl setup
+result = validate_setup()
+print_validation_result(result)
+```
+
+You should see: ✅ **Status: PASSED**
+
+**What if validation fails?**
+
+The validation output will show specific errors and how to fix them:
+
+```
+❌ Status: FAILED
+Summary: 1 errors, 0 warnings
+
+🚨 ERRORS (must fix to proceed):
+
+1. [Connectivity] Cannot connect to cribl-stream:4318
+   Fix: Check Cribl Stream is running and port 4318 is open. Test with: telnet cribl-stream 4318
+```
+
+Follow the fix suggestions, then run validation again.
+
+---
+
 ### Step 3: Verify in Cribl Stream (30 seconds)
 
 In Cribl Stream UI:
@@ -314,6 +346,22 @@ netstat -an | grep 4318
 3. Check pipeline processing:
    - Processing → Pipelines → View pipeline metrics
    - Monitor dropped/failed events
+
+---
+
+## ✅ Verification Checklist
+
+Before proceeding, verify each step:
+
+- [ ] ✅ Cribl Stream v4.0+ installed and running
+- [ ] ✅ OTLP HTTP source created (port 4318)
+- [ ] ✅ GenOps AI installed: `pip show genops-ai`
+- [ ] ✅ Environment variables set: `echo $CRIBL_OTLP_ENDPOINT`
+- [ ] ✅ Validation passed: `python -c "from genops.providers.cribl.validation import validate_setup, print_validation_result; print_validation_result(validate_setup())"`
+- [ ] ✅ First telemetry event sent successfully
+- [ ] ✅ Event visible in Cribl UI Live Data
+
+**All checked?** You're ready to configure pipelines!
 
 ---
 
