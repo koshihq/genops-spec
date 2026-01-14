@@ -23,6 +23,44 @@ This guide gets you from zero to routing GenOps AI governance telemetry through 
 
 ---
 
+## ⚡ Pre-Flight Verification (30 seconds)
+
+Before starting, verify your environment is ready:
+
+```bash
+# Check Cribl Stream is running
+curl http://localhost:9000/api/v1/health
+# Should return: {"status":"ok"}
+
+# Check OTLP port availability (optional - Cribl will bind it in Step 1)
+netstat -an | grep 4318
+# Should show LISTEN state after Step 1, or no output yet
+
+# Verify GenOps AI is installed
+pip show genops-ai
+# Should show package version info
+```
+
+**If Cribl health check fails**: Ensure Cribl Stream is started (`systemctl start cribl` or check Cribl Cloud status)
+
+**If GenOps is not installed**: `pip install genops-ai`
+
+---
+
+## 📖 Quick Glossary
+
+New to OpenTelemetry or Cribl? Here are the key terms:
+
+| Term | Meaning |
+|------|---------|
+| **OTLP** | OpenTelemetry Protocol - standard format for exporting telemetry data |
+| **Span** | A single operation or event in a trace (e.g., one AI API call) |
+| **Attributes** | Key-value metadata attached to spans (e.g., `cost`, `customer_id`, `team`) |
+| **Pipeline** | A Cribl workflow that filters, transforms, and routes telemetry data |
+| **Sampling** | Selectively keeping a percentage of events to reduce volume and costs |
+
+---
+
 ## ⚡ Quick Setup (2 minutes)
 
 ### Step 1: Configure Cribl HTTP Source for OTLP (60 seconds)
@@ -39,7 +77,12 @@ In Cribl Stream UI:
 4. **Authentication** (optional but recommended):
    - Click **Add Authentication**
    - Type: **Bearer Token**
-   - Token: Generate a secure token (e.g., `genops-cribl-token-2024`)
+   - **Token**: Generate a token:
+     - **For testing**: Use `genops-cribl-test-token` (simple placeholder)
+     - **For production**: Generate cryptographically secure token:
+       ```bash
+       openssl rand -hex 32
+       ```
    - Save the token for Step 2
 5. Click **Save**
 
@@ -47,9 +90,71 @@ In Cribl Stream UI:
 - Status indicator should show green/active
 - Endpoint URL: `http://localhost:4318/v1/traces`
 
-### Step 2: Configure GenOps to Send Telemetry to Cribl (60 seconds)
+### Step 2: Configure GenOps Endpoint (30 seconds)
 
-Create a test file: `test_genops_cribl.py`
+Set environment variables and configure GenOps to send telemetry to Cribl Stream.
+
+**Set your Cribl endpoint:**
+```bash
+export CRIBL_OTLP_ENDPOINT="http://localhost:4318"
+export CRIBL_AUTH_TOKEN="genops-cribl-test-token"  # Use actual token from Step 1
+```
+
+**GenOps configuration pattern:**
+```python
+from genops import init
+
+# Configure GenOps to send OTLP to Cribl Stream
+init(
+    service_name="my-ai-service",
+    exporter_type="otlp",
+    otlp_endpoint="http://localhost:4318",  # Cribl OTLP HTTP receiver
+    otlp_headers={
+        "Authorization": "Bearer genops-cribl-test-token",  # Your token
+        "X-Scope-OrgID": "my-organization"
+    },
+    default_team="ai-platform",
+    default_project="genops-cribl-demo"
+)
+```
+
+**Note**: We'll validate this configuration before sending test telemetry in the next step.
+
+### Step 2.5: Validate Configuration (30 seconds)
+
+Before sending test telemetry, verify your Cribl setup is correct:
+
+```python
+from genops.providers.cribl.validation import validate_setup, print_validation_result
+
+# Check your Cribl setup
+result = validate_setup()
+print_validation_result(result)
+```
+
+You should see: ✅ **Status: PASSED**
+
+**What if validation fails?**
+
+The validation output will show specific errors and how to fix them:
+
+```
+❌ Status: FAILED
+Summary: 1 errors, 0 warnings
+
+🚨 ERRORS (must fix to proceed):
+
+1. [Connectivity] Cannot connect to cribl-stream:4318
+   Fix: Check Cribl Stream is running and port 4318 is open. Test with: telnet cribl-stream 4318
+```
+
+Follow the fix suggestions, then run validation again.
+
+---
+
+### Step 3: Send Test Telemetry (60 seconds)
+
+Now that validation passed, create a test file to send telemetry: `test_genops_cribl.py`
 
 ```python
 from genops import init
@@ -62,7 +167,7 @@ init(
     exporter_type="otlp",
     otlp_endpoint="http://localhost:4318",  # Cribl OTLP HTTP receiver
     otlp_headers={
-        "Authorization": "Bearer genops-cribl-token-2024",  # Use your token
+        "Authorization": "Bearer genops-cribl-test-token",  # Your token
         "X-Scope-OrgID": "my-organization"
     },
     default_team="ai-platform",
@@ -117,39 +222,9 @@ python test_genops_cribl.py
    Check Cribl UI: Data → Sources → genops_otlp_source → Live Data
 ```
 
-### Step 2.5: Validate Setup (30 seconds)
-
-Before sending telemetry, verify your setup is correct:
-
-```python
-from genops.providers.cribl.validation import validate_setup, print_validation_result
-
-# Check your Cribl setup
-result = validate_setup()
-print_validation_result(result)
-```
-
-You should see: ✅ **Status: PASSED**
-
-**What if validation fails?**
-
-The validation output will show specific errors and how to fix them:
-
-```
-❌ Status: FAILED
-Summary: 1 errors, 0 warnings
-
-🚨 ERRORS (must fix to proceed):
-
-1. [Connectivity] Cannot connect to cribl-stream:4318
-   Fix: Check Cribl Stream is running and port 4318 is open. Test with: telnet cribl-stream 4318
-```
-
-Follow the fix suggestions, then run validation again.
-
 ---
 
-### Step 3: Verify in Cribl Stream (30 seconds)
+### Step 4: Verify in Cribl Stream (30 seconds)
 
 In Cribl Stream UI:
 
@@ -216,6 +291,30 @@ Quick test route to see data flowing:
 ## 🏗️ Next Steps (Your Choice!)
 
 **✅ You now have GenOps telemetry flowing through Cribl!**
+
+### 🎯 Recommended Learning Path
+
+For first-time users, we recommend this sequence:
+
+**1. Start here** → **Option A: Cost Routing** (simplest, immediate value)
+- See costs flowing to Datadog/Grafana dashboards
+- ~10 minutes to working dashboard
+
+**2. Then add** → **Option C: Budget Alerting** (operational value)
+- Get Slack alerts when budgets hit thresholds
+- ~15 minutes to first alert
+
+**3. Next level** → **Option B: Policy Violations** (governance layer)
+- Route violations to SIEM for security review
+- ~20 minutes to SIEM integration
+
+**4. Advanced** → **Option D: Compliance Audit** (enterprise requirement)
+- Preserve audit trail for regulated industries
+- ~30 minutes to compliant storage
+
+Choose your path below:
+
+---
 
 ### Option A: Set Up Cost Routing Pipeline
 
