@@ -132,6 +132,11 @@ python validate_splunk_setup.py
 ```
 
 > **Note**: `validate_splunk_setup.py` is a standalone CLI script that uses the `splunk_validation` module internally.
+>
+> **For self-signed certificates:** Add `--no-ssl-verify` flag (insecure, development only):
+> ```bash
+> python validate_splunk_setup.py --no-ssl-verify
+> ```
 
 **Option B: Programmatic validation in Python**
 ```python

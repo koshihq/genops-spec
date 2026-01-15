@@ -1440,6 +1440,39 @@ The validation framework performs comprehensive checks:
    - Sourcetype configuration
    - HEC global settings enabled
 
+#### SSL Certificate Validation
+
+**Production Recommendation:**
+Always use valid SSL certificates and keep `verify_ssl=True` (default).
+
+**Self-Signed Certificates (Development Only):**
+```python
+# Only for trusted development/test environments
+result = validate_setup(verify_ssl=False)
+```
+
+**Security Warning:**
+Disabling SSL verification (`verify_ssl=False`) makes your connection vulnerable to
+man-in-the-middle attacks. Only use this in:
+- Trusted internal networks
+- Development/testing environments
+- When using verified self-signed certificates
+
+**Better Alternative:**
+Configure your CA certificate bundle:
+```bash
+export REQUESTS_CA_BUNDLE=/path/to/your/ca-bundle.crt
+```
+
+**CLI Option:**
+```bash
+# Secure (default)
+python validate_splunk_setup.py
+
+# Self-signed certificates (development only)
+python validate_splunk_setup.py --no-ssl-verify
+```
+
 ### Integration Testing
 
 #### Test Checklist

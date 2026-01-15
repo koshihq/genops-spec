@@ -58,6 +58,11 @@ Examples:
         action="store_true",
         help="Skip connectivity and authentication checks"
     )
+    parser.add_argument(
+        "--no-ssl-verify",
+        action="store_true",
+        help="Disable SSL certificate verification (insecure, use only with self-signed certificates)"
+    )
 
     args = parser.parse_args()
 
@@ -68,7 +73,8 @@ Examples:
         splunk_hec_endpoint=args.endpoint,
         splunk_hec_token=args.token,
         splunk_index=args.index,
-        check_connectivity=not args.no_connectivity
+        check_connectivity=not args.no_connectivity,
+        verify_ssl=not args.no_ssl_verify
     )
 
     print_validation_result(result)

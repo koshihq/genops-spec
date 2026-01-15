@@ -8,8 +8,7 @@ from dataclasses import dataclass, field
 from typing import List, Optional
 from urllib.parse import urlparse
 
-# Suppress SSL warnings for self-signed certificates (common in Splunk deployments)
-warnings.filterwarnings('ignore', message='Unverified HTTPS request')
+# SSL warnings will be shown when verify_ssl=False to ensure users are aware of security implications
 
 try:
     import requests
@@ -72,6 +71,7 @@ def validate_setup(
     splunk_hec_token: Optional[str] = None,
     splunk_index: str = "genops_ai",
     check_connectivity: bool = True,
+    verify_ssl: bool = True,
 ) -> SplunkValidationResult:
     """
     Validate Splunk HEC integration setup.
@@ -89,6 +89,8 @@ def validate_setup(
         splunk_hec_token: HEC authentication token (or from SPLUNK_HEC_TOKEN env var)
         splunk_index: Target Splunk index for telemetry data
         check_connectivity: Test API connectivity and authentication
+        verify_ssl: Verify SSL certificates (default: True). Set to False only for
+                   self-signed certificates in trusted environments. This is a security risk.
 
     Returns:
         SplunkValidationResult with validation details
@@ -100,8 +102,19 @@ def validate_setup(
         >>> else:
         ...     for error in result.errors:
         ...         print(f"Error: {error}")
+
+        >>> # For self-signed certificates (development/trusted environments only)
+        >>> result = validate_setup(verify_ssl=False)
     """
     result = SplunkValidationResult(valid=False)
+
+    # Security warning for disabled SSL verification
+    if not verify_ssl:
+        result.warnings.append(
+            "⚠️  SSL certificate verification is DISABLED. "
+            "This is insecure and should only be used in trusted environments "
+            "with self-signed certificates."
+        )
 
     # Check if requests library is available
     if check_connectivity and not HAS_REQUESTS:
@@ -164,10 +177,26 @@ def validate_setup(
             health_url = f"{final_endpoint}/services/collector/health"
 
             try:
-                response = requests.get(health_url, verify=False, timeout=5)
-            except requests.exceptions.SSLError:
-                # Try without SSL verification if certificate issue
-                response = requests.get(health_url, verify=False, timeout=5)
+                response = requests.get(health_url, verify=verify_ssl, timeout=5)
+            except requests.exceptions.SSLError as ssl_error:
+                if verify_ssl:
+                    # SSL verification failed - provide helpful error
+                    result.errors.append(
+                        "SSL certificate verification failed"
+                    )
+                    result.recommendations.append(
+                        "SSL certificate verification failed:\n"
+                        f"  Error: {str(ssl_error)}\n"
+                        "  Solutions:\n"
+                        "    1. Use valid SSL certificate (recommended)\n"
+                        "    2. For self-signed certificates in trusted environments:\n"
+                        "       validate_setup(verify_ssl=False)\n"
+                        "    3. Set REQUESTS_CA_BUNDLE environment variable to CA certificate path"
+                    )
+                    return result
+                else:
+                    # User explicitly disabled verification - try again without verification
+                    response = requests.get(health_url, verify=False, timeout=5)
 
             if response.status_code == 200:
                 result.connectivity = True
@@ -223,13 +252,33 @@ def validate_setup(
                     "index": splunk_index
                 }
 
-                response = requests.post(
-                    test_url,
-                    json=test_event,
-                    headers=headers,
-                    verify=False,
-                    timeout=5
-                )
+                try:
+                    response = requests.post(
+                        test_url,
+                        json=test_event,
+                        headers=headers,
+                        verify=verify_ssl,
+                        timeout=5
+                    )
+                except requests.exceptions.SSLError as ssl_error:
+                    if verify_ssl:
+                        result.errors.append(
+                            "SSL certificate verification failed during token authentication"
+                        )
+                        result.recommendations.append(
+                            f"SSL verification failed: {str(ssl_error)}\n"
+                            "For self-signed certificates, use: validate_setup(verify_ssl=False)"
+                        )
+                        return result
+                    else:
+                        # Retry without verification
+                        response = requests.post(
+                            test_url,
+                            json=test_event,
+                            headers=headers,
+                            verify=False,
+                            timeout=5
+                        )
 
                 if response.status_code == 200:
                     result.index_accessible = True
