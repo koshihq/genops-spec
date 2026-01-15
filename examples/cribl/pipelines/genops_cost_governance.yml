@@ -1,0 +1,187 @@
+# GenOps Cost Governance Pipeline
+# Route GenOps cost telemetry to cost dashboards and analytics platforms
+#
+# This pipeline:
+# - Filters for spans with genops.cost.* attributes
+# - Parses and enriches cost data
+# - Implements intelligent cost-aware sampling
+# - Routes to cost monitoring platforms (Datadog, Grafana, InfluxDB, S3)
+#
+# Installation:
+# 1. Copy this file to Cribl Stream: Processing → Pipelines → Import
+# 2. Configure destinations in Routes section
+# 3. Attach to genops_otlp_source HTTP source
+
+id: genops-cost-governance
+description: Route GenOps cost telemetry to dashboards and cost platforms
+enabled: true
+conf:
+  asyncFuncTimeout: 1000
+  functions:
+    # Filter 1: Only process spans with cost attributes
+    - id: filter_has_cost
+      filter: |
+        __inputId == 'genops_otlp_source' &&
+        attributes['genops.cost.total'] != null
+      disabled: null
+      final: false
+      description: Filter spans with genops.cost.* attributes
+
+    # Processor 1: Parse cost attributes
+    - id: eval_parse_cost
+      filter: "true"
+      disabled: null
+      conf:
+        add:
+          - name: cost_total
+            value: parseFloat(attributes['genops.cost.total'] || '0')
+          - name: cost_provider
+            value: attributes['genops.cost.provider'] || 'unknown'
+          - name: cost_model
+            value: attributes['genops.cost.model'] || 'unknown'
+          - name: tokens_input
+            value: parseInt(attributes['genops.tokens.input'] || '0')
+          - name: tokens_output
+            value: parseInt(attributes['genops.tokens.output'] || '0')
+          - name: tokens_total
+            value: parseInt(attributes['genops.tokens.total'] || '0')
+          - name: team
+            value: attributes['genops.team'] || 'default'
+          - name: project
+            value: attributes['genops.project'] || 'unknown'
+          - name: customer_id
+            value: attributes['genops.customer_id'] || 'unknown'
+          - name: environment
+            value: attributes['genops.environment'] || 'production'
+        keep:
+          - "*"
+        remove: []
+      description: Parse and extract GenOps cost attributes
+      final: false
+      type: eval
+
+    # Processor 2: Enrich with budget metadata
+    - id: lookup_budget_metadata
+      filter: customer_id != 'unknown'
+      disabled: null
+      conf:
+        matchMode: exact
+        reloadPeriodSec: 60
+        addToEvent:
+          - inFieldName: budget_limit
+            outFieldName: customer_budget_limit
+          - inFieldName: budget_tier
+            outFieldName: customer_tier
+          - inFieldName: billing_account
+            outFieldName: billing_account_id
+        ignoreCase: false
+        matchType: specific
+        inFields:
+          - eventField: customer_id
+            lookupField: customer_id
+        file: customer_budgets.csv
+      description: Enrich with customer budget and tier information
+      final: false
+      type: lookup
+
+    # Processor 3: Calculate cost metrics
+    - id: eval_cost_metrics
+      filter: "true"
+      disabled: null
+      conf:
+        add:
+          - name: cost_per_token
+            value: "tokens_total > 0 ? (cost_total / tokens_total) : 0"
+          - name: cost_per_1k_tokens
+            value: "tokens_total > 0 ? (cost_total / tokens_total * 1000) : 0"
+          - name: cost_category
+            value: "cost_total > 10 ? 'high' : cost_total > 1 ? 'medium' : cost_total > 0.1 ? 'low' : 'micro'"
+          - name: budget_exceeded
+            value: "customer_budget_limit != null && cost_total > customer_budget_limit"
+        keep:
+          - "*"
+        remove: []
+      description: Calculate cost metrics and categorization
+      final: false
+      type: eval
+
+    # Processor 4: Intelligent cost-aware sampling
+    - id: sampling_cost_aware
+      filter: "true"
+      disabled: null
+      conf:
+        rules:
+          # 100% sampling for high-cost operations (> $10)
+          - filter: cost_total > 10
+            rate: 1.0
+          # 100% sampling for budget overruns
+          - filter: budget_exceeded == true
+            rate: 1.0
+          # 50% sampling for medium-cost operations ($1-$10)
+          - filter: cost_total > 1
+            rate: 0.5
+          # 10% sampling for low-cost operations ($0.10-$1)
+          - filter: cost_total > 0.1
+            rate: 0.1
+          # 1% sampling for micro-cost operations (< $0.10)
+          - filter: "true"
+            rate: 0.01
+      description: Intelligent sampling based on cost magnitude
+      final: false
+      type: sampling
+
+    # Processor 5: Add routing metadata
+    - id: eval_routing_metadata
+      filter: "true"
+      disabled: null
+      conf:
+        add:
+          - name: cribl_pipe
+            value: "'genops-cost-governance'"
+          - name: processed_at
+            value: Date.now()
+          - name: route_to_cost_dashboards
+            value: "true"
+          - name: route_to_analytics
+            value: cost_total > 1
+        keep:
+          - "*"
+        remove: []
+      description: Add routing and processing metadata
+      final: false
+      type: eval
+
+# Routes configuration (configure these in Cribl Stream UI)
+output:
+  - name: datadog_metrics
+    description: Send cost metrics to Datadog
+    filter: route_to_cost_dashboards == true
+  - name: grafana_prometheus
+    description: Send cost metrics to Grafana/Prometheus
+    filter: route_to_cost_dashboards == true
+  - name: influxdb_cost
+    description: Send cost time-series to InfluxDB
+    filter: route_to_cost_dashboards == true
+  - name: s3_cost_analytics
+    description: Send high-value operations to S3 for analysis
+    filter: route_to_analytics == true
+  - name: cribl_lake
+    description: Store all cost data in Cribl Lake
+    filter: "true"
+
+# Example lookup table: customer_budgets.csv
+# Create this file in Cribl Stream: Knowledge → Lookups → Add Lookup File
+#
+# customer_id,budget_limit,budget_tier,billing_account
+# enterprise-123,1000.00,enterprise,BA-ENT-001
+# enterprise-456,500.00,business,BA-BUS-002
+# free-tier-789,10.00,free,BA-FREE-003
+# regulated-customer-001,5000.00,enterprise-plus,BA-ENT-004
+
+# Monitoring & Alerting
+# Configure in Cribl Stream: Monitoring → Metrics
+# Alert on:
+# - cribl.pipeline.genops-cost-governance.in.events (incoming events)
+# - cribl.pipeline.genops-cost-governance.out.events (outgoing events)
+# - cribl.pipeline.genops-cost-governance.dropped.events (sampling dropped)
+# - High cost_total values (budget overruns)
