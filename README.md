@@ -354,7 +354,7 @@ Scale authority control from individual constraints to organization-wide AI gove
 - ☐ AWS S3 (<a href="https://aws.amazon.com/s3/" target="_blank">↗</a>)
 - ☐ GCS (<a href="https://cloud.google.com/storage" target="_blank">↗</a>)
 - ☐ Azure Blob (<a href="https://azure.microsoft.com/en-us/products/storage/blobs/" target="_blank">↗</a>)
-- ☐ Splunk (<a href="https://www.splunk.com/" target="_blank">↗</a>)
+- ✅ [Splunk](docs/integrations/splunk.md) (<a href="https://www.splunk.com/" target="_blank">↗</a>)
 - ☐ Elastic (<a href="https://www.elastic.co/" target="_blank">↗</a>)
 
 ---
