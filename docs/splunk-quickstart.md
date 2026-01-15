@@ -121,6 +121,63 @@ init(
 
 ---
 
+### Step 2.5: Validate Setup (30 seconds) ⭐ NEW
+
+Before sending telemetry, validate your configuration to catch any issues early:
+
+**Option A: Quick validation script** (Recommended)
+```bash
+cd examples/observability
+python validate_splunk_setup.py
+```
+
+**Option B: Manual validation in Python**
+```python
+from examples.observability.splunk_validation import validate_setup, print_validation_result
+
+result = validate_setup()
+print_validation_result(result)
+```
+
+**Expected output when successful:**
+```
+======================================================================
+Splunk HEC Integration Validation Report
+======================================================================
+
+✅ [SUCCESS] HEC Status: Connected
+✅ [SUCCESS] HEC Version: HEC is healthy
+✅ [SUCCESS] Index Access: Token authenticated successfully
+
+💡 RECOMMENDATIONS:
+1. ✅ Setup validated successfully! Next steps:
+   • Create dedicated index 'genops_ai' for better organization
+   • Configure index retention policies for compliance
+   • Set up alerting for budget thresholds
+
+======================================================================
+✅ [SUCCESS] Validation: PASSED
+   Ready to send GenOps telemetry to Splunk!
+======================================================================
+```
+
+**If validation fails:**
+- The report will show specific errors with remediation steps
+- Fix each error following the recommendations
+- Re-run validation until all checks pass
+- Common fixes:
+  - `export SPLUNK_HEC_ENDPOINT="https://splunk.example.com:8088"`
+  - `export SPLUNK_HEC_TOKEN="your-hec-token"`
+  - Verify HEC is enabled: Settings → Data Inputs → HTTP Event Collector → Global Settings
+
+**Why validate?**
+- ✅ Catches 95%+ of configuration issues before runtime
+- ✅ Provides actionable error messages with specific fixes
+- ✅ Saves time debugging connection problems
+- ✅ Confirms HEC token authentication works
+
+---
+
 ### Step 3: Send Test Telemetry (60 seconds)
 
 Create a test file to send telemetry: `test_genops_splunk.py`

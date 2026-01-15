@@ -594,6 +594,64 @@ class SplunkGenOpsIntegration:
 </dashboard>'''
         return dashboard_xml
 
+    def validate_configuration(self):
+        """
+        Validate current Splunk HEC configuration.
+
+        This method checks:
+        - Environment variables are set correctly
+        - HEC endpoint is accessible
+        - HEC token authentication works
+        - Index write permissions
+        - OpenTelemetry dependencies
+
+        Returns:
+            SplunkValidationResult with validation details
+
+        Example:
+            >>> splunk = SplunkGenOpsIntegration()
+            >>> result = splunk.validate_configuration()
+            >>> if result.valid:
+            ...     print("Configuration is valid!")
+        """
+        try:
+            from splunk_validation import validate_setup
+        except ImportError:
+            print("❌ splunk_validation module not found")
+            print("   Ensure splunk_validation.py is in the same directory")
+            return None
+
+        return validate_setup(
+            splunk_hec_endpoint=self.splunk_hec_endpoint,
+            splunk_hec_token=self.splunk_hec_token,
+            splunk_index=self.splunk_index
+        )
+
+    def print_validation(self) -> bool:
+        """
+        Validate and print configuration status.
+
+        Returns:
+            True if validation passed, False otherwise
+
+        Example:
+            >>> splunk = SplunkGenOpsIntegration()
+            >>> if splunk.print_validation():
+            ...     print("Ready to send telemetry!")
+        """
+        try:
+            from splunk_validation import print_validation_result
+        except ImportError:
+            print("❌ splunk_validation module not found")
+            print("   Ensure splunk_validation.py is in the same directory")
+            return False
+
+        result = self.validate_configuration()
+        if result:
+            print_validation_result(result)
+            return result.valid
+        return False
+
 
 def demonstrate_splunk_telemetry():
     """Demonstrate GenOps AI telemetry flowing to Splunk HEC."""
@@ -606,6 +664,17 @@ def demonstrate_splunk_telemetry():
         service_name="genops-demo",
         environment="development"
     )
+
+    # Validate configuration before proceeding
+    print("\n🔍 Validating Splunk HEC configuration...")
+    if not splunk.print_validation():
+        print("\n❌ Validation failed. Fix configuration errors before proceeding.")
+        print("   Set environment variables:")
+        print("     export SPLUNK_HEC_ENDPOINT='https://splunk.example.com:8088'")
+        print("     export SPLUNK_HEC_TOKEN='your-hec-token'")
+        return
+
+    print("\n✅ Configuration validated! Proceeding with demo...\n")
 
     # Set up default attribution
     genops.set_default_attributes(

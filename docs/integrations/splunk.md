@@ -1346,6 +1346,348 @@ index=genops_ai genops.cost.total=*
 
 ---
 
+## Testing & Validation
+
+### Pre-Flight Validation
+
+Before deploying to production, validate your Splunk HEC integration to catch configuration issues early.
+
+#### Standalone Validation Script
+
+Run the validation script from the command line:
+
+```bash
+cd examples/observability
+python validate_splunk_setup.py
+```
+
+**With explicit credentials:**
+```bash
+python validate_splunk_setup.py \
+  --endpoint https://splunk.example.com:8088 \
+  --token YOUR_HEC_TOKEN \
+  --index genops_ai
+```
+
+**Skip connectivity check** (validate config only):
+```bash
+python validate_splunk_setup.py --no-connectivity
+```
+
+#### Programmatic Validation
+
+Validate within your Python code:
+
+```python
+from examples.observability.splunk_validation import validate_setup, print_validation_result
+
+# Validate using environment variables
+result = validate_setup()
+print_validation_result(result)
+
+if not result.valid:
+    print("Fix errors before proceeding")
+    sys.exit(1)
+
+# Or validate with explicit credentials
+result = validate_setup(
+    splunk_hec_endpoint="https://splunk.example.com:8088",
+    splunk_hec_token="your-hec-token",
+    splunk_index="genops_ai",
+    check_connectivity=True
+)
+```
+
+#### Using Integration Class
+
+```python
+from examples.observability.splunk_integration import SplunkGenOpsIntegration
+
+splunk = SplunkGenOpsIntegration()
+
+# Quick validation with formatted output
+if splunk.print_validation():
+    print("Ready to send telemetry!")
+else:
+    print("Configuration needs fixes")
+
+# Or get detailed validation result
+result = splunk.validate_configuration()
+if result.valid:
+    print(f"Connected to HEC version: {result.hec_version}")
+```
+
+### Validation Checks
+
+The validation framework performs comprehensive checks:
+
+1. **Environment Variables**
+   - `SPLUNK_HEC_ENDPOINT` is set and formatted correctly
+   - `SPLUNK_HEC_TOKEN` is set and not empty
+   - URL format validation (http/https, domain, port)
+
+2. **Connectivity Tests**
+   - HEC health check: `/services/collector/health`
+   - Network reachability and timeout detection
+   - SSL/TLS certificate validation
+
+3. **Authentication Tests**
+   - HEC token authentication with test event
+   - Index write permissions verification
+   - Token expiration and status checks
+
+4. **Dependency Checks**
+   - OpenTelemetry SDK installation
+   - Required Python packages (requests)
+   - Version compatibility
+
+5. **Configuration Validation**
+   - Index accessibility and write permissions
+   - Sourcetype configuration
+   - HEC global settings enabled
+
+### Integration Testing
+
+#### Test Checklist
+
+Before production deployment, verify:
+
+- ✅ **HEC endpoint accessible** - Health check returns 200
+- ✅ **HEC token authentication works** - Test event ingested successfully
+- ✅ **Index write permissions verified** - Events appear in target index
+- ✅ **OpenTelemetry dependencies installed** - No import errors
+- ✅ **Test event successfully indexed** - Searchable in Splunk
+- ✅ **SPL queries return expected results** - Cost/policy queries work
+- ✅ **Dashboard XML imports correctly** - Visualizations render
+- ✅ **Alerts trigger as expected** - Budget/policy alerts fire
+
+#### Manual Integration Test
+
+Send test telemetry and verify in Splunk:
+
+```python
+from examples.observability.splunk_integration import demonstrate_splunk_telemetry
+
+# This will validate configuration first, then send test events
+demonstrate_splunk_telemetry()
+```
+
+**Verify in Splunk Search:**
+```spl
+index=genops_ai earliest=-5m
+| table _time genops.cost.* genops.policy.* genops.budget.*
+| head 10
+```
+
+#### Automated Test Suite
+
+If you have a test suite, add validation tests:
+
+```python
+import pytest
+from examples.observability.splunk_validation import validate_setup
+
+def test_splunk_hec_connectivity():
+    """Test Splunk HEC endpoint is accessible."""
+    result = validate_setup(check_connectivity=True)
+    assert result.connectivity, "HEC endpoint not accessible"
+
+def test_splunk_token_authentication():
+    """Test HEC token authentication works."""
+    result = validate_setup(check_connectivity=True)
+    assert result.index_accessible, "HEC token authentication failed"
+
+def test_splunk_config_validation():
+    """Test environment variables are set correctly."""
+    result = validate_setup(check_connectivity=False)
+    assert len(result.errors) == 0, f"Config errors: {result.errors}"
+```
+
+### Common Validation Failures
+
+#### Error: "SPLUNK_HEC_ENDPOINT not set"
+
+**Cause:** Environment variable not configured
+
+**Fix:**
+```bash
+export SPLUNK_HEC_ENDPOINT="https://splunk.example.com:8088"
+```
+
+**Verify:**
+```bash
+echo $SPLUNK_HEC_ENDPOINT
+```
+
+---
+
+#### Error: "SPLUNK_HEC_TOKEN not set"
+
+**Cause:** HEC token environment variable missing
+
+**Fix:**
+```bash
+export SPLUNK_HEC_TOKEN="your-hec-token-here"
+```
+
+**Create HEC token in Splunk:**
+1. Navigate to: Settings → Data Inputs → HTTP Event Collector
+2. Click "New Token"
+3. Configure name and settings
+4. Copy token value
+
+---
+
+#### Error: "HEC token authentication failed (401 Unauthorized)"
+
+**Cause:** Invalid or expired HEC token
+
+**Fix:**
+1. Verify token in Splunk UI: Settings → Data Inputs → HTTP Event Collector
+2. Check token is **enabled** (not disabled)
+3. Confirm token hasn't expired
+4. Verify Global Settings has HEC enabled
+
+**Test token manually:**
+```bash
+curl -k https://splunk.example.com:8088/services/collector \
+  -H "Authorization: Splunk YOUR_TOKEN" \
+  -d '{"event":"test","sourcetype":"_json"}'
+```
+
+Expected response: `{"text":"Success","code":0}`
+
+---
+
+#### Error: "Connection refused - HEC endpoint not accessible"
+
+**Cause:** Network connectivity or Splunk not running
+
+**Fix:**
+1. **Check Splunk is running:**
+   ```bash
+   # On Splunk server
+   $SPLUNK_HOME/bin/splunk status
+   ```
+
+2. **Verify port 8088 is accessible:**
+   ```bash
+   nc -zv splunk.example.com 8088
+   # or
+   telnet splunk.example.com 8088
+   ```
+
+3. **Check firewall rules:**
+   - Outbound connections to port 8088 allowed
+   - Splunk server firewall allows inbound on 8088
+
+4. **Verify HEC is enabled globally:**
+   - In Splunk: Settings → Data Inputs → HTTP Event Collector
+   - Click "Global Settings"
+   - Ensure "All Tokens" is **Enabled**
+
+---
+
+#### Error: "HEC token forbidden (403 Forbidden)"
+
+**Cause:** Token lacks permissions for target index
+
+**Fix:**
+1. **Verify index exists:**
+   ```spl
+   | eventcount summarize=false index=*
+   | dedup index
+   | search index=genops_ai
+   ```
+
+2. **Check token index permissions:**
+   - Settings → Data Inputs → HTTP Event Collector
+   - Click on your token
+   - Verify "Allowed Indexes" includes `genops_ai`
+
+3. **Create index if missing:**
+   - Settings → Indexes → New Index
+   - Name: `genops_ai`
+   - Configure retention and sizing
+
+---
+
+#### Warning: "OpenTelemetry not installed"
+
+**Cause:** Missing Python dependencies
+
+**Fix:**
+```bash
+pip install opentelemetry-api opentelemetry-sdk opentelemetry-exporter-otlp
+```
+
+**Verify installation:**
+```python
+import opentelemetry
+print(opentelemetry.__version__)
+```
+
+---
+
+### Validation Best Practices
+
+1. **Run validation before every deployment**
+   - Catches configuration drift
+   - Verifies credentials haven't expired
+   - Tests network connectivity
+
+2. **Include validation in CI/CD pipelines**
+   ```bash
+   # In your CI/CD script
+   python validate_splunk_setup.py || exit 1
+   ```
+
+3. **Monitor validation results**
+   - Log validation failures
+   - Alert on repeated failures
+   - Track success rates
+
+4. **Document environment-specific configs**
+   - Development vs staging vs production endpoints
+   - Different HEC tokens per environment
+   - Environment-specific indexes
+
+5. **Regular validation in production**
+   - Periodic health checks (every 5 minutes)
+   - Alert on validation failures
+   - Automatic retry with backoff
+
+### Troubleshooting Tips
+
+**Enable debug logging:**
+```python
+import logging
+logging.basicConfig(level=logging.DEBUG)
+
+result = validate_setup(check_connectivity=True)
+```
+
+**Test HEC health manually:**
+```bash
+curl -k https://splunk.example.com:8088/services/collector/health
+# Expected: {"text":"HEC is healthy","code":200}
+```
+
+**Check Splunk internal logs:**
+```spl
+index=_internal source=*metrics.log component=Metrics group=http_event_collector_metrics
+| stats count by name
+```
+
+**Verify index is receiving data:**
+```spl
+| eventcount summarize=false index=genops_ai
+| eval size_mb=size_bytes/1024/1024
+| table index count earliest_time latest_time size_mb
+```
+
+---
+
 ## Additional Resources
 
 ### Documentation
