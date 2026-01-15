@@ -179,24 +179,20 @@ def validate_setup(
             try:
                 response = requests.get(health_url, verify=verify_ssl, timeout=5)
             except requests.exceptions.SSLError as ssl_error:
-                if verify_ssl:
-                    # SSL verification failed - provide helpful error
-                    result.errors.append(
-                        "SSL certificate verification failed"
-                    )
-                    result.recommendations.append(
-                        "SSL certificate verification failed:\n"
-                        f"  Error: {str(ssl_error)}\n"
-                        "  Solutions:\n"
-                        "    1. Use valid SSL certificate (recommended)\n"
-                        "    2. For self-signed certificates in trusted environments:\n"
-                        "       validate_setup(verify_ssl=False)\n"
-                        "    3. Set REQUESTS_CA_BUNDLE environment variable to CA certificate path"
-                    )
-                    return result
-                else:
-                    # User explicitly disabled verification - try again without verification
-                    response = requests.get(health_url, verify=False, timeout=5)
+                # SSL verification failed - provide helpful error
+                result.errors.append(
+                    "SSL certificate verification failed"
+                )
+                result.recommendations.append(
+                    "SSL certificate verification failed:\n"
+                    f"  Error: {str(ssl_error)}\n"
+                    "  Solutions:\n"
+                    "    1. Use valid SSL certificate (recommended)\n"
+                    "    2. For self-signed certificates in trusted environments:\n"
+                    "       validate_setup(verify_ssl=False)\n"
+                    "    3. Set REQUESTS_CA_BUNDLE environment variable to CA certificate path"
+                )
+                return result
 
             if response.status_code == 200:
                 result.connectivity = True
@@ -261,24 +257,14 @@ def validate_setup(
                         timeout=5
                     )
                 except requests.exceptions.SSLError as ssl_error:
-                    if verify_ssl:
-                        result.errors.append(
-                            "SSL certificate verification failed during token authentication"
-                        )
-                        result.recommendations.append(
-                            f"SSL verification failed: {str(ssl_error)}\n"
-                            "For self-signed certificates, use: validate_setup(verify_ssl=False)"
-                        )
-                        return result
-                    else:
-                        # Retry without verification
-                        response = requests.post(
-                            test_url,
-                            json=test_event,
-                            headers=headers,
-                            verify=False,
-                            timeout=5
-                        )
+                    result.errors.append(
+                        "SSL certificate verification failed during token authentication"
+                    )
+                    result.recommendations.append(
+                        f"SSL verification failed: {str(ssl_error)}\n"
+                        "For self-signed certificates, use: validate_setup(verify_ssl=False)"
+                    )
+                    return result
 
                 if response.status_code == 200:
                     result.index_accessible = True
