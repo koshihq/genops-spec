@@ -600,8 +600,6 @@ GenOps provides pre-built Splunk dashboard XML templates for common governance u
 
 ### Cost Governance Dashboard
 
-**File**: `examples/observability/splunk_dashboards/cost_governance.xml`
-
 **Features:**
 - Total cost (last 24h)
 - Total requests
@@ -632,8 +630,6 @@ splunk import dashboard cost_dashboard.xml
 
 ### Compliance Monitoring Dashboard
 
-**File**: `examples/observability/splunk_dashboards/compliance_monitoring.xml`
-
 **Features:**
 - Policy violations (last 24h)
 - Compliance rate
@@ -656,8 +652,6 @@ splunk import dashboard compliance_dashboard.xml
 ```
 
 ### Budget Monitoring Dashboard
-
-**File**: `examples/observability/splunk_dashboards/budget_alerting.xml`
 
 **Features:**
 - Budgets over 80% utilized
@@ -1702,7 +1696,6 @@ index=_internal source=*metrics.log component=Metrics group=http_event_collector
 - **GitHub Repository**: [https://github.com/KoshiHQ/GenOps-AI](https://github.com/KoshiHQ/GenOps-AI)
 - **Quickstart Guide**: [docs/splunk-quickstart.md](../splunk-quickstart.md)
 - **Example Code**: [examples/observability/splunk_integration.py](../../examples/observability/splunk_integration.py)
-- **Dashboard Templates**: [examples/observability/splunk_dashboards/](../../examples/observability/splunk_dashboards/)
 
 ### Community
 
