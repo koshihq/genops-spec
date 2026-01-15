@@ -325,7 +325,8 @@ Scale authority control from individual constraints to organization-wide AI gove
 - ✅ [Cribl](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/integrations/cribl.md) (<a href="https://cribl.io" target="_blank">↗</a>)
 - ✅ [Prometheus](https://github.com/KoshiHQ/GenOps-AI/tree/main/observability/prometheus.yml) (<a href="https://prometheus.io/" target="_blank">↗</a>)
 - ✅ [Tempo](https://github.com/KoshiHQ/GenOps-AI/tree/main/observability/tempo-config.yaml) (<a href="https://grafana.com/oss/tempo/" target="_blank">↗</a>)
-- ✅ [Collibra](docs/quickstarts/collibra-quickstart.md) (<a href="https://www.collibra.com/" target="_blank">↗</a>)
+- ✅ [Splunk](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/splunk-quickstart.md) (<a href="https://www.splunk.com/" target="_blank">↗</a>)
+- ✅ [Collibra](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/quickstarts/collibra-quickstart.md) (<a href="https://www.collibra.com/" target="_blank">↗</a>)
 - ☐ Docker (<a href="https://www.docker.com/" target="_blank">↗</a>)
 - ☐ AWS Lambda (<a href="https://aws.amazon.com/lambda/" target="_blank">↗</a>)
 - ☐ Google Cloud Run (<a href="https://cloud.google.com/run" target="_blank">↗</a>)
@@ -354,7 +355,6 @@ Scale authority control from individual constraints to organization-wide AI gove
 - ☐ AWS S3 (<a href="https://aws.amazon.com/s3/" target="_blank">↗</a>)
 - ☐ GCS (<a href="https://cloud.google.com/storage" target="_blank">↗</a>)
 - ☐ Azure Blob (<a href="https://azure.microsoft.com/en-us/products/storage/blobs/" target="_blank">↗</a>)
-- ☐ Splunk (<a href="https://www.splunk.com/" target="_blank">↗</a>)
 - ☐ Elastic (<a href="https://www.elastic.co/" target="_blank">↗</a>)
 
 ---
