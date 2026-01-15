@@ -121,7 +121,7 @@ init(
 
 ---
 
-### Step 2.5: Validate Setup (30 seconds) ⭐ NEW
+### Step 3: Validate Setup (30 seconds) ⭐ NEW
 
 Before sending telemetry, validate your configuration to catch any issues early:
 
@@ -131,7 +131,9 @@ cd examples/observability
 python validate_splunk_setup.py
 ```
 
-**Option B: Manual validation in Python**
+> **Note**: `validate_splunk_setup.py` is a standalone CLI script that uses the `splunk_validation` module internally.
+
+**Option B: Programmatic validation in Python**
 ```python
 from examples.observability.splunk_validation import validate_setup, print_validation_result
 
@@ -178,7 +180,7 @@ Splunk HEC Integration Validation Report
 
 ---
 
-### Step 3: Send Test Telemetry (60 seconds)
+### Step 4: Send Test Telemetry (60 seconds)
 
 Create a test file to send telemetry: `test_genops_splunk.py`
 
@@ -249,7 +251,7 @@ python test_genops_splunk.py
 
 ---
 
-### Step 4: Verify in Splunk Search (30 seconds)
+### Step 5: Verify in Splunk Search (30 seconds)
 
 In Splunk Web UI:
 
@@ -407,20 +409,10 @@ index=genops_ai (genops.policy.* OR genops.eval.*)
 | sort -_time
 ```
 
-### Option C: Import Dashboard Templates
+### Option C: Generate Dashboard Templates
 
-Pre-built Splunk dashboards for GenOps governance:
+Use the Python integration to programmatically generate Splunk dashboards for GenOps governance:
 
-**1. Cost Governance Dashboard:**
-```bash
-# Download dashboard XML
-curl -O https://raw.githubusercontent.com/KoshiHQ/GenOps-AI/main/examples/observability/splunk_dashboards/cost_governance.xml
-
-# Import to Splunk
-splunk import dashboard cost_governance.xml
-```
-
-**Or use the Python integration to generate:**
 ```python
 from examples.observability.splunk_integration import SplunkGenOpsIntegration
 
@@ -435,10 +427,10 @@ with open("cost_dashboard.xml", "w") as f:
     f.write(cost_dashboard_xml)
 ```
 
-**Available Dashboards:**
-- Cost Governance (`cost_governance.xml`)
-- Compliance Monitoring (`compliance_monitoring.xml`)
-- Budget Alerting (`budget_alerting.xml`)
+**Available Dashboard Types:**
+- Cost Governance (via `create_cost_dashboard()`)
+- Compliance Monitoring (via `create_compliance_dashboard()`)
+- Budget Alerting (via `create_budget_dashboard()`)
 
 ### Option D: Budget Threshold Alerting
 
@@ -482,6 +474,18 @@ with track_enhanced(operation_name="budget_test", team="ai-platform") as span:
 - Multi-destination routing (Splunk + Datadog + S3 simultaneously)
 - Intelligent sampling (reduce costs by 90%+)
 - Data enrichment and transformation
+
+**When to use Cribl:**
+- ✅ You need multi-destination routing (send to multiple observability platforms)
+- ✅ Splunk licensing costs are high (Cribl can reduce volume by 90%+)
+- ✅ You need data transformation before ingestion
+- ✅ You already have Cribl infrastructure deployed
+
+**When to use direct Splunk HEC:**
+- ✅ Simple single-destination setup
+- ✅ Fastest time-to-value (5 minutes)
+- ✅ No additional infrastructure required
+- ✅ Lower operational complexity
 
 **Quick Cribl Setup:**
 ```bash
@@ -584,7 +588,6 @@ Before proceeding, verify each step:
 
 - **Full Integration Guide:** [docs/integrations/splunk.md](integrations/splunk.md)
 - **Example Code:** [examples/observability/splunk_integration.py](../examples/observability/splunk_integration.py)
-- **Dashboard Templates:** [examples/observability/splunk_dashboards/](../examples/observability/splunk_dashboards/)
 - **Splunk HEC Documentation:** [https://docs.splunk.com/Documentation/Splunk/latest/Data/UsetheHTTPEventCollector](https://docs.splunk.com/Documentation/Splunk/latest/Data/UsetheHTTPEventCollector)
 - **SPL Reference:** [https://docs.splunk.com/Documentation/Splunk/latest/SearchReference](https://docs.splunk.com/Documentation/Splunk/latest/SearchReference)
 - **GenOps Documentation:** [README.md](../README.md)
