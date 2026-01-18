@@ -284,6 +284,7 @@ Scale authority control from individual constraints to organization-wide AI gove
 - ✅ [LangChain](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/langchain) (<a href="https://python.langchain.com/" target="_blank">↗</a>)
 - ✅ [LlamaIndex](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/llamaindex) (<a href="https://www.llamaindex.ai/" target="_blank">↗</a>)
 - ✅ [Haystack AI](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/integrations/haystack.md) (<a href="https://haystack.deepset.ai/" target="_blank">↗</a>)
+- ✅ [Kubetorch](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/kubetorch-quickstart.md) (<a href="https://www.run.house/" target="_blank">↗</a>)
 - ✅ [CrewAI](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/quickstart/crewai-quickstart.md) (<a href="https://www.crewai.com/" target="_blank">↗</a>)
 - ✅ [Replicate](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/replicate) (<a href="https://replicate.com/" target="_blank">↗</a>)
 - ✅ [Cohere](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/cohere) (<a href="https://cohere.com/" target="_blank">↗</a>)
