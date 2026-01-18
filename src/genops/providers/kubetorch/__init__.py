@@ -91,9 +91,21 @@ except ImportError as e:
     ComputeCostSummary = None  # type: ignore
     KubetorchCostAggregator = None  # type: ignore
 
-    def create_compute_cost_context(**kwargs):
-        """Stub: Cost aggregator module not available."""
-        raise ImportError("Cost aggregator import failed. Check dependencies.")
+    def create_compute_cost_context(operation_id: str, **kwargs):
+        """Stub: Cost aggregator module not available.
+
+        Args:
+            operation_id: Unique operation identifier (unused in stub)
+            **kwargs: Additional arguments (unused in stub)
+
+        Raises:
+            ImportError: Always raised - cost aggregator not available
+        """
+        raise ImportError(
+            "Cost aggregator import failed. "
+            f"Cannot create context for operation '{operation_id}'. "
+            "Check dependencies."
+        )
 
     def get_cost_aggregator():
         """Stub: Cost aggregator module not available."""
