@@ -13,6 +13,7 @@ Example:
 
 import logging
 import os
+import shutil
 import sys
 from dataclasses import dataclass, field
 from typing import List, Optional, Dict, Any
@@ -233,26 +234,38 @@ def _check_kubernetes_environment(result: ValidationResult) -> None:
             ))
 
         # Check for kubectl
-        import subprocess
-        try:
-            subprocess.run(
-                ['kubectl', 'version', '--client'],
-                capture_output=True,
-                check=True,
-                timeout=5
-            )
-            result.add_issue(ValidationIssue(
-                level=ValidationLevel.SUCCESS,
-                component="kubectl",
-                message="kubectl available",
-            ))
-        except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
+        import subprocess  # nosec B404 - subprocess required for CLI tool validation
+
+        # Find absolute path to kubectl for security
+        kubectl_path = shutil.which('kubectl')
+        if not kubectl_path:
             result.add_issue(ValidationIssue(
                 level=ValidationLevel.INFO,
                 component="kubectl",
                 message="kubectl not available",
                 fix_suggestion="Install kubectl for Kubernetes cluster management",
             ))
+        else:
+            try:
+                subprocess.run(
+                    [kubectl_path, 'version', '--client'],  # nosec B607 - validated absolute path
+                    capture_output=True,
+                    check=True,
+                    timeout=5,
+                    shell=False  # Explicit shell=False for security
+                )
+                result.add_issue(ValidationIssue(
+                    level=ValidationLevel.SUCCESS,
+                    component="kubectl",
+                    message="kubectl available",
+                ))
+            except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
+                result.add_issue(ValidationIssue(
+                    level=ValidationLevel.INFO,
+                    component="kubectl",
+                    message=f"kubectl found but not working: {e}",
+                    fix_suggestion="Ensure kubectl is properly configured",
+                ))
 
     except Exception as e:
         logger.debug(f"Kubernetes check failed: {e}")
