@@ -2,6 +2,18 @@
 
 Complete local observability stack for GenOps AI development and testing, featuring the **LGTM stack** (Loki, Grafana, Tempo, Mimir) with OpenTelemetry Collector.
 
+---
+
+## 📚 New to OpenTelemetry Collector?
+
+**👉 Start here:** [5-Minute Quickstart Guide](../docs/otel-collector-quickstart.md) - Get from zero to live governance dashboards in 5 minutes!
+
+**📖 Comprehensive Guide:** [Full OTel Collector Integration](../docs/integrations/otel-collector.md) - Deep-dive into production deployment
+
+**✅ Validate Your Setup:** Run `python examples/observability/validate_otel_collector.py` to check your configuration
+
+---
+
 ## 🚀 Quick Start
 
 Start the complete observability stack:
@@ -74,6 +86,19 @@ graph LR
    - Performance bottleneck identification
 
 ## 🧪 Testing the Stack
+
+### 0. Validate Setup (Recommended)
+```bash
+# Run automated validation to check all services
+python examples/observability/validate_otel_collector.py
+
+# Expected: All checks should pass with green checkmarks ✅
+```
+
+This validation script checks:
+- OTel Collector health and OTLP endpoints
+- Grafana, Tempo, Loki, and Mimir accessibility
+- OpenTelemetry dependencies
 
 ### 1. Basic Health Check
 ```bash
