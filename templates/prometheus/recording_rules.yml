@@ -1,0 +1,242 @@
+# GenOps AI - Prometheus Recording Rules
+#
+# Pre-compute frequently used aggregations to improve query performance
+# and reduce Prometheus query load.
+#
+# Load in prometheus.yml:
+#   rule_files:
+#     - "recording_rules.yml"
+
+groups:
+  #==========================================
+  # Cost Aggregations
+  #==========================================
+  - name: genops_cost_recording
+    interval: 60s
+    rules:
+      # Hourly cost rate by team
+      - record: genops:cost:hourly_by_team_usd
+        expr: sum(rate(genops_cost_total_usd[1h])) by (team) * 3600
+
+      # Hourly cost rate by provider
+      - record: genops:cost:hourly_by_provider_usd
+        expr: sum(rate(genops_cost_total_usd[1h])) by (provider) * 3600
+
+      # Hourly cost rate by model
+      - record: genops:cost:hourly_by_model_usd
+        expr: sum(rate(genops_cost_total_usd[1h])) by (model) * 3600
+
+      # Hourly cost rate by customer
+      - record: genops:cost:hourly_by_customer_usd
+        expr: sum(rate(genops_cost_total_usd[1h])) by (customer_id) * 3600
+
+      # Hourly cost rate by environment
+      - record: genops:cost:hourly_by_environment_usd
+        expr: sum(rate(genops_cost_total_usd[1h])) by (environment) * 3600
+
+      # Daily cost increase
+      - record: genops:cost:daily_increase_usd
+        expr: increase(genops_cost_total_usd[24h])
+
+      # Cost per operation
+      - record: genops:cost:per_operation_usd
+        expr: |
+          sum(rate(genops_cost_total_usd[5m]))
+          /
+          sum(rate(genops_operations_total[5m]))
+
+      # Cost per token (averaged)
+      - record: genops:cost:per_token_usd
+        expr: |
+          sum(rate(genops_cost_total_usd[5m]))
+          /
+          sum(rate(genops_tokens_total[5m]))
+
+  #==========================================
+  # Token Aggregations
+  #==========================================
+  - name: genops_token_recording
+    interval: 60s
+    rules:
+      # Hourly token rate by provider
+      - record: genops:tokens:hourly_by_provider
+        expr: sum(rate(genops_tokens_total[1h])) by (provider) * 3600
+
+      # Hourly token rate by model
+      - record: genops:tokens:hourly_by_model
+        expr: sum(rate(genops_tokens_total[1h])) by (model) * 3600
+
+      # Tokens per dollar by model (efficiency)
+      - record: genops:tokens:per_dollar_by_model
+        expr: |
+          sum(rate(genops_tokens_total[5m])) by (model)
+          /
+          sum(rate(genops_cost_total_usd[5m])) by (model)
+
+      # Tokens per dollar by provider (efficiency)
+      - record: genops:tokens:per_dollar_by_provider
+        expr: |
+          sum(rate(genops_tokens_total[5m])) by (provider)
+          /
+          sum(rate(genops_cost_total_usd[5m])) by (provider)
+
+      # Input/output token ratio
+      - record: genops:tokens:output_input_ratio
+        expr: |
+          sum(rate(genops_tokens_output_total[5m]))
+          /
+          sum(rate(genops_tokens_input_total[5m]))
+
+      # Input/output token ratio by model
+      - record: genops:tokens:output_input_ratio_by_model
+        expr: |
+          sum(rate(genops_tokens_output_total[5m])) by (model)
+          /
+          sum(rate(genops_tokens_input_total[5m])) by (model)
+
+  #==========================================
+  # Performance Aggregations
+  #==========================================
+  - name: genops_performance_recording
+    interval: 30s
+    rules:
+      # p50 (median) latency overall
+      - record: genops:latency:p50_seconds
+        expr: |
+          histogram_quantile(0.50,
+            sum(rate(genops_operation_latency_seconds_bucket[5m])) by (le)
+          )
+
+      # p50 latency by provider
+      - record: genops:latency:p50_by_provider_seconds
+        expr: |
+          histogram_quantile(0.50,
+            sum(rate(genops_operation_latency_seconds_bucket[5m])) by (le, provider)
+          )
+
+      # p50 latency by model
+      - record: genops:latency:p50_by_model_seconds
+        expr: |
+          histogram_quantile(0.50,
+            sum(rate(genops_operation_latency_seconds_bucket[5m])) by (le, model)
+          )
+
+      # p95 latency overall
+      - record: genops:latency:p95_seconds
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(genops_operation_latency_seconds_bucket[5m])) by (le)
+          )
+
+      # p95 latency by provider
+      - record: genops:latency:p95_by_provider_seconds
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(genops_operation_latency_seconds_bucket[5m])) by (le, provider)
+          )
+
+      # p95 latency by model
+      - record: genops:latency:p95_by_model_seconds
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(genops_operation_latency_seconds_bucket[5m])) by (le, model)
+          )
+
+      # p99 latency overall
+      - record: genops:latency:p99_seconds
+        expr: |
+          histogram_quantile(0.99,
+            sum(rate(genops_operation_latency_seconds_bucket[5m])) by (le)
+          )
+
+      # Operations per second
+      - record: genops:operations:per_second
+        expr: sum(rate(genops_operations_total[1m]))
+
+      # Operations per second by provider
+      - record: genops:operations:per_second_by_provider
+        expr: sum(rate(genops_operations_total[1m])) by (provider)
+
+      # Operations per second by model
+      - record: genops:operations:per_second_by_model
+        expr: sum(rate(genops_operations_total[1m])) by (model)
+
+      # Error rate (errors per second)
+      - record: genops:errors:per_second
+        expr: sum(rate(genops_operation_errors_total[5m]))
+
+      # Error rate by provider
+      - record: genops:errors:per_second_by_provider
+        expr: sum(rate(genops_operation_errors_total[5m])) by (provider)
+
+      # Error percentage
+      - record: genops:errors:percentage
+        expr: |
+          sum(rate(genops_operation_errors_total[5m]))
+          /
+          sum(rate(genops_operations_total[5m]))
+
+  #==========================================
+  # Policy & Compliance Aggregations
+  #==========================================
+  - name: genops_policy_recording
+    interval: 60s
+    rules:
+      # Violations per hour
+      - record: genops:policy:violations_per_hour
+        expr: sum(rate(genops_policy_violations_total[1h])) by (policy_name) * 3600
+
+      # Violation rate
+      - record: genops:policy:violation_rate
+        expr: sum(rate(genops_policy_violations_total[5m]))
+
+      # Compliance rate by policy
+      - record: genops:policy:compliance_rate_by_policy
+        expr: avg(genops_policy_compliance_rate_ratio) by (policy_name)
+
+      # Overall compliance rate
+      - record: genops:policy:compliance_rate_overall
+        expr: avg(genops_policy_compliance_rate_ratio)
+
+  #==========================================
+  # Budget Aggregations
+  #==========================================
+  - name: genops_budget_recording
+    interval: 120s
+    rules:
+      # Teams near budget limit (>80%)
+      - record: genops:budget:teams_near_limit
+        expr: count(genops_budget_utilization_ratio{budget_period="monthly"} > 0.8)
+
+      # Teams over budget
+      - record: genops:budget:teams_over_budget
+        expr: count(genops_budget_utilization_ratio{budget_period="monthly"} > 1.0)
+
+      # Average budget utilization
+      - record: genops:budget:average_utilization
+        expr: avg(genops_budget_utilization_ratio{budget_period="monthly"})
+
+  #==========================================
+  # Evaluation Aggregations
+  #==========================================
+  - name: genops_evaluation_recording
+    interval: 60s
+    rules:
+      # Average evaluation score by evaluator
+      - record: genops:evaluation:avg_score_by_evaluator
+        expr: |
+          avg(genops_evaluation_score_sum / genops_evaluation_score_count) by (evaluator)
+
+      # p50 evaluation score
+      - record: genops:evaluation:p50_score
+        expr: |
+          histogram_quantile(0.50,
+            sum(rate(genops_evaluation_score_bucket[5m])) by (le)
+          )
+
+      # p95 evaluation score
+      - record: genops:evaluation:p95_score
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(genops_evaluation_score_bucket[5m])) by (le)
+          )

@@ -324,7 +324,7 @@ Scale authority control from individual constraints to organization-wide AI gove
 - ✅ [Loki](https://github.com/KoshiHQ/GenOps-AI/tree/main/observability/loki-config.yaml) (<a href="https://grafana.com/oss/loki/" target="_blank">↗</a>)
 - ✅ [Honeycomb](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/observability/honeycomb_integration.py) (<a href="https://www.honeycomb.io/" target="_blank">↗</a>)
 - ✅ [Cribl](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/integrations/cribl.md) (<a href="https://cribl.io" target="_blank">↗</a>)
-- ✅ [Prometheus](https://github.com/KoshiHQ/GenOps-AI/tree/main/observability/prometheus.yml) (<a href="https://prometheus.io/" target="_blank">↗</a>)
+- ✅ [Prometheus](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/prometheus-quickstart.md) (<a href="https://prometheus.io/" target="_blank">↗</a>)
 - ✅ [Tempo](https://github.com/KoshiHQ/GenOps-AI/tree/main/observability/tempo-config.yaml) (<a href="https://grafana.com/oss/tempo/" target="_blank">↗</a>)
 - ✅ [Splunk](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/splunk-quickstart.md) (<a href="https://www.splunk.com/" target="_blank">↗</a>)
 - ✅ [Elastic](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/quickstarts/elastic-quickstart.md) (<a href="https://www.elastic.co/" target="_blank">↗</a>)

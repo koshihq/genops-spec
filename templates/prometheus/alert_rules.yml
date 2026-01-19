@@ -1,0 +1,369 @@
+# GenOps AI - Prometheus Alert Rules
+#
+# Production-ready alert configurations for AI governance monitoring.
+#
+# Load in prometheus.yml:
+#   rule_files:
+#     - "alert_rules.yml"
+#   alerting:
+#     alertmanagers:
+#       - static_configs:
+#           - targets: ['localhost:9093']
+
+groups:
+  #==========================================
+  # Cost Alerts
+  #==========================================
+  - name: genops_cost_alerts
+    rules:
+      # High cost rate (exceeds $10/hour)
+      - alert: HighCostRate
+        expr: rate(genops_cost_total_usd[5m]) * 3600 > 10
+        for: 5m
+        labels:
+          severity: warning
+          category: cost
+        annotations:
+          summary: "High AI cost rate detected"
+          description: "Cost rate {{ $value | humanize }}/hour exceeds $10/hour threshold"
+          runbook_url: "https://github.com/KoshiHQ/GenOps-AI/wiki/alerts/high-cost-rate"
+
+      # Very high cost rate (exceeds $50/hour)
+      - alert: VeryHighCostRate
+        expr: rate(genops_cost_total_usd[5m]) * 3600 > 50
+        for: 2m
+        labels:
+          severity: critical
+          category: cost
+        annotations:
+          summary: "Very high AI cost rate detected"
+          description: "Cost rate {{ $value | humanize }}/hour exceeds $50/hour critical threshold"
+          runbook_url: "https://github.com/KoshiHQ/GenOps-AI/wiki/alerts/very-high-cost-rate"
+
+      # Cost spike detection (>200% of 1-hour baseline)
+      - alert: CostSpike
+        expr: |
+          rate(genops_cost_total_usd[5m])
+          >
+          2 * avg_over_time(rate(genops_cost_total_usd[5m])[1h:5m])
+        for: 10m
+        labels:
+          severity: critical
+          category: cost
+        annotations:
+          summary: "AI cost spike detected"
+          description: "Cost rate is >200% of 1-hour baseline"
+          runbook_url: "https://github.com/KoshiHQ/GenOps-AI/wiki/alerts/cost-spike"
+
+      # Team-specific high cost
+      - alert: TeamHighCostRate
+        expr: sum(rate(genops_cost_total_usd[5m])) by (team) * 3600 > 5
+        for: 10m
+        labels:
+          severity: warning
+          category: cost
+        annotations:
+          summary: "High cost rate for team {{ $labels.team }}"
+          description: "Team {{ $labels.team }} cost rate: ${{ $value | humanize }}/hour"
+          runbook_url: "https://github.com/KoshiHQ/GenOps-AI/wiki/alerts/team-high-cost"
+
+      # Customer-specific high cost
+      - alert: CustomerHighCostRate
+        expr: sum(rate(genops_cost_total_usd[5m])) by (customer_id) * 3600 > 20
+        for: 15m
+        labels:
+          severity: warning
+          category: cost
+        annotations:
+          summary: "High cost rate for customer {{ $labels.customer_id }}"
+          description: "Customer {{ $labels.customer_id }} cost rate: ${{ $value | humanize }}/hour"
+
+  #==========================================
+  # Budget Alerts
+  #==========================================
+  - name: genops_budget_alerts
+    rules:
+      # Budget exceeded
+      - alert: BudgetExceeded
+        expr: genops_budget_utilization_ratio{budget_period="monthly"} > 1.0
+        for: 1m
+        labels:
+          severity: critical
+          category: budget
+        annotations:
+          summary: "Budget exceeded for team {{ $labels.team }}"
+          description: "Monthly budget exceeded: {{ $value | humanizePercentage }}"
+          runbook_url: "https://github.com/KoshiHQ/GenOps-AI/wiki/alerts/budget-exceeded"
+
+      # Budget warning (90% utilization)
+      - alert: BudgetNearlyExceeded
+        expr: genops_budget_utilization_ratio{budget_period="monthly"} > 0.9 and genops_budget_utilization_ratio{budget_period="monthly"} <= 1.0
+        for: 5m
+        labels:
+          severity: warning
+          category: budget
+        annotations:
+          summary: "Budget nearly exceeded for team {{ $labels.team }}"
+          description: "Budget utilization: {{ $value | humanizePercentage }}"
+          runbook_url: "https://github.com/KoshiHQ/GenOps-AI/wiki/alerts/budget-nearly-exceeded"
+
+      # Budget watch (80% utilization)
+      - alert: BudgetWatch
+        expr: genops_budget_utilization_ratio{budget_period="monthly"} > 0.8 and genops_budget_utilization_ratio{budget_period="monthly"} <= 0.9
+        for: 10m
+        labels:
+          severity: info
+          category: budget
+        annotations:
+          summary: "Budget watch for team {{ $labels.team }}"
+          description: "Budget utilization: {{ $value | humanizePercentage }} (>80%)"
+
+      # Low remaining budget (<$100)
+      - alert: LowRemainingBudget
+        expr: genops_budget_remaining_usd{budget_period="monthly"} < 100
+        for: 5m
+        labels:
+          severity: warning
+          category: budget
+        annotations:
+          summary: "Low remaining budget for team {{ $labels.team }}"
+          description: "Remaining budget: ${{ $value | humanize }}"
+
+  #==========================================
+  # Policy & Compliance Alerts
+  #==========================================
+  - name: genops_policy_alerts
+    rules:
+      # Policy violation spike
+      - alert: PolicyViolationSpike
+        expr: rate(genops_policy_violations_total[5m]) > 1
+        for: 2m
+        labels:
+          severity: warning
+          category: compliance
+        annotations:
+          summary: "Policy violation spike detected"
+          description: "Violation rate: {{ $value | humanize }}/sec for policy {{ $labels.policy_name }}"
+          runbook_url: "https://github.com/KoshiHQ/GenOps-AI/wiki/alerts/policy-violation-spike"
+
+      # Critical policy violation
+      - alert: CriticalPolicyViolation
+        expr: rate(genops_policy_violations_total{policy_type="critical"}[5m]) > 0.1
+        for: 1m
+        labels:
+          severity: critical
+          category: compliance
+        annotations:
+          summary: "Critical policy violation detected"
+          description: "Critical policy {{ $labels.policy_name }} violated at {{ $value | humanize }}/sec"
+          runbook_url: "https://github.com/KoshiHQ/GenOps-AI/wiki/alerts/critical-policy-violation"
+
+      # Low compliance rate
+      - alert: LowComplianceRate
+        expr: genops_policy_compliance_rate_ratio < 0.95
+        for: 10m
+        labels:
+          severity: warning
+          category: compliance
+        annotations:
+          summary: "Low compliance rate for policy {{ $labels.policy_name }}"
+          description: "Compliance rate: {{ $value | humanizePercentage }} (< 95%)"
+          runbook_url: "https://github.com/KoshiHQ/GenOps-AI/wiki/alerts/low-compliance-rate"
+
+      # Very low compliance rate
+      - alert: VeryLowComplianceRate
+        expr: genops_policy_compliance_rate_ratio < 0.90
+        for: 5m
+        labels:
+          severity: critical
+          category: compliance
+        annotations:
+          summary: "Very low compliance rate for policy {{ $labels.policy_name }}"
+          description: "Compliance rate: {{ $value | humanizePercentage }} (< 90%)"
+          runbook_url: "https://github.com/KoshiHQ/GenOps-AI/wiki/alerts/very-low-compliance-rate"
+
+  #==========================================
+  # Performance Alerts
+  #==========================================
+  - name: genops_performance_alerts
+    rules:
+      # High latency (p95 > 5 seconds)
+      - alert: HighLatency
+        expr: |
+          histogram_quantile(0.95,
+            rate(genops_operation_latency_seconds_bucket[5m])
+          ) > 5
+        for: 5m
+        labels:
+          severity: warning
+          category: performance
+        annotations:
+          summary: "High AI operation latency"
+          description: "p95 latency: {{ $value | humanizeDuration }}"
+          runbook_url: "https://github.com/KoshiHQ/GenOps-AI/wiki/alerts/high-latency"
+
+      # Very high latency (p95 > 15 seconds)
+      - alert: VeryHighLatency
+        expr: |
+          histogram_quantile(0.95,
+            rate(genops_operation_latency_seconds_bucket[5m])
+          ) > 15
+        for: 2m
+        labels:
+          severity: critical
+          category: performance
+        annotations:
+          summary: "Very high AI operation latency"
+          description: "p95 latency: {{ $value | humanizeDuration }} (>15s)"
+          runbook_url: "https://github.com/KoshiHQ/GenOps-AI/wiki/alerts/very-high-latency"
+
+      # Latency spike for specific model
+      - alert: ModelLatencySpike
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(genops_operation_latency_seconds_bucket[5m])) by (le, model)
+          ) > 10
+        for: 5m
+        labels:
+          severity: warning
+          category: performance
+        annotations:
+          summary: "High latency for model {{ $labels.model }}"
+          description: "p95 latency for {{ $labels.model }}: {{ $value | humanizeDuration }}"
+
+      # High error rate (>1% of operations)
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(genops_operation_errors_total[5m]))
+          /
+          sum(rate(genops_operations_total[5m]))
+          > 0.01
+        for: 5m
+        labels:
+          severity: critical
+          category: reliability
+        annotations:
+          summary: "High AI operation error rate"
+          description: "Error rate: {{ $value | humanizePercentage }} (>1%)"
+          runbook_url: "https://github.com/KoshiHQ/GenOps-AI/wiki/alerts/high-error-rate"
+
+      # Elevated error rate (>0.5% of operations)
+      - alert: ElevatedErrorRate
+        expr: |
+          sum(rate(genops_operation_errors_total[5m]))
+          /
+          sum(rate(genops_operations_total[5m]))
+          > 0.005
+        for: 10m
+        labels:
+          severity: warning
+          category: reliability
+        annotations:
+          summary: "Elevated AI operation error rate"
+          description: "Error rate: {{ $value | humanizePercentage }} (>0.5%)"
+          runbook_url: "https://github.com/KoshiHQ/GenOps-AI/wiki/alerts/elevated-error-rate"
+
+      # Error spike
+      - alert: ErrorSpike
+        expr: |
+          rate(genops_operation_errors_total[5m])
+          >
+          2 * avg_over_time(rate(genops_operation_errors_total[5m])[1h:5m])
+        for: 5m
+        labels:
+          severity: warning
+          category: reliability
+        annotations:
+          summary: "Error rate spike detected"
+          description: "Error rate >200% of baseline"
+          runbook_url: "https://github.com/KoshiHQ/GenOps-AI/wiki/alerts/error-spike"
+
+  #==========================================
+  # Evaluation & Quality Alerts
+  #==========================================
+  - name: genops_evaluation_alerts
+    rules:
+      # Low average evaluation score
+      - alert: LowEvaluationScore
+        expr: |
+          avg(genops_evaluation_score_sum / genops_evaluation_score_count) by (evaluator) < 0.7
+        for: 10m
+        labels:
+          severity: warning
+          category: quality
+        annotations:
+          summary: "Low average evaluation score for {{ $labels.evaluator }}"
+          description: "Average score: {{ $value | humanize }} (< 0.7)"
+          runbook_url: "https://github.com/KoshiHQ/GenOps-AI/wiki/alerts/low-evaluation-score"
+
+      # High evaluation failure rate
+      - alert: HighEvaluationFailureRate
+        expr: rate(genops_evaluation_failures_total[5m]) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          category: quality
+        annotations:
+          summary: "High evaluation failure rate"
+          description: "Evaluation failures: {{ $value | humanize }}/sec"
+          runbook_url: "https://github.com/KoshiHQ/GenOps-AI/wiki/alerts/high-evaluation-failure-rate"
+
+  #==========================================
+  # Token Usage Alerts
+  #==========================================
+  - name: genops_token_alerts
+    rules:
+      # High token consumption rate (> 1M tokens/hour)
+      - alert: HighTokenConsumptionRate
+        expr: sum(rate(genops_tokens_total[5m])) * 3600 > 1000000
+        for: 10m
+        labels:
+          severity: warning
+          category: usage
+        annotations:
+          summary: "High token consumption rate"
+          description: "Token rate: {{ $value | humanize }}/hour (>1M/hour)"
+
+      # Low token efficiency (< 1000 tokens/$)
+      - alert: LowTokenEfficiency
+        expr: |
+          sum(rate(genops_tokens_total[5m]))
+          /
+          sum(rate(genops_cost_total_usd[5m]))
+          < 1000
+        for: 15m
+        labels:
+          severity: info
+          category: efficiency
+        annotations:
+          summary: "Low token efficiency detected"
+          description: "Efficiency: {{ $value | humanize }} tokens/$ (< 1000)"
+
+  #==========================================
+  # Operational Health Alerts
+  #==========================================
+  - name: genops_health_alerts
+    rules:
+      # No operations in 5 minutes (potential issue)
+      - alert: NoOperations
+        expr: rate(genops_operations_total[5m]) == 0
+        for: 5m
+        labels:
+          severity: warning
+          category: health
+        annotations:
+          summary: "No AI operations detected"
+          description: "Zero operations in the last 5 minutes - potential instrumentation issue"
+          runbook_url: "https://github.com/KoshiHQ/GenOps-AI/wiki/alerts/no-operations"
+
+      # Metrics endpoint down (if using blackbox exporter)
+      - alert: MetricsEndpointDown
+        expr: up{job="genops-ai"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          category: health
+        annotations:
+          summary: "GenOps metrics endpoint is down"
+          description: "Cannot scrape metrics from {{ $labels.instance }}"
+          runbook_url: "https://github.com/KoshiHQ/GenOps-AI/wiki/alerts/metrics-endpoint-down"
