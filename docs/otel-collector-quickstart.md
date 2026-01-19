@@ -533,7 +533,8 @@ python your_app.py
 export HONEYCOMB_API_KEY="your-api-key"
 export HONEYCOMB_DATASET="genops-ai"
 
-# See: docs/integrations/honeycomb.md
+# See quickstart: docs/honeycomb-quickstart.md
+# Full integration guide: docs/integrations/honeycomb.md
 ```
 
 ### Splunk Integration

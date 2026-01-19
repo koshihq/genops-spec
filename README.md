@@ -322,7 +322,7 @@ Scale authority control from individual constraints to organization-wide AI gove
 - ✅ [Datadog](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/datadog-quickstart.md) (<a href="https://www.datadoghq.com/" target="_blank">↗</a>)
 - ✅ [Grafana](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/grafana-quickstart.md) (<a href="https://grafana.com/" target="_blank">↗</a>)
 - ✅ [Loki](https://github.com/KoshiHQ/GenOps-AI/tree/main/observability/loki-config.yaml) (<a href="https://grafana.com/oss/loki/" target="_blank">↗</a>)
-- ✅ [Honeycomb](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/observability/honeycomb_integration.py) (<a href="https://www.honeycomb.io/" target="_blank">↗</a>)
+- ✅ [Honeycomb](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/honeycomb-quickstart.md) (<a href="https://www.honeycomb.io/" target="_blank">↗</a>)
 - ✅ [Cribl](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/integrations/cribl.md) (<a href="https://cribl.io" target="_blank">↗</a>)
 - ✅ [Prometheus](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/prometheus-quickstart.md) (<a href="https://prometheus.io/" target="_blank">↗</a>)
 - ✅ [Tempo](https://github.com/KoshiHQ/GenOps-AI/tree/main/observability/tempo-config.yaml) (<a href="https://grafana.com/oss/tempo/" target="_blank">↗</a>)
