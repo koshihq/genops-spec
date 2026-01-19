@@ -110,6 +110,20 @@ class GenOpsInstrumentor:
         except ImportError:
             pass  # Dust provider not available
 
+        # Add Anyscale to registry
+        try:
+            from genops.providers.anyscale.registration import auto_instrument as anyscale_auto_instrument
+            from genops.providers.anyscale.registration import disable_auto_instrument as anyscale_disable
+            self.provider_patches["anyscale"] = {
+                "patch": lambda **kwargs: anyscale_auto_instrument(**kwargs),
+                "unpatch": anyscale_disable,
+                "module": "requests",  # Anyscale uses requests or OpenAI SDK
+                "provider_type": "llm_api",
+                "framework_type": "inference",
+            }
+        except ImportError:
+            pass  # Anyscale provider not available
+
         # Framework providers will be added dynamically as they're implemented
         self.framework_registry = {}
 

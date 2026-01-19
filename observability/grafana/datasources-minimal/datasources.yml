@@ -1,0 +1,19 @@
+apiVersion: 1
+
+datasources:
+  # Tempo for distributed tracing
+  - name: Tempo
+    type: tempo
+    access: proxy
+    url: http://tempo:3200
+    uid: tempo
+    isDefault: true
+    jsonData:
+      httpMethod: GET
+      tracesToLogsV2:
+        datasourceUid: tempo
+        spanStartTimeShift: '-1h'
+        spanEndTimeShift: '1h'
+        filterByTraceID: true
+        filterBySpanID: false
+    version: 1

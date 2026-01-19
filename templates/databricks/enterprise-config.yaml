@@ -1,0 +1,319 @@
+# GenOps Databricks Unity Catalog Enterprise Configuration
+# Complete configuration for enterprise-grade deployments
+
+genops:
+  # Provider configuration
+  providers:
+    databricks_unity_catalog:
+      # Workspace configuration
+      workspace_url: "${DATABRICKS_HOST}"
+      metastore_id: "${DATABRICKS_METASTORE_ID}"
+      
+      # High availability
+      enable_high_availability: true
+      failover_workspace_url: "${DATABRICKS_FAILOVER_HOST}"
+      sync_interval_seconds: 30
+      health_check_interval_seconds: 60
+      
+      # Security configuration
+      security:
+        authentication:
+          method: "azure_ad"  # or "aws_iam", "google_identity"
+          mfa_required: true
+          session_timeout_minutes: 480  # 8 hours
+        
+        authorization:
+          rbac_enabled: true
+          data_classification_enforcement: true
+          row_level_security: true
+          column_masking: true
+          minimum_clearance_levels:
+            restricted: ["data_steward", "compliance_officer"]
+            confidential: ["data_analyst", "data_engineer"]
+            internal: ["all_authenticated_users"]
+        
+        encryption:
+          data_at_rest: "customer_managed_keys"
+          data_in_transit: "tls_1_3"
+          telemetry_encryption: true
+          key_rotation_days: 90
+        
+        audit_logging:
+          enabled: true
+          log_level: "detailed"
+          destinations: ["splunk", "datadog", "s3_bucket"]
+          real_time_alerting: true
+      
+      # Governance configuration
+      governance:
+        compliance_level: "enterprise"
+        enable_cross_workspace_lineage: true
+        enable_unified_cost_reporting: true
+        audit_retention_days: 2555  # 7 years for compliance
+        enable_real_time_alerts: true
+        
+        # Policy enforcement
+        policies:
+          data_classification:
+            enabled: true
+            auto_classification: true
+            pii_detection: true
+          
+          data_retention:
+            enabled: true
+            default_retention_days: 2555
+            gdpr_compliance: true
+            ccpa_compliance: true
+          
+          access_control:
+            enabled: true
+            require_justification: true
+            approval_workflow: true
+            max_session_duration: 480  # 8 hours
+        
+        # Compliance frameworks
+        compliance_frameworks:
+          - "SOX"
+          - "GDPR" 
+          - "CCPA"
+          - "HIPAA"
+          - "PCI_DSS"
+      
+      # Performance optimization
+      performance:
+        mode: "enterprise"
+        
+        telemetry:
+          enable_sampling: true
+          sampling_strategy: "adaptive"
+          sampling_rates:
+            table_operations: 0.1      # 10% for high-volume
+            sql_warehouse: 1.0          # 100% for expensive ops
+            governance_events: 1.0      # 100% for compliance
+          
+          batch_processing:
+            enabled: true
+            batch_size: 1000
+            flush_interval_seconds: 30
+            max_memory_mb: 512
+            enable_compression: true
+        
+        cost_calculation:
+          enable_caching: true
+          cache_ttl_seconds: 300  # 5 minutes
+          enable_async_processing: true
+          cost_aggregation_interval: 60  # 1 minute
+        
+        lineage_tracking:
+          enable_compression: true
+          async_lineage_processing: true
+          lineage_graph_cache_ttl: 3600  # 1 hour
+          max_lineage_depth: 10
+        
+        resource_management:
+          max_concurrent_operations: 50
+          connection_pool_size: 20
+          request_timeout_seconds: 30
+          
+          retry_policy:
+            max_retries: 3
+            backoff_multiplier: 2.0
+            max_backoff_seconds: 60
+      
+      # Monitoring and alerting
+      monitoring:
+        enable_metrics: true
+        enable_health_checks: true
+        
+        metrics:
+          cost_thresholds:
+            hourly_alert_threshold: 100.0   # $100/hour
+            daily_budget_threshold: 1000.0  # $1000/day
+            monthly_budget_threshold: 20000.0  # $20k/month
+          
+          performance_thresholds:
+            max_operation_latency_ms: 1000
+            max_error_rate: 0.01  # 1%
+            min_success_rate: 0.99  # 99%
+        
+        alerting:
+          enabled: true
+          channels:
+            - type: "slack"
+              webhook: "${SLACK_WEBHOOK_URL}"
+              channel: "#data-platform-alerts"
+            - type: "email"
+              recipients: ["data-platform@company.com"]
+            - type: "pagerduty"
+              service_key: "${PAGERDUTY_SERVICE_KEY}"
+          
+          alert_rules:
+            cost_anomaly:
+              enabled: true
+              threshold_multiplier: 2.0  # 200% of baseline
+              window_minutes: 60
+            
+            compliance_violation:
+              enabled: true
+              severity: "critical"
+              immediate_notification: true
+            
+            workspace_connectivity:
+              enabled: true
+              check_interval_seconds: 60
+              failure_threshold: 3
+
+  # OpenTelemetry configuration
+  telemetry:
+    service_name: "genops-databricks-enterprise"
+    service_version: "1.0.0"
+    
+    # OTLP exporters
+    exporters:
+      otlp:
+        endpoint: "${OTEL_EXPORTER_OTLP_ENDPOINT}"
+        headers:
+          x-api-key: "${OTEL_API_KEY}"
+        compression: "gzip"
+        timeout: 10
+      
+      # Additional exporters for enterprise observability
+      datadog:
+        api_key: "${DATADOG_API_KEY}"
+        site: "${DATADOG_SITE:-datadoghq.com}"
+        service: "genops-databricks"
+      
+      jaeger:
+        endpoint: "${JAEGER_ENDPOINT}"
+        agent_host: "${JAEGER_AGENT_HOST}"
+        agent_port: 6831
+    
+    # Sampling configuration
+    sampling:
+      default_sampler: "parent_based_trace_id_ratio"
+      sampling_ratio: 0.1  # 10% for high-volume enterprise
+      
+      per_service_sampling:
+        "databricks_unity_catalog": 0.5
+        "cost_aggregator": 1.0
+        "governance_monitor": 1.0
+    
+    # Resource attributes
+    resource:
+      deployment_environment: "${GENOPS_ENVIRONMENT:-production}"
+      service_instance_id: "${HOSTNAME}"
+      service_namespace: "genops"
+      
+      # Business attributes
+      business_unit: "${GENOPS_BUSINESS_UNIT:-data-platform}"
+      cost_center: "${GENOPS_COST_CENTER:-engineering}"
+      team: "${GENOPS_TEAM:-data-platform-engineering}"
+      project: "${GENOPS_PROJECT:-unity-catalog-governance}"
+
+# Kubernetes-specific configuration
+kubernetes:
+  namespace: "genops-databricks"
+  
+  deployment:
+    replicas: 3
+    image: "genops/databricks-unity-catalog:latest"
+    
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "500m"
+      limits:
+        memory: "2Gi"
+        cpu: "2000m"
+    
+    # Anti-affinity for high availability
+    affinity:
+      podAntiAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchLabels:
+              app: genops-databricks
+          topologyKey: kubernetes.io/hostname
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 20
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  
+  service:
+    type: "ClusterIP"
+    port: 80
+    targetPort: 8080
+  
+  ingress:
+    enabled: true
+    className: "nginx"
+    annotations:
+      cert-manager.io/cluster-issuer: "letsencrypt-prod"
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    hosts:
+    - host: "genops-databricks.company.com"
+      paths:
+      - path: "/"
+        pathType: "Prefix"
+    tls:
+    - secretName: "genops-databricks-tls"
+      hosts:
+      - "genops-databricks.company.com"
+
+# Backup and disaster recovery
+backup:
+  enabled: true
+  schedule: "0 2 * * *"  # Daily at 2 AM
+  
+  destinations:
+    s3:
+      bucket: "${BACKUP_S3_BUCKET}"
+      region: "${BACKUP_S3_REGION}"
+      prefix: "genops-databricks-backup"
+      encryption: "aws:kms"
+      kms_key_id: "${BACKUP_KMS_KEY_ID}"
+  
+  retention:
+    daily_backups: 30    # 30 days
+    weekly_backups: 12   # 12 weeks  
+    monthly_backups: 12  # 12 months
+  
+  data_types:
+    - governance_policies
+    - cost_summaries
+    - lineage_graphs
+    - compliance_reports
+    - audit_logs
+
+# Network configuration
+network:
+  vpc_endpoints:
+    - databricks_workspace
+    - databricks_backend
+    - s3_root_bucket
+  
+  security_groups:
+    databricks_workspace:
+      ingress:
+        - port: 443
+          protocol: "tcp"
+          source_cidrs: ["10.0.0.0/8"]  # Corporate network
+        - port: 2443
+          protocol: "tcp"
+          source_cidrs: ["${DATABRICKS_CONTROL_PLANE_CIDRS}"]
+      
+      egress:
+        - port: 443
+          protocol: "tcp"
+          destination_cidrs: ["${DATABRICKS_CONTROL_PLANE_CIDRS}"]
+        - port: 443
+          protocol: "tcp"
+          destination_cidrs: ["0.0.0.0/0"]  # HTTPS to telemetry endpoints
+  
+  private_subnets:
+    - "${PRIVATE_SUBNET_1}"
+    - "${PRIVATE_SUBNET_2}"
+    - "${PRIVATE_SUBNET_3}"
