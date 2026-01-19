@@ -424,7 +424,7 @@ Need help? Here are your options:
 
 1. **Documentation**: Read the [full integration guide](../integrations/collibra.md)
 2. **Examples**: Explore [working examples](../../examples/collibra/)
-3. **Issues**: Report issues at [GitHub Issues](https://github.com/anthropics/claude-code/issues)
+3. **Issues**: Report issues at [GitHub Issues](https://github.com/KoshiHQ/GenOps-AI/issues)
 4. **Community**: Ask questions in the GenOps community
 
 ---
