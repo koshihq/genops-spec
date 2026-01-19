@@ -311,7 +311,7 @@ As governance requirements grow, teams scale from individual oversight to organi
 
 ### 🏗️ Platform & Infrastructure
 - ✅ [Kubernetes](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/kubernetes-getting-started.md) (<a href="https://kubernetes.io/" target="_blank">↗</a>)
-- ✅ [OpenTelemetry Collector](https://github.com/KoshiHQ/GenOps-AI/tree/main/observability) (<a href="https://opentelemetry.io/docs/collector/" target="_blank">↗</a>)
+- ✅ [OpenTelemetry Collector](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/otel-collector-quickstart.md) (<a href="https://opentelemetry.io/docs/collector/" target="_blank">↗</a>)
 - ✅ [Datadog](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/observability/datadog_integration.py) (<a href="https://www.datadoghq.com/" target="_blank">↗</a>)
 - ✅ [Grafana](https://github.com/KoshiHQ/GenOps-AI/tree/main/observability/grafana) (<a href="https://grafana.com/" target="_blank">↗</a>)
 - ✅ [Loki](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/loki-quickstart.md) (<a href="https://grafana.com/oss/loki/" target="_blank">↗</a>)

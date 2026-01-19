@@ -448,16 +448,7 @@ See framework-specific guides in the [documentation](../README.md#ai--llm-ecosys
 
 ---
 
-## 🤝 Getting Help
+## 💬 Get Help
 
-**Found an issue?**
-- Report bugs at: https://github.com/KoshiHQ/GenOps-AI/issues
-- Tag with: `integration:loki`
-
-**Need support?**
-- Community Slack: [Join here](https://genops-ai.slack.com)
-- Documentation: [GenOps Docs](https://docs.genops.ai)
-
-**Want to contribute?**
-- See [CONTRIBUTING.md](../CONTRIBUTING.md)
-- Share your LogQL queries and dashboard examples!
+- **Issues:** [GitHub Issues](https://github.com/KoshiHQ/GenOps-AI/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/KoshiHQ/GenOps-AI/discussions)
