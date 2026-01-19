@@ -151,12 +151,18 @@ open http://localhost:16686 # Jaeger
 
 GenOps works with any OpenTelemetry-compatible platform:
 
-```bash
-# Datadog
-export OTEL_EXPORTER_OTLP_ENDPOINT="https://otlp.datadoghq.com"
-export DD_API_KEY="your_datadog_key"
+**Datadog:** See the **[Datadog Quickstart Guide](datadog-quickstart.md)** for complete 5-minute setup.
 
-# Honeycomb  
+```bash
+# Quick Datadog setup
+export DATADOG_API_KEY="your_datadog_api_key"
+export DATADOG_SITE="datadoghq.com"
+```
+
+**Other Platforms:**
+
+```bash
+# Honeycomb
 export OTEL_EXPORTER_OTLP_ENDPOINT="https://api.honeycomb.io"
 export HONEYCOMB_API_KEY="your_honeycomb_key"
 
