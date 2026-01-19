@@ -1,0 +1,377 @@
+{
+  "dashboard": {
+    "title": "GenOps AI Governance",
+    "tags": ["genops", "ai", "governance", "cost"],
+    "timezone": "browser",
+    "schemaVersion": 16,
+    "version": 1,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Total Cost (Last 24h)",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "increase(genops_cost_total_usd[24h])",
+            "legendFormat": "Total Cost",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "currencyUSD",
+            "decimals": 2
+          }
+        },
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 0,
+          "y": 0
+        }
+      },
+      {
+        "id": 2,
+        "title": "Hourly Cost Rate",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(rate(genops_cost_total_usd[5m])) * 3600",
+            "legendFormat": "Cost/Hour",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "currencyUSD",
+            "decimals": 2
+          }
+        },
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 6,
+          "y": 0
+        }
+      },
+      {
+        "id": 3,
+        "title": "Total Tokens (24h)",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "increase(genops_tokens_total[24h])",
+            "legendFormat": "Total Tokens",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "decimals": 0
+          }
+        },
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 12,
+          "y": 0
+        }
+      },
+      {
+        "id": 4,
+        "title": "Operations/Second",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(rate(genops_operations_total[1m]))",
+            "legendFormat": "Ops/s",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "ops",
+            "decimals": 2
+          }
+        },
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 18,
+          "y": 0
+        }
+      },
+      {
+        "id": 5,
+        "title": "Cost Over Time",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum(rate(genops_cost_total_usd[5m])) * 300",
+            "legendFormat": "Cost (5min window)",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {
+            "format": "currencyUSD",
+            "label": "Cost"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 4
+        }
+      },
+      {
+        "id": 6,
+        "title": "Cost by Provider",
+        "type": "piechart",
+        "targets": [
+          {
+            "expr": "sum(genops_cost_total_usd) by (provider)",
+            "legendFormat": "{{provider}}",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 0,
+          "y": 12
+        }
+      },
+      {
+        "id": 7,
+        "title": "Cost by Model (Top 10)",
+        "type": "bargauge",
+        "targets": [
+          {
+            "expr": "topk(10, sum(genops_cost_total_usd) by (model))",
+            "legendFormat": "{{model}}",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "orientation": "horizontal"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "currencyUSD"
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 8,
+          "y": 12
+        }
+      },
+      {
+        "id": 8,
+        "title": "Cost by Team",
+        "type": "piechart",
+        "targets": [
+          {
+            "expr": "sum(genops_cost_total_usd) by (team)",
+            "legendFormat": "{{team}}",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 16,
+          "y": 12
+        }
+      },
+      {
+        "id": 9,
+        "title": "Token Usage Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum(rate(genops_tokens_input_total[5m])) * 60",
+            "legendFormat": "Input Tokens/min",
+            "refId": "A"
+          },
+          {
+            "expr": "sum(rate(genops_tokens_output_total[5m])) * 60",
+            "legendFormat": "Output Tokens/min",
+            "refId": "B"
+          }
+        ],
+        "yaxes": [
+          {
+            "format": "short",
+            "label": "Tokens/min"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 20
+        }
+      },
+      {
+        "id": 10,
+        "title": "Token Efficiency by Model",
+        "type": "bargauge",
+        "targets": [
+          {
+            "expr": "topk(10, sum(rate(genops_tokens_total[5m])) by (model) / sum(rate(genops_cost_total_usd[5m])) by (model))",
+            "legendFormat": "{{model}}",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "orientation": "horizontal"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "custom": {
+              "displayMode": "gradient"
+            }
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 20
+        }
+      },
+      {
+        "id": 11,
+        "title": "Operation Latency (p50, p95, p99)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.50, sum(rate(genops_operation_latency_seconds_bucket[5m])) by (le))",
+            "legendFormat": "p50",
+            "refId": "A"
+          },
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(genops_operation_latency_seconds_bucket[5m])) by (le))",
+            "legendFormat": "p95",
+            "refId": "B"
+          },
+          {
+            "expr": "histogram_quantile(0.99, sum(rate(genops_operation_latency_seconds_bucket[5m])) by (le))",
+            "legendFormat": "p99",
+            "refId": "C"
+          }
+        ],
+        "yaxes": [
+          {
+            "format": "s",
+            "label": "Latency"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 28
+        }
+      },
+      {
+        "id": 12,
+        "title": "Error Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum(rate(genops_operation_errors_total[5m]))",
+            "legendFormat": "Errors/sec",
+            "refId": "A"
+          },
+          {
+            "expr": "sum(rate(genops_operation_errors_total[5m])) / sum(rate(genops_operations_total[5m]))",
+            "legendFormat": "Error %",
+            "refId": "B"
+          }
+        ],
+        "yaxes": [
+          {
+            "format": "short",
+            "label": "Errors"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 28
+        }
+      },
+      {
+        "id": 13,
+        "title": "Budget Utilization",
+        "type": "gauge",
+        "targets": [
+          {
+            "expr": "genops_budget_utilization_ratio{budget_period=\"monthly\"}",
+            "legendFormat": "{{team}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percentunit",
+            "min": 0,
+            "max": 1,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": 0, "color": "green" },
+                { "value": 0.8, "color": "yellow" },
+                { "value": 0.9, "color": "orange" },
+                { "value": 1.0, "color": "red" }
+              ]
+            }
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 36
+        }
+      },
+      {
+        "id": 14,
+        "title": "Policy Violations",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum(rate(genops_policy_violations_total[5m])) by (policy_name)",
+            "legendFormat": "{{policy_name}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {
+            "format": "short",
+            "label": "Violations/sec"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 36
+        }
+      }
+    ],
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    }
+  }
+}

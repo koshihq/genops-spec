@@ -17,8 +17,10 @@ Features:
 
 import json
 import os
+import socket
 import time
-from typing import Any, Optional
+from dataclasses import dataclass, field
+from typing import Any, List, Optional
 
 import genops
 
@@ -479,6 +481,318 @@ Review: [Token Usage Dashboard](https://app.datadoghq.com/dashboard/genops-token
         return sli_monitors
 
 
+# ============================================================================
+# Validation Utilities (Following GenOps Standards)
+# ============================================================================
+
+@dataclass
+class ValidationIssue:
+    """Individual validation issue with severity and fix suggestion."""
+    severity: str  # "error", "warning", "info"
+    component: str
+    message: str
+    fix_suggestion: str
+
+
+@dataclass
+class ValidationResult:
+    """Comprehensive validation result."""
+    success: bool
+    issues: List[ValidationIssue] = field(default_factory=list)
+    environment_info: dict = field(default_factory=dict)
+
+
+def validate_datadog_setup(
+    api_key: Optional[str] = None,
+    site: str = "datadoghq.com"
+) -> ValidationResult:
+    """
+    Comprehensive Datadog setup validation.
+
+    Validates:
+    - Environment variables (DATADOG_API_KEY, DATADOG_SITE)
+    - OpenTelemetry dependencies
+    - Network connectivity to OTLP endpoint
+    - Datadog API key validity (basic format check)
+    - Configuration completeness
+
+    Args:
+        api_key: Datadog API key (or uses DATADOG_API_KEY env var)
+        site: Datadog site (default: datadoghq.com)
+
+    Returns:
+        ValidationResult with actionable fix suggestions
+    """
+    issues = []
+
+    # Check API key
+    effective_api_key = api_key or os.getenv("DATADOG_API_KEY")
+    if not effective_api_key:
+        issues.append(ValidationIssue(
+            severity="error",
+            component="environment",
+            message="DATADOG_API_KEY not set",
+            fix_suggestion="Set environment variable: export DATADOG_API_KEY='your_32_char_api_key'"
+        ))
+    elif len(effective_api_key) != 32:
+        issues.append(ValidationIssue(
+            severity="warning",
+            component="environment",
+            message=f"DATADOG_API_KEY has unexpected length ({len(effective_api_key)} chars, expected 32)",
+            fix_suggestion="Verify your Datadog API key is correct (should be 32 characters)"
+        ))
+
+    # Check Datadog site
+    valid_sites = [
+        "datadoghq.com",
+        "us5.datadoghq.com",
+        "datadoghq.eu",
+        "us3.datadoghq.com",
+        "ddog-gov.com"
+    ]
+    if site not in valid_sites:
+        issues.append(ValidationIssue(
+            severity="warning",
+            component="configuration",
+            message=f"Datadog site '{site}' is not a standard site",
+            fix_suggestion=f"Valid sites: {', '.join(valid_sites)}"
+        ))
+
+    # Check OpenTelemetry dependencies
+    if not HAS_OPENTELEMETRY:
+        issues.append(ValidationIssue(
+            severity="error",
+            component="dependencies",
+            message="OpenTelemetry not installed",
+            fix_suggestion="Install with: pip install opentelemetry-api opentelemetry-sdk opentelemetry-exporter-otlp-proto-http"
+        ))
+
+    # Check network connectivity to Datadog OTLP endpoint
+    if effective_api_key:  # Only test if API key is set
+        otlp_host = f"otlp.{site}"
+        try:
+            socket.create_connection((otlp_host, 443), timeout=5)
+        except socket.timeout:
+            issues.append(ValidationIssue(
+                severity="warning",
+                component="network",
+                message=f"Connection to {otlp_host}:443 timed out (5 seconds)",
+                fix_suggestion="Check network connectivity, firewall rules, and proxy configuration"
+            ))
+        except socket.gaierror:
+            issues.append(ValidationIssue(
+                severity="error",
+                component="network",
+                message=f"Cannot resolve hostname: {otlp_host}",
+                fix_suggestion="Verify DATADOG_SITE is correct and DNS is working"
+            ))
+        except Exception as e:
+            issues.append(ValidationIssue(
+                severity="warning",
+                component="network",
+                message=f"Cannot connect to {otlp_host}:443: {type(e).__name__}",
+                fix_suggestion="Check network connectivity and firewall rules"
+            ))
+
+    # Check service name configuration
+    service_name = os.getenv("OTEL_SERVICE_NAME")
+    if not service_name:
+        issues.append(ValidationIssue(
+            severity="info",
+            component="configuration",
+            message="OTEL_SERVICE_NAME not set (will use default: genops-ai)",
+            fix_suggestion="Set environment variable: export OTEL_SERVICE_NAME='your-service-name'"
+        ))
+
+    # Environment info
+    environment_info = {
+        "api_key_set": bool(effective_api_key),
+        "api_key_length": len(effective_api_key) if effective_api_key else 0,
+        "site": site,
+        "has_opentelemetry": HAS_OPENTELEMETRY,
+        "has_datadog_sdk": HAS_DATADOG,
+        "service_name": service_name or "genops-ai (default)",
+        "otlp_endpoint": f"https://otlp.{site}"
+    }
+
+    # Determine success (no errors)
+    success = len([i for i in issues if i.severity == "error"]) == 0
+
+    return ValidationResult(
+        success=success,
+        issues=issues,
+        environment_info=environment_info
+    )
+
+
+def print_validation_result(result: ValidationResult):
+    """
+    User-friendly validation result display.
+
+    Args:
+        result: ValidationResult from validate_datadog_setup()
+    """
+    print("\n" + "=" * 60)
+    print("  DATADOG SETUP VALIDATION")
+    print("=" * 60)
+
+    if result.success:
+        print("\n✅ Datadog setup validation PASSED!")
+        print(f"\n📋 Configuration:")
+        print(f"   Site: {result.environment_info['site']}")
+        print(f"   OTLP Endpoint: {result.environment_info['otlp_endpoint']}")
+        print(f"   Service Name: {result.environment_info['service_name']}")
+        print(f"   API Key: {'✅ Set (%d chars)' % result.environment_info['api_key_length'] if result.environment_info['api_key_set'] else '❌ Not Set'}")
+        print(f"   OpenTelemetry: {'✅ Installed' if result.environment_info['has_opentelemetry'] else '❌ Missing'}")
+        print(f"   Datadog SDK: {'✅ Installed' if result.environment_info['has_datadog_sdk'] else '⚠️  Not installed (optional)'}")
+    else:
+        print("\n❌ Datadog setup validation FAILED!")
+        print("\nYou must fix the errors below before exporting telemetry.\n")
+
+    # Group issues by severity
+    errors = [i for i in result.issues if i.severity == "error"]
+    warnings = [i for i in result.issues if i.severity == "warning"]
+    info = [i for i in result.issues if i.severity == "info"]
+
+    if errors:
+        print("\n🚨 ERRORS (must fix):")
+        for issue in errors:
+            print(f"\n   [{issue.component.upper()}] {issue.message}")
+            print(f"   💡 Fix: {issue.fix_suggestion}")
+
+    if warnings:
+        print("\n⚠️  WARNINGS:")
+        for issue in warnings:
+            print(f"\n   [{issue.component.upper()}] {issue.message}")
+            print(f"   💡 Suggestion: {issue.fix_suggestion}")
+
+    if info:
+        print("\n📌 INFORMATION:")
+        for issue in info:
+            print(f"\n   [{issue.component.upper()}] {issue.message}")
+            print(f"   💡 Tip: {issue.fix_suggestion}")
+
+    print("\n" + "=" * 60)
+
+    if result.success:
+        print("✅ Ready to export telemetry to Datadog!")
+    else:
+        print("❌ Please fix errors above before proceeding.")
+
+    print("=" * 60 + "\n")
+
+
+# ============================================================================
+# Standard Entry Points (Following GenOps Naming Conventions)
+# ============================================================================
+
+def instrument_datadog(
+    api_key: Optional[str] = None,
+    app_key: Optional[str] = None,
+    site: str = "datadoghq.com",
+    service_name: Optional[str] = None,
+    environment: str = "production",
+    auto_configure: bool = True,
+    validate: bool = True,
+    **config
+) -> DatadogGenOpsIntegration:
+    """
+    Main entry point for Datadog instrumentation.
+
+    Follows GenOps standard naming convention for provider adapters.
+
+    Args:
+        api_key: Datadog API key (or use DATADOG_API_KEY env var)
+        app_key: Datadog App key (or use DATADOG_APP_KEY env var)
+        site: Datadog site (default: datadoghq.com)
+        service_name: Service name (or use OTEL_SERVICE_NAME env var)
+        environment: Environment (default: production)
+        auto_configure: Automatically configure OpenTelemetry (default: True)
+        validate: Run validation before setup (default: True)
+        **config: Additional configuration options
+
+    Returns:
+        Configured DatadogGenOpsIntegration instance
+
+    Raises:
+        RuntimeError: If validation fails with errors
+
+    Example:
+        >>> from genops.exporters.datadog import instrument_datadog
+        >>> integration = instrument_datadog()  # Uses environment variables
+        >>> # Or with explicit configuration:
+        >>> integration = instrument_datadog(
+        ...     api_key="your_api_key",
+        ...     service_name="my-ai-app",
+        ...     environment="production"
+        ... )
+    """
+    # Run validation if requested
+    if validate:
+        result = validate_datadog_setup(api_key=api_key, site=site)
+        print_validation_result(result)
+
+        if not result.success:
+            raise RuntimeError(
+                "Datadog setup validation failed. Fix errors above before proceeding."
+            )
+
+    # Create and return integration
+    return DatadogGenOpsIntegration(
+        datadog_api_key=api_key,
+        datadog_app_key=app_key,
+        datadog_site=site,
+        service_name=service_name or os.getenv("OTEL_SERVICE_NAME", "genops-ai"),
+        environment=environment,
+        **config
+    )
+
+
+def auto_instrument(
+    validate: bool = True
+) -> DatadogGenOpsIntegration:
+    """
+    Zero-code auto-instrumentation for Datadog export.
+
+    Automatically detects Datadog environment variables and
+    configures OpenTelemetry export with no code changes required.
+
+    Environment variables used:
+    - DATADOG_API_KEY (required)
+    - DATADOG_APP_KEY (optional)
+    - DATADOG_SITE (default: datadoghq.com)
+    - OTEL_SERVICE_NAME (default: genops-ai)
+    - OTEL_ENVIRONMENT (default: production)
+
+    Args:
+        validate: Run validation before setup (default: True)
+
+    Returns:
+        Configured DatadogGenOpsIntegration instance
+
+    Raises:
+        RuntimeError: If validation fails with errors
+
+    Example:
+        >>> from genops.exporters.datadog import auto_instrument
+        >>> auto_instrument()
+        >>> # All GenOps operations now export to Datadog!
+    """
+    return instrument_datadog(
+        api_key=os.getenv("DATADOG_API_KEY"),
+        app_key=os.getenv("DATADOG_APP_KEY"),
+        site=os.getenv("DATADOG_SITE", "datadoghq.com"),
+        service_name=os.getenv("OTEL_SERVICE_NAME"),
+        environment=os.getenv("OTEL_ENVIRONMENT", "production"),
+        auto_configure=True,
+        validate=validate
+    )
+
+
+# ============================================================================
+# Demonstration Functions
+# ============================================================================
+
 def demonstrate_datadog_telemetry():
     """Demonstrate GenOps AI telemetry flowing to Datadog."""
 
@@ -738,6 +1052,16 @@ def main():
     print("=" * 80)
     print("\nThis guide demonstrates comprehensive integration between")
     print("GenOps AI telemetry and Datadog observability platform.")
+
+    # Run validation first
+    print("\n🔍 STEP 1: Validating Datadog Setup")
+    print("=" * 60)
+    validation_result = validate_datadog_setup()
+    print_validation_result(validation_result)
+
+    if not validation_result.success:
+        print("\n⚠️ Setup validation failed. Please fix errors above.")
+        print("Continuing with demonstration mode (no actual export)...\n")
 
     # Check dependencies
     if not HAS_OPENTELEMETRY:

@@ -66,6 +66,8 @@ helicone = ["requests>=2.25.0"]
 langfuse = ["langfuse>=2.0.0"]
 arize = ["arize>=6.0.0", "pandas>=1.3.0"]
 dust = ["requests>=2.25.0"]
+elastic = ["elasticsearch>=8.0.0,<10.0.0"]
+collibra = ["requests>=2.25.0"]
 docs = [
     "mkdocs>=1.5.0",
     "mkdocs-material>=9.4.0",
@@ -77,7 +79,7 @@ docs = [
 all = [
     "genops[openai]",
     "genops[anthropic]",
-    "genops[langchain]", 
+    "genops[langchain]",
     "genops[llamaindex]",
     "genops[bedrock]",
     "genops[gemini]",
@@ -87,6 +89,8 @@ all = [
     "genops[langfuse]",
     "genops[arize]",
     "genops[dust]",
+    "genops[elastic]",
+    "genops[collibra]",
 ]
 dev = [
     "pytest>=7.0.0",

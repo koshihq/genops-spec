@@ -814,17 +814,15 @@ kubectl get aipolicies -o yaml | grep -A 10 selector
 - **[Examples](../examples/kubernetes/)**: Hands-on code examples and patterns
 - **[Helm Chart Documentation](../charts/genops-ai/)**: Complete configuration reference
 - **[Operator Guide](../operators/genops-controller/)**: Custom resource management
-- **[API Reference](api-reference.md)**: Complete API documentation
 - **[Best Practices](kubernetes-best-practices.md)**: Production deployment patterns
 
 ---
 
-## 🆘 Getting Help
+## 💬 Get Help
 
-- **GitHub Issues**: [Report bugs and request features](https://github.com/KoshiHQ/GenOps-AI/issues)
-- **Community Discord**: [Join our community](https://discord.gg/genops-ai)
-- **Documentation**: [Complete documentation site](https://docs.genops.ai)
-- **Enterprise Support**: [Contact us](mailto:support@genops.ai)
+- **Issues:** [GitHub Issues](https://github.com/KoshiHQ/GenOps-AI/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/KoshiHQ/GenOps-AI/discussions)
+- **OpenTelemetry Community:** [https://cloud-native.slack.com](https://cloud-native.slack.com) (#otel-collector)
 
 ---
 
