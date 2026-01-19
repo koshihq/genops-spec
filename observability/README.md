@@ -4,17 +4,27 @@ Complete local observability stack for GenOps AI development and testing, featur
 
 ---
 
-## 📚 New to OpenTelemetry Collector?
+## 📚 Quick Links
 
-**👉 Start here:** [5-Minute Quickstart Guide](../docs/otel-collector-quickstart.md) - Get from zero to live governance dashboards in 5 minutes!
+### Grafana-Specific Documentation
+**👉 New to Grafana?** [Grafana Quickstart Guide](../docs/grafana-quickstart.md) - Get GenOps telemetry flowing to Grafana in 3-10 minutes!
 
-**📖 Comprehensive Guide:** [Full OTel Collector Integration](../docs/integrations/otel-collector.md) - Deep-dive into production deployment
+**📊 Comprehensive Grafana Guide:** [Full Grafana Integration](../docs/integrations/grafana.md) - Complete reference for Grafana Cloud, self-hosted, and production deployments
+
+**🔍 Query Examples:** [Grafana Query Cookbook](../docs/grafana-query-examples.md) - PromQL, TraceQL, and LogQL query patterns
+
+### OpenTelemetry Collector Documentation
+**👉 New to OTel Collector?** [OTel Collector Quickstart](../docs/otel-collector-quickstart.md) - Get from zero to live governance dashboards in 5 minutes!
+
+**📖 Comprehensive OTel Guide:** [Full OTel Collector Integration](../docs/integrations/otel-collector.md) - Deep-dive into production deployment
 
 **✅ Validate Your Setup:** Run `python examples/observability/validate_otel_collector.py` to check your configuration
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Quick Start - Full LGTM Stack Deployment
+
+**Note:** This guide covers the complete LGTM stack (Grafana + Tempo + Loki + Mimir + OTel Collector). For Grafana-specific quickstarts including Grafana Cloud and connecting to existing Grafana instances, see the [Grafana Quickstart Guide](../docs/grafana-quickstart.md).
 
 Start the complete observability stack:
 
@@ -143,6 +153,14 @@ curl -X POST http://localhost:8000/simulate/load \
 2. Login with `admin/genops`
 3. Navigate to "GenOps AI - Governance Overview" dashboard
 4. Explore traces in the "Explore" section using Tempo
+
+**Expected Results:**
+- **AI Cost Overview panel:** Shows $0.00 initially (no operations yet)
+- **After running test operation:** Cost increases to ~$0.0005 - $0.001
+- **Token Usage pie chart:** Shows model name (e.g., "gpt-4") with ~100-500 tokens
+- **Recent AI Operations table:** Displays your test operation with trace link
+- **Policy Violations panel:** Shows 0 violations (if no policies configured)
+- **Tempo Explore:** Search for your service name shows distributed traces
 
 ## 📋 Demo Application Features
 
