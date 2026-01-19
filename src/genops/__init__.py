@@ -80,6 +80,14 @@ from genops.core.validation import (
     validate_tags,
 )
 
+# Export configuration and validation
+from genops.exporters.otlp import configure_otlp_exporter
+from genops.exporters.validation import (
+    ValidationResult,
+    print_validation_result,
+    validate_export_setup,
+)
+
 __version__ = "0.1.0"
 
 
@@ -139,4 +147,9 @@ __all__ = [
     "create_required_rule",
     "create_enum_rule",
     "create_pattern_rule",
+    # Export configuration and validation
+    "configure_otlp_exporter",
+    "validate_export_setup",
+    "print_validation_result",
+    "ValidationResult",
 ]
