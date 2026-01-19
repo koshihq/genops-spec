@@ -536,16 +536,7 @@ set_budget_limit(team="ai-engineering", limit_usd=1000.0, period="daily")
 
 ---
 
-## 🤝 Getting Help
+## 💬 Get Help
 
-**Found an issue?**
-- Report bugs at: https://github.com/KoshiHQ/GenOps-AI/issues
-- Tag with: `integration:honeycomb`
-
-**Need support?**
-- Community Slack: [Join here](https://genops-ai.slack.com)
-- Documentation: [GenOps Docs](https://docs.genops.ai)
-
-**Want to contribute?**
-- See [CONTRIBUTING.md](https://github.com/KoshiHQ/GenOps-AI/blob/main/CONTRIBUTING.md)
-- Share your Honeycomb queries and dashboards!
+- **Issues:** [GitHub Issues](https://github.com/KoshiHQ/GenOps-AI/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/KoshiHQ/GenOps-AI/discussions)
