@@ -5,11 +5,11 @@ from __future__ import annotations
 import os
 import socket
 from dataclasses import dataclass, field
-from typing import List, Optional
 from urllib.parse import urlparse
 
 try:
     import requests
+
     HAS_REQUESTS = True
 except ImportError:
     HAS_REQUESTS = False
@@ -20,11 +20,11 @@ class OTelCollectorValidationResult:
     """Result of OTel Collector setup validation."""
 
     valid: bool
-    errors: List[str] = field(default_factory=list)
-    warnings: List[str] = field(default_factory=list)
-    recommendations: List[str] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+    recommendations: list[str] = field(default_factory=list)
     collector_healthy: bool = False
-    collector_version: Optional[str] = None
+    collector_version: str | None = None
     otlp_http_accessible: bool = False
     otlp_grpc_accessible: bool = False
     grafana_accessible: bool = False
@@ -65,7 +65,7 @@ def check_port_open(host: str, port: int, timeout: float = 2.0) -> bool:
         return False
 
 
-def validate_url_format(url: str) -> tuple[bool, Optional[str]]:
+def validate_url_format(url: str) -> tuple[bool, str | None]:
     """
     Validate URL format.
 
@@ -83,7 +83,10 @@ def validate_url_format(url: str) -> tuple[bool, Optional[str]]:
         if not parsed.scheme:
             return False, "URL missing scheme (http/https)"
         if parsed.scheme not in ["http", "https"]:
-            return False, f"Invalid URL scheme: {parsed.scheme} (expected http or https)"
+            return (
+                False,
+                f"Invalid URL scheme: {parsed.scheme} (expected http or https)",
+            )
         if not parsed.netloc:
             return False, "URL missing domain"
         return True, None
@@ -92,8 +95,8 @@ def validate_url_format(url: str) -> tuple[bool, Optional[str]]:
 
 
 def validate_setup(
-    collector_endpoint: Optional[str] = None,
-    grafana_endpoint: Optional[str] = None,
+    collector_endpoint: str | None = None,
+    grafana_endpoint: str | None = None,
     check_connectivity: bool = True,
     check_backends: bool = True,
 ) -> OTelCollectorValidationResult:
@@ -174,7 +177,9 @@ def validate_setup(
                 result.collector_healthy = True
                 try:
                     health_data = response.json()
-                    result.collector_version = health_data.get("status", "Collector is healthy")
+                    result.collector_version = health_data.get(
+                        "status", "Collector is healthy"
+                    )
                 except Exception:
                     result.collector_version = "Collector is healthy"
             else:
@@ -281,8 +286,10 @@ def validate_setup(
 
     # 5. Check OpenTelemetry dependencies
     try:
-        import opentelemetry
-        from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+        import opentelemetry  # noqa: F401
+        from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
+            OTLPSpanExporter,  # noqa: F401
+        )
     except ImportError:
         result.warnings.append("OpenTelemetry not installed")
         result.recommendations.append(

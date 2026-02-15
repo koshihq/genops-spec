@@ -12,7 +12,7 @@ from genops.core.tracker import track_cost, track_evaluation
     operation_name="analyze_sentiment",
     team="nlp-team",
     project="customer-feedback",
-    feature="sentiment-analysis"
+    feature="sentiment-analysis",
 )
 def analyze_sentiment(text: str) -> dict:
     """Analyze sentiment of text (mock implementation)."""
@@ -25,7 +25,7 @@ def analyze_sentiment(text: str) -> dict:
         provider="openai",
         model="text-davinci-003",
         tokens_input=len(text.split()) * 1.3,
-        tokens_output=10
+        tokens_output=10,
     )
 
     # Record evaluation metrics
@@ -33,12 +33,12 @@ def analyze_sentiment(text: str) -> dict:
         evaluation_name="confidence_score",
         score=sentiment_score,
         threshold=0.7,
-        passed=sentiment_score > 0.7
+        passed=sentiment_score > 0.7,
     )
 
     return {
         "sentiment": "positive" if sentiment_score > 0.5 else "negative",
-        "confidence": sentiment_score
+        "confidence": sentiment_score,
     }
 
 
@@ -51,7 +51,7 @@ def process_documents(documents: list) -> list:
         operation_name="document_processing_batch",
         team="content-team",
         project="document-analyzer",
-        customer="enterprise-client-123"
+        customer="enterprise-client-123",
     ) as span:
         # Add custom attributes
         span.set_attribute("batch_size", len(documents))
@@ -67,7 +67,7 @@ def process_documents(documents: list) -> list:
             cost=total_cost,
             provider="anthropic",
             model="claude-3-sonnet",
-            batch_size=len(documents)
+            batch_size=len(documents),
         )
 
         # Record batch evaluation
@@ -75,7 +75,7 @@ def process_documents(documents: list) -> list:
             evaluation_name="batch_success_rate",
             score=len(results) / len(documents),
             threshold=0.95,
-            passed=len(results) == len(documents)
+            passed=len(results) == len(documents),
         )
 
     return results
@@ -86,7 +86,7 @@ def process_single_document(document: str) -> dict:
     return {
         "processed": True,
         "word_count": len(document.split()),
-        "summary": document[:100] + "..." if len(document) > 100 else document
+        "summary": document[:100] + "..." if len(document) > 100 else document,
     }
 
 
@@ -99,7 +99,7 @@ def setup_governance_policies():
         name="cost_limit",
         description="Limit per-operation costs to prevent runaway spending",
         enforcement_level=PolicyResult.BLOCKED,
-        max_cost=1.00  # $1 per operation
+        max_cost=1.00,  # $1 per operation
     )
 
     # Register content filtering policy
@@ -107,7 +107,7 @@ def setup_governance_policies():
         name="content_filter",
         description="Block operations with inappropriate content",
         enforcement_level=PolicyResult.BLOCKED,
-        blocked_patterns=["violence", "hate", "explicit"]
+        blocked_patterns=["violence", "hate", "explicit"],
     )
 
     # Register team access policy
@@ -115,15 +115,13 @@ def setup_governance_policies():
         name="team_access",
         description="Restrict model access to authorized teams",
         enforcement_level=PolicyResult.WARNING,
-        allowed_teams=["nlp-team", "content-team", "research-team"]
+        allowed_teams=["nlp-team", "content-team", "research-team"],
     )
 
 
 @enforce_policy(["cost_limit", "content_filter"])
 @track_usage(
-    operation_name="generate_content",
-    team="content-team",
-    project="blog-generator"
+    operation_name="generate_content", team="content-team", project="blog-generator"
 )
 def generate_content(prompt: str) -> str:
     """Generate content with policy enforcement."""
@@ -137,7 +135,7 @@ def generate_content(prompt: str) -> str:
         provider="openai",
         model="gpt-4",
         tokens_input=len(prompt.split()) * 1.3,
-        tokens_output=100
+        tokens_output=100,
     )
 
     # Mock generated content
@@ -162,14 +160,12 @@ def example_with_openai():
             operation_name="openai_chat_completion",
             team="ai-team",
             project="chatbot",
-            customer="demo-user"
+            customer="demo-user",
         ):
             response = genops_client.chat_completions_create(
                 model="gpt-3.5-turbo",
-                messages=[
-                    {"role": "user", "content": "Hello! How are you?"}
-                ],
-                max_tokens=100
+                messages=[{"role": "user", "content": "Hello! How are you?"}],
+                max_tokens=100,
             )
 
             return response.choices[0].message.content
@@ -192,14 +188,12 @@ def example_with_anthropic():
             operation_name="anthropic_message",
             team="ai-team",
             project="assistant",
-            customer="demo-user"
+            customer="demo-user",
         ):
             response = genops_client.messages_create(
                 model="claude-3-sonnet",
-                messages=[
-                    {"role": "user", "content": "Hello! How are you?"}
-                ],
-                max_tokens=100
+                messages=[{"role": "user", "content": "Hello! How are you?"}],
+                max_tokens=100,
             )
 
             return response.content[0].text
@@ -228,7 +222,7 @@ def main():
     docs = [
         "Document 1 content here",
         "Document 2 with different content",
-        "Document 3 with more text"
+        "Document 3 with more text",
     ]
     result2 = process_documents(docs)
     print(f"Processed {len(result2)} documents")

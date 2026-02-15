@@ -11,14 +11,13 @@ Tests cover:
 - User-friendly error messages
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
 import os
+from unittest.mock import MagicMock, patch
 
 from genops.providers.elastic.validation import (
-    validate_setup,
-    print_validation_result,
     ElasticValidationResult,
+    print_validation_result,
+    validate_setup,
 )
 
 
@@ -67,7 +66,10 @@ class TestValidateSetupEnvironmentVariables:
 
     def test_validate_with_env_vars_set(self, mock_env_vars, mock_elasticsearch_client):
         """Test validation succeeds when env vars are set."""
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             result = validate_setup(test_index_write=False)
 
             # Should pass basic validation
@@ -80,11 +82,14 @@ class TestValidateSetupEnvironmentVariables:
                 elastic_url=None,
                 cloud_id=None,
                 api_key="test-key",
-                test_index_write=False
+                test_index_write=False,
             )
 
             assert result.valid is False
-            assert any("ELASTIC_URL" in error or "elastic_url" in error for error in result.errors)
+            assert any(
+                "ELASTIC_URL" in error or "elastic_url" in error
+                for error in result.errors
+            )
 
     def test_validate_with_missing_credentials(self, mock_elasticsearch_client):
         """Test validation fails when credentials are missing."""
@@ -94,7 +99,7 @@ class TestValidateSetupEnvironmentVariables:
                 username=None,
                 password=None,
                 api_key=None,
-                test_index_write=False
+                test_index_write=False,
             )
 
             assert result.valid is False
@@ -108,14 +113,17 @@ class TestValidateSetupConnectivity:
         """Test validation with successful connection."""
         mock_elasticsearch_client.info.return_value = {
             "version": {"number": "8.12.0"},
-            "cluster_name": "test-cluster"
+            "cluster_name": "test-cluster",
         }
 
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             result = validate_setup(
                 elastic_url="https://localhost:9200",
                 api_key="test-api-key",
-                test_index_write=False
+                test_index_write=False,
             )
 
             assert result.connectivity is True
@@ -126,13 +134,18 @@ class TestValidateSetupConnectivity:
         """Test validation with connection failure."""
         from elasticsearch.exceptions import ConnectionError as ESConnectionError
 
-        mock_elasticsearch_client.info.side_effect = ESConnectionError("Connection refused")
+        mock_elasticsearch_client.info.side_effect = ESConnectionError(
+            "Connection refused"
+        )
 
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             result = validate_setup(
                 elastic_url="https://localhost:9200",
                 api_key="test-api-key",
-                test_index_write=False
+                test_index_write=False,
             )
 
             assert result.connectivity is False
@@ -142,13 +155,18 @@ class TestValidateSetupConnectivity:
         """Test validation with authentication failure."""
         from elasticsearch.exceptions import AuthenticationException
 
-        mock_elasticsearch_client.info.side_effect = AuthenticationException("Invalid credentials")
+        mock_elasticsearch_client.info.side_effect = AuthenticationException(
+            "Invalid credentials"
+        )
 
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             result = validate_setup(
                 elastic_url="https://localhost:9200",
                 api_key="invalid-key",
-                test_index_write=False
+                test_index_write=False,
             )
 
             assert result.connectivity is False
@@ -162,14 +180,17 @@ class TestValidateSetupVersionCompatibility:
         """Test validation with compatible ES 8.x version."""
         mock_elasticsearch_client.info.return_value = {
             "version": {"number": "8.12.0"},
-            "cluster_name": "test-cluster"
+            "cluster_name": "test-cluster",
         }
 
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             result = validate_setup(
                 elastic_url="https://localhost:9200",
                 api_key="test-api-key",
-                test_index_write=False
+                test_index_write=False,
             )
 
             assert result.cluster_version == "8.12.0"
@@ -179,14 +200,17 @@ class TestValidateSetupVersionCompatibility:
         """Test validation with old ES version (< 8.0)."""
         mock_elasticsearch_client.info.return_value = {
             "version": {"number": "7.17.0"},
-            "cluster_name": "test-cluster"
+            "cluster_name": "test-cluster",
         }
 
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             result = validate_setup(
                 elastic_url="https://localhost:9200",
                 api_key="test-api-key",
-                test_index_write=False
+                test_index_write=False,
             )
 
             # Should have warning or recommendation about version
@@ -200,15 +224,18 @@ class TestValidateSetupIndexPermissions:
         """Test validation with successful index write."""
         mock_elasticsearch_client.info.return_value = {
             "version": {"number": "8.12.0"},
-            "cluster_name": "test-cluster"
+            "cluster_name": "test-cluster",
         }
         mock_elasticsearch_client.index.return_value = {"result": "created"}
 
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             result = validate_setup(
                 elastic_url="https://localhost:9200",
                 api_key="test-api-key",
-                test_index_write=True
+                test_index_write=True,
             )
 
             assert result.index_write_permission is True
@@ -217,15 +244,18 @@ class TestValidateSetupIndexPermissions:
         """Test validation when write permission is denied."""
         mock_elasticsearch_client.info.return_value = {
             "version": {"number": "8.12.0"},
-            "cluster_name": "test-cluster"
+            "cluster_name": "test-cluster",
         }
         mock_elasticsearch_client.index.side_effect = Exception("Forbidden")
 
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             result = validate_setup(
                 elastic_url="https://localhost:9200",
                 api_key="test-api-key",
-                test_index_write=True
+                test_index_write=True,
             )
 
             assert result.index_write_permission is False
@@ -239,20 +269,25 @@ class TestValidateSetupILMSupport:
         """Test detection of ILM support."""
         mock_elasticsearch_client.info.return_value = {
             "version": {"number": "8.12.0"},
-            "cluster_name": "test-cluster"
+            "cluster_name": "test-cluster",
         }
         # Mock ILM availability
         mock_elasticsearch_client.ilm = MagicMock()
 
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             result = validate_setup(
                 elastic_url="https://localhost:9200",
                 api_key="test-api-key",
-                test_index_write=False
+                test_index_write=False,
             )
 
             # ILM should be detected as supported in ES 8.x
-            assert result.ilm_supported is True or True  # Conditional based on implementation
+            assert (
+                result.ilm_supported is True or True
+            )  # Conditional based on implementation
 
 
 class TestPrintValidationResult:
@@ -300,4 +335,7 @@ class TestPrintValidationResult:
         print_validation_result(result)
 
         captured = capsys.readouterr()
-        assert "recommendation" in captured.out.lower() or "suggest" in captured.out.lower()
+        assert (
+            "recommendation" in captured.out.lower()
+            or "suggest" in captured.out.lower()
+        )

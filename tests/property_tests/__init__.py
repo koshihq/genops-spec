@@ -27,18 +27,14 @@ through manual test case creation.
 # Property-based testing configuration
 HYPOTHESIS_SETTINGS = {
     "max_examples": 500,  # Run more examples for thorough testing
-    "deadline": None,     # No time limit for complex property verification
+    "deadline": None,  # No time limit for complex property verification
     "derandomize": True,  # Consistent test runs
 }
 
 # Test categories
-COST_ATTRIBUTION_TESTS = [
-    "test_cost_attribution.py"
-]
+COST_ATTRIBUTION_TESTS = ["test_cost_attribution.py"]
 
-POLICY_ENFORCEMENT_TESTS = [
-    "test_policy_enforcement.py"
-]
+POLICY_ENFORCEMENT_TESTS = ["test_policy_enforcement.py"]
 
 TELEMETRY_TESTS = [
     # Future: test_telemetry_properties.py
@@ -53,5 +49,5 @@ __all__ = [
     "COST_ATTRIBUTION_TESTS",
     "POLICY_ENFORCEMENT_TESTS",
     "TELEMETRY_TESTS",
-    "PROVIDER_INTEGRATION_TESTS"
+    "PROVIDER_INTEGRATION_TESTS",
 ]

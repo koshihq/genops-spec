@@ -30,11 +30,13 @@ Environment Variables:
 
 import os
 import time
-from typing import Optional
 
-import genops
 from genops import auto_instrument
-from genops.core.context import set_governance_context, governance_context, clear_governance_context
+from genops.core.context import (
+    clear_governance_context,
+    governance_context,
+    set_governance_context,
+)
 
 # OpenTelemetry imports for Honeycomb integration
 try:
@@ -43,10 +45,13 @@ try:
     from opentelemetry.sdk.resources import Resource
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
+
     HAS_OPENTELEMETRY = True
 except ImportError:
     HAS_OPENTELEMETRY = False
-    print("⚠️  OpenTelemetry not installed. Install with: pip install genops-ai[opentelemetry]")
+    print(
+        "⚠️  OpenTelemetry not installed. Install with: pip install genops-ai[opentelemetry]"
+    )
 
 
 def setup_honeycomb_integration():
@@ -75,23 +80,25 @@ def setup_honeycomb_integration():
         print("✅ Honeycomb API key found")
         exporter = OTLPSpanExporter(
             endpoint="https://api.honeycomb.io/v1/traces",
-            headers={"X-Honeycomb-Team": api_key}
+            headers={"X-Honeycomb-Team": api_key},
         )
 
     # Create resource with service metadata
-    resource = Resource.create({
-        "service.name": service_name,
-        "service.version": "1.0.0",
-        "deployment.environment": os.getenv("ENVIRONMENT", "development"),
-        "honeycomb.dataset": dataset
-    })
+    resource = Resource.create(
+        {
+            "service.name": service_name,
+            "service.version": "1.0.0",
+            "deployment.environment": os.getenv("ENVIRONMENT", "development"),
+            "honeycomb.dataset": dataset,
+        }
+    )
 
     # Set up tracing
     trace_provider = TracerProvider(resource=resource)
     trace_provider.add_span_processor(BatchSpanProcessor(exporter))
     trace.set_tracer_provider(trace_provider)
 
-    print(f"✅ Honeycomb integration configured")
+    print("✅ Honeycomb integration configured")
     print(f"   Dataset: {dataset}")
     print(f"   Service: {service_name}")
     print(f"   Environment: {os.getenv('ENVIRONMENT', 'development')}")
@@ -119,7 +126,9 @@ def validate_honeycomb_setup():
     if api_key:
         validation_results.append(("✅", "HONEYCOMB_API_KEY", "Set"))
     else:
-        validation_results.append(("❌", "HONEYCOMB_API_KEY", "Not set (using console export)"))
+        validation_results.append(
+            ("❌", "HONEYCOMB_API_KEY", "Not set (using console export)")
+        )
 
     # Validate dataset
     validation_results.append(("✅", "HONEYCOMB_DATASET", dataset))
@@ -163,16 +172,20 @@ def demonstrate_auto_instrumentation():
     print("✅ Auto-instrumentation enabled for all AI providers")
 
     # Set global governance context (applies to all operations)
-    set_governance_context({
-        "team": "ai-platform",
-        "project": "honeycomb-integration-demo",
-        "environment": "development"
-    })
+    set_governance_context(
+        {
+            "team": "ai-platform",
+            "project": "honeycomb-integration-demo",
+            "environment": "development",
+        }
+    )
     print("✅ Global governance context set")
 
     print("\n💡 Now all AI operations are automatically tracked!")
     print("   Example: client.chat.completions.create(...)")
-    print("   → Telemetry sent to Honeycomb with cost, tokens, and governance attributes")
+    print(
+        "   → Telemetry sent to Honeycomb with cost, tokens, and governance attributes"
+    )
 
 
 def demonstrate_high_cardinality_tracking():
@@ -194,22 +207,22 @@ def demonstrate_high_cardinality_tracking():
             "customer_tier": "enterprise",
             "feature": "document-analysis",
             "user_id": "user-12345",
-            "region": "us-west-2"
+            "region": "us-west-2",
         },
         {
             "customer_id": "startup-tech-innovations",
             "customer_tier": "business",
             "feature": "chat-assistant",
             "user_id": "user-67890",
-            "region": "eu-west-1"
+            "region": "eu-west-1",
         },
         {
             "customer_id": "enterprise-global-bank",
             "customer_tier": "enterprise",
             "feature": "fraud-detection",
             "user_id": "user-11111",
-            "region": "us-east-1"
-        }
+            "region": "us-east-1",
+        },
     ]
 
     print("🤖 Generating operations with high-cardinality attributes...")
@@ -251,8 +264,16 @@ def demonstrate_context_managers():
 
     # Simulate workflow with scoped context
     workflows = [
-        {"workflow_id": "workflow-abc-123", "customer_id": "customer-001", "feature": "data-pipeline"},
-        {"workflow_id": "workflow-def-456", "customer_id": "customer-002", "feature": "analysis"}
+        {
+            "workflow_id": "workflow-abc-123",
+            "customer_id": "customer-001",
+            "feature": "data-pipeline",
+        },
+        {
+            "workflow_id": "workflow-def-456",
+            "customer_id": "customer-002",
+            "feature": "analysis",
+        },
     ]
 
     for workflow_attrs in workflows:
@@ -261,17 +282,19 @@ def demonstrate_context_managers():
         # Context manager automatically manages governance scope
         with governance_context(**workflow_attrs):
             # All operations within this block inherit the governance context
-            print(f"  Step 1: Data preparation (customer: {workflow_attrs['customer_id']})")
+            print(
+                f"  Step 1: Data preparation (customer: {workflow_attrs['customer_id']})"
+            )
             time.sleep(0.05)
 
             print(f"  Step 2: AI processing (feature: {workflow_attrs['feature']})")
             time.sleep(0.05)
 
-            print(f"  Step 3: Result aggregation")
+            print("  Step 3: Result aggregation")
             time.sleep(0.05)
 
         # Context automatically cleared on exit
-        print(f"  ✅ Workflow complete (context auto-cleared)")
+        print("  ✅ Workflow complete (context auto-cleared)")
 
     print("\n✅ Context manager pattern demonstrated!")
     print("   → Prevents attribute leakage between operations")
@@ -297,19 +320,21 @@ def demonstrate_budget_tracking():
             "budget_id": "team-ai-research-daily",
             "budget_limit": 100.0,
             "budget_consumed": 45.50,
-            "budget_remaining": 54.50
+            "budget_remaining": 54.50,
         },
         {
             "team": "product-eng",
             "budget_id": "team-product-eng-daily",
             "budget_limit": 50.0,
             "budget_consumed": 48.75,
-            "budget_remaining": 1.25
-        }
+            "budget_remaining": 1.25,
+        },
     ]
 
     for budget_info in budgets:
-        utilization_pct = (budget_info["budget_consumed"] / budget_info["budget_limit"]) * 100
+        utilization_pct = (
+            budget_info["budget_consumed"] / budget_info["budget_limit"]
+        ) * 100
 
         print(f"\nTeam: {budget_info['team']}")
         print(f"  Budget ID: {budget_info['budget_id']}")
@@ -319,11 +344,11 @@ def demonstrate_budget_tracking():
         print(f"  Utilization: {utilization_pct:.1f}%")
 
         if utilization_pct >= 90:
-            print(f"  ⚠️  WARNING: Budget nearly exhausted!")
+            print("  ⚠️  WARNING: Budget nearly exhausted!")
         elif utilization_pct >= 75:
-            print(f"  ⚠️  ALERT: 75% budget threshold crossed")
+            print("  ⚠️  ALERT: 75% budget threshold crossed")
         else:
-            print(f"  ✅ Budget healthy")
+            print("  ✅ Budget healthy")
 
     print("\n💡 Budget Tracking in Honeycomb:")
     print("   Query: WHERE genops.budget.consumed / genops.budget.limit > 0.9")
@@ -351,9 +376,8 @@ def show_honeycomb_queries():
             "GROUP BY genops.customer_id | SUM(genops.cost.total) | ORDER BY SUM DESC | LIMIT 20",
             "",
             "# Daily cost trend",
-            "GROUP BY DATE_TRUNC('day', timestamp) | SUM(genops.cost.total)"
+            "GROUP BY DATE_TRUNC('day', timestamp) | SUM(genops.cost.total)",
         ],
-
         "Performance Analysis": [
             "# Latency percentiles by model",
             "GROUP BY genops.cost.model | P50(duration_ms), P95(duration_ms), P99(duration_ms)",
@@ -362,9 +386,8 @@ def show_honeycomb_queries():
             "WHERE duration_ms > 2000 | COUNT | GROUP BY genops.team, genops.feature",
             "",
             "# Correlation: Latency vs Token Count",
-            "HEATMAP(duration_ms, genops.tokens.total)"
+            "HEATMAP(duration_ms, genops.tokens.total)",
         ],
-
         "Attribution Analysis": [
             "# Multi-dimensional cost breakdown",
             "GROUP BY genops.team, genops.project, genops.environment | SUM(genops.cost.total)",
@@ -373,24 +396,22 @@ def show_honeycomb_queries():
             "GROUP BY genops.customer_tier | SUM(genops.cost.total), COUNT, AVG(genops.cost.total)",
             "",
             "# Feature usage and cost",
-            "GROUP BY genops.feature | COUNT, SUM(genops.cost.total) | ORDER BY COUNT DESC"
+            "GROUP BY genops.feature | COUNT, SUM(genops.cost.total) | ORDER BY COUNT DESC",
         ],
-
         "BubbleUp Analysis": [
             "# Find cost outliers automatically",
             "1. Create query: SUM(genops.cost.total) WHERE timestamp > ago(1h)",
             "2. Click 'BubbleUp' button",
             "3. Honeycomb automatically surfaces attributes driving high costs",
-            "   Example: customer_id, feature, model, etc."
+            "   Example: customer_id, feature, model, etc.",
         ],
-
         "Budget Tracking": [
             "# Budget utilization percentage",
             "WHERE genops.budget.id EXISTS | AVG(genops.budget.consumed / genops.budget.limit * 100)",
             "",
             "# Budget overruns",
-            "WHERE genops.budget.consumed > genops.budget.limit | COUNT | GROUP BY genops.team"
-        ]
+            "WHERE genops.budget.consumed > genops.budget.limit | COUNT | GROUP BY genops.team",
+        ],
     }
 
     for category, query_list in queries.items():
@@ -506,6 +527,7 @@ def main():
     except Exception as e:
         print(f"\n❌ Demo failed: {e}")
         import traceback
+
         traceback.print_exc()
 
 

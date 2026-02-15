@@ -19,7 +19,7 @@ auto_instrument_kubetorch(team="ml-team")
 cost = calculate_gpu_cost(
     instance_type="a100",
     num_devices=8,
-    duration_seconds=3600  # 1 hour
+    duration_seconds=3600,  # 1 hour
 )
 
 print(f"Training cost for 8x A100 (1 hour): ${cost:.2f}")

@@ -6,18 +6,19 @@ handling authentication, bulk indexing, index management, and ILM policies.
 """
 
 import logging
-from dataclasses import dataclass, field, asdict
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
-from enum import Enum
+from dataclasses import asdict, dataclass, field
+from typing import Any, Optional, Union
 
 try:
     from elasticsearch import Elasticsearch
     from elasticsearch.exceptions import (
-        ConnectionError as ESConnectionError,
         AuthenticationException,
         TransportError,
     )
+    from elasticsearch.exceptions import (
+        ConnectionError as ESConnectionError,
+    )
+
     ELASTICSEARCH_AVAILABLE = True
 except ImportError:
     ELASTICSEARCH_AVAILABLE = False
@@ -31,21 +32,25 @@ logger = logging.getLogger(__name__)
 
 class ElasticAPIError(Exception):
     """Base exception for Elasticsearch API errors."""
+
     pass
 
 
 class ElasticAuthenticationError(ElasticAPIError):
     """Raised when authentication fails."""
+
     pass
 
 
 class ElasticConnectionError(ElasticAPIError):
     """Raised when connection to Elasticsearch fails."""
+
     pass
 
 
 class ElasticIndexError(ElasticAPIError):
     """Raised when index operations fail."""
+
     pass
 
 
@@ -57,6 +62,7 @@ class ElasticDocument:
     This structure aligns with GenOps governance semantic conventions
     while providing Elasticsearch-specific fields for optimal indexing.
     """
+
     # Core telemetry fields
     timestamp: str
     trace_id: str
@@ -98,9 +104,9 @@ class ElasticDocument:
     status: Optional[str] = None  # "success", "error", "timeout"
 
     # Additional attributes (flexible for custom telemetry)
-    attributes: Dict[str, Any] = field(default_factory=dict)
+    attributes: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for Elasticsearch indexing."""
         doc = asdict(self)
         # Flatten attributes into main document
@@ -176,7 +182,7 @@ class ElasticAPIClient:
         )
 
         # Cache cluster info
-        self._cluster_info: Optional[Dict[str, Any]] = None
+        self._cluster_info: Optional[dict[str, Any]] = None
         self._cluster_version: Optional[str] = None
 
     def _create_client(
@@ -192,7 +198,7 @@ class ElasticAPIClient:
         timeout: int,
     ) -> Elasticsearch:
         """Create Elasticsearch client with appropriate authentication."""
-        client_args: Dict[str, Any] = {
+        client_args: dict[str, Any] = {
             "request_timeout": timeout,
             "verify_certs": verify_certs,
         }
@@ -227,7 +233,9 @@ class ElasticAPIClient:
         try:
             return Elasticsearch(**client_args)
         except Exception as e:
-            raise ElasticConnectionError(f"Failed to create Elasticsearch client: {e}")
+            raise ElasticConnectionError(
+                f"Failed to create Elasticsearch client: {e}"
+            ) from e
 
     def health_check(self) -> bool:
         """
@@ -240,14 +248,14 @@ class ElasticAPIClient:
             health = self.client.cluster.health()
             return health.get("status") in ["green", "yellow"]
         except AuthenticationException as e:
-            raise ElasticAuthenticationError(f"Authentication failed: {e}")
+            raise ElasticAuthenticationError(f"Authentication failed: {e}") from e
         except ESConnectionError as e:
-            raise ElasticConnectionError(f"Connection failed: {e}")
+            raise ElasticConnectionError(f"Connection failed: {e}") from e
         except Exception as e:
             logger.error(f"Health check failed: {e}")
             return False
 
-    def get_cluster_info(self) -> Dict[str, Any]:
+    def get_cluster_info(self) -> dict[str, Any]:
         """
         Get Elasticsearch cluster information including version.
 
@@ -257,9 +265,11 @@ class ElasticAPIClient:
         if self._cluster_info is None:
             try:
                 self._cluster_info = self.client.info()
-                self._cluster_version = self._cluster_info.get("version", {}).get("number")
+                self._cluster_version = self._cluster_info.get("version", {}).get(
+                    "number"
+                )
             except Exception as e:
-                raise ElasticAPIError(f"Failed to get cluster info: {e}")
+                raise ElasticAPIError(f"Failed to get cluster info: {e}") from e
 
         return self._cluster_info
 
@@ -272,9 +282,9 @@ class ElasticAPIClient:
     def index_document(
         self,
         index: str,
-        document: Union[ElasticDocument, Dict[str, Any]],
+        document: Union[ElasticDocument, dict[str, Any]],
         doc_id: Optional[str] = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Index a single document.
 
@@ -299,13 +309,13 @@ class ElasticAPIClient:
             )
             return response
         except Exception as e:
-            raise ElasticIndexError(f"Failed to index document: {e}")
+            raise ElasticIndexError(f"Failed to index document: {e}") from e
 
     def bulk_index(
         self,
         index: str,
-        documents: List[Union[ElasticDocument, Dict[str, Any]]],
-    ) -> Dict[str, Any]:
+        documents: list[Union[ElasticDocument, dict[str, Any]]],
+    ) -> dict[str, Any]:
         """
         Bulk index multiple documents for optimal performance.
 
@@ -343,10 +353,12 @@ class ElasticAPIClient:
                 if index_result.get("status") in [200, 201]:
                     success_count += 1
                 else:
-                    errors.append({
-                        "status": index_result.get("status"),
-                        "error": index_result.get("error"),
-                    })
+                    errors.append(
+                        {
+                            "status": index_result.get("status"),
+                            "error": index_result.get("error"),
+                        }
+                    )
 
             return {
                 "success": success_count,
@@ -356,15 +368,15 @@ class ElasticAPIClient:
             }
 
         except Exception as e:
-            raise ElasticIndexError(f"Bulk indexing failed: {e}")
+            raise ElasticIndexError(f"Bulk indexing failed: {e}") from e
 
     def create_index_template(
         self,
         template_name: str,
         index_pattern: str,
-        mappings: Optional[Dict[str, Any]] = None,
-        settings: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+        mappings: Optional[dict[str, Any]] = None,
+        settings: Optional[dict[str, Any]] = None,
+    ) -> dict[str, Any]:
         """
         Create an index template for consistent field mappings.
 
@@ -377,7 +389,7 @@ class ElasticAPIClient:
         Returns:
             Elasticsearch response
         """
-        template_body: Dict[str, Any] = {
+        template_body: dict[str, Any] = {
             "index_patterns": [index_pattern],
         }
 
@@ -396,7 +408,7 @@ class ElasticAPIClient:
             )
             return response
         except Exception as e:
-            raise ElasticIndexError(f"Failed to create index template: {e}")
+            raise ElasticIndexError(f"Failed to create index template: {e}") from e
 
     def create_ilm_policy(
         self,
@@ -404,7 +416,7 @@ class ElasticAPIClient:
         retention_days: int = 90,
         rollover_size: str = "50gb",
         rollover_age: str = "30d",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Create an Index Lifecycle Management (ILM) policy.
 
@@ -430,10 +442,8 @@ class ElasticAPIClient:
                     },
                     "delete": {
                         "min_age": f"{retention_days}d",
-                        "actions": {
-                            "delete": {}
-                        }
-                    }
+                        "actions": {"delete": {}},
+                    },
                 }
             }
         }
@@ -459,9 +469,9 @@ class ElasticAPIClient:
     def create_index(
         self,
         index: str,
-        mappings: Optional[Dict[str, Any]] = None,
-        settings: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+        mappings: Optional[dict[str, Any]] = None,
+        settings: Optional[dict[str, Any]] = None,
+    ) -> dict[str, Any]:
         """
         Create an index with optional mappings and settings.
 
@@ -473,17 +483,19 @@ class ElasticAPIClient:
         Returns:
             Elasticsearch response
         """
-        body: Dict[str, Any] = {}
+        body: dict[str, Any] = {}
         if mappings:
             body["mappings"] = mappings
         if settings:
             body["settings"] = settings
 
         try:
-            response = self.client.indices.create(index=index, body=body if body else None)
+            response = self.client.indices.create(
+                index=index, body=body if body else None
+            )
             return response
         except Exception as e:
-            raise ElasticIndexError(f"Failed to create index: {e}")
+            raise ElasticIndexError(f"Failed to create index: {e}") from e
 
     def close(self):
         """Close the Elasticsearch client connection."""

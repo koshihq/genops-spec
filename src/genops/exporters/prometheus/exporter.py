@@ -14,7 +14,7 @@ import logging
 import socket
 import threading
 from contextlib import contextmanager
-from typing import Dict, Optional, Any
+from typing import Any
 
 from opentelemetry import metrics
 from opentelemetry.sdk.metrics import MeterProvider
@@ -31,8 +31,9 @@ logger = logging.getLogger(__name__)
 
 # Try to import Prometheus dependencies
 try:
-    from prometheus_client import start_http_server, REGISTRY
     from opentelemetry.exporter.prometheus import PrometheusMetricReader
+    from prometheus_client import REGISTRY, start_http_server  # noqa: F401
+
     HAS_PROMETHEUS = True
 except ImportError:
     HAS_PROMETHEUS = False
@@ -62,11 +63,7 @@ class PrometheusExporter:
         # Metrics now available at http://localhost:8000/metrics
     """
 
-    def __init__(
-        self,
-        config: Optional[PrometheusConfig] = None,
-        validate: bool = True
-    ):
+    def __init__(self, config: PrometheusConfig | None = None, validate: bool = True):
         """Initialize Prometheus exporter.
 
         Args:
@@ -91,11 +88,11 @@ class PrometheusExporter:
             if not is_valid:
                 raise ValueError(f"Invalid configuration: {', '.join(errors)}")
 
-        self._meter_provider: Optional[MeterProvider] = None
-        self._meter: Optional[metrics.Meter] = None
-        self._server_thread: Optional[threading.Thread] = None
+        self._meter_provider: MeterProvider | None = None
+        self._meter: metrics.Meter | None = None
+        self._server_thread: threading.Thread | None = None
         self._is_running = False
-        self._metrics_cache: Dict[str, Any] = {}
+        self._metrics_cache: dict[str, Any] = {}
 
         # Initialize metrics
         self._setup_metrics()
@@ -107,15 +104,16 @@ class PrometheusExporter:
             reader = PrometheusMetricReader(prefix=self.config.namespace)
 
             # Create resource with service info
-            resource = Resource.create({
-                "service.name": "genops-ai",
-                "service.namespace": self.config.namespace,
-            })
+            resource = Resource.create(
+                {
+                    "service.name": "genops-ai",
+                    "service.namespace": self.config.namespace,
+                }
+            )
 
             # Create meter provider
             self._meter_provider = MeterProvider(
-                metric_readers=[reader],
-                resource=resource
+                metric_readers=[reader], resource=resource
             )
 
             # Set as global meter provider
@@ -123,14 +121,15 @@ class PrometheusExporter:
 
             # Get meter for creating instruments
             self._meter = self._meter_provider.get_meter(
-                "genops.exporters.prometheus",
-                version="0.1.0"
+                "genops.exporters.prometheus", version="0.1.0"
             )
 
             # Pre-create metric instruments
             self._create_metric_instruments()
 
-            logger.info(f"Prometheus metrics initialized with namespace: {self.config.namespace}")
+            logger.info(
+                f"Prometheus metrics initialized with namespace: {self.config.namespace}"
+            )
 
         except Exception as e:
             logger.error(f"Failed to set up Prometheus metrics: {e}")
@@ -146,22 +145,24 @@ class PrometheusExporter:
                     instrument = self._meter.create_counter(
                         name=full_name,
                         description=metric_def.description,
-                        unit=metric_def.unit
+                        unit=metric_def.unit,
                     )
                 elif metric_def.metric_type == MetricType.GAUGE:
                     instrument = self._meter.create_observable_gauge(
                         name=full_name,
                         description=metric_def.description,
-                        unit=metric_def.unit
+                        unit=metric_def.unit,
                     )
                 elif metric_def.metric_type == MetricType.HISTOGRAM:
                     instrument = self._meter.create_histogram(
                         name=full_name,
                         description=metric_def.description,
-                        unit=metric_def.unit
+                        unit=metric_def.unit,
                     )
                 else:
-                    logger.warning(f"Unsupported metric type for {metric_name}: {metric_def.metric_type}")
+                    logger.warning(
+                        f"Unsupported metric type for {metric_name}: {metric_def.metric_type}"
+                    )
                     continue
 
                 self._metrics_cache[metric_name] = instrument
@@ -189,10 +190,7 @@ class PrometheusExporter:
 
         try:
             # Start HTTP server for metrics endpoint
-            start_http_server(
-                port=self.config.port,
-                addr='0.0.0.0'
-            )
+            start_http_server(port=self.config.port, addr="0.0.0.0")
 
             self._is_running = True
             logger.info(
@@ -212,13 +210,7 @@ class PrometheusExporter:
         self._is_running = False
         logger.info("Prometheus metrics server stopped")
 
-    def record_cost(
-        self,
-        cost: float,
-        provider: str,
-        model: str,
-        **labels
-    ) -> None:
+    def record_cost(self, cost: float, provider: str, model: str, **labels) -> None:
         """Record cost metric.
 
         Args:
@@ -233,11 +225,9 @@ class PrometheusExporter:
 
         try:
             # Filter labels based on configuration
-            filtered_labels = self._filter_labels({
-                "provider": provider,
-                "model": model,
-                **labels
-            })
+            filtered_labels = self._filter_labels(
+                {"provider": provider, "model": model, **labels}
+            )
 
             counter = self._metrics_cache["cost_total"]
             counter.add(cost, attributes=filtered_labels)
@@ -246,12 +236,7 @@ class PrometheusExporter:
             logger.error(f"Failed to record cost metric: {e}")
 
     def record_tokens(
-        self,
-        tokens_input: int,
-        tokens_output: int,
-        provider: str,
-        model: str,
-        **labels
+        self, tokens_input: int, tokens_output: int, provider: str, model: str, **labels
     ) -> None:
         """Record token metrics.
 
@@ -263,11 +248,9 @@ class PrometheusExporter:
             **labels: Additional governance labels
         """
         try:
-            filtered_labels = self._filter_labels({
-                "provider": provider,
-                "model": model,
-                **labels
-            })
+            filtered_labels = self._filter_labels(
+                {"provider": provider, "model": model, **labels}
+            )
 
             if "tokens_input_total" in self._metrics_cache:
                 self._metrics_cache["tokens_input_total"].add(
@@ -288,12 +271,7 @@ class PrometheusExporter:
             logger.error(f"Failed to record token metrics: {e}")
 
     def record_operation_latency(
-        self,
-        latency: float,
-        operation_type: str,
-        provider: str,
-        model: str,
-        **labels
+        self, latency: float, operation_type: str, provider: str, model: str, **labels
     ) -> None:
         """Record operation latency.
 
@@ -309,12 +287,14 @@ class PrometheusExporter:
             return
 
         try:
-            filtered_labels = self._filter_labels({
-                "operation_type": operation_type,
-                "provider": provider,
-                "model": model,
-                **labels
-            })
+            filtered_labels = self._filter_labels(
+                {
+                    "operation_type": operation_type,
+                    "provider": provider,
+                    "model": model,
+                    **labels,
+                }
+            )
 
             histogram = self._metrics_cache["operation_latency_seconds"]
             histogram.record(latency, attributes=filtered_labels)
@@ -322,7 +302,7 @@ class PrometheusExporter:
         except Exception as e:
             logger.error(f"Failed to record latency metric: {e}")
 
-    def _filter_labels(self, labels: Dict[str, str]) -> Dict[str, str]:
+    def _filter_labels(self, labels: dict[str, str]) -> dict[str, str]:
         """Filter labels based on configuration.
 
         Args:
@@ -333,8 +313,8 @@ class PrometheusExporter:
         """
         return filter_labels(
             labels,
-            include=self.config.include_labels if self.config.include_labels else None,
-            exclude=self.config.exclude_labels if self.config.exclude_labels else None
+            include=self.config.include_labels if self.config.include_labels else None,  # type: ignore
+            exclude=self.config.exclude_labels if self.config.exclude_labels else None,  # type: ignore
         )
 
     def _is_port_available(self, port: int) -> bool:
@@ -349,7 +329,7 @@ class PrometheusExporter:
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
                 sock.settimeout(1)
-                result = sock.connect_ex(('localhost', port))
+                result = sock.connect_ex(("localhost", port))
                 return result != 0
         except Exception as e:
             logger.warning(f"Failed to check port availability: {e}")

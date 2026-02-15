@@ -19,13 +19,15 @@ Standard Labels:
     - feature: Feature identifier for feature-level tracking
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, Set
 
 
 class MetricType(Enum):
     """Prometheus metric types."""
+
     COUNTER = "counter"
     GAUGE = "gauge"
     HISTOGRAM = "histogram"
@@ -43,22 +45,16 @@ class MetricDefinition:
         unit: Unit of measurement (e.g., "usd", "tokens", "seconds")
         labels: Standard labels for this metric
     """
+
     name: str
     metric_type: MetricType
     description: str
     unit: str
-    labels: Set[str]
+    labels: set[str]
 
 
 # Standard label sets
-STANDARD_LABELS = {
-    "provider",
-    "model",
-    "team",
-    "customer_id",
-    "environment",
-    "feature"
-}
+STANDARD_LABELS = {"provider", "model", "team", "customer_id", "environment", "feature"}
 
 OPERATION_LABELS = STANDARD_LABELS | {"operation_type", "operation_id"}
 POLICY_LABELS = STANDARD_LABELS | {"policy_name", "policy_type"}
@@ -74,7 +70,7 @@ COST_TOTAL = MetricDefinition(
     metric_type=MetricType.COUNTER,
     description="Total cost of AI operations in USD",
     unit="usd",
-    labels=STANDARD_LABELS
+    labels=STANDARD_LABELS,
 )
 
 COST_BY_OPERATION = MetricDefinition(
@@ -82,7 +78,7 @@ COST_BY_OPERATION = MetricDefinition(
     metric_type=MetricType.COUNTER,
     description="Cost per operation type",
     unit="usd",
-    labels=OPERATION_LABELS
+    labels=OPERATION_LABELS,
 )
 
 
@@ -95,7 +91,7 @@ TOKENS_INPUT_TOTAL = MetricDefinition(
     metric_type=MetricType.COUNTER,
     description="Total input tokens consumed",
     unit="tokens",
-    labels=STANDARD_LABELS
+    labels=STANDARD_LABELS,
 )
 
 TOKENS_OUTPUT_TOTAL = MetricDefinition(
@@ -103,7 +99,7 @@ TOKENS_OUTPUT_TOTAL = MetricDefinition(
     metric_type=MetricType.COUNTER,
     description="Total output tokens generated",
     unit="tokens",
-    labels=STANDARD_LABELS
+    labels=STANDARD_LABELS,
 )
 
 TOKENS_TOTAL = MetricDefinition(
@@ -111,7 +107,7 @@ TOKENS_TOTAL = MetricDefinition(
     metric_type=MetricType.COUNTER,
     description="Total tokens (input + output)",
     unit="tokens",
-    labels=STANDARD_LABELS
+    labels=STANDARD_LABELS,
 )
 
 TOKEN_EFFICIENCY = MetricDefinition(
@@ -119,7 +115,7 @@ TOKEN_EFFICIENCY = MetricDefinition(
     metric_type=MetricType.GAUGE,
     description="Tokens per dollar (cost efficiency)",
     unit="tokens_per_usd",
-    labels=STANDARD_LABELS
+    labels=STANDARD_LABELS,
 )
 
 
@@ -132,7 +128,7 @@ POLICY_VIOLATIONS_TOTAL = MetricDefinition(
     metric_type=MetricType.COUNTER,
     description="Total number of policy violations",
     unit="violations",
-    labels=POLICY_LABELS
+    labels=POLICY_LABELS,
 )
 
 POLICY_EVALUATIONS_TOTAL = MetricDefinition(
@@ -140,7 +136,7 @@ POLICY_EVALUATIONS_TOTAL = MetricDefinition(
     metric_type=MetricType.COUNTER,
     description="Total number of policy evaluations",
     unit="evaluations",
-    labels=POLICY_LABELS
+    labels=POLICY_LABELS,
 )
 
 POLICY_ENFORCEMENT_ACTIONS = MetricDefinition(
@@ -148,7 +144,7 @@ POLICY_ENFORCEMENT_ACTIONS = MetricDefinition(
     metric_type=MetricType.COUNTER,
     description="Number of policy enforcement actions taken",
     unit="actions",
-    labels=POLICY_LABELS | {"action_type"}
+    labels=POLICY_LABELS | {"action_type"},
 )
 
 POLICY_COMPLIANCE_RATE = MetricDefinition(
@@ -156,7 +152,7 @@ POLICY_COMPLIANCE_RATE = MetricDefinition(
     metric_type=MetricType.GAUGE,
     description="Policy compliance rate (0-1)",
     unit="ratio",
-    labels=POLICY_LABELS
+    labels=POLICY_LABELS,
 )
 
 
@@ -169,7 +165,7 @@ EVALUATION_SCORE = MetricDefinition(
     metric_type=MetricType.HISTOGRAM,
     description="Distribution of evaluation scores",
     unit="score",
-    labels=EVALUATION_LABELS
+    labels=EVALUATION_LABELS,
 )
 
 EVALUATION_LATENCY = MetricDefinition(
@@ -177,7 +173,7 @@ EVALUATION_LATENCY = MetricDefinition(
     metric_type=MetricType.HISTOGRAM,
     description="Evaluation execution latency",
     unit="seconds",
-    labels=EVALUATION_LABELS
+    labels=EVALUATION_LABELS,
 )
 
 EVALUATION_FAILURES = MetricDefinition(
@@ -185,7 +181,7 @@ EVALUATION_FAILURES = MetricDefinition(
     metric_type=MetricType.COUNTER,
     description="Number of failed evaluations",
     unit="failures",
-    labels=EVALUATION_LABELS
+    labels=EVALUATION_LABELS,
 )
 
 
@@ -198,7 +194,7 @@ BUDGET_UTILIZATION = MetricDefinition(
     metric_type=MetricType.GAUGE,
     description="Budget utilization ratio (0-1)",
     unit="ratio",
-    labels=STANDARD_LABELS | {"budget_period"}
+    labels=STANDARD_LABELS | {"budget_period"},
 )
 
 BUDGET_REMAINING = MetricDefinition(
@@ -206,7 +202,7 @@ BUDGET_REMAINING = MetricDefinition(
     metric_type=MetricType.GAUGE,
     description="Remaining budget in USD",
     unit="usd",
-    labels=STANDARD_LABELS | {"budget_period"}
+    labels=STANDARD_LABELS | {"budget_period"},
 )
 
 BUDGET_EXCEEDED = MetricDefinition(
@@ -214,7 +210,7 @@ BUDGET_EXCEEDED = MetricDefinition(
     metric_type=MetricType.COUNTER,
     description="Number of times budget was exceeded",
     unit="events",
-    labels=STANDARD_LABELS | {"budget_period"}
+    labels=STANDARD_LABELS | {"budget_period"},
 )
 
 
@@ -227,7 +223,7 @@ OPERATION_LATENCY = MetricDefinition(
     metric_type=MetricType.HISTOGRAM,
     description="AI operation latency",
     unit="seconds",
-    labels=OPERATION_LABELS
+    labels=OPERATION_LABELS,
 )
 
 OPERATION_ERRORS = MetricDefinition(
@@ -235,7 +231,7 @@ OPERATION_ERRORS = MetricDefinition(
     metric_type=MetricType.COUNTER,
     description="Total number of operation errors",
     unit="errors",
-    labels=OPERATION_LABELS | {"error_type"}
+    labels=OPERATION_LABELS | {"error_type"},
 )
 
 OPERATIONS_TOTAL = MetricDefinition(
@@ -243,7 +239,7 @@ OPERATIONS_TOTAL = MetricDefinition(
     metric_type=MetricType.COUNTER,
     description="Total number of AI operations",
     unit="operations",
-    labels=OPERATION_LABELS
+    labels=OPERATION_LABELS,
 )
 
 
@@ -252,33 +248,28 @@ OPERATIONS_TOTAL = MetricDefinition(
 # ======================
 
 # All metric definitions for easy iteration
-ALL_METRICS: Dict[str, MetricDefinition] = {
+ALL_METRICS: dict[str, MetricDefinition] = {
     # Cost
     "cost_total": COST_TOTAL,
     "cost_by_operation": COST_BY_OPERATION,
-
     # Tokens
     "tokens_input_total": TOKENS_INPUT_TOTAL,
     "tokens_output_total": TOKENS_OUTPUT_TOTAL,
     "tokens_total": TOKENS_TOTAL,
     "token_efficiency": TOKEN_EFFICIENCY,
-
     # Policy
     "policy_violations_total": POLICY_VIOLATIONS_TOTAL,
     "policy_evaluations_total": POLICY_EVALUATIONS_TOTAL,
     "policy_enforcement_actions": POLICY_ENFORCEMENT_ACTIONS,
     "policy_compliance_rate": POLICY_COMPLIANCE_RATE,
-
     # Evaluation
     "evaluation_score": EVALUATION_SCORE,
     "evaluation_latency_seconds": EVALUATION_LATENCY,
     "evaluation_failures_total": EVALUATION_FAILURES,
-
     # Budget
     "budget_utilization_ratio": BUDGET_UTILIZATION,
     "budget_remaining_usd": BUDGET_REMAINING,
     "budget_exceeded_total": BUDGET_EXCEEDED,
-
     # Performance
     "operation_latency_seconds": OPERATION_LATENCY,
     "operation_errors_total": OPERATION_ERRORS,
@@ -322,10 +313,10 @@ def get_full_metric_name(name: str, namespace: str = "genops") -> str:
 
 
 def filter_labels(
-    labels: Dict[str, str],
-    include: Set[str] = None,
-    exclude: Set[str] = None
-) -> Dict[str, str]:
+    labels: dict[str, str],
+    include: set[str] | None = None,
+    exclude: set[str] | None = None,
+) -> dict[str, str]:
     """Filter labels based on include/exclude sets.
 
     Args:

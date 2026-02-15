@@ -40,17 +40,17 @@ from typing import Optional
 from .adapter import GenOpsElasticAdapter
 from .client import (
     ElasticAPIClient,
-    ElasticDocument,
     ElasticAPIError,
     ElasticAuthenticationError,
     ElasticConnectionError,
+    ElasticDocument,
     ElasticIndexError,
 )
 from .event_exporter import EventExporter, ExportMode, ExportStats
 from .validation import (
-    validate_setup,
-    print_validation_result,
     ElasticValidationResult,
+    print_validation_result,
+    validate_setup,
 )
 
 logger = logging.getLogger(__name__)

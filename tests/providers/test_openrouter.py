@@ -3,39 +3,45 @@
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
-from tests.utils.mock_providers import MockOpenAIClient
 
 from genops.providers.openrouter import GenOpsOpenRouterAdapter
+from tests.utils.mock_providers import MockOpenAIClient
 
 
 # Mock OpenAI exception classes for testing
 class APITimeoutError(Exception):
     """Mock APITimeoutError for testing."""
+
     pass
 
 
 class APIConnectionError(Exception):
     """Mock APIConnectionError for testing."""
+
     pass
 
 
 class AuthenticationError(Exception):
     """Mock AuthenticationError for testing."""
+
     pass
 
 
 class RateLimitError(Exception):
     """Mock RateLimitError for testing."""
+
     pass
 
 
 class NotFoundError(Exception):
     """Mock NotFoundError for testing."""
+
     pass
 
 
 class APIError(Exception):
     """Mock APIError for testing."""
+
     pass
 
 
@@ -244,15 +250,19 @@ class TestGenOpsOpenRouterAdapter:
 
         # Mock import error for pricing engine by patching the method to raise ImportError
         with patch.object(adapter, "_calculate_cost") as mock_method:
+
             def mock_calculate_cost_with_fallback(*args):
                 # Simulate the try/except ImportError logic in _calculate_cost
                 try:
-                    from genops.providers.openrouter_pricing import calculate_openrouter_cost
+                    from genops.providers.openrouter_pricing import (
+                        calculate_openrouter_cost,  # noqa: F401
+                    )
+
                     raise ImportError("Mock import error")  # Force ImportError
                 except ImportError:
                     # Call the actual fallback calculation
                     return adapter._fallback_cost_calculation(*args)
-            
+
             mock_method.side_effect = mock_calculate_cost_with_fallback
             cost = adapter._calculate_cost("openai/gpt-4o", "openai", 100, 50)
 
@@ -365,7 +375,10 @@ class TestGenOpsOpenRouterAdapter:
 
         # Check for OpenRouter-specific attributes
         attributes = dict(span.attributes)
-        assert attributes.get("genops.operation.name") == "openrouter.chat.completions.create"
+        assert (
+            attributes.get("genops.operation.name")
+            == "openrouter.chat.completions.create"
+        )
         assert attributes.get("genops.provider") == "openrouter"
         assert attributes.get("genops.model") == "anthropic/claude-3-5-sonnet"
         assert "genops.openrouter.predicted_provider" in attributes
@@ -903,7 +916,9 @@ class TestOpenRouterMultiProviderScenarios:
             if spans:
                 latest_span = spans[-1]
                 attributes = dict(latest_span.attributes)
-                assert attributes.get("genops.openrouter.predicted_provider") == provider
+                assert (
+                    attributes.get("genops.openrouter.predicted_provider") == provider
+                )
 
 
 class TestOpenRouterErrorHandlingScenarios:
@@ -1109,7 +1124,9 @@ class TestOpenRouterGovernanceIntegration:
         span = spans[0]
 
         # Should have cost-related attributes
-        cost_attrs = [key for key in dict(span.attributes).keys() if "cost" in key.lower()]
+        cost_attrs = [
+            key for key in dict(span.attributes).keys() if "cost" in key.lower()
+        ]
         assert len(cost_attrs) > 0
 
 

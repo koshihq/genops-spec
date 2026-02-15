@@ -32,7 +32,7 @@ from genops import (
 )
 
 # Set up logging to see validation messages
-logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
 
 def demonstrate_basic_validation():
@@ -47,7 +47,7 @@ def demonstrate_basic_validation():
         "customer_id": "enterprise-123",
         "environment": "production",
         "feature": "chat-assistant",
-        "user_id": "user_456"
+        "user_id": "user_456",
     }
 
     good_result = validate_tags(good_attributes)
@@ -63,9 +63,9 @@ def demonstrate_basic_validation():
     bad_attributes = {
         "team": "Platform Engineering",  # Wrong format (spaces)
         "customer_id": "enterprise@123",  # Invalid characters
-        "environment": "dev",            # Not in allowed enum
-        "feature": "x",                  # Too short
-        "user_id": ""                    # Empty string
+        "environment": "dev",  # Not in allowed enum
+        "feature": "x",  # Too short
+        "user_id": "",  # Empty string
     }
 
     bad_result = validate_tags(bad_attributes)
@@ -88,25 +88,28 @@ def demonstrate_custom_validation_rules():
     validator = get_validator()
 
     # Add custom required field
-    validator.add_rule(create_required_rule(
-        "cost_center",
-        severity=ValidationSeverity.ERROR
-    ))
+    validator.add_rule(
+        create_required_rule("cost_center", severity=ValidationSeverity.ERROR)
+    )
 
     # Add custom enum for customer tiers
-    validator.add_rule(create_enum_rule(
-        "customer_tier",
-        allowed_values={"freemium", "startup", "enterprise", "enterprise-plus"},
-        severity=ValidationSeverity.WARNING
-    ))
+    validator.add_rule(
+        create_enum_rule(
+            "customer_tier",
+            allowed_values={"freemium", "startup", "enterprise", "enterprise-plus"},
+            severity=ValidationSeverity.WARNING,
+        )
+    )
 
     # Add custom pattern for API keys
-    validator.add_rule(create_pattern_rule(
-        "api_key",
-        pattern=r"^ak_[a-z]+_[a-zA-Z0-9]{32}$",
-        description="API keys must follow format: ak_env_32chars",
-        severity=ValidationSeverity.ERROR
-    ))
+    validator.add_rule(
+        create_pattern_rule(
+            "api_key",
+            pattern=r"^ak_[a-z]+_[a-zA-Z0-9]{32}$",
+            description="API keys must follow format: ak_env_32chars",
+            severity=ValidationSeverity.ERROR,
+        )
+    )
 
     # Add custom validation function
     def validate_budget_amount(value):
@@ -119,15 +122,17 @@ def demonstrate_custom_validation_rules():
         except (ValueError, TypeError):
             return False
 
-    validator.add_rule(ValidationRule(
-        name="budget_amount_range",
-        attribute="budget_amount",
-        rule_type="custom",
-        severity=ValidationSeverity.WARNING,
-        description="Budget amount must be between $0-$1M",
-        validator_func=validate_budget_amount,
-        error_message="Budget amount must be a number between $0.01 and $1,000,000"
-    ))
+    validator.add_rule(
+        ValidationRule(
+            name="budget_amount_range",
+            attribute="budget_amount",
+            rule_type="custom",
+            severity=ValidationSeverity.WARNING,
+            description="Budget amount must be between $0-$1M",
+            validator_func=validate_budget_amount,
+            error_message="Budget amount must be a number between $0.01 and $1,000,000",
+        )
+    )
 
     print("✅ Added custom validation rules:")
     print("   • cost_center (required)")
@@ -139,9 +144,9 @@ def demonstrate_custom_validation_rules():
     test_attributes = {
         "team": "platform-engineering",
         "cost_center": "engineering",  # Required and present
-        "customer_tier": "premium",    # Invalid enum value
-        "api_key": "invalid-key",      # Wrong pattern
-        "budget_amount": "1500000"     # Too high
+        "customer_tier": "premium",  # Invalid enum value
+        "api_key": "invalid-key",  # Wrong pattern
+        "budget_amount": "1500000",  # Too high
     }
 
     test_result = validate_tags(test_attributes)
@@ -165,35 +170,41 @@ def demonstrate_severity_levels():
     validator.rules.clear()
 
     # WARNING: Logs warning, allows operation
-    validator.add_rule(ValidationRule(
-        name="team_format_warning",
-        attribute="team",
-        rule_type="pattern",
-        severity=ValidationSeverity.WARNING,
-        description="Team format warning",
-        pattern=r"^[a-z-]+$",
-        error_message="Team should be lowercase with hyphens"
-    ))
+    validator.add_rule(
+        ValidationRule(
+            name="team_format_warning",
+            attribute="team",
+            rule_type="pattern",
+            severity=ValidationSeverity.WARNING,
+            description="Team format warning",
+            pattern=r"^[a-z-]+$",
+            error_message="Team should be lowercase with hyphens",
+        )
+    )
 
     # ERROR: Logs error, allows operation but marks invalid
-    validator.add_rule(ValidationRule(
-        name="environment_required_error",
-        attribute="environment",
-        rule_type="required",
-        severity=ValidationSeverity.ERROR,
-        description="Environment is required",
-        error_message="Environment must be specified"
-    ))
+    validator.add_rule(
+        ValidationRule(
+            name="environment_required_error",
+            attribute="environment",
+            rule_type="required",
+            severity=ValidationSeverity.ERROR,
+            description="Environment is required",
+            error_message="Environment must be specified",
+        )
+    )
 
     # BLOCK: Raises exception, prevents operation
-    validator.add_rule(ValidationRule(
-        name="customer_id_required_block",
-        attribute="customer_id",
-        rule_type="required",
-        severity=ValidationSeverity.BLOCK,
-        description="Customer ID is required for billing",
-        error_message="Customer ID is required and cannot be empty"
-    ))
+    validator.add_rule(
+        ValidationRule(
+            name="customer_id_required_block",
+            attribute="customer_id",
+            rule_type="required",
+            severity=ValidationSeverity.BLOCK,
+            description="Customer ID is required for billing",
+            error_message="Customer ID is required and cannot be empty",
+        )
+    )
 
     print("🔍 Testing WARNING level (team format)...")
     warning_result = validate_tags({"team": "Platform_Engineering"})
@@ -227,17 +238,19 @@ def demonstrate_integration_with_providers():
     validator.add_rule(create_required_rule("team", ValidationSeverity.WARNING))
     validator.add_rule(create_required_rule("customer_id", ValidationSeverity.ERROR))
 
-    validator.add_rule(create_enum_rule(
-        "environment",
-        {"production", "staging", "development"},
-        ValidationSeverity.WARNING
-    ))
+    validator.add_rule(
+        create_enum_rule(
+            "environment",
+            {"production", "staging", "development"},
+            ValidationSeverity.WARNING,
+        )
+    )
 
     # Set up some defaults with validation issues
     genops.set_default_attributes(
         team="platform-engineering",  # Good
-        environment="dev",             # Warning - not in enum
-        project="ai-services"
+        environment="dev",  # Warning - not in enum
+        project="ai-services",
     )
 
     print("🏷️ Set defaults with validation warnings...")
@@ -250,7 +263,7 @@ def demonstrate_integration_with_providers():
         # This will trigger validation
         effective_attrs = genops.get_effective_attributes(
             customer_id="enterprise-123",  # Required field provided
-            feature="chat-assistant"
+            feature="chat-assistant",
         )
 
         print("✅ Validation passed, effective attributes:")
@@ -285,42 +298,50 @@ def demonstrate_enterprise_compliance_rules():
     # Compliance rules for enterprise
 
     # 1. Data residency compliance
-    validator.add_rule(create_enum_rule(
-        "data_region",
-        {"us-east", "us-west", "eu-central", "ap-southeast"},
-        ValidationSeverity.ERROR
-    ))
+    validator.add_rule(
+        create_enum_rule(
+            "data_region",
+            {"us-east", "us-west", "eu-central", "ap-southeast"},
+            ValidationSeverity.ERROR,
+        )
+    )
 
     # 2. Cost center required for FinOps
     validator.add_rule(create_required_rule("cost_center", ValidationSeverity.BLOCK))
 
     # 3. Customer classification
-    validator.add_rule(create_enum_rule(
-        "customer_classification",
-        {"public", "confidential", "restricted", "top-secret"},
-        ValidationSeverity.BLOCK
-    ))
+    validator.add_rule(
+        create_enum_rule(
+            "customer_classification",
+            {"public", "confidential", "restricted", "top-secret"},
+            ValidationSeverity.BLOCK,
+        )
+    )
 
     # 4. Compliance tags required
-    validator.add_rule(create_required_rule("compliance_scope", ValidationSeverity.ERROR))
+    validator.add_rule(
+        create_required_rule("compliance_scope", ValidationSeverity.ERROR)
+    )
 
     # 5. Custom PII detection
     def validate_no_pii_in_feature(value):
         """Ensure feature names don't contain PII."""
         if value is None:
             return True
-        pii_patterns = ['email', 'phone', 'ssn', 'credit_card', 'personal']
+        pii_patterns = ["email", "phone", "ssn", "credit_card", "personal"]
         return not any(pattern in str(value).lower() for pattern in pii_patterns)
 
-    validator.add_rule(ValidationRule(
-        name="feature_no_pii",
-        attribute="feature",
-        rule_type="custom",
-        severity=ValidationSeverity.BLOCK,
-        description="Feature names must not contain PII indicators",
-        validator_func=validate_no_pii_in_feature,
-        error_message="Feature name contains potential PII - use generic names"
-    ))
+    validator.add_rule(
+        ValidationRule(
+            name="feature_no_pii",
+            attribute="feature",
+            rule_type="custom",
+            severity=ValidationSeverity.BLOCK,
+            description="Feature names must not contain PII indicators",
+            validator_func=validate_no_pii_in_feature,
+            error_message="Feature name contains potential PII - use generic names",
+        )
+    )
 
     print("🛡️ Enterprise compliance rules configured:")
     print("   • Data residency validation")
@@ -336,7 +357,7 @@ def demonstrate_enterprise_compliance_rules():
         "data_region": "us-east",
         "customer_classification": "confidential",
         "compliance_scope": "sox-compliant",
-        "feature": "document-processing"
+        "feature": "document-processing",
     }
 
     try:
@@ -352,7 +373,7 @@ def demonstrate_enterprise_compliance_rules():
         # cost_center missing (BLOCK)
         "data_region": "china",  # Invalid region
         "customer_classification": "internal",  # Invalid classification
-        "feature": "email-processing"  # Contains PII indicator
+        "feature": "email-processing",  # Contains PII indicator
     }
 
     try:
@@ -386,14 +407,18 @@ def demonstrate_configuration_management():
     bad_data = {"team": "INVALID FORMAT", "environment": "invalid"}
     disabled_result = validate_tags(bad_data)
     print(f"   With validation disabled - Valid: {disabled_result.valid}")
-    print(f"   Warnings: {len(disabled_result.warnings)}, Violations: {len(disabled_result.violations)}")
+    print(
+        f"   Warnings: {len(disabled_result.warnings)}, Violations: {len(disabled_result.violations)}"
+    )
 
     print("\n▶️ Re-enabling validation...")
     validator.enable()
 
     enabled_result = validate_tags(bad_data)
     print(f"   With validation enabled - Valid: {enabled_result.valid}")
-    print(f"   Warnings: {len(enabled_result.warnings)}, Violations: {len(enabled_result.violations)}")
+    print(
+        f"   Warnings: {len(enabled_result.warnings)}, Violations: {len(enabled_result.violations)}"
+    )
 
     print("\n🧹 Cleaning up rules...")
     initial_count = len(validator.rules)

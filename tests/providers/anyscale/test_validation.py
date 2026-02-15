@@ -1,17 +1,15 @@
 """Tests for Anyscale validation functionality."""
 
-import pytest
-from unittest.mock import patch, Mock
-import os
+from unittest.mock import Mock, patch
 
 from genops.providers.anyscale.validation import (
-    ValidationResult,
+    AnyscaleValidator,
+    ValidationCategory,
     ValidationIssue,
     ValidationLevel,
-    ValidationCategory,
-    AnyscaleValidator,
-    validate_setup,
+    ValidationResult,
     print_validation_result,
+    validate_setup,
 )
 
 
@@ -24,7 +22,7 @@ class TestValidationIssue:
             category=ValidationCategory.CONFIGURATION,
             level=ValidationLevel.ERROR,
             title="API key missing",
-            description="ANYSCALE_API_KEY not set"
+            description="ANYSCALE_API_KEY not set",
         )
 
         assert issue.category == ValidationCategory.CONFIGURATION
@@ -38,7 +36,7 @@ class TestValidationIssue:
             level=ValidationLevel.ERROR,
             title="Test",
             description="Test description",
-            fix_suggestion="export ANYSCALE_API_KEY='your-key'"
+            fix_suggestion="export ANYSCALE_API_KEY='your-key'",
         )
 
         assert issue.fix_suggestion == "export ANYSCALE_API_KEY='your-key'"
@@ -50,10 +48,7 @@ class TestValidationResult:
     def test_validation_result_success(self):
         """Test successful validation result."""
         result = ValidationResult(
-            success=True,
-            total_checks=5,
-            passed_checks=5,
-            issues=[]
+            success=True, total_checks=5, passed_checks=5, issues=[]
         )
 
         assert result.success is True
@@ -70,9 +65,9 @@ class TestValidationResult:
                     ValidationCategory.CONNECTIVITY,
                     ValidationLevel.WARNING,
                     "Slow connection",
-                    "API response time > 1s"
+                    "API response time > 1s",
                 )
-            ]
+            ],
         )
 
         assert result.success is False
@@ -82,10 +77,7 @@ class TestValidationResult:
     def test_validation_result_failure(self):
         """Test failed validation result."""
         result = ValidationResult(
-            success=False,
-            total_checks=5,
-            passed_checks=0,
-            issues=[]
+            success=False, total_checks=5, passed_checks=0, issues=[]
         )
 
         assert result.success is False
@@ -94,10 +86,7 @@ class TestValidationResult:
     def test_validation_result_score_calculation(self):
         """Test score calculation."""
         result = ValidationResult(
-            success=False,
-            total_checks=8,
-            passed_checks=6,
-            issues=[]
+            success=False, total_checks=8, passed_checks=6, issues=[]
         )
 
         assert result.score == 75.0
@@ -129,12 +118,12 @@ class TestValidationCategories:
 class TestAnyscaleValidator:
     """Test AnyscaleValidator class."""
 
-    @patch.dict('os.environ', {'ANYSCALE_API_KEY': 'test-key-123'})
+    @patch.dict("os.environ", {"ANYSCALE_API_KEY": "test-key-123"})
     def test_validator_initialization(self):
         """Test validator initialization."""
         validator = AnyscaleValidator()
 
-        assert validator.anyscale_api_key == 'test-key-123'
+        assert validator.anyscale_api_key == "test-key-123"
 
     def test_validator_with_custom_api_key(self):
         """Test validator with custom API key."""
@@ -142,7 +131,7 @@ class TestAnyscaleValidator:
 
         assert validator.anyscale_api_key == "custom-key"
 
-    @patch.dict('os.environ', {'ANYSCALE_API_KEY': 'test-key'})
+    @patch.dict("os.environ", {"ANYSCALE_API_KEY": "test-key"})
     def test_check_configuration_success(self):
         """Test configuration check with valid API key."""
         validator = AnyscaleValidator()
@@ -153,7 +142,7 @@ class TestAnyscaleValidator:
         critical_issues = [i for i in issues if i.level == ValidationLevel.CRITICAL]
         assert len(critical_issues) == 0
 
-    @patch.dict('os.environ', {}, clear=True)
+    @patch.dict("os.environ", {}, clear=True)
     def test_check_configuration_missing_api_key(self):
         """Test configuration check with missing API key."""
         validator = AnyscaleValidator(anyscale_api_key=None)
@@ -162,7 +151,8 @@ class TestAnyscaleValidator:
 
         # Should have critical issue for missing API key
         api_key_issues = [
-            i for i in issues
+            i
+            for i in issues
             if "API key" in i.title or "ANYSCALE_API_KEY" in i.description
         ]
         assert len(api_key_issues) > 0
@@ -176,7 +166,7 @@ class TestAnyscaleValidator:
         # Should check for required packages
         assert isinstance(issues, list)
 
-    @patch('genops.providers.anyscale.validation.requests')
+    @patch("genops.providers.anyscale.validation.requests")
     def test_check_connectivity_success(self, mock_requests):
         """Test connectivity check with successful connection."""
         mock_response = Mock()
@@ -192,7 +182,7 @@ class TestAnyscaleValidator:
         critical_issues = [i for i in issues if i.level == ValidationLevel.CRITICAL]
         assert len(critical_issues) == 0
 
-    @patch('genops.providers.anyscale.validation.requests')
+    @patch("genops.providers.anyscale.validation.requests")
     def test_check_connectivity_failure(self, mock_requests):
         """Test connectivity check with connection failure."""
         mock_requests.get.side_effect = Exception("Connection failed")
@@ -214,8 +204,8 @@ class TestAnyscaleValidator:
         critical_issues = [i for i in issues if i.level == ValidationLevel.CRITICAL]
         assert len(critical_issues) == 0
 
-    @patch.dict('os.environ', {'ANYSCALE_API_KEY': 'test-key'})
-    @patch('genops.providers.anyscale.validation.requests')
+    @patch.dict("os.environ", {"ANYSCALE_API_KEY": "test-key"})
+    @patch("genops.providers.anyscale.validation.requests")
     def test_validate_full_success(self, mock_requests):
         """Test full validation with all checks passing."""
         mock_response = Mock()
@@ -234,8 +224,8 @@ class TestAnyscaleValidator:
 class TestValidateSetup:
     """Test validate_setup function."""
 
-    @patch.dict('os.environ', {'ANYSCALE_API_KEY': 'test-key'})
-    @patch('genops.providers.anyscale.validation.requests')
+    @patch.dict("os.environ", {"ANYSCALE_API_KEY": "test-key"})
+    @patch("genops.providers.anyscale.validation.requests")
     def test_validate_setup_basic(self, mock_requests):
         """Test basic setup validation."""
         mock_response = Mock()
@@ -257,7 +247,7 @@ class TestValidateSetup:
         """Test setup validation with custom base URL."""
         result = validate_setup(
             anyscale_api_key="test-key",
-            anyscale_base_url="https://custom.anyscale.com/v1"
+            anyscale_base_url="https://custom.anyscale.com/v1",
         )
 
         assert isinstance(result, ValidationResult)
@@ -269,10 +259,7 @@ class TestPrintValidationResult:
     def test_print_validation_result_success(self, capsys):
         """Test printing successful validation result."""
         result = ValidationResult(
-            success=True,
-            total_checks=5,
-            passed_checks=5,
-            issues=[]
+            success=True, total_checks=5, passed_checks=5, issues=[]
         )
 
         print_validation_result(result)
@@ -291,9 +278,9 @@ class TestPrintValidationResult:
                     ValidationCategory.CONFIGURATION,
                     ValidationLevel.ERROR,
                     "API key invalid",
-                    "Invalid API key format"
+                    "Invalid API key format",
                 )
-            ]
+            ],
         )
 
         print_validation_result(result)
@@ -313,9 +300,9 @@ class TestPrintValidationResult:
                     ValidationLevel.WARNING,
                     "Slow API response",
                     "API response time exceeded 1s",
-                    fix_suggestion="Check network connection"
+                    fix_suggestion="Check network connection",
                 )
-            ]
+            ],
         )
 
         print_validation_result(result)
@@ -328,8 +315,8 @@ class TestPrintValidationResult:
 class TestValidationIntegration:
     """Integration tests for validation system."""
 
-    @patch.dict('os.environ', {'ANYSCALE_API_KEY': 'test-key-123'})
-    @patch('genops.providers.anyscale.validation.requests')
+    @patch.dict("os.environ", {"ANYSCALE_API_KEY": "test-key-123"})
+    @patch("genops.providers.anyscale.validation.requests")
     def test_end_to_end_validation(self, mock_requests):
         """Test end-to-end validation workflow."""
         mock_response = Mock()
@@ -349,7 +336,7 @@ class TestValidationIntegration:
         assert result.passed_checks >= 0
         assert isinstance(result.issues, list)
 
-    @patch.dict('os.environ', {}, clear=True)
+    @patch.dict("os.environ", {}, clear=True)
     def test_validation_catches_missing_api_key(self):
         """Test validation catches missing API key."""
         result = validate_setup(anyscale_api_key=None)
@@ -359,7 +346,8 @@ class TestValidationIntegration:
 
         # Should have issue about missing API key
         api_key_issues = [
-            i for i in result.issues
+            i
+            for i in result.issues
             if "API key" in i.title or "ANYSCALE_API_KEY" in i.description
         ]
         assert len(api_key_issues) > 0

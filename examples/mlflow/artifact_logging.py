@@ -8,13 +8,15 @@ Demonstrates:
 - Artifact retrieval and management
 """
 
+import json
 import os
 import sys
-import json
 import tempfile
 from pathlib import Path
+
 import matplotlib
-matplotlib.use('Agg')  # Use non-interactive backend
+
+matplotlib.use("Agg")  # Use non-interactive backend
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -30,7 +32,7 @@ def create_sample_artifacts(output_dir: Path):
     """Create sample artifacts for demonstration."""
     # 1. Text file
     summary_file = output_dir / "model_summary.txt"
-    with open(summary_file, 'w') as f:
+    with open(summary_file, "w") as f:
         f.write("Model Training Summary\n")
         f.write("=" * 40 + "\n")
         f.write("Model Type: Random Forest\n")
@@ -41,18 +43,10 @@ def create_sample_artifacts(output_dir: Path):
     # 2. JSON configuration
     config_file = output_dir / "config.json"
     config = {
-        "model": {
-            "type": "RandomForest",
-            "n_estimators": 100,
-            "max_depth": 10
-        },
-        "training": {
-            "batch_size": 32,
-            "epochs": 50,
-            "learning_rate": 0.01
-        }
+        "model": {"type": "RandomForest", "n_estimators": 100, "max_depth": 10},
+        "training": {"batch_size": 32, "epochs": 50, "learning_rate": 0.01},
     }
-    with open(config_file, 'w') as f:
+    with open(config_file, "w") as f:
         json.dump(config, f, indent=2)
 
     # 3. Plot - Training curves
@@ -62,19 +56,19 @@ def create_sample_artifacts(output_dir: Path):
     val_loss = 2.2 * np.exp(-epochs / 10) + 0.15
 
     plt.figure(figsize=(10, 6))
-    plt.plot(epochs, train_loss, label='Training Loss', linewidth=2)
-    plt.plot(epochs, val_loss, label='Validation Loss', linewidth=2)
-    plt.xlabel('Epoch')
-    plt.ylabel('Loss')
-    plt.title('Training and Validation Loss')
+    plt.plot(epochs, train_loss, label="Training Loss", linewidth=2)
+    plt.plot(epochs, val_loss, label="Validation Loss", linewidth=2)
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.title("Training and Validation Loss")
     plt.legend()
     plt.grid(True, alpha=0.3)
-    plt.savefig(plot_file, dpi=100, bbox_inches='tight')
+    plt.savefig(plot_file, dpi=100, bbox_inches="tight")
     plt.close()
 
     # 4. CSV data
     data_file = output_dir / "predictions.csv"
-    with open(data_file, 'w') as f:
+    with open(data_file, "w") as f:
         f.write("sample_id,true_label,predicted_label,confidence\n")
         for i in range(20):
             true_label = np.random.randint(0, 2)
@@ -88,11 +82,11 @@ def create_sample_artifacts(output_dir: Path):
     np.save(weights_file, weights)
 
     return {
-        'summary': summary_file,
-        'config': config_file,
-        'plot': plot_file,
-        'data': data_file,
-        'weights': weights_file
+        "summary": summary_file,
+        "config": config_file,
+        "plot": plot_file,
+        "data": data_file,
+        "weights": weights_file,
     }
 
 
@@ -104,11 +98,11 @@ def main():
     print()
 
     # Configuration
-    tracking_uri = os.getenv('MLFLOW_TRACKING_URI', 'file:///tmp/mlruns')
-    team = os.getenv('GENOPS_TEAM', 'ml-team')
-    project = os.getenv('GENOPS_PROJECT', 'artifact-logging-demo')
+    tracking_uri = os.getenv("MLFLOW_TRACKING_URI", "file:///tmp/mlruns")
+    team = os.getenv("GENOPS_TEAM", "ml-team")
+    project = os.getenv("GENOPS_PROJECT", "artifact-logging-demo")
 
-    print(f"Configuration:")
+    print("Configuration:")
     print(f"  Tracking URI: {tracking_uri}")
     print(f"  Team: {team}")
     print(f"  Project: {project}")
@@ -116,10 +110,7 @@ def main():
 
     # Create adapter
     adapter = instrument_mlflow(
-        tracking_uri=tracking_uri,
-        team=team,
-        project=project,
-        environment="development"
+        tracking_uri=tracking_uri, team=team, project=project, environment="development"
     )
 
     print("✓ MLflow adapter created")
@@ -136,35 +127,34 @@ def main():
         artifacts = create_sample_artifacts(output_dir)
 
         with adapter.track_mlflow_run(
-            experiment_name="artifact-logging-demo",
-            run_name="individual-artifacts"
+            experiment_name="artifact-logging-demo", run_name="individual-artifacts"
         ) as run:
             # Log each artifact individually
             print("Logging artifacts:")
 
             print("  1. Text summary...")
-            mlflow.log_artifact(str(artifacts['summary']), artifact_path="reports")
-            file_size = artifacts['summary'].stat().st_size / 1024  # KB
+            mlflow.log_artifact(str(artifacts["summary"]), artifact_path="reports")
+            file_size = artifacts["summary"].stat().st_size / 1024  # KB
             print(f"     ✓ Logged (size: {file_size:.2f} KB)")
 
             print("  2. JSON configuration...")
-            mlflow.log_artifact(str(artifacts['config']), artifact_path="configs")
-            file_size = artifacts['config'].stat().st_size / 1024
+            mlflow.log_artifact(str(artifacts["config"]), artifact_path="configs")
+            file_size = artifacts["config"].stat().st_size / 1024
             print(f"     ✓ Logged (size: {file_size:.2f} KB)")
 
             print("  3. Training plot...")
-            mlflow.log_artifact(str(artifacts['plot']), artifact_path="plots")
-            file_size = artifacts['plot'].stat().st_size / 1024
+            mlflow.log_artifact(str(artifacts["plot"]), artifact_path="plots")
+            file_size = artifacts["plot"].stat().st_size / 1024
             print(f"     ✓ Logged (size: {file_size:.2f} KB)")
 
             print("  4. Predictions CSV...")
-            mlflow.log_artifact(str(artifacts['data']), artifact_path="data")
-            file_size = artifacts['data'].stat().st_size / 1024
+            mlflow.log_artifact(str(artifacts["data"]), artifact_path="data")
+            file_size = artifacts["data"].stat().st_size / 1024
             print(f"     ✓ Logged (size: {file_size:.2f} KB)")
 
             print("  5. Model weights...")
-            mlflow.log_artifact(str(artifacts['weights']), artifact_path="weights")
-            file_size = artifacts['weights'].stat().st_size / 1024
+            mlflow.log_artifact(str(artifacts["weights"]), artifact_path="weights")
+            file_size = artifacts["weights"].stat().st_size / 1024
             print(f"     ✓ Logged (size: {file_size:.2f} KB)")
 
             print()
@@ -187,20 +177,19 @@ def main():
         # Create multiple files
         for i in range(5):
             report_file = reports_dir / f"report_{i}.txt"
-            with open(report_file, 'w') as f:
+            with open(report_file, "w") as f:
                 f.write(f"Report {i}\n")
-                f.write(f"Timestamp: 2024-01-{i+1:02d}\n")
-                f.write(f"Status: Complete\n")
+                f.write(f"Timestamp: 2024-01-{i + 1:02d}\n")
+                f.write("Status: Complete\n")
 
         with adapter.track_mlflow_run(
-            experiment_name="artifact-logging-demo",
-            run_name="directory-artifacts"
+            experiment_name="artifact-logging-demo", run_name="directory-artifacts"
         ) as run:
             print(f"Logging directory: {reports_dir}")
             mlflow.log_artifacts(str(reports_dir), artifact_path="reports")
 
             # Calculate total size
-            total_size = sum(f.stat().st_size for f in reports_dir.glob('*'))
+            total_size = sum(f.stat().st_size for f in reports_dir.glob("*"))
             print(f"  ✓ Logged {len(list(reports_dir.glob('*')))} files")
             print(f"  ✓ Total size: {total_size / 1024:.2f} KB")
             print()
@@ -212,8 +201,7 @@ def main():
     print("-" * 70)
 
     with adapter.track_mlflow_run(
-        experiment_name="artifact-logging-demo",
-        run_name="dict-artifacts"
+        experiment_name="artifact-logging-demo", run_name="dict-artifacts"
     ) as run:
         # Create metrics dictionary
         metrics_dict = {
@@ -221,7 +209,7 @@ def main():
             "precision": 0.93,
             "recall": 0.94,
             "f1_score": 0.935,
-            "confusion_matrix": [[450, 50], [30, 470]]
+            "confusion_matrix": [[450, 50], [30, 470]],
         }
 
         print("Logging metrics dictionary as JSON...")
@@ -246,8 +234,7 @@ def main():
         file_size_mb = large_file.stat().st_size / (1024 * 1024)
 
         with adapter.track_mlflow_run(
-            experiment_name="artifact-logging-demo",
-            run_name="large-artifacts"
+            experiment_name="artifact-logging-demo", run_name="large-artifacts"
         ) as run:
             print(f"Logging large file: {file_size_mb:.2f} MB")
             mlflow.log_artifact(str(large_file), artifact_path="datasets")
@@ -272,10 +259,9 @@ def main():
 
         # Log artifacts
         with adapter.track_mlflow_run(
-            experiment_name="artifact-logging-demo",
-            run_name="artifact-retrieval"
+            experiment_name="artifact-logging-demo", run_name="artifact-retrieval"
         ) as run:
-            mlflow.log_artifact(str(artifacts['config']), artifact_path="configs")
+            mlflow.log_artifact(str(artifacts["config"]), artifact_path="configs")
             run_id = run.info.run_id
 
         print(f"Logged artifacts in run: {run_id}")
@@ -297,7 +283,7 @@ def main():
         print(f"  ✓ Downloaded to: {artifact_path}")
 
         # Read and display
-        with open(artifact_path, 'r') as f:
+        with open(artifact_path) as f:
             config = json.load(f)
         print(f"  ✓ Config loaded: {json.dumps(config, indent=2)}")
         print()
@@ -310,7 +296,7 @@ def main():
     print("=" * 70)
 
     metrics = adapter.get_metrics()
-    print(f"\nGovernance Metrics:")
+    print("\nGovernance Metrics:")
     print(f"  Daily Usage: ${metrics['daily_usage']:.6f}")
     print(f"  Operations Tracked: {metrics['operation_count']}")
     print(f"  Runs: {metrics.get('run_count', 'N/A')}")
@@ -338,9 +324,9 @@ def main():
     print()
     print("View your artifacts:")
     print(f"  1. Start MLflow UI: mlflow ui --backend-store-uri {tracking_uri}")
-    print(f"  2. Open browser: http://localhost:5000")
-    print(f"  3. Navigate to experiment 'artifact-logging-demo'")
-    print(f"  4. Click on any run to view artifacts")
+    print("  2. Open browser: http://localhost:5000")
+    print("  3. Navigate to experiment 'artifact-logging-demo'")
+    print("  4. Click on any run to view artifacts")
     print()
     print("Governance features enabled:")
     print(f"  ✓ All artifacts attributed to team '{team}'")
@@ -359,5 +345,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n\nError running example: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

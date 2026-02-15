@@ -27,6 +27,7 @@ import os
 import sys
 import time
 
+
 def print_header() -> None:
     """Print example header."""
     print("=" * 70)
@@ -43,7 +44,8 @@ def check_prerequisites() -> bool:
 
     # Check GenOps installation
     try:
-        import genops
+        import genops  # noqa: F401
+
         print("  \u2713 GenOps installed")
     except ImportError:
         print("  \u2717 GenOps not installed")
@@ -68,7 +70,7 @@ def check_prerequisites() -> bool:
         missing.append('export COLLIBRA_PASSWORD="your-password"')
 
     if missing:
-        print(f"\n\u2717 Missing requirements:")
+        print("\n\u2717 Missing requirements:")
         for req in missing:
             print(f"   {req}")
         return False
@@ -99,11 +101,11 @@ def demonstrate_basic_export() -> int:
             daily_budget_limit=100.0,
         )
 
-        print(f"   \u2713 Adapter initialized")
-        print(f"     - Team: ml-platform")
-        print(f"     - Project: ai-governance-demo")
-        print(f"     - Export mode: batch")
-        print(f"     - Daily budget: $100.00")
+        print("   \u2713 Adapter initialized")
+        print("     - Team: ml-platform")
+        print("     - Project: ai-governance-demo")
+        print("     - Export mode: batch")
+        print("     - Daily budget: $100.00")
         print()
 
         # Simulate AI operations with telemetry
@@ -193,7 +195,7 @@ def demonstrate_basic_export() -> int:
         print(f"   Assets created: {summary['assets_created']}")
         print(f"   Assets failed: {summary['assets_failed']}")
         print(f"   Total cost tracked: ${summary['total_cost']:.2f}")
-        avg_time = summary['average_export_time_ms']
+        avg_time = summary["average_export_time_ms"]
         print(f"   Average export time: {avg_time:.2f}ms")
         print()
 
@@ -212,6 +214,7 @@ def demonstrate_basic_export() -> int:
     except Exception as e:
         print(f"\u2717 Error during export: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -250,7 +253,9 @@ def main() -> int:
 
     # Check prerequisites
     if not check_prerequisites():
-        print("\u2717 Prerequisites not met. Please install dependencies and set credentials.")
+        print(
+            "\u2717 Prerequisites not met. Please install dependencies and set credentials."
+        )
         return 1
 
     # Run basic export demonstration

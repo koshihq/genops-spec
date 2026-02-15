@@ -23,7 +23,7 @@ class TestFrameworkInfo:
             import_path="test.framework",
             version="1.0.0",
             framework_type="testing",
-            available=True
+            available=True,
         )
 
         assert info.name == "test_framework"
@@ -72,7 +72,7 @@ class TestFrameworkDetector:
         assert "training" in types
         assert "inference" in types
 
-    @patch('importlib.import_module')
+    @patch("importlib.import_module")
     def test_detect_framework_available(self, mock_import):
         """Test detecting an available framework."""
         # Mock successful import
@@ -83,7 +83,7 @@ class TestFrameworkDetector:
         config = {
             "import_path": "test_framework",
             "version_attr": "__version__",
-            "framework_type": "testing"
+            "framework_type": "testing",
         }
 
         result = self.detector.detect_framework("test_framework", config)
@@ -94,7 +94,7 @@ class TestFrameworkDetector:
         assert result.framework_type == "testing"
         assert result.module_obj is mock_module
 
-    @patch('importlib.import_module')
+    @patch("importlib.import_module")
     def test_detect_framework_unavailable(self, mock_import):
         """Test detecting an unavailable framework."""
         # Mock import error
@@ -103,7 +103,7 @@ class TestFrameworkDetector:
         config = {
             "import_path": "missing_framework",
             "version_attr": "__version__",
-            "framework_type": "testing"
+            "framework_type": "testing",
         }
 
         result = self.detector.detect_framework("missing_framework", config)
@@ -113,7 +113,7 @@ class TestFrameworkDetector:
         assert result.version is None
         assert result.module_obj is None
 
-    @patch('importlib.import_module')
+    @patch("importlib.import_module")
     def test_detect_framework_no_version(self, mock_import):
         """Test detecting framework without version attribute."""
         # Mock module without version
@@ -124,7 +124,7 @@ class TestFrameworkDetector:
         config = {
             "import_path": "no_version_framework",
             "version_attr": "__version__",
-            "framework_type": "testing"
+            "framework_type": "testing",
         }
 
         result = self.detector.detect_framework("no_version_framework", config)
@@ -132,11 +132,13 @@ class TestFrameworkDetector:
         assert result.available is True
         assert result.version is None
 
-    @patch('genops.providers.base.detector.FrameworkDetector.detect_framework')
+    @patch("genops.providers.base.detector.FrameworkDetector.detect_framework")
     def test_detect_all_frameworks(self, mock_detect):
         """Test detecting all frameworks."""
         # Mock detection results
-        mock_detect.return_value = FrameworkInfo("test", "test", "1.0.0", "testing", True)
+        mock_detect.return_value = FrameworkInfo(
+            "test", "test", "1.0.0", "testing", True
+        )
 
         results = self.detector.detect_all_frameworks()
 
@@ -147,8 +149,10 @@ class TestFrameworkDetector:
 
     def test_detect_all_frameworks_caching(self):
         """Test that framework detection results are cached."""
-        with patch.object(self.detector, 'detect_framework') as mock_detect:
-            mock_detect.return_value = FrameworkInfo("test", "test", "1.0.0", "testing", True)
+        with patch.object(self.detector, "detect_framework") as mock_detect:
+            mock_detect.return_value = FrameworkInfo(
+                "test", "test", "1.0.0", "testing", True
+            )
 
             # First call
             results1 = self.detector.detect_all_frameworks()
@@ -162,8 +166,10 @@ class TestFrameworkDetector:
 
     def test_detect_all_frameworks_force_refresh(self):
         """Test forcing refresh of framework detection."""
-        with patch.object(self.detector, 'detect_framework') as mock_detect:
-            mock_detect.return_value = FrameworkInfo("test", "test", "1.0.0", "testing", True)
+        with patch.object(self.detector, "detect_framework") as mock_detect:
+            mock_detect.return_value = FrameworkInfo(
+                "test", "test", "1.0.0", "testing", True
+            )
 
             # First call
             self.detector.detect_all_frameworks()
@@ -174,13 +180,15 @@ class TestFrameworkDetector:
 
             assert mock_detect.call_count == first_call_count * 2
 
-    @patch('genops.providers.base.detector.FrameworkDetector.detect_all_frameworks')
+    @patch("genops.providers.base.detector.FrameworkDetector.detect_all_frameworks")
     def test_get_available_frameworks(self, mock_detect_all):
         """Test filtering available frameworks."""
         # Mock mixed available/unavailable frameworks
         mock_detect_all.return_value = {
             "available1": FrameworkInfo("available1", "path1", "1.0.0", "type1", True),
-            "unavailable1": FrameworkInfo("unavailable1", "path2", None, "type1", False),
+            "unavailable1": FrameworkInfo(
+                "unavailable1", "path2", None, "type1", False
+            ),
             "available2": FrameworkInfo("available2", "path3", "2.0.0", "type2", True),
         }
 
@@ -191,7 +199,7 @@ class TestFrameworkDetector:
         assert any(info.name == "available1" for info in available)
         assert any(info.name == "available2" for info in available)
 
-    @patch('genops.providers.base.detector.FrameworkDetector.detect_all_frameworks')
+    @patch("genops.providers.base.detector.FrameworkDetector.detect_all_frameworks")
     def test_get_available_frameworks_filtered_by_type(self, mock_detect_all):
         """Test filtering available frameworks by type."""
         mock_detect_all.return_value = {
@@ -205,7 +213,7 @@ class TestFrameworkDetector:
         assert len(type1_frameworks) == 2
         assert all(info.framework_type == "type1" for info in type1_frameworks)
 
-    @patch('genops.providers.base.detector.FrameworkDetector.detect_all_frameworks')
+    @patch("genops.providers.base.detector.FrameworkDetector.detect_all_frameworks")
     def test_is_framework_available(self, mock_detect_all):
         """Test checking if specific framework is available."""
         mock_detect_all.return_value = {
@@ -217,7 +225,7 @@ class TestFrameworkDetector:
         assert self.detector.is_framework_available("unavailable") is False
         assert self.detector.is_framework_available("nonexistent") is False
 
-    @patch('genops.providers.base.detector.FrameworkDetector.detect_all_frameworks')
+    @patch("genops.providers.base.detector.FrameworkDetector.detect_all_frameworks")
     def test_get_framework_version(self, mock_detect_all):
         """Test getting framework version."""
         mock_detect_all.return_value = {
@@ -240,7 +248,7 @@ class TestFrameworkDetector:
             import_path="custom.framework",
             framework_type="custom",
             version_attr="__version__",
-            description="Custom test framework"
+            description="Custom test framework",
         )
 
         assert len(self.detector.FRAMEWORKS) == initial_count + 1
@@ -254,8 +262,10 @@ class TestFrameworkDetector:
     def test_add_custom_framework_clears_cache(self):
         """Test that adding custom framework clears detection cache."""
         # First populate cache
-        with patch.object(self.detector, 'detect_framework') as mock_detect:
-            mock_detect.return_value = FrameworkInfo("test", "test", "1.0.0", "testing", True)
+        with patch.object(self.detector, "detect_framework") as mock_detect:
+            mock_detect.return_value = FrameworkInfo(
+                "test", "test", "1.0.0", "testing", True
+            )
             self.detector.detect_all_frameworks()
 
         # Cache should be populated
@@ -279,7 +289,7 @@ class TestGlobalFunctions:
         assert detector1 is detector2
         assert isinstance(detector1, FrameworkDetector)
 
-    @patch('genops.providers.base.detector.get_framework_detector')
+    @patch("genops.providers.base.detector.get_framework_detector")
     def test_detect_frameworks_convenience(self, mock_get_detector):
         """Test detect_frameworks convenience function."""
         mock_detector = Mock()
@@ -291,7 +301,7 @@ class TestGlobalFunctions:
         assert result == {"test": "result"}
         mock_detector.detect_all_frameworks.assert_called_once()
 
-    @patch('genops.providers.base.detector.get_framework_detector')
+    @patch("genops.providers.base.detector.get_framework_detector")
     def test_is_framework_available_convenience(self, mock_get_detector):
         """Test is_framework_available convenience function."""
         mock_detector = Mock()
@@ -312,14 +322,14 @@ def sample_frameworks():
             "import_path": "langchain",
             "version_attr": "__version__",
             "framework_type": "orchestration",
-            "description": "LLM application orchestration framework"
+            "description": "LLM application orchestration framework",
         },
         "torch": {
             "import_path": "torch",
             "version_attr": "__version__",
             "framework_type": "training",
-            "description": "PyTorch deep learning framework"
-        }
+            "description": "PyTorch deep learning framework",
+        },
     }
 
 
@@ -332,8 +342,16 @@ class TestFrameworkDetectorIntegration:
 
         # Try to detect some common modules that should be available
         test_modules = {
-            "os": {"import_path": "os", "version_attr": "__version__", "framework_type": "builtin"},
-            "sys": {"import_path": "sys", "version_attr": "version", "framework_type": "builtin"},
+            "os": {
+                "import_path": "os",
+                "version_attr": "__version__",
+                "framework_type": "builtin",
+            },
+            "sys": {
+                "import_path": "sys",
+                "version_attr": "version",
+                "framework_type": "builtin",
+            },
         }
 
         for name, config in test_modules.items():
@@ -348,7 +366,7 @@ class TestFrameworkDetectorIntegration:
         config = {
             "import_path": "definitely_does_not_exist_module_12345",
             "version_attr": "__version__",
-            "framework_type": "nonexistent"
+            "framework_type": "nonexistent",
         }
 
         result = detector.detect_framework("nonexistent", config)

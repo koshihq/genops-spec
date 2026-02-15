@@ -23,7 +23,7 @@ def test_basic_validation():
     good_attrs = {
         "team": "platform-engineering",
         "environment": "production",
-        "customer_id": "enterprise-123"
+        "customer_id": "enterprise-123",
     }
 
     result = validate_tags(good_attrs)
@@ -33,9 +33,9 @@ def test_basic_validation():
     # Test invalid attributes
     bad_attrs = {
         "team": "Invalid Team Name",  # Wrong format
-        "environment": "invalid",     # Not in enum
-        "customer_id": "bad@id",      # Invalid characters
-        "user_id": ""                 # Empty string
+        "environment": "invalid",  # Not in enum
+        "customer_id": "bad@id",  # Invalid characters
+        "user_id": "",  # Empty string
     }
 
     result = validate_tags(bad_attrs)
@@ -51,29 +51,35 @@ def test_severity_levels():
     validator.rules.clear()
 
     # Add rules with different severities
-    validator.add_rule(ValidationRule(
-        name="test_warning",
-        attribute="test_attr",
-        rule_type="required",
-        severity=ValidationSeverity.WARNING,
-        description="Test warning"
-    ))
+    validator.add_rule(
+        ValidationRule(
+            name="test_warning",
+            attribute="test_attr",
+            rule_type="required",
+            severity=ValidationSeverity.WARNING,
+            description="Test warning",
+        )
+    )
 
-    validator.add_rule(ValidationRule(
-        name="test_error",
-        attribute="test_attr2",
-        rule_type="required",
-        severity=ValidationSeverity.ERROR,
-        description="Test error"
-    ))
+    validator.add_rule(
+        ValidationRule(
+            name="test_error",
+            attribute="test_attr2",
+            rule_type="required",
+            severity=ValidationSeverity.ERROR,
+            description="Test error",
+        )
+    )
 
-    validator.add_rule(ValidationRule(
-        name="test_block",
-        attribute="test_attr3",
-        rule_type="required",
-        severity=ValidationSeverity.BLOCK,
-        description="Test block"
-    ))
+    validator.add_rule(
+        ValidationRule(
+            name="test_block",
+            attribute="test_attr3",
+            rule_type="required",
+            severity=ValidationSeverity.BLOCK,
+            description="Test block",
+        )
+    )
 
     # Test all severity levels at once
     result = validate_tags({})
@@ -107,30 +113,36 @@ def test_custom_rules():
     validator.rules.clear()
 
     # Test pattern rule
-    validator.add_rule(create_pattern_rule(
-        "api_key",
-        r"^ak_[a-z]+_[a-zA-Z0-9]{10}$",
-        "API key format validation"
-    ))
+    validator.add_rule(
+        create_pattern_rule(
+            "api_key", r"^ak_[a-z]+_[a-zA-Z0-9]{10}$", "API key format validation"
+        )
+    )
 
     valid_key = {"api_key": "ak_prod_abc1234567"}
     invalid_key = {"api_key": "invalid-key"}
 
     assert validate_tags(valid_key).valid
-    assert len(validate_tags(invalid_key).violations + validate_tags(invalid_key).warnings) > 0
+    assert (
+        len(validate_tags(invalid_key).violations + validate_tags(invalid_key).warnings)
+        > 0
+    )
     print("   ✅ Pattern validation works")
 
     # Test enum rule
-    validator.add_rule(create_enum_rule(
-        "tier",
-        {"free", "pro", "enterprise"}
-    ))
+    validator.add_rule(create_enum_rule("tier", {"free", "pro", "enterprise"}))
 
     valid_tier = {"tier": "enterprise"}
     invalid_tier = {"tier": "premium"}
 
     assert validate_tags(valid_tier).valid
-    assert len(validate_tags(invalid_tier).violations + validate_tags(invalid_tier).warnings) > 0
+    assert (
+        len(
+            validate_tags(invalid_tier).violations
+            + validate_tags(invalid_tier).warnings
+        )
+        > 0
+    )
     print("   ✅ Enum validation works")
 
 

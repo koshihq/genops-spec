@@ -28,6 +28,7 @@ import genops
 # Optional JWT integration
 try:
     import jwt as pyjwt
+
     HAS_JWT = True
 except ImportError:
     HAS_JWT = False
@@ -52,7 +53,7 @@ class GenOpsFastAPIMiddleware:
         enable_performance_tracking: bool = True,
         jwt_secret: Optional[str] = None,
         debug: bool = False,
-        **app_defaults
+        **app_defaults,
     ):
         self.app = app
         self.customer_header = customer_header
@@ -66,10 +67,10 @@ class GenOpsFastAPIMiddleware:
 
         # Set up global defaults
         defaults = {
-            'service': app.title.lower().replace(' ', '-'),
-            'environment': environment,
-            'framework': 'fastapi',
-            **app_defaults
+            "service": app.title.lower().replace(" ", "-"),
+            "environment": environment,
+            "framework": "fastapi",
+            **app_defaults,
         }
         genops.set_default_attributes(**defaults)
 
@@ -102,7 +103,7 @@ class GenOpsFastAPIMiddleware:
                 genops.set_context(
                     error_type=type(e).__name__,
                     error_message=str(e),
-                    error_occurred=True
+                    error_occurred=True,
                 )
                 raise
 
@@ -118,9 +119,9 @@ class GenOpsFastAPIMiddleware:
 
         # Generate or extract request ID
         request_id = (
-            request.headers.get(self.trace_header) or
-            request.headers.get("x-request-id") or
-            str(uuid.uuid4())
+            request.headers.get(self.trace_header)
+            or request.headers.get("x-request-id")
+            or str(uuid.uuid4())
         )
 
         # Extract attribution information
@@ -130,27 +131,27 @@ class GenOpsFastAPIMiddleware:
 
         # Build context
         context_attrs = {
-            'request_id': request_id,
-            'method': request.method,
-            'path': request.url.path,
-            'user_agent': request.headers.get('user-agent'),
-            'client_ip': self._get_client_ip(request),
-            'start_time': start_time,
+            "request_id": request_id,
+            "method": request.method,
+            "path": request.url.path,
+            "user_agent": request.headers.get("user-agent"),
+            "client_ip": self._get_client_ip(request),
+            "start_time": start_time,
         }
 
         # Add user information
         if user_id:
-            context_attrs['user_id'] = user_id
+            context_attrs["user_id"] = user_id
         if user_info:
             context_attrs.update(user_info)
 
         # Add customer/tenant information
         if customer_id:
-            context_attrs['customer_id'] = customer_id
+            context_attrs["customer_id"] = customer_id
 
         tenant_id = request.headers.get(self.tenant_header)
         if tenant_id:
-            context_attrs['tenant_id'] = tenant_id
+            context_attrs["tenant_id"] = tenant_id
 
         # Set the context
         genops.set_context(**context_attrs)
@@ -169,11 +170,11 @@ class GenOpsFastAPIMiddleware:
         # Try JWT token
         if HAS_JWT and self.jwt_secret:
             try:
-                auth_header = request.headers.get('authorization')
-                if auth_header and auth_header.startswith('Bearer '):
-                    token = auth_header.split(' ')[1]
-                    payload = pyjwt.decode(token, self.jwt_secret, algorithms=['HS256'])
-                    return payload.get('sub') or payload.get('user_id')
+                auth_header = request.headers.get("authorization")
+                if auth_header and auth_header.startswith("Bearer "):
+                    token = auth_header.split(" ")[1]
+                    payload = pyjwt.decode(token, self.jwt_secret, algorithms=["HS256"])
+                    return payload.get("sub") or payload.get("user_id")
             except Exception:
                 pass
 
@@ -190,20 +191,20 @@ class GenOpsFastAPIMiddleware:
         # Try JWT token for additional claims
         if HAS_JWT and self.jwt_secret:
             try:
-                auth_header = request.headers.get('authorization')
-                if auth_header and auth_header.startswith('Bearer '):
-                    token = auth_header.split(' ')[1]
-                    payload = pyjwt.decode(token, self.jwt_secret, algorithms=['HS256'])
+                auth_header = request.headers.get("authorization")
+                if auth_header and auth_header.startswith("Bearer "):
+                    token = auth_header.split(" ")[1]
+                    payload = pyjwt.decode(token, self.jwt_secret, algorithms=["HS256"])
 
                     # Extract common claims
-                    if 'role' in payload:
-                        user_info['user_role'] = payload['role']
-                    if 'tier' in payload:
-                        user_info['user_tier'] = payload['tier']
-                    if 'customer_id' in payload:
-                        user_info['jwt_customer_id'] = payload['customer_id']
-                    if 'email' in payload:
-                        user_info['user_email'] = payload['email']
+                    if "role" in payload:
+                        user_info["user_role"] = payload["role"]
+                    if "tier" in payload:
+                        user_info["user_tier"] = payload["tier"]
+                    if "customer_id" in payload:
+                        user_info["jwt_customer_id"] = payload["customer_id"]
+                    if "email" in payload:
+                        user_info["user_email"] = payload["email"]
 
             except Exception:
                 pass
@@ -213,11 +214,11 @@ class GenOpsFastAPIMiddleware:
     def _get_client_ip(self, request: Request) -> Optional[str]:
         """Extract client IP address."""
         # Check for forwarded headers first
-        forwarded_for = request.headers.get('x-forwarded-for')
+        forwarded_for = request.headers.get("x-forwarded-for")
         if forwarded_for:
-            return forwarded_for.split(',')[0].strip()
+            return forwarded_for.split(",")[0].strip()
 
-        real_ip = request.headers.get('x-real-ip')
+        real_ip = request.headers.get("x-real-ip")
         if real_ip:
             return real_ip
 
@@ -248,7 +249,9 @@ async def get_effective_attributes() -> dict[str, Any]:
     return genops.get_effective_attributes()
 
 
-async def require_customer_id(customer_id: str = Header(..., alias="x-customer-id")) -> str:
+async def require_customer_id(
+    customer_id: str = Header(..., alias="x-customer-id"),
+) -> str:
     """Dependency to require customer ID header."""
     return customer_id
 
@@ -271,24 +274,22 @@ class JWTBearer(HTTPBearer):
         if not HAS_JWT:
             raise HTTPException(
                 status_code=500,
-                detail="JWT support not available. Install with: pip install PyJWT"
+                detail="JWT support not available. Install with: pip install PyJWT",
             )
 
         try:
             payload = pyjwt.decode(
-                credentials.credentials,
-                self.jwt_secret,
-                algorithms=['HS256']
+                credentials.credentials, self.jwt_secret, algorithms=["HS256"]
             )
 
             # Add JWT claims to attribution context
             jwt_context = {}
-            if 'sub' in payload:
-                jwt_context['jwt_user_id'] = payload['sub']
-            if 'role' in payload:
-                jwt_context['jwt_role'] = payload['role']
-            if 'customer_id' in payload:
-                jwt_context['jwt_customer_id'] = payload['customer_id']
+            if "sub" in payload:
+                jwt_context["jwt_user_id"] = payload["sub"]
+            if "role" in payload:
+                jwt_context["jwt_role"] = payload["role"]
+            if "customer_id" in payload:
+                jwt_context["jwt_customer_id"] = payload["customer_id"]
 
             genops.set_context(**jwt_context)
 
@@ -296,14 +297,14 @@ class JWTBearer(HTTPBearer):
 
         except pyjwt.InvalidTokenError as e:
             raise HTTPException(
-                status_code=401,
-                detail=f"Invalid token: {str(e)}"
-            )
+                status_code=401, detail=f"Invalid token: {str(e)}"
+            ) from e
 
 
 # Response models
 class AttributionResponse(BaseModel):
     """Response model for attribution context."""
+
     defaults: dict[str, Any]
     context: dict[str, Any]
     effective: dict[str, Any]
@@ -311,6 +312,7 @@ class AttributionResponse(BaseModel):
 
 class AIOperationRequest(BaseModel):
     """Request model for AI operations."""
+
     operation_name: str
     input_text: str
     feature: Optional[str] = None
@@ -319,6 +321,7 @@ class AIOperationRequest(BaseModel):
 
 class AIOperationResponse(BaseModel):
     """Response model for AI operations."""
+
     result: str
     attribution: dict[str, Any]
     operation_metadata: dict[str, Any]
@@ -330,7 +333,7 @@ def create_example_app():
     app = FastAPI(
         title="GenOps AI FastAPI Example",
         description="FastAPI application with automatic GenOps AI attribution",
-        version="1.0.0"
+        version="1.0.0",
     )
 
     # Initialize GenOps middleware
@@ -340,7 +343,7 @@ def create_example_app():
         team="backend-engineering",
         project="ai-api-fastapi",
         debug=True,
-        jwt_secret="demo-secret-key"  # In production, use secure secret
+        jwt_secret="demo-secret-key",  # In production, use secure secret
     )
 
     # Set up JWT authentication (optional)
@@ -352,7 +355,7 @@ def create_example_app():
         context = genops.get_context()
         return {
             "message": "FastAPI + GenOps AI Attribution",
-            "attribution_context": context
+            "attribution_context": context,
         }
 
     @app.get("/attribution", response_model=AttributionResponse)
@@ -361,35 +364,35 @@ def create_example_app():
         return AttributionResponse(
             defaults=genops.get_default_attributes(),
             context=genops.get_context(),
-            effective=genops.get_effective_attributes()
+            effective=genops.get_effective_attributes(),
         )
 
     @app.get("/protected")
     async def protected_endpoint(
         customer_id: str = Depends(require_customer_id),
-        context: dict[str, Any] = Depends(get_attribution_context)
+        context: dict[str, Any] = Depends(get_attribution_context),
     ):
         """Protected endpoint requiring customer ID header."""
         return {
             "message": "Protected endpoint accessed",
             "customer_id": customer_id,
-            "context": context
+            "context": context,
         }
 
     @app.post("/ai-operation", response_model=AIOperationResponse)
     async def ai_operation(
         request_data: AIOperationRequest,
-        effective_attrs: dict[str, Any] = Depends(get_effective_attributes)
+        effective_attrs: dict[str, Any] = Depends(get_effective_attributes),
     ):
         """AI operation endpoint with full attribution."""
 
         # Add operation-specific context
         operation_context = {
-            'operation_name': request_data.operation_name,
-            'operation_type': 'ai.inference',
-            'feature': request_data.feature or 'general',
-            'priority': request_data.priority,
-            'input_length': len(request_data.input_text)
+            "operation_name": request_data.operation_name,
+            "operation_type": "ai.inference",
+            "feature": request_data.feature or "general",
+            "priority": request_data.priority,
+            "input_length": len(request_data.input_text),
         }
 
         # Merge with effective attributes
@@ -402,10 +405,10 @@ def create_example_app():
             result=result,
             attribution=final_attrs,
             operation_metadata={
-                'processing_time': '45ms',
-                'model': 'example-model',
-                'tokens_used': 150
-            }
+                "processing_time": "45ms",
+                "model": "example-model",
+                "tokens_used": 150,
+            },
         )
 
     @app.post("/login")
@@ -414,37 +417,33 @@ def create_example_app():
         if not HAS_JWT:
             raise HTTPException(
                 status_code=500,
-                detail="JWT support not available. Install with: pip install PyJWT"
+                detail="JWT support not available. Install with: pip install PyJWT",
             )
 
         payload = {
-            'sub': user_id,
-            'role': 'user',
-            'tier': 'premium',
-            'exp': int(time.time()) + 3600,  # 1 hour expiry
+            "sub": user_id,
+            "role": "user",
+            "tier": "premium",
+            "exp": int(time.time()) + 3600,  # 1 hour expiry
         }
 
         if customer_id:
-            payload['customer_id'] = customer_id
+            payload["customer_id"] = customer_id
 
-        token = pyjwt.encode(payload, "demo-secret-key", algorithm='HS256')
+        token = pyjwt.encode(payload, "demo-secret-key", algorithm="HS256")
 
-        return {
-            'access_token': token,
-            'token_type': 'bearer',
-            'expires_in': 3600
-        }
+        return {"access_token": token, "token_type": "bearer", "expires_in": 3600}
 
     @app.get("/protected-jwt")
     async def protected_jwt_endpoint(
         jwt_payload: dict[str, Any] = Depends(jwt_bearer),
-        context: dict[str, Any] = Depends(get_attribution_context)
+        context: dict[str, Any] = Depends(get_attribution_context),
     ):
         """JWT protected endpoint with automatic attribution."""
         return {
             "message": "JWT protected endpoint accessed",
             "jwt_payload": jwt_payload,
-            "attribution_context": context
+            "attribution_context": context,
         }
 
     @app.get("/health")
@@ -475,7 +474,9 @@ if __name__ == "__main__":
     print("Try these requests:")
     print("  curl http://localhost:8000/")
     print("  curl -H 'X-Customer-ID: enterprise-123' http://localhost:8000/protected")
-    print("  curl -X POST http://localhost:8000/login?user_id=demo_user&customer_id=demo_customer")
+    print(
+        "  curl -X POST http://localhost:8000/login?user_id=demo_user&customer_id=demo_customer"
+    )
     print()
 
     uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)

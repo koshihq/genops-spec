@@ -19,13 +19,9 @@ Prerequisites:
 import os
 from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Dict, List
 from datetime import datetime
 
-from genops.providers.anyscale import (
-    instrument_anyscale,
-    calculate_completion_cost
-)
+from genops.providers.anyscale import calculate_completion_cost, instrument_anyscale
 
 # Check API key
 if not os.getenv("ANYSCALE_API_KEY"):
@@ -42,11 +38,11 @@ print("=" * 70 + "\n")
 class CostTracker:
     """Track costs across multiple dimensions."""
 
-    by_customer: Dict[str, float] = field(default_factory=lambda: defaultdict(float))
-    by_team: Dict[str, float] = field(default_factory=lambda: defaultdict(float))
-    by_project: Dict[str, float] = field(default_factory=lambda: defaultdict(float))
-    by_feature: Dict[str, float] = field(default_factory=lambda: defaultdict(float))
-    by_model: Dict[str, float] = field(default_factory=lambda: defaultdict(float))
+    by_customer: dict[str, float] = field(default_factory=lambda: defaultdict(float))
+    by_team: dict[str, float] = field(default_factory=lambda: defaultdict(float))
+    by_project: dict[str, float] = field(default_factory=lambda: defaultdict(float))
+    by_feature: dict[str, float] = field(default_factory=lambda: defaultdict(float))
+    by_model: dict[str, float] = field(default_factory=lambda: defaultdict(float))
 
     total_requests: int = 0
     total_cost: float = 0.0
@@ -58,7 +54,7 @@ class CostTracker:
         team: str = None,
         project: str = None,
         feature: str = None,
-        model: str = None
+        model: str = None,
     ):
         """Record cost with all attribution dimensions."""
         self.total_requests += 1
@@ -80,18 +76,16 @@ class CostTracker:
         print("=" * 70)
         print(f"COST ATTRIBUTION REPORT - {datetime.now().strftime('%Y-%m-%d %H:%M')}")
         print("=" * 70)
-        print(f"\n📊 OVERALL SUMMARY:")
+        print("\n📊 OVERALL SUMMARY:")
         print(f"   Total Requests: {self.total_requests}")
         print(f"   Total Cost: ${self.total_cost:.6f}")
-        print(f"   Avg Cost/Request: ${self.total_cost/self.total_requests:.8f}")
+        print(f"   Avg Cost/Request: ${self.total_cost / self.total_requests:.8f}")
 
         # By Customer
         if self.by_customer:
-            print(f"\n💼 BY CUSTOMER:")
+            print("\n💼 BY CUSTOMER:")
             sorted_customers = sorted(
-                self.by_customer.items(),
-                key=lambda x: x[1],
-                reverse=True
+                self.by_customer.items(), key=lambda x: x[1], reverse=True
             )
             for customer, cost in sorted_customers:
                 pct = (cost / self.total_cost) * 100
@@ -99,11 +93,9 @@ class CostTracker:
 
         # By Team
         if self.by_team:
-            print(f"\n👥 BY TEAM:")
+            print("\n👥 BY TEAM:")
             sorted_teams = sorted(
-                self.by_team.items(),
-                key=lambda x: x[1],
-                reverse=True
+                self.by_team.items(), key=lambda x: x[1], reverse=True
             )
             for team, cost in sorted_teams:
                 pct = (cost / self.total_cost) * 100
@@ -111,11 +103,9 @@ class CostTracker:
 
         # By Project
         if self.by_project:
-            print(f"\n📁 BY PROJECT:")
+            print("\n📁 BY PROJECT:")
             sorted_projects = sorted(
-                self.by_project.items(),
-                key=lambda x: x[1],
-                reverse=True
+                self.by_project.items(), key=lambda x: x[1], reverse=True
             )
             for project, cost in sorted_projects:
                 pct = (cost / self.total_cost) * 100
@@ -123,11 +113,9 @@ class CostTracker:
 
         # By Feature
         if self.by_feature:
-            print(f"\n🎯 BY FEATURE:")
+            print("\n🎯 BY FEATURE:")
             sorted_features = sorted(
-                self.by_feature.items(),
-                key=lambda x: x[1],
-                reverse=True
+                self.by_feature.items(), key=lambda x: x[1], reverse=True
             )
             for feature, cost in sorted_features:
                 pct = (cost / self.total_cost) * 100
@@ -135,11 +123,9 @@ class CostTracker:
 
         # By Model
         if self.by_model:
-            print(f"\n🤖 BY MODEL:")
+            print("\n🤖 BY MODEL:")
             sorted_models = sorted(
-                self.by_model.items(),
-                key=lambda x: x[1],
-                reverse=True
+                self.by_model.items(), key=lambda x: x[1], reverse=True
             )
             for model, cost in sorted_models:
                 pct = (cost / self.total_cost) * 100
@@ -153,9 +139,7 @@ cost_tracker = CostTracker()
 
 # Create SaaS platform adapter
 adapter = instrument_anyscale(
-    team="saas-platform",
-    project="ai-features",
-    environment="production"
+    team="saas-platform", project="ai-features", environment="production"
 )
 
 print("Simulating SaaS platform with multiple customers...\n")
@@ -176,19 +160,22 @@ for i in range(5):
     response = adapter.completion_create(
         model="meta-llama/Llama-2-70b-chat-hf",  # Premium model
         messages=[
-            {"role": "user", "content": f"Enterprise query {i+1}: Analyze quarterly results"}
+            {
+                "role": "user",
+                "content": f"Enterprise query {i + 1}: Analyze quarterly results",
+            }
         ],
         max_tokens=200,
         customer_id=enterprise_customer,
         feature="chat-completion",
-        cost_center="Enterprise-Sales"
+        cost_center="Enterprise-Sales",
     )
 
-    usage = response['usage']
+    usage = response["usage"]
     cost = calculate_completion_cost(
         model="meta-llama/Llama-2-70b-chat-hf",
-        input_tokens=usage['prompt_tokens'],
-        output_tokens=usage['completion_tokens']
+        input_tokens=usage["prompt_tokens"],
+        output_tokens=usage["completion_tokens"],
     )
 
     cost_tracker.record_cost(
@@ -197,29 +184,29 @@ for i in range(5):
         team="saas-platform",
         project="ai-features",
         feature="chat-completion",
-        model="meta-llama/Llama-2-70b-chat-hf"
+        model="meta-llama/Llama-2-70b-chat-hf",
     )
 
-    print(f"   ✅ Chat request {i+1}: ${cost:.8f}")
+    print(f"   ✅ Chat request {i + 1}: ${cost:.8f}")
 
 # Document analysis
 for i in range(3):
     response = adapter.completion_create(
         model="meta-llama/Llama-2-70b-chat-hf",
         messages=[
-            {"role": "user", "content": f"Analyze contract document section {i+1}"}
+            {"role": "user", "content": f"Analyze contract document section {i + 1}"}
         ],
         max_tokens=500,
         customer_id=enterprise_customer,
         feature="document-analysis",
-        cost_center="Enterprise-Sales"
+        cost_center="Enterprise-Sales",
     )
 
-    usage = response['usage']
+    usage = response["usage"]
     cost = calculate_completion_cost(
         model="meta-llama/Llama-2-70b-chat-hf",
-        input_tokens=usage['prompt_tokens'],
-        output_tokens=usage['completion_tokens']
+        input_tokens=usage["prompt_tokens"],
+        output_tokens=usage["completion_tokens"],
     )
 
     cost_tracker.record_cost(
@@ -228,10 +215,10 @@ for i in range(3):
         team="saas-platform",
         project="ai-features",
         feature="document-analysis",
-        model="meta-llama/Llama-2-70b-chat-hf"
+        model="meta-llama/Llama-2-70b-chat-hf",
     )
 
-    print(f"   ✅ Document analysis {i+1}: ${cost:.8f}")
+    print(f"   ✅ Document analysis {i + 1}: ${cost:.8f}")
 
 print()
 
@@ -250,20 +237,18 @@ print("Features: Basic chat, Classification\n")
 for i in range(10):
     response = adapter.completion_create(
         model="meta-llama/Llama-2-7b-chat-hf",  # Budget model
-        messages=[
-            {"role": "user", "content": f"Simple query {i+1}"}
-        ],
+        messages=[{"role": "user", "content": f"Simple query {i + 1}"}],
         max_tokens=100,
         customer_id=startup_customer,
         feature="basic-chat",
-        cost_center="Self-Serve"
+        cost_center="Self-Serve",
     )
 
-    usage = response['usage']
+    usage = response["usage"]
     cost = calculate_completion_cost(
         model="meta-llama/Llama-2-7b-chat-hf",
-        input_tokens=usage['prompt_tokens'],
-        output_tokens=usage['completion_tokens']
+        input_tokens=usage["prompt_tokens"],
+        output_tokens=usage["completion_tokens"],
     )
 
     cost_tracker.record_cost(
@@ -272,10 +257,10 @@ for i in range(10):
         team="saas-platform",
         project="ai-features",
         feature="basic-chat",
-        model="meta-llama/Llama-2-7b-chat-hf"
+        model="meta-llama/Llama-2-7b-chat-hf",
     )
 
-    print(f"   ✅ Chat request {i+1}: ${cost:.8f}")
+    print(f"   ✅ Chat request {i + 1}: ${cost:.8f}")
 
 print()
 
@@ -301,20 +286,18 @@ for feature, model, count in features_and_models:
     for i in range(count):
         response = adapter.completion_create(
             model=model,
-            messages=[
-                {"role": "user", "content": f"{feature} request {i+1}"}
-            ],
+            messages=[{"role": "user", "content": f"{feature} request {i + 1}"}],
             max_tokens=150,
             customer_id=midmarket_customer,
             feature=feature,
-            cost_center="Mid-Market"
+            cost_center="Mid-Market",
         )
 
-        usage = response['usage']
+        usage = response["usage"]
         cost = calculate_completion_cost(
             model=model,
-            input_tokens=usage['prompt_tokens'],
-            output_tokens=usage['completion_tokens']
+            input_tokens=usage["prompt_tokens"],
+            output_tokens=usage["completion_tokens"],
         )
 
         cost_tracker.record_cost(
@@ -323,10 +306,10 @@ for feature, model, count in features_and_models:
             team="saas-platform",
             project="ai-features",
             feature=feature,
-            model=model
+            model=model,
         )
 
-        print(f"   ✅ {feature} {i+1}: ${cost:.8f}")
+        print(f"   ✅ {feature} {i + 1}: ${cost:.8f}")
 
 print()
 
@@ -344,20 +327,18 @@ print("Features: Testing, Validation\n")
 for i in range(5):
     response = adapter.completion_create(
         model="meta-llama/Llama-2-7b-chat-hf",
-        messages=[
-            {"role": "user", "content": f"Test case {i+1}"}
-        ],
+        messages=[{"role": "user", "content": f"Test case {i + 1}"}],
         max_tokens=50,
         customer_id=internal_team,
         feature="testing",
-        cost_center="Engineering"
+        cost_center="Engineering",
     )
 
-    usage = response['usage']
+    usage = response["usage"]
     cost = calculate_completion_cost(
         model="meta-llama/Llama-2-7b-chat-hf",
-        input_tokens=usage['prompt_tokens'],
-        output_tokens=usage['completion_tokens']
+        input_tokens=usage["prompt_tokens"],
+        output_tokens=usage["completion_tokens"],
     )
 
     cost_tracker.record_cost(
@@ -366,10 +347,10 @@ for i in range(5):
         team="saas-platform",
         project="ai-features",
         feature="testing",
-        model="meta-llama/Llama-2-7b-chat-hf"
+        model="meta-llama/Llama-2-7b-chat-hf",
     )
 
-    print(f"   ✅ Test request {i+1}: ${cost:.8f}")
+    print(f"   ✅ Test request {i + 1}: ${cost:.8f}")
 
 print()
 
@@ -387,14 +368,16 @@ monthly_cost = daily_cost * 30
 
 print(f"Current sample cost: ${cost_tracker.total_cost:.6f}")
 print(f"Requests in sample: {cost_tracker.total_requests}")
-print(f"\nMonthly projections (30 days):")
+print("\nMonthly projections (30 days):")
 print(f"   Total cost: ${monthly_cost:.2f}")
 print(f"   Total requests: {cost_tracker.total_requests * 30:,}")
 print()
 
 # Per-customer monthly projections
 print("Customer monthly billing estimates:")
-for customer, cost in sorted(cost_tracker.by_customer.items(), key=lambda x: x[1], reverse=True):
+for customer, cost in sorted(
+    cost_tracker.by_customer.items(), key=lambda x: x[1], reverse=True
+):
     monthly_customer_cost = cost * 30
     print(f"   {customer:30s} ${monthly_customer_cost:10.2f}/month")
 
@@ -418,7 +401,7 @@ if high_cost_customers:
     for customer, cost in high_cost_customers:
         pct = (cost / cost_tracker.total_cost) * 100
         print(f"   • {customer}: ${cost:.6f} ({pct:.1f}% of total)")
-        print(f"     Consider: Enterprise pricing tier, volume discounts")
+        print("     Consider: Enterprise pricing tier, volume discounts")
 
 # Feature-level optimization
 expensive_features = [
@@ -432,21 +415,23 @@ if expensive_features:
     for feature, cost in expensive_features:
         pct = (cost / cost_tracker.total_cost) * 100
         print(f"   • {feature}: ${cost:.6f} ({pct:.1f}% of total)")
-        print(f"     Consider: Model optimization, caching, rate limiting")
+        print("     Consider: Model optimization, caching, rate limiting")
 
 # Model optimization
 print("\n🤖 Model Usage Optimization:")
-for model, cost in sorted(cost_tracker.by_model.items(), key=lambda x: x[1], reverse=True):
+for model, cost in sorted(
+    cost_tracker.by_model.items(), key=lambda x: x[1], reverse=True
+):
     pct = (cost / cost_tracker.total_cost) * 100
     print(f"   • {model}")
     print(f"     Cost: ${cost:.6f} ({pct:.1f}% of total)")
 
     if "70b" in model.lower():
-        print(f"     💡 Consider: Use 13B or 7B models for simpler tasks")
+        print("     💡 Consider: Use 13B or 7B models for simpler tasks")
     elif "13b" in model.lower():
-        print(f"     ✅ Good balance of cost and capability")
+        print("     ✅ Good balance of cost and capability")
     elif "7b" in model.lower():
-        print(f"     ✅ Cost-optimized for simple tasks")
+        print("     ✅ Cost-optimized for simple tasks")
 
 print()
 print("=" * 70)

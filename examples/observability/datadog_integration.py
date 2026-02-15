@@ -20,7 +20,7 @@ import os
 import socket
 import time
 from dataclasses import dataclass, field
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 import genops
 
@@ -36,14 +36,18 @@ try:
     from opentelemetry.sdk.resources import Resource
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor
+
     HAS_OPENTELEMETRY = True
 except ImportError:
     HAS_OPENTELEMETRY = False
-    print("⚠️ OpenTelemetry not installed. Install with: pip install opentelemetry-api opentelemetry-sdk opentelemetry-exporter-otlp")
+    print(
+        "⚠️ OpenTelemetry not installed. Install with: pip install opentelemetry-api opentelemetry-sdk opentelemetry-exporter-otlp"
+    )
 
 # Optional Datadog-specific integrations
 try:
     from datadog import initialize, statsd
+
     HAS_DATADOG = True
 except ImportError:
     HAS_DATADOG = False
@@ -64,7 +68,7 @@ class DatadogGenOpsIntegration:
         datadog_site: str = "datadoghq.com",
         service_name: str = "genops-ai",
         environment: str = "production",
-        **config
+        **config,
     ):
         self.datadog_api_key = datadog_api_key or os.getenv("DATADOG_API_KEY")
         self.datadog_app_key = datadog_app_key or os.getenv("DATADOG_APP_KEY")
@@ -91,12 +95,14 @@ class DatadogGenOpsIntegration:
             return
 
         # Create resource with service information
-        resource = Resource.create({
-            "service.name": self.service_name,
-            "service.version": "1.0.0",
-            "deployment.environment": self.environment,
-            "genops.framework": "datadog-integration"
-        })
+        resource = Resource.create(
+            {
+                "service.name": self.service_name,
+                "service.version": "1.0.0",
+                "deployment.environment": self.environment,
+                "genops.framework": "datadog-integration",
+            }
+        )
 
         # Set up tracing
         trace_provider = TracerProvider(resource=resource)
@@ -108,18 +114,16 @@ class DatadogGenOpsIntegration:
 
             # Set up OTLP span exporter
             span_exporter = OTLPSpanExporter(
-                endpoint=f"{otlp_endpoint}/v1/traces",
-                headers=headers
+                endpoint=f"{otlp_endpoint}/v1/traces", headers=headers
             )
         else:
             # Console export for demo
             from opentelemetry.sdk.trace.export import ConsoleSpanExporter
+
             span_exporter = ConsoleSpanExporter()
 
         # Add span processor
-        trace_provider.add_span_processor(
-            BatchSpanProcessor(span_exporter)
-        )
+        trace_provider.add_span_processor(BatchSpanProcessor(span_exporter))
 
         # Set global tracer provider
         trace.set_tracer_provider(trace_provider)
@@ -127,23 +131,22 @@ class DatadogGenOpsIntegration:
         # Set up metrics
         if self.datadog_api_key:
             metric_exporter = OTLPMetricExporter(
-                endpoint=f"{otlp_endpoint}/v1/metrics",
-                headers=headers
+                endpoint=f"{otlp_endpoint}/v1/metrics", headers=headers
             )
         else:
             from opentelemetry.sdk.metrics.export import ConsoleMetricExporter
+
             metric_exporter = ConsoleMetricExporter()
 
         # Create metric reader
         metric_reader = PeriodicExportingMetricReader(
             exporter=metric_exporter,
-            export_interval_millis=10000  # 10 seconds
+            export_interval_millis=10000,  # 10 seconds
         )
 
         # Set up metrics provider
         metrics_provider = MeterProvider(
-            resource=resource,
-            metric_readers=[metric_reader]
+            resource=resource, metric_readers=[metric_reader]
         )
 
         # Set global metrics provider
@@ -163,16 +166,13 @@ class DatadogGenOpsIntegration:
         initialize(
             api_key=self.datadog_api_key,
             app_key=self.datadog_app_key,
-            host_name=f"{self.service_name}-{self.environment}"
+            host_name=f"{self.service_name}-{self.environment}",
         )
 
         print("✅ Datadog direct integration configured")
 
     def send_custom_metric(
-        self,
-        metric_name: str,
-        value: float,
-        tags: Optional[dict[str, str]] = None
+        self, metric_name: str, value: float, tags: Optional[dict[str, str]] = None
     ):
         """Send a custom metric to Datadog via StatsD."""
 
@@ -206,10 +206,10 @@ class DatadogGenOpsIntegration:
                         "requests": [
                             {
                                 "q": "sum:genops.cost.total{*} by {genops.team,genops.project}",
-                                "display_type": "line"
+                                "display_type": "line",
                             }
-                        ]
-                    }
+                        ],
+                    },
                 },
                 {
                     "id": "cost-by-customer",
@@ -219,10 +219,10 @@ class DatadogGenOpsIntegration:
                         "requests": [
                             {
                                 "q": "sum:genops.cost.total{*} by {genops.customer_id}",
-                                "limit": 20
+                                "limit": 20,
                             }
-                        ]
-                    }
+                        ],
+                    },
                 },
                 {
                     "id": "token-usage",
@@ -232,10 +232,10 @@ class DatadogGenOpsIntegration:
                         "requests": [
                             {
                                 "q": "sum:genops.tokens.total{*} by {genops.cost.provider}",
-                                "aggregator": "sum"
+                                "aggregator": "sum",
                             }
-                        ]
-                    }
+                        ],
+                    },
                 },
                 {
                     "id": "policy-violations",
@@ -245,10 +245,10 @@ class DatadogGenOpsIntegration:
                         "requests": [
                             {
                                 "q": "sum:genops.policy.violation{*} by {genops.policy.name}",
-                                "display_type": "bars"
+                                "display_type": "bars",
                             }
-                        ]
-                    }
+                        ],
+                    },
                 },
                 {
                     "id": "evaluation-scores",
@@ -259,8 +259,8 @@ class DatadogGenOpsIntegration:
                             {
                                 "q": "avg:genops.eval.safety{*} by {genops.team,genops.feature}",
                             }
-                        ]
-                    }
+                        ],
+                    },
                 },
                 {
                     "id": "cost-per-operation",
@@ -268,32 +268,25 @@ class DatadogGenOpsIntegration:
                         "title": "Average Cost per Operation",
                         "type": "query_value",
                         "requests": [
-                            {
-                                "q": "avg:genops.cost.total{*}",
-                                "aggregator": "avg"
-                            }
-                        ]
-                    }
-                }
+                            {"q": "avg:genops.cost.total{*}", "aggregator": "avg"}
+                        ],
+                    },
+                },
             ],
             "template_variables": [
-                {
-                    "name": "team",
-                    "prefix": "genops.team",
-                    "available_values": []
-                },
+                {"name": "team", "prefix": "genops.team", "available_values": []},
                 {
                     "name": "environment",
                     "prefix": "genops.environment",
-                    "available_values": ["production", "staging", "development"]
+                    "available_values": ["production", "staging", "development"],
                 },
                 {
                     "name": "customer_id",
                     "prefix": "genops.customer_id",
-                    "available_values": []
-                }
+                    "available_values": [],
+                },
             ],
-            "layout_type": "ordered"
+            "layout_type": "ordered",
         }
 
         return dashboard_config
@@ -311,13 +304,10 @@ class DatadogGenOpsIntegration:
                         "title": "Overall Compliance Score",
                         "type": "query_value",
                         "requests": [
-                            {
-                                "q": "avg:genops.eval.safety{*}",
-                                "aggregator": "avg"
-                            }
+                            {"q": "avg:genops.eval.safety{*}", "aggregator": "avg"}
                         ],
-                        "custom_unit": "%"
-                    }
+                        "custom_unit": "%",
+                    },
                 },
                 {
                     "id": "policy-enforcement",
@@ -328,8 +318,8 @@ class DatadogGenOpsIntegration:
                             {
                                 "q": "sum:genops.policy.result{*} by {genops.policy.enforcement}"
                             }
-                        ]
-                    }
+                        ],
+                    },
                 },
                 {
                     "id": "audit-trail-volume",
@@ -339,10 +329,10 @@ class DatadogGenOpsIntegration:
                         "requests": [
                             {
                                 "q": "sum:genops.audit.event{*} by {genops.compliance.framework}",
-                                "display_type": "area"
+                                "display_type": "area",
                             }
-                        ]
-                    }
+                        ],
+                    },
                 },
                 {
                     "id": "data-classification",
@@ -353,10 +343,10 @@ class DatadogGenOpsIntegration:
                             {
                                 "q": "sum:genops.operation{*} by {genops.data.classification}"
                             }
-                        ]
-                    }
-                }
-            ]
+                        ],
+                    },
+                },
+            ],
         }
 
         return dashboard_config
@@ -383,8 +373,8 @@ AI costs are unusually high (>${value}) in the last hour.
                 "options": {
                     "notify_audit": True,
                     "include_tags": True,
-                    "new_host_delay": 300
-                }
+                    "new_host_delay": 300,
+                },
             },
             {
                 "name": "Policy Violation Rate High",
@@ -402,7 +392,7 @@ Dashboard: [AI Compliance](https://app.datadoghq.com/dashboard/genops-compliance
 
 @pagerduty-ai-governance
 """,
-                "tags": ["team:compliance", "severity:critical"]
+                "tags": ["team:compliance", "severity:critical"],
             },
             {
                 "name": "AI Safety Score Below Threshold",
@@ -421,7 +411,7 @@ Required minimum: 0.85
 
 @slack-ai-safety-team
 """,
-                "tags": ["team:ai-safety", "severity:high"]
+                "tags": ["team:ai-safety", "severity:high"],
             },
             {
                 "name": "Token Usage Anomaly",
@@ -439,8 +429,8 @@ Review: [Token Usage Dashboard](https://app.datadoghq.com/dashboard/genops-token
 
 @slack-ai-platform-team
 """,
-                "tags": ["team:ai-platform", "severity:medium"]
-            }
+                "tags": ["team:ai-platform", "severity:medium"],
+            },
         ]
 
         return alerts
@@ -452,30 +442,30 @@ Review: [Token Usage Dashboard](https://app.datadoghq.com/dashboard/genops-token
             {
                 "name": "AI Operation Success Rate SLI",
                 "type": "service_check",
-                "query": "\"genops.operation.success\".over(\"*\").last(2).count_by_status()",
+                "query": '"genops.operation.success".over("*").last(2).count_by_status()',
                 "message": "AI operation success rate SLI",
                 "tags": ["sli", "ai-operations"],
                 "options": {
                     "thresholds": {
                         "critical": 95.0,  # 95% success rate minimum
-                        "warning": 98.0    # 98% target
+                        "warning": 98.0,  # 98% target
                     }
-                }
+                },
             },
             {
                 "name": "Compliance Evaluation Coverage SLI",
                 "type": "metric alert",
                 "query": "sum(last_1h):sum:genops.eval.performed{*} / sum:genops.operation.total{*} * 100 < 95",
                 "message": "Compliance evaluation coverage below target",
-                "tags": ["sli", "compliance-coverage"]
+                "tags": ["sli", "compliance-coverage"],
             },
             {
                 "name": "Policy Response Time SLI",
                 "type": "metric alert",
                 "query": "avg(last_5m):avg:genops.policy.response_time{*} > 500",
                 "message": "Policy evaluation response time above target (500ms)",
-                "tags": ["sli", "policy-performance"]
-            }
+                "tags": ["sli", "policy-performance"],
+            },
         ]
 
         return sli_monitors
@@ -485,9 +475,11 @@ Review: [Token Usage Dashboard](https://app.datadoghq.com/dashboard/genops-token
 # Validation Utilities (Following GenOps Standards)
 # ============================================================================
 
+
 @dataclass
 class ValidationIssue:
     """Individual validation issue with severity and fix suggestion."""
+
     severity: str  # "error", "warning", "info"
     component: str
     message: str
@@ -497,14 +489,14 @@ class ValidationIssue:
 @dataclass
 class ValidationResult:
     """Comprehensive validation result."""
+
     success: bool
-    issues: List[ValidationIssue] = field(default_factory=list)
+    issues: list[ValidationIssue] = field(default_factory=list)
     environment_info: dict = field(default_factory=dict)
 
 
 def validate_datadog_setup(
-    api_key: Optional[str] = None,
-    site: str = "datadoghq.com"
+    api_key: Optional[str] = None, site: str = "datadoghq.com"
 ) -> ValidationResult:
     """
     Comprehensive Datadog setup validation.
@@ -528,19 +520,23 @@ def validate_datadog_setup(
     # Check API key
     effective_api_key = api_key or os.getenv("DATADOG_API_KEY")
     if not effective_api_key:
-        issues.append(ValidationIssue(
-            severity="error",
-            component="environment",
-            message="DATADOG_API_KEY not set",
-            fix_suggestion="Set environment variable: export DATADOG_API_KEY='your_32_char_api_key'"
-        ))
+        issues.append(
+            ValidationIssue(
+                severity="error",
+                component="environment",
+                message="DATADOG_API_KEY not set",
+                fix_suggestion="Set environment variable: export DATADOG_API_KEY='your_32_char_api_key'",
+            )
+        )
     elif len(effective_api_key) != 32:
-        issues.append(ValidationIssue(
-            severity="warning",
-            component="environment",
-            message=f"DATADOG_API_KEY has unexpected length ({len(effective_api_key)} chars, expected 32)",
-            fix_suggestion="Verify your Datadog API key is correct (should be 32 characters)"
-        ))
+        issues.append(
+            ValidationIssue(
+                severity="warning",
+                component="environment",
+                message=f"DATADOG_API_KEY has unexpected length ({len(effective_api_key)} chars, expected 32)",
+                fix_suggestion="Verify your Datadog API key is correct (should be 32 characters)",
+            )
+        )
 
     # Check Datadog site
     valid_sites = [
@@ -548,24 +544,28 @@ def validate_datadog_setup(
         "us5.datadoghq.com",
         "datadoghq.eu",
         "us3.datadoghq.com",
-        "ddog-gov.com"
+        "ddog-gov.com",
     ]
     if site not in valid_sites:
-        issues.append(ValidationIssue(
-            severity="warning",
-            component="configuration",
-            message=f"Datadog site '{site}' is not a standard site",
-            fix_suggestion=f"Valid sites: {', '.join(valid_sites)}"
-        ))
+        issues.append(
+            ValidationIssue(
+                severity="warning",
+                component="configuration",
+                message=f"Datadog site '{site}' is not a standard site",
+                fix_suggestion=f"Valid sites: {', '.join(valid_sites)}",
+            )
+        )
 
     # Check OpenTelemetry dependencies
     if not HAS_OPENTELEMETRY:
-        issues.append(ValidationIssue(
-            severity="error",
-            component="dependencies",
-            message="OpenTelemetry not installed",
-            fix_suggestion="Install with: pip install opentelemetry-api opentelemetry-sdk opentelemetry-exporter-otlp-proto-http"
-        ))
+        issues.append(
+            ValidationIssue(
+                severity="error",
+                component="dependencies",
+                message="OpenTelemetry not installed",
+                fix_suggestion="Install with: pip install opentelemetry-api opentelemetry-sdk opentelemetry-exporter-otlp-proto-http",
+            )
+        )
 
     # Check network connectivity to Datadog OTLP endpoint
     if effective_api_key:  # Only test if API key is set
@@ -573,36 +573,44 @@ def validate_datadog_setup(
         try:
             socket.create_connection((otlp_host, 443), timeout=5)
         except socket.timeout:
-            issues.append(ValidationIssue(
-                severity="warning",
-                component="network",
-                message=f"Connection to {otlp_host}:443 timed out (5 seconds)",
-                fix_suggestion="Check network connectivity, firewall rules, and proxy configuration"
-            ))
+            issues.append(
+                ValidationIssue(
+                    severity="warning",
+                    component="network",
+                    message=f"Connection to {otlp_host}:443 timed out (5 seconds)",
+                    fix_suggestion="Check network connectivity, firewall rules, and proxy configuration",
+                )
+            )
         except socket.gaierror:
-            issues.append(ValidationIssue(
-                severity="error",
-                component="network",
-                message=f"Cannot resolve hostname: {otlp_host}",
-                fix_suggestion="Verify DATADOG_SITE is correct and DNS is working"
-            ))
+            issues.append(
+                ValidationIssue(
+                    severity="error",
+                    component="network",
+                    message=f"Cannot resolve hostname: {otlp_host}",
+                    fix_suggestion="Verify DATADOG_SITE is correct and DNS is working",
+                )
+            )
         except Exception as e:
-            issues.append(ValidationIssue(
-                severity="warning",
-                component="network",
-                message=f"Cannot connect to {otlp_host}:443: {type(e).__name__}",
-                fix_suggestion="Check network connectivity and firewall rules"
-            ))
+            issues.append(
+                ValidationIssue(
+                    severity="warning",
+                    component="network",
+                    message=f"Cannot connect to {otlp_host}:443: {type(e).__name__}",
+                    fix_suggestion="Check network connectivity and firewall rules",
+                )
+            )
 
     # Check service name configuration
     service_name = os.getenv("OTEL_SERVICE_NAME")
     if not service_name:
-        issues.append(ValidationIssue(
-            severity="info",
-            component="configuration",
-            message="OTEL_SERVICE_NAME not set (will use default: genops-ai)",
-            fix_suggestion="Set environment variable: export OTEL_SERVICE_NAME='your-service-name'"
-        ))
+        issues.append(
+            ValidationIssue(
+                severity="info",
+                component="configuration",
+                message="OTEL_SERVICE_NAME not set (will use default: genops-ai)",
+                fix_suggestion="Set environment variable: export OTEL_SERVICE_NAME='your-service-name'",
+            )
+        )
 
     # Environment info
     environment_info = {
@@ -612,16 +620,14 @@ def validate_datadog_setup(
         "has_opentelemetry": HAS_OPENTELEMETRY,
         "has_datadog_sdk": HAS_DATADOG,
         "service_name": service_name or "genops-ai (default)",
-        "otlp_endpoint": f"https://otlp.{site}"
+        "otlp_endpoint": f"https://otlp.{site}",
     }
 
     # Determine success (no errors)
     success = len([i for i in issues if i.severity == "error"]) == 0
 
     return ValidationResult(
-        success=success,
-        issues=issues,
-        environment_info=environment_info
+        success=success, issues=issues, environment_info=environment_info
     )
 
 
@@ -638,13 +644,19 @@ def print_validation_result(result: ValidationResult):
 
     if result.success:
         print("\n✅ Datadog setup validation PASSED!")
-        print(f"\n📋 Configuration:")
+        print("\n📋 Configuration:")
         print(f"   Site: {result.environment_info['site']}")
         print(f"   OTLP Endpoint: {result.environment_info['otlp_endpoint']}")
         print(f"   Service Name: {result.environment_info['service_name']}")
-        print(f"   API Key: {'✅ Set (%d chars)' % result.environment_info['api_key_length'] if result.environment_info['api_key_set'] else '❌ Not Set'}")
-        print(f"   OpenTelemetry: {'✅ Installed' if result.environment_info['has_opentelemetry'] else '❌ Missing'}")
-        print(f"   Datadog SDK: {'✅ Installed' if result.environment_info['has_datadog_sdk'] else '⚠️  Not installed (optional)'}")
+        print(
+            f"   API Key: {'✅ Set (' + str(result.environment_info['api_key_length']) + ' chars)' if result.environment_info['api_key_set'] else '❌ Not Set'}"
+        )
+        print(
+            f"   OpenTelemetry: {'✅ Installed' if result.environment_info['has_opentelemetry'] else '❌ Missing'}"
+        )
+        print(
+            f"   Datadog SDK: {'✅ Installed' if result.environment_info['has_datadog_sdk'] else '⚠️  Not installed (optional)'}"
+        )
     else:
         print("\n❌ Datadog setup validation FAILED!")
         print("\nYou must fix the errors below before exporting telemetry.\n")
@@ -686,6 +698,7 @@ def print_validation_result(result: ValidationResult):
 # Standard Entry Points (Following GenOps Naming Conventions)
 # ============================================================================
 
+
 def instrument_datadog(
     api_key: Optional[str] = None,
     app_key: Optional[str] = None,
@@ -694,7 +707,7 @@ def instrument_datadog(
     environment: str = "production",
     auto_configure: bool = True,
     validate: bool = True,
-    **config
+    **config,
 ) -> DatadogGenOpsIntegration:
     """
     Main entry point for Datadog instrumentation.
@@ -744,13 +757,11 @@ def instrument_datadog(
         datadog_site=site,
         service_name=service_name or os.getenv("OTEL_SERVICE_NAME", "genops-ai"),
         environment=environment,
-        **config
+        **config,
     )
 
 
-def auto_instrument(
-    validate: bool = True
-) -> DatadogGenOpsIntegration:
+def auto_instrument(validate: bool = True) -> DatadogGenOpsIntegration:
     """
     Zero-code auto-instrumentation for Datadog export.
 
@@ -785,13 +796,14 @@ def auto_instrument(
         service_name=os.getenv("OTEL_SERVICE_NAME"),
         environment=os.getenv("OTEL_ENVIRONMENT", "production"),
         auto_configure=True,
-        validate=validate
+        validate=validate,
     )
 
 
 # ============================================================================
 # Demonstration Functions
 # ============================================================================
+
 
 def demonstrate_datadog_telemetry():
     """Demonstrate GenOps AI telemetry flowing to Datadog."""
@@ -801,8 +813,7 @@ def demonstrate_datadog_telemetry():
 
     # Initialize Datadog integration
     datadog_integration = DatadogGenOpsIntegration(
-        service_name="genops-ai-demo",
-        environment="development"
+        service_name="genops-ai-demo", environment="development"
     )
 
     # Set up GenOps with attribution
@@ -810,7 +821,7 @@ def demonstrate_datadog_telemetry():
         team="ai-platform",
         project="datadog-integration",
         environment="development",
-        cost_center="engineering"
+        cost_center="engineering",
     )
 
     # Demonstrate various AI operations with telemetry
@@ -819,26 +830,26 @@ def demonstrate_datadog_telemetry():
             "name": "customer_support_chat",
             "customer_id": "enterprise-123",
             "feature": "ai-assistant",
-            "data_classification": "internal"
+            "data_classification": "internal",
         },
         {
             "name": "document_analysis",
             "customer_id": "startup-456",
             "feature": "document-processing",
-            "data_classification": "confidential"
+            "data_classification": "confidential",
         },
         {
             "name": "financial_analysis",
             "customer_id": "enterprise-789",
             "feature": "risk-assessment",
-            "data_classification": "restricted"
-        }
+            "data_classification": "restricted",
+        },
     ]
 
     print("🤖 Generating AI operations with full telemetry...")
 
     for i, op in enumerate(operations):
-        print(f"\n   Operation {i+1}: {op['name']}")
+        print(f"\n   Operation {i + 1}: {op['name']}")
 
         # Set operation context
         genops.set_context(**op)
@@ -858,29 +869,21 @@ def demonstrate_datadog_telemetry():
         datadog_integration.send_custom_metric(
             "operation.duration",
             duration * 1000,  # milliseconds
-            tags=effective_attrs
+            tags=effective_attrs,
         )
 
         datadog_integration.send_custom_metric(
-            "operation.count",
-            1,
-            tags=effective_attrs
+            "operation.count", 1, tags=effective_attrs
         )
 
         # Simulate cost and token usage
         cost = 0.0234 * (i + 1)  # Varying costs
-        tokens = 150 * (i + 2)   # Varying token usage
+        tokens = 150 * (i + 2)  # Varying token usage
+
+        datadog_integration.send_custom_metric("cost.total", cost, tags=effective_attrs)
 
         datadog_integration.send_custom_metric(
-            "cost.total",
-            cost,
-            tags=effective_attrs
-        )
-
-        datadog_integration.send_custom_metric(
-            "tokens.total",
-            tokens,
-            tags=effective_attrs
+            "tokens.total", tokens, tags=effective_attrs
         )
 
         # Simulate evaluation scores
@@ -888,20 +891,16 @@ def demonstrate_datadog_telemetry():
         accuracy_score = 0.88 + (i * 0.01)
 
         datadog_integration.send_custom_metric(
-            "eval.safety",
-            safety_score,
-            tags=effective_attrs
+            "eval.safety", safety_score, tags=effective_attrs
         )
 
         datadog_integration.send_custom_metric(
-            "eval.accuracy",
-            accuracy_score,
-            tags=effective_attrs
+            "eval.accuracy", accuracy_score, tags=effective_attrs
         )
 
         print(f"      Cost: ${cost:.4f} | Tokens: {tokens:,}")
         print(f"      Safety: {safety_score:.3f} | Accuracy: {accuracy_score:.3f}")
-        print(f"      Duration: {duration*1000:.1f}ms")
+        print(f"      Duration: {duration * 1000:.1f}ms")
 
         genops.clear_context()
 
@@ -916,8 +915,7 @@ def demonstrate_dashboard_creation():
 
     # Initialize integration
     datadog_integration = DatadogGenOpsIntegration(
-        service_name="genops-ai",
-        environment="production"
+        service_name="genops-ai", environment="production"
     )
 
     # Create cost dashboard
@@ -925,11 +923,15 @@ def demonstrate_dashboard_creation():
     print("📊 AI Cost Dashboard Configuration:")
     print(f"   Title: {cost_dashboard['title']}")
     print(f"   Widgets: {len(cost_dashboard['widgets'])} widgets")
-    print(f"   Template Variables: {len(cost_dashboard['template_variables'])} variables")
+    print(
+        f"   Template Variables: {len(cost_dashboard['template_variables'])} variables"
+    )
 
     # Widget details
-    for widget in cost_dashboard['widgets']:
-        print(f"      • {widget['definition']['title']} ({widget['definition']['type']})")
+    for widget in cost_dashboard["widgets"]:
+        print(
+            f"      • {widget['definition']['title']} ({widget['definition']['type']})"
+        )
 
     # Create compliance dashboard
     compliance_dashboard = datadog_integration.create_compliance_dashboard()
@@ -937,8 +939,10 @@ def demonstrate_dashboard_creation():
     print(f"   Title: {compliance_dashboard['title']}")
     print(f"   Widgets: {len(compliance_dashboard['widgets'])} widgets")
 
-    for widget in compliance_dashboard['widgets']:
-        print(f"      • {widget['definition']['title']} ({widget['definition']['type']})")
+    for widget in compliance_dashboard["widgets"]:
+        print(
+            f"      • {widget['definition']['title']} ({widget['definition']['type']})"
+        )
 
     # Save dashboard configurations
     with open("datadog_cost_dashboard.json", "w") as f:
@@ -960,8 +964,7 @@ def demonstrate_alerting_setup():
 
     # Initialize integration
     datadog_integration = DatadogGenOpsIntegration(
-        service_name="genops-ai",
-        environment="production"
+        service_name="genops-ai", environment="production"
     )
 
     # Create performance alerts
@@ -984,7 +987,7 @@ def demonstrate_alerting_setup():
     # Save alerting configurations
     alerting_config = {
         "performance_alerts": performance_alerts,
-        "sli_monitors": sli_monitors
+        "sli_monitors": sli_monitors,
     }
 
     with open("datadog_alerting_config.json", "w") as f:
@@ -1004,32 +1007,32 @@ def show_datadog_queries():
             "sum:genops.cost.total{*} by {genops.team}",
             "sum:genops.cost.total{*} by {genops.customer_id}",
             "avg:genops.cost.total{*} by {genops.cost.provider}",
-            "sum:genops.cost.total{genops.environment:production} by {genops.feature}"
+            "sum:genops.cost.total{genops.environment:production} by {genops.feature}",
         ],
         "Token Usage": [
             "sum:genops.tokens.total{*} by {genops.cost.provider}",
             "avg:genops.tokens.input{*} by {genops.team}",
             "rate(sum:genops.tokens.total{*})",
-            "sum:genops.tokens.total{genops.feature:chat-assistant}"
+            "sum:genops.tokens.total{genops.feature:chat-assistant}",
         ],
         "Performance Monitoring": [
             "avg:genops.operation.duration{*} by {genops.operation.name}",
             "p95:genops.operation.duration{*}",
             "rate(sum:genops.operation.count{*})",
-            "sum:genops.operation.error{*} by {genops.error.type}"
+            "sum:genops.operation.error{*} by {genops.error.type}",
         ],
         "Compliance & Governance": [
             "avg:genops.eval.safety{*} by {genops.team}",
             "sum:genops.policy.violation{*} by {genops.policy.name}",
             "count:genops.audit.event{*} by {genops.compliance.framework}",
-            "avg:genops.eval.accuracy{genops.data.classification:restricted}"
+            "avg:genops.eval.accuracy{genops.data.classification:restricted}",
         ],
         "Business Intelligence": [
             "sum:genops.cost.total{*} by {genops.customer_id,genops.feature}",
             "avg:genops.tokens.total{*} by {genops.customer_tier}",
             "sum:genops.operation.count{*} by {genops.project,genops.environment}",
-            "rate(sum:genops.cost.total{*}) by {genops.cost_center}"
-        ]
+            "rate(sum:genops.cost.total{*}) by {genops.cost_center}",
+        ],
     }
 
     for category, query_list in queries.items():
@@ -1066,7 +1069,9 @@ def main():
     # Check dependencies
     if not HAS_OPENTELEMETRY:
         print("\n⚠️ OpenTelemetry not installed. Install with:")
-        print("pip install opentelemetry-api opentelemetry-sdk opentelemetry-exporter-otlp")
+        print(
+            "pip install opentelemetry-api opentelemetry-sdk opentelemetry-exporter-otlp"
+        )
         print("\nContinuing with limited functionality...")
 
     try:
@@ -1097,7 +1102,9 @@ def main():
         print("\n🔧 SETUP INSTRUCTIONS")
         print("=" * 60)
         print("1. Set environment variables: DATADOG_API_KEY, DATADOG_APP_KEY")
-        print("2. Install dependencies: pip install datadog opentelemetry-exporter-otlp")
+        print(
+            "2. Install dependencies: pip install datadog opentelemetry-exporter-otlp"
+        )
         print("3. Import dashboard configurations into Datadog UI")
         print("4. Configure alerts and SLI monitors")
         print("5. Set up log ingestion for audit trails")

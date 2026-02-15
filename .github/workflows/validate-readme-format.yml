@@ -20,7 +20,7 @@ jobs:
       uses: actions/checkout@v4
       
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.9'
         
@@ -30,12 +30,12 @@ jobs:
         echo "Running README format validation..."
         python3 scripts/validate-readme-format.py README.md
         VALIDATION_EXIT_CODE=$?
-        echo "validation_passed=$([[ $VALIDATION_EXIT_CODE == 0 ]] && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
-        exit $VALIDATION_EXIT_CODE
+        echo "validation_passed=$([[ "$VALIDATION_EXIT_CODE" == 0 ]] && echo 'true' || echo 'false')" >> "$GITHUB_OUTPUT"
+        exit "$VALIDATION_EXIT_CODE"
         
     - name: Comment on PR with validation results
       if: failure() && github.event_name == 'pull_request'
-      uses: actions/github-script@v6
+      uses: actions/github-script@v7
       with:
         script: |
           const { execSync } = require('child_process');
@@ -48,43 +48,43 @@ jobs:
             });
             
             const comment = `## 🚨 README Format Validation Failed
-            
-The README integration list contains formatting violations that must be fixed before merging.
 
-<details>
-<summary>📋 Validation Results</summary>
+            The README integration list contains formatting violations that must be fixed before merging.
 
-\`\`\`
-${output}
-\`\`\`
-</details>
+            <details>
+            <summary>📋 Validation Results</summary>
 
-### 🔧 How to Fix
+            \`\`\`
+            ${output}
+            \`\`\`
+            </details>
 
-The most common issue is adding descriptive text to integration entries. Integration entries must follow these exact formats:
+            ### 🔧 How to Fix
 
-**✅ Completed integrations:**
-\`\`\`
-- ✅ [Name](internal-link) (<a href="external-link" target="_blank">↗</a>)
-\`\`\`
+            The most common issue is adding descriptive text to integration entries. Integration entries must follow these exact formats:
 
-**☐ Planned integrations:**
-\`\`\`
-- ☐ Name (<a href="external-link" target="_blank">↗</a>)
-\`\`\`
+            **✅ Completed integrations:**
+            \`\`\`
+            - ✅ [Name](internal-link) (<a href="external-link" target="_blank">↗</a>)
+            \`\`\`
 
-**❌ NEVER add descriptive text:**
-\`\`\`
-- ✅ [Name](link) (<a href="external" target="_blank">↗</a>) - This descriptive text is FORBIDDEN
-\`\`\`
+            **☐ Planned integrations:**
+            \`\`\`
+            - ☐ Name (<a href="external-link" target="_blank">↗</a>)
+            \`\`\`
 
-### 📚 References
+            **❌ NEVER add descriptive text:**
+            \`\`\`
+            - ✅ [Name](link) (<a href="external" target="_blank">↗</a>) - This descriptive text is FORBIDDEN
+            \`\`\`
 
-- See \`CLAUDE.md\` for complete formatting guidelines
-- Run \`python3 scripts/validate-readme-format.py\` locally to test fixes
-- This validation prevents recurring formatting issues identified by the maintainers
+            ### 📚 References
 
-This check is automatically enforced to maintain README consistency.`;
+            - See \`CLAUDE.md\` for complete formatting guidelines
+            - Run \`python3 scripts/validate-readme-format.py\` locally to test fixes
+            - This validation prevents recurring formatting issues identified by the maintainers
+
+            This check is automatically enforced to maintain README consistency.`.replace(/^ +/gm, '');
 
             github.rest.issues.createComment({
               issue_number: context.issue.number,
@@ -100,20 +100,20 @@ This check is automatically enforced to maintain README consistency.`;
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: `## 🚨 README Format Validation Failed
-              
-There was an error validating the README format. Please run the validation script locally:
 
-\`\`\`bash
-python3 scripts/validate-readme-format.py README.md
-\`\`\`
+              There was an error validating the README format. Please run the validation script locally:
 
-And fix any formatting violations before merging.`
+              \`\`\`bash
+              python3 scripts/validate-readme-format.py README.md
+              \`\`\`
+
+              And fix any formatting violations before merging.`.replace(/^ +/gm, '')
             });
           }
           
     - name: Comment on successful validation
       if: success() && github.event_name == 'pull_request'
-      uses: actions/github-script@v6
+      uses: actions/github-script@v7
       with:
         script: |
           github.rest.issues.createComment({
@@ -121,6 +121,6 @@ And fix any formatting violations before merging.`
             owner: context.repo.owner,
             repo: context.repo.repo,
             body: `## ✅ README Format Validation Passed
-            
-All integration entries follow the correct format. Thank you for maintaining README consistency! 🎉`
+
+            All integration entries follow the correct format. Thank you for maintaining README consistency! 🎉`.replace(/^ +/gm, '')
           });

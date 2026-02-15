@@ -57,7 +57,9 @@ def main():
             print("   3. 🔧 Fix GenOps installation")
 
         print("   4. 🔄 Run this validation script again")
-        print("   5. 📚 Check the troubleshooting guide: docs/integrations/langchain.md")
+        print(
+            "   5. 📚 Check the troubleshooting guide: docs/integrations/langchain.md"
+        )
 
     print(f"\n📊 Exit code: {'0' if result.is_valid else '1'}")
     return 0 if result.is_valid else 1

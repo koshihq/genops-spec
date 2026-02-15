@@ -14,16 +14,36 @@ from genops.core.context import set_default_attributes
 from genops.core.telemetry import GenOpsTelemetry
 
 # Strategies for generating realistic test data
-cost_strategy = st.floats(min_value=0.0, max_value=1000.0, allow_nan=False, allow_infinity=False)
+cost_strategy = st.floats(
+    min_value=0.0, max_value=1000.0, allow_nan=False, allow_infinity=False
+)
 currency_strategy = st.sampled_from(["USD", "EUR", "GBP", "JPY"])
 provider_strategy = st.sampled_from(["openai", "anthropic", "bedrock", "gemini"])
-model_strategy = st.sampled_from([
-    "gpt-3.5-turbo", "gpt-4", "gpt-4-turbo",
-    "claude-3-sonnet", "claude-3-opus", "claude-3-haiku"
-])
-team_strategy = st.text(min_size=1, max_size=50, alphabet=st.characters(whitelist_categories=["Ll", "Lu", "Nd", "-"]))
-project_strategy = st.text(min_size=1, max_size=50, alphabet=st.characters(whitelist_categories=["Ll", "Lu", "Nd", "-"]))
-customer_id_strategy = st.text(min_size=1, max_size=100, alphabet=st.characters(whitelist_categories=["Ll", "Lu", "Nd", "-", "_"]))
+model_strategy = st.sampled_from(
+    [
+        "gpt-3.5-turbo",
+        "gpt-4",
+        "gpt-4-turbo",
+        "claude-3-sonnet",
+        "claude-3-opus",
+        "claude-3-haiku",
+    ]
+)
+team_strategy = st.text(
+    min_size=1,
+    max_size=50,
+    alphabet=st.characters(whitelist_categories=["Ll", "Lu", "Nd", "-"]),
+)
+project_strategy = st.text(
+    min_size=1,
+    max_size=50,
+    alphabet=st.characters(whitelist_categories=["Ll", "Lu", "Nd", "-"]),
+)
+customer_id_strategy = st.text(
+    min_size=1,
+    max_size=100,
+    alphabet=st.characters(whitelist_categories=["Ll", "Lu", "Nd", "-", "_"]),
+)
 
 
 class TestCostAttributionProperties:
@@ -38,7 +58,9 @@ class TestCostAttributionProperties:
         project=project_strategy,
     )
     @settings(max_examples=500, deadline=None)
-    def test_cost_recording_properties(self, cost, currency, provider, model, team, project):
+    def test_cost_recording_properties(
+        self, cost, currency, provider, model, team, project
+    ):
         """Test that cost recording always maintains correct properties."""
         # Assume valid inputs
         assume(cost >= 0)
@@ -48,17 +70,11 @@ class TestCostAttributionProperties:
         telemetry = GenOpsTelemetry()
 
         with telemetry.trace_operation(
-            operation_name="test_operation",
-            team=team.strip(),
-            project=project.strip()
+            operation_name="test_operation", team=team.strip(), project=project.strip()
         ) as span:
             # Record cost
             telemetry.record_cost(
-                span=span,
-                cost=cost,
-                currency=currency,
-                provider=provider,
-                model=model
+                span=span, cost=cost, currency=currency, provider=provider, model=model
             )
 
             # Properties that should always hold
@@ -77,10 +93,10 @@ class TestCostAttributionProperties:
                 currency_strategy,
                 provider_strategy,
                 team_strategy,
-                project_strategy
+                project_strategy,
             ),
             min_size=1,
-            max_size=50
+            max_size=50,
         )
     )
     @settings(max_examples=100, deadline=None)
@@ -98,16 +114,15 @@ class TestCostAttributionProperties:
             with telemetry.trace_operation(
                 operation_name=f"operation_{len(recorded_operations)}",
                 team=team.strip(),
-                project=project.strip()
+                project=project.strip(),
             ) as span:
                 telemetry.record_cost(
-                    span=span,
-                    cost=cost,
-                    currency=currency,
-                    provider=provider
+                    span=span, cost=cost, currency=currency, provider=provider
                 )
 
-                recorded_operations.append((cost, currency, provider, team.strip(), project.strip()))
+                recorded_operations.append(
+                    (cost, currency, provider, team.strip(), project.strip())
+                )
                 if currency == "USD":  # Only sum USD for simplicity
                     total_cost += cost
 
@@ -115,7 +130,7 @@ class TestCostAttributionProperties:
         assert len(recorded_operations) >= 0
         assert total_cost >= 0
         # Each operation should have maintained its individual properties
-        for cost, currency, provider, team, project in recorded_operations:
+        for cost, _currency, _provider, team, project in recorded_operations:
             assert cost >= 0
             assert len(team) > 0
             assert len(project) > 0
@@ -126,7 +141,9 @@ class TestCostAttributionProperties:
         tokens_output=st.integers(min_value=1, max_value=10000),
     )
     @settings(max_examples=200)
-    def test_cost_per_token_calculation_properties(self, cost, tokens_input, tokens_output):
+    def test_cost_per_token_calculation_properties(
+        self, cost, tokens_input, tokens_output
+    ):
         """Test that cost per token calculations maintain mathematical properties."""
         assume(cost > 0)
         assume(tokens_input > 0)
@@ -159,7 +176,7 @@ class CostAttributionStateMachine(RuleBasedStateMachine):
         cost=cost_strategy,
         provider=provider_strategy,
         team=team_strategy,
-        project=project_strategy
+        project=project_strategy,
     )
     def record_cost_operation(self, cost, provider, team, project):
         """Rule: Record a cost operation."""
@@ -170,16 +187,10 @@ class CostAttributionStateMachine(RuleBasedStateMachine):
         operation_name = f"operation_{self.operation_count}"
 
         span = self.telemetry.trace_operation(
-            operation_name=operation_name,
-            team=team.strip(),
-            project=project.strip()
+            operation_name=operation_name, team=team.strip(), project=project.strip()
         ).__enter__()
 
-        self.telemetry.record_cost(
-            span=span,
-            cost=cost,
-            provider=provider
-        )
+        self.telemetry.record_cost(span=span, cost=cost, provider=provider)
 
         # Update state
         self.total_recorded_cost += cost
@@ -190,19 +201,13 @@ class CostAttributionStateMachine(RuleBasedStateMachine):
         span.__exit__(None, None, None)
         self.active_spans.remove(span)
 
-    @rule(
-        team=team_strategy,
-        project=project_strategy
-    )
+    @rule(team=team_strategy, project=project_strategy)
     def set_default_attribution(self, team, project):
         """Rule: Set default attribution context."""
         assume(len(team.strip()) > 0)
         assume(len(project.strip()) > 0)
 
-        set_default_attributes(
-            team=team.strip(),
-            project=project.strip()
-        )
+        set_default_attributes(team=team.strip(), project=project.strip())
 
     @invariant()
     def total_cost_is_non_negative(self):
@@ -233,12 +238,10 @@ class TestCostAttributionStateMachine:
     customer_operations=st.dictionaries(
         keys=customer_id_strategy,
         values=st.lists(
-            st.tuples(cost_strategy, provider_strategy),
-            min_size=1,
-            max_size=10
+            st.tuples(cost_strategy, provider_strategy), min_size=1, max_size=10
         ),
         min_size=1,
-        max_size=10
+        max_size=10,
     )
 )
 @settings(max_examples=50, deadline=None)
@@ -256,13 +259,9 @@ def test_customer_cost_attribution_properties(customer_operations):
 
             with telemetry.trace_operation(
                 operation_name="customer_operation",
-                customer_id=customer_id.strip() if customer_id.strip() else "default"
+                customer_id=customer_id.strip() if customer_id.strip() else "default",
             ) as span:
-                telemetry.record_cost(
-                    span=span,
-                    cost=cost,
-                    provider=provider
-                )
+                telemetry.record_cost(span=span, cost=cost, provider=provider)
                 customer_total += cost
 
         customer_totals[customer_id] = customer_total

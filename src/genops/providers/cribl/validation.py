@@ -8,20 +8,22 @@ following the Universal Validation Framework from CLAUDE.md.
 import os
 import socket
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional
 from enum import Enum
+from typing import Optional
 
 
 class ValidationLevel(Enum):
     """Validation issue severity levels."""
-    ERROR = "error"      # Blocks operation
+
+    ERROR = "error"  # Blocks operation
     WARNING = "warning"  # Degraded functionality
-    INFO = "info"        # Optimization suggestion
+    INFO = "info"  # Optimization suggestion
 
 
 @dataclass
 class ValidationIssue:
     """Single validation issue with fix suggestion."""
+
     level: ValidationLevel
     component: str
     message: str
@@ -31,12 +33,14 @@ class ValidationIssue:
 @dataclass
 class ValidationResult:
     """Complete validation result with all issues."""
+
     is_valid: bool
-    issues: List[ValidationIssue] = field(default_factory=list)
+    issues: list[ValidationIssue] = field(default_factory=list)
     summary: str = ""
 
-    def add_issue(self, level: ValidationLevel, component: str,
-                  message: str, fix_suggestion: str):
+    def add_issue(
+        self, level: ValidationLevel, component: str, message: str, fix_suggestion: str
+    ):
         """Add a validation issue."""
         self.issues.append(ValidationIssue(level, component, message, fix_suggestion))
         if level == ValidationLevel.ERROR:
@@ -44,8 +48,7 @@ class ValidationResult:
 
 
 def validate_setup(
-    endpoint: Optional[str] = None,
-    auth_token: Optional[str] = None
+    endpoint: Optional[str] = None, auth_token: Optional[str] = None
 ) -> ValidationResult:
     """
     Validate GenOps → Cribl Stream setup.
@@ -75,7 +78,7 @@ def validate_setup(
             ValidationLevel.ERROR,
             "Configuration",
             "CRIBL_OTLP_ENDPOINT not set",
-            "Set environment variable: export CRIBL_OTLP_ENDPOINT='http://cribl-stream:4318'"
+            "Set environment variable: export CRIBL_OTLP_ENDPOINT='http://cribl-stream:4318'",
         )
 
     if not auth_token:
@@ -83,7 +86,7 @@ def validate_setup(
             ValidationLevel.WARNING,
             "Authentication",
             "CRIBL_AUTH_TOKEN not set - using anonymous mode",
-            "Set token for production: export CRIBL_AUTH_TOKEN='your-token'"
+            "Set token for production: export CRIBL_AUTH_TOKEN='your-token'",
         )
 
     if not endpoint:
@@ -93,15 +96,16 @@ def validate_setup(
     # Check 2: Parse endpoint and extract host/port
     try:
         from urllib.parse import urlparse
+
         parsed = urlparse(endpoint)
         host = parsed.hostname or "localhost"
         port = parsed.port or 4318
-    except Exception as e:
+    except Exception:
         result.add_issue(
             ValidationLevel.ERROR,
             "Configuration",
             f"Invalid endpoint URL format: {endpoint}",
-            "Use format: http://cribl-stream:4318 or https://cribl-cloud.example.com:4318"
+            "Use format: http://cribl-stream:4318 or https://cribl-cloud.example.com:4318",
         )
         result.summary = "Invalid endpoint configuration"
         return result
@@ -114,7 +118,7 @@ def validate_setup(
             ValidationLevel.ERROR,
             "Connectivity",
             f"Cannot resolve hostname: {host}",
-            f"Verify DNS: ping {host} or check /etc/hosts"
+            f"Verify DNS: ping {host} or check /etc/hosts",
         )
         result.summary = "Cannot reach Cribl endpoint"
         return result
@@ -125,12 +129,12 @@ def validate_setup(
         sock.settimeout(3)
         sock.connect((host, port))
         sock.close()
-    except (socket.timeout, ConnectionRefusedError, OSError) as e:
+    except (socket.timeout, ConnectionRefusedError, OSError):
         result.add_issue(
             ValidationLevel.ERROR,
             "Connectivity",
             f"Cannot connect to {host}:{port}",
-            f"Check Cribl Stream is running and port {port} is open. Test with: telnet {host} {port}"
+            f"Check Cribl Stream is running and port {port} is open. Test with: telnet {host} {port}",
         )
         result.summary = "Cribl endpoint not reachable"
         return result
@@ -142,7 +146,7 @@ def validate_setup(
                 ValidationLevel.WARNING,
                 "Authentication",
                 "Auth token seems too short (< 16 characters)",
-                "Verify token from Cribl UI: Settings → Authentication"
+                "Verify token from Cribl UI: Settings → Authentication",
             )
 
         # Check for common mistakes
@@ -151,24 +155,28 @@ def validate_setup(
                 ValidationLevel.WARNING,
                 "Authentication",
                 "Token includes 'Bearer ' prefix - this will be added automatically",
-                "Remove 'Bearer ' prefix from token: export CRIBL_AUTH_TOKEN='token-only'"
+                "Remove 'Bearer ' prefix from token: export CRIBL_AUTH_TOKEN='token-only'",
             )
 
     # Check 6: GenOps dependencies
     try:
-        import opentelemetry
-        from opentelemetry.sdk.trace import TracerProvider
+        import opentelemetry  # noqa: F401
+        from opentelemetry.sdk.trace import TracerProvider  # noqa: F401
     except ImportError:
         result.add_issue(
             ValidationLevel.ERROR,
             "Dependencies",
             "OpenTelemetry SDK not installed",
-            "Install: pip install opentelemetry-api opentelemetry-sdk"
+            "Install: pip install opentelemetry-api opentelemetry-sdk",
         )
 
     # Final summary
-    error_count = sum(1 for issue in result.issues if issue.level == ValidationLevel.ERROR)
-    warning_count = sum(1 for issue in result.issues if issue.level == ValidationLevel.WARNING)
+    error_count = sum(
+        1 for issue in result.issues if issue.level == ValidationLevel.ERROR
+    )
+    warning_count = sum(
+        1 for issue in result.issues if issue.level == ValidationLevel.WARNING
+    )
 
     if result.is_valid:
         result.summary = "✅ All checks passed"
@@ -208,8 +216,12 @@ def print_validation_result(result: ValidationResult) -> None:
         print("No issues found - you're ready to send telemetry!")
         print()
         print("Next steps:")
-        print("  1. Run the quickstart example: python examples/observability/cribl_integration.py")
-        print("  2. Check Cribl UI for incoming events: Data → Sources → genops_otlp_source → Live Data")
+        print(
+            "  1. Run the quickstart example: python examples/observability/cribl_integration.py"
+        )
+        print(
+            "  2. Check Cribl UI for incoming events: Data → Sources → genops_otlp_source → Live Data"
+        )
         print("  3. Configure pipelines: docs/integrations/cribl.md")
         return
 

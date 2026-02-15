@@ -1,9 +1,6 @@
 """Unit tests for Collibra validation utilities."""
 
-from io import StringIO
 from unittest.mock import MagicMock, patch
-
-import pytest
 
 from genops.providers.collibra.validation import (
     CollibraValidationResult,
@@ -11,7 +8,6 @@ from genops.providers.collibra.validation import (
     validate_setup,
     validate_url_format,
 )
-
 
 # ============================================================================
 # URL Validation Tests (3 tests)
@@ -200,7 +196,9 @@ def test_validate_setup_authentication_401(mock_client_class, monkeypatch):
 
     # Mock 401 authentication error
     mock_client = MagicMock()
-    mock_client.health_check.side_effect = CollibraAPIError("Unauthorized", status_code=401)
+    mock_client.health_check.side_effect = CollibraAPIError(
+        "Unauthorized", status_code=401
+    )
     mock_client_class.return_value = mock_client
 
     result = validate_setup()
@@ -220,7 +218,9 @@ def test_validate_setup_authentication_403(mock_client_class, monkeypatch):
 
     # Mock 403 permission error
     mock_client = MagicMock()
-    mock_client.health_check.side_effect = CollibraAPIError("Forbidden", status_code=403)
+    mock_client.health_check.side_effect = CollibraAPIError(
+        "Forbidden", status_code=403
+    )
     mock_client_class.return_value = mock_client
 
     result = validate_setup()

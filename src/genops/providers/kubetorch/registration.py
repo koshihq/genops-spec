@@ -16,7 +16,7 @@ Example (Manual Cleanup):
 """
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +34,7 @@ def auto_instrument_kubetorch(
     cost_center: Optional[str] = None,
     enable_monitoring: bool = True,
     enable_cost_tracking: bool = True,
-    **kwargs
+    **kwargs,
 ) -> bool:
     """
     Enable zero-code auto-instrumentation for Kubetorch.
@@ -83,23 +83,22 @@ def auto_instrument_kubetorch(
         # Create adapter with governance attributes
         governance_attrs = {}
         if team:
-            governance_attrs['team'] = team
+            governance_attrs["team"] = team
         if project:
-            governance_attrs['project'] = project
+            governance_attrs["project"] = project
         if customer_id:
-            governance_attrs['customer_id'] = customer_id
+            governance_attrs["customer_id"] = customer_id
         if environment:
-            governance_attrs['environment'] = environment
+            governance_attrs["environment"] = environment
         if cost_center:
-            governance_attrs['cost_center'] = cost_center
+            governance_attrs["cost_center"] = cost_center
 
         # Merge additional kwargs
         governance_attrs.update(kwargs)
 
         # Create global adapter
         _global_adapter = instrument_kubetorch(
-            cost_tracking_enabled=enable_cost_tracking,
-            **governance_attrs
+            cost_tracking_enabled=enable_cost_tracking, **governance_attrs
         )
 
         # Enable operation monitoring if requested
@@ -219,7 +218,7 @@ def get_global_monitor() -> Optional[Any]:
     return _global_monitor
 
 
-def get_instrumentation_status() -> Dict[str, Any]:
+def get_instrumentation_status() -> dict[str, Any]:
     """
     Get detailed instrumentation status information.
 
@@ -233,26 +232,26 @@ def get_instrumentation_status() -> Dict[str, Any]:
         True
     """
     status = {
-        'enabled': _instrumentation_enabled,
-        'adapter': _global_adapter is not None,
-        'monitor': _global_monitor is not None,
+        "enabled": _instrumentation_enabled,
+        "adapter": _global_adapter is not None,
+        "monitor": _global_monitor is not None,
     }
 
     # Add monitor details if available
     if _global_monitor is not None:
         try:
-            status['monitor_status'] = _global_monitor.get_instrumentation_status()
+            status["monitor_status"] = _global_monitor.get_instrumentation_status()
         except Exception as e:
             logger.debug(f"Failed to get monitor status: {e}")
 
     # Add adapter details if available
     if _global_adapter is not None:
         try:
-            status['governance_attributes'] = {
-                'team': getattr(_global_adapter, 'team', None),
-                'project': getattr(_global_adapter, 'project', None),
-                'customer_id': getattr(_global_adapter, 'customer_id', None),
-                'environment': getattr(_global_adapter, 'environment', None),
+            status["governance_attributes"] = {  # type: ignore
+                "team": getattr(_global_adapter, "team", None),
+                "project": getattr(_global_adapter, "project", None),
+                "customer_id": getattr(_global_adapter, "customer_id", None),
+                "environment": getattr(_global_adapter, "environment", None),
             }
         except Exception as e:
             logger.debug(f"Failed to get adapter details: {e}")

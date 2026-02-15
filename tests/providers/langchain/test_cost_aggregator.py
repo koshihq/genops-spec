@@ -26,7 +26,7 @@ class TestLLMCallCost:
             tokens_input=100,
             tokens_output=50,
             cost=0.015,
-            operation_name="test_operation"
+            operation_name="test_operation",
         )
 
         assert cost.provider == "openai"
@@ -139,7 +139,7 @@ class TestLangChainCostAggregator:
             model="gpt-4",
             tokens_input=100,
             tokens_output=50,
-            operation_name="test_op"
+            operation_name="test_op",
         )
 
         assert result is not None
@@ -162,12 +162,14 @@ class TestLangChainCostAggregator:
             provider="openai",
             model="gpt-4",
             tokens_input=100,
-            tokens_output=50
+            tokens_output=50,
         )
 
         assert result is None
 
-    @patch('genops.providers.langchain.cost_aggregator.LangChainCostAggregator._calculate_provider_cost')
+    @patch(
+        "genops.providers.langchain.cost_aggregator.LangChainCostAggregator._calculate_provider_cost"
+    )
     def test_add_llm_call_cost_with_mocked_calculation(self, mock_calc):
         """Test adding LLM call cost with mocked cost calculation."""
         mock_calc.return_value = 0.025
@@ -180,7 +182,7 @@ class TestLangChainCostAggregator:
             provider="custom",
             model="custom-model",
             tokens_input=200,
-            tokens_output=100
+            tokens_output=100,
         )
 
         assert result.cost == 0.025
@@ -196,7 +198,9 @@ class TestLangChainCostAggregator:
     def test_generic_cost_calculation_known_patterns(self):
         """Test generic cost calculation with known model patterns."""
         gpt4_cost = self.aggregator._generic_cost_calculation("gpt-4-turbo", 1000, 500)
-        claude_cost = self.aggregator._generic_cost_calculation("claude-3-sonnet", 1000, 500)
+        claude_cost = self.aggregator._generic_cost_calculation(
+            "claude-3-sonnet", 1000, 500
+        )
 
         assert gpt4_cost > 0
         assert claude_cost > 0
@@ -213,7 +217,7 @@ class TestLangChainCostAggregator:
             provider="openai",
             model="gpt-4",
             tokens_input=100,
-            tokens_output=50
+            tokens_output=50,
         )
 
         summary = self.aggregator.finalize_chain_tracking(chain_id, total_time=2.5)
@@ -287,10 +291,7 @@ class TestChainCostContext:
 
             # Add a cost within the context
             context.add_llm_call(
-                provider="openai",
-                model="gpt-4",
-                tokens_input=100,
-                tokens_output=50
+                provider="openai", model="gpt-4", tokens_input=100, tokens_output=50
             )
 
             current_summary = context.get_current_summary()
@@ -340,25 +341,31 @@ class TestGlobalFunctions:
 @pytest.fixture
 def mock_openai_calculator():
     """Mock OpenAI cost calculator."""
+
     def calculator(model, input_tokens, output_tokens):
         # Simple mock calculation
         return (input_tokens * 0.00003) + (output_tokens * 0.00006)
+
     return calculator
 
 
 @pytest.fixture
 def mock_anthropic_calculator():
     """Mock Anthropic cost calculator."""
+
     def calculator(model, input_tokens, output_tokens):
         # Simple mock calculation
         return (input_tokens * 0.000003) + (output_tokens * 0.000015)
+
     return calculator
 
 
 class TestCostAggregatorIntegration:
     """Integration tests for cost aggregator."""
 
-    def test_multi_provider_cost_aggregation(self, mock_openai_calculator, mock_anthropic_calculator):
+    def test_multi_provider_cost_aggregation(
+        self, mock_openai_calculator, mock_anthropic_calculator
+    ):
         """Test aggregating costs from multiple providers."""
         aggregator = LangChainCostAggregator()
         aggregator.provider_cost_calculators["openai"] = mock_openai_calculator
@@ -374,7 +381,7 @@ class TestCostAggregatorIntegration:
             model="gpt-4",
             tokens_input=1000,
             tokens_output=500,
-            operation_name="openai_completion"
+            operation_name="openai_completion",
         )
 
         # Add Anthropic call
@@ -384,7 +391,7 @@ class TestCostAggregatorIntegration:
             model="claude-3",
             tokens_input=800,
             tokens_output=400,
-            operation_name="anthropic_completion"
+            operation_name="anthropic_completion",
         )
 
         summary = aggregator.finalize_chain_tracking(chain_id, total_time=3.5)

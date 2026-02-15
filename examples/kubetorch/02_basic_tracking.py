@@ -12,9 +12,9 @@ Time to run: < 1 minute
 
 from genops.providers.kubetorch import (
     calculate_gpu_cost,
-    get_pricing_info,
     create_compute_cost_context,
     get_cost_aggregator,
+    get_pricing_info,
     reset_cost_aggregator,
 )
 
@@ -42,7 +42,9 @@ print("-" * 60)
 
 for gpu_type in ["h100", "a100", "v100", "t4"]:
     info = get_pricing_info(gpu_type)
-    print(f"{gpu_type.upper():6s}: ${info.cost_per_hour:7.2f}/hr | {info.gpu_memory_gb:3d}GB")
+    print(
+        f"{gpu_type.upper():6s}: ${info.cost_per_hour:7.2f}/hr | {info.gpu_memory_gb:3d}GB"
+    )
 
 # =============================================
 # Example 3: Context Manager for Multi-Resource Tracking
@@ -58,28 +60,22 @@ with create_compute_cost_context("train-bert-001") as ctx:
     ctx.add_gpu_cost(
         instance_type="a100",
         gpu_hours=8.0,  # 8 GPUs for 1 hour
-        operation_name="training"
+        operation_name="training",
     )
 
     # Checkpoint storage (100GB stored for 24 hours)
-    ctx.add_storage_cost(
-        storage_gb_hours=100 * 24,
-        operation_name="checkpoints"
-    )
+    ctx.add_storage_cost(storage_gb_hours=100 * 24, operation_name="checkpoints")
 
     # Data transfer (50GB)
-    ctx.add_network_cost(
-        data_transfer_gb=50,
-        operation_name="data_sync"
-    )
+    ctx.add_network_cost(data_transfer_gb=50, operation_name="data_sync")
 
 # Print cost summary
 print(f"Total Cost: ${ctx.summary.total_cost:.2f}")
-print(f"\nCost Breakdown:")
+print("\nCost Breakdown:")
 for resource_type, cost in ctx.summary.cost_by_resource_type.items():
     print(f"  {resource_type:8s}: ${cost:7.2f}")
 
-print(f"\nResource Usage:")
+print("\nResource Usage:")
 print(f"  GPU Hours: {ctx.summary.total_gpu_hours:.1f}")
 print(f"  Storage:   {ctx.summary.total_storage_gb_hours:.0f} GB-hours")
 print(f"  Network:   {ctx.summary.total_network_gb:.0f} GB")
@@ -131,7 +127,9 @@ for job_id, gpu_type, gpu_hours in jobs:
 total_cost = 0
 for job_id, gpu_type, gpu_hours in jobs:
     summary = aggregator.finalize_operation_tracking(job_id)
-    print(f"{job_id}: {gpu_hours:.1f} {gpu_type.upper()} GPU-hours = ${summary.total_cost:.2f}")
+    print(
+        f"{job_id}: {gpu_hours:.1f} {gpu_type.upper()} GPU-hours = ${summary.total_cost:.2f}"
+    )
     total_cost += summary.total_cost
 
 print(f"\nTotal Cost (All Jobs): ${total_cost:.2f}")

@@ -40,6 +40,7 @@ class GenOpsTelemetry:
         # Get effective attributes (defaults + context + overrides)
         try:
             from genops.core.context import get_effective_attributes
+
             effective_attributes = get_effective_attributes(**attributes)
         except ImportError:
             # Fallback if context module not available
@@ -91,7 +92,9 @@ class GenOpsTelemetry:
 
         # Handle token parameters with backward compatibility
         input_tokens_value = tokens_input if tokens_input is not None else input_tokens
-        output_tokens_value = tokens_output if tokens_output is not None else output_tokens
+        output_tokens_value = (
+            tokens_output if tokens_output is not None else output_tokens
+        )
 
         if input_tokens_value is not None:
             span.set_attribute("genops.tokens.input", input_tokens_value)
@@ -99,7 +102,11 @@ class GenOpsTelemetry:
             span.set_attribute("genops.tokens.output", output_tokens_value)
 
         # Calculate total tokens if not provided
-        if tokens_total is None and input_tokens_value is not None and output_tokens_value is not None:
+        if (
+            tokens_total is None
+            and input_tokens_value is not None
+            and output_tokens_value is not None
+        ):
             tokens_total = input_tokens_value + output_tokens_value
         if tokens_total is not None:
             span.set_attribute("genops.tokens.total", tokens_total)
@@ -108,7 +115,9 @@ class GenOpsTelemetry:
         for key, value in metadata.items():
             if value is not None:
                 if key == "cost_type":
-                    span.set_attribute("genops.cost.type", value)  # Map cost_type to type
+                    span.set_attribute(
+                        "genops.cost.type", value
+                    )  # Map cost_type to type
                 else:
                     span.set_attribute(f"genops.cost.{key}", value)
 
@@ -163,7 +172,9 @@ class GenOpsTelemetry:
         # Handle name parameter with backward compatibility
         name_value = evaluation_name if evaluation_name is not None else metric_name
         if name_value is not None:
-            span.set_attribute("genops.eval.metric", name_value)  # Use 'metric' instead of 'name'
+            span.set_attribute(
+                "genops.eval.metric", name_value
+            )  # Use 'metric' instead of 'name'
 
         span.set_attribute("genops.eval.score", score)
 
@@ -203,15 +214,25 @@ class GenOpsTelemetry:
         # Handle parameter aliases
         limit_value = budget_limit if budget_limit is not None else allocated
         used_value = budget_used if budget_used is not None else consumed
-        remaining_value = budget_remaining if budget_remaining is not None else remaining
+        remaining_value = (
+            budget_remaining if budget_remaining is not None else remaining
+        )
 
         if limit_value is not None:
-            span.set_attribute("genops.budget.allocated", limit_value)  # Use 'allocated' instead of 'limit'
+            span.set_attribute(
+                "genops.budget.allocated", limit_value
+            )  # Use 'allocated' instead of 'limit'
         if used_value is not None:
-            span.set_attribute("genops.budget.consumed", used_value)  # Use 'consumed' instead of 'used'
+            span.set_attribute(
+                "genops.budget.consumed", used_value
+            )  # Use 'consumed' instead of 'used'
 
         # Calculate remaining if not provided but limit and used are available
-        if remaining_value is None and limit_value is not None and used_value is not None:
+        if (
+            remaining_value is None
+            and limit_value is not None
+            and used_value is not None
+        ):
             remaining_value = limit_value - used_value
         if remaining_value is not None:
             span.set_attribute("genops.budget.remaining", remaining_value)
@@ -225,3 +246,7 @@ class GenOpsTelemetry:
         for key, value in metadata.items():
             if value is not None:
                 span.set_attribute(f"genops.budget.{key}", value)
+
+
+# NOTE: TelemetryExporter is an alias for GenOpsTelemetry, used by test imports
+TelemetryExporter = GenOpsTelemetry

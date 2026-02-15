@@ -5,29 +5,32 @@
 This is the absolute simplest way to prove GenOps Replicate integration works.
 Perfect for first-time users - instant confidence builder!
 
-Requirements: 
+Requirements:
 - REPLICATE_API_TOKEN environment variable (get free at https://replicate.com/account/api-tokens)
 - pip install replicate genops-ai
 
 Usage:
     python hello_genops_minimal.py
-    
+
 Expected result: "✅ SUCCESS! GenOps is now tracking your Replicate usage!"
 """
 
+
 def main():
     print("🚀 Testing GenOps with Replicate...")
-    
+
     try:
         # Step 1: Enable GenOps tracking (universal CLAUDE.md standard)
         from genops.providers.replicate import auto_instrument
+
         auto_instrument()
         print("✅ GenOps auto-instrumentation enabled")
-        
+
         # Step 2: Use Replicate normally - now with GenOps tracking!
-        import replicate
         import os
-        
+
+        import replicate
+
         # Check for API token with specific guidance
         api_token = os.getenv("REPLICATE_API_TOKEN")
         if not api_token:
@@ -40,18 +43,14 @@ def main():
             print("   3. python hello_genops_minimal.py")
             print()
             return False
-        
+
         # Simple test with a fast, cheap model
         print("🤖 Running test with Replicate model...")
         output = replicate.run(
             "meta/llama-2-7b-chat",
-            input={
-                "prompt": "Say hello!",
-                "max_length": 50,
-                "temperature": 0.7
-            }
+            input={"prompt": "Say hello!", "max_length": 50, "temperature": 0.7},
         )
-        
+
         print("✅ SUCCESS! GenOps is now tracking your Replicate usage!")
         print("💰 Cost tracking, team attribution, and governance are active.")
         print("📊 Your AI operations are now visible in your observability platform.")
@@ -59,9 +58,9 @@ def main():
         print(f"🤖 Model response: {output[:100] if output else 'Success'}...")
         print()
         print("🎯 PHASE 1 COMPLETE - You now have GenOps working with Replicate!")
-        
+
         return True
-        
+
     except ImportError as e:
         if "replicate" in str(e):
             print("❌ Replicate SDK not installed")
@@ -74,7 +73,7 @@ def main():
         error_str = str(e).lower()
         print(f"❌ Error: {e}")
         print()
-        
+
         # Provide specific guidance for common errors
         if "authentication" in error_str or "token" in error_str:
             print("🔧 API TOKEN ISSUE:")
@@ -91,13 +90,16 @@ def main():
             print("   2. Free tier has usage limits")
         else:
             print("🔧 DETAILED DIAGNOSIS:")
-            print("   python -c \"from genops.providers.replicate_validation import validate_setup, print_validation_result; print_validation_result(validate_setup(), detailed=True)\"")
-        
+            print(
+                '   python -c "from genops.providers.replicate_validation import validate_setup, print_validation_result; print_validation_result(validate_setup(), detailed=True)"'
+            )
+
         return False
+
 
 if __name__ == "__main__":
     success = main()
-    
+
     if success:
         print("🚀 READY FOR PHASE 2? (Team Attribution & Multi-Modal)")
         print("   → python basic_tracking.py          # Add team cost tracking")
@@ -109,5 +111,5 @@ if __name__ == "__main__":
         print()
         print("💡 Need help? Check the troubleshooting guide:")
         print("   → examples/replicate/README.md#troubleshooting")
-    
+
     exit(0 if success else 1)

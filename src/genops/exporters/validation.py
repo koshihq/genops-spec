@@ -5,9 +5,9 @@ Provides diagnostic tools to verify export configuration and connectivity
 to observability platforms like Honeycomb, Datadog, Grafana, etc.
 """
 
-from dataclasses import dataclass
-from typing import Dict, List, Optional
 import os
+from dataclasses import dataclass
+from typing import Optional
 
 try:
     import requests
@@ -30,7 +30,7 @@ class ValidationResult:
 
     provider: str
     passed: bool
-    checks: List[Dict[str, any]]
+    checks: list[dict[str, any]]
     error_message: Optional[str] = None
 
 
@@ -111,7 +111,9 @@ def _validate_honeycomb() -> ValidationResult:
                     "message": "Honeycomb API reachable"
                     if connectivity_passed
                     else f"HTTP {response.status_code}",
-                    "fix": "Check API key validity" if not connectivity_passed else None,
+                    "fix": "Check API key validity"
+                    if not connectivity_passed
+                    else None,
                 }
             )
         except Exception as e:
@@ -192,9 +194,7 @@ def _validate_grafana() -> ValidationResult:
     # Check authentication (optional)
     auth_header = os.getenv("TEMPO_AUTH_HEADER")
     if auth_header:
-        checks.append(
-            {"name": "TEMPO_AUTH_HEADER", "passed": True, "message": "Set"}
-        )
+        checks.append({"name": "TEMPO_AUTH_HEADER", "passed": True, "message": "Set"})
 
     passed = all(check["passed"] for check in checks)
 

@@ -1,11 +1,11 @@
 """Unit tests for Collibra policy importer."""
 
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from genops.core.policy import PolicyConfig, PolicyResult
-from genops.providers.collibra.policy_importer import PolicyImporter, PolicySyncStats
+from genops.providers.collibra.policy_importer import PolicyImporter
 
 
 @pytest.fixture
@@ -119,7 +119,7 @@ def test_fetch_policies_from_all_domains(mock_client, sample_collibra_policies):
         client=mock_client, domain_id=None, enable_background_sync=False
     )
 
-    policies = importer.fetch_policies()
+    importer.fetch_policies()
 
     # Should fetch from both domains
     assert mock_client.list_assets.call_count == 2

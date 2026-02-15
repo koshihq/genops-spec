@@ -12,10 +12,10 @@ Time to run: < 1 minute
 
 from genops.providers.kubetorch import (
     auto_instrument_kubetorch,
-    uninstrument_kubetorch,
-    instrument_kubetorch,
     create_compute_cost_context,
+    instrument_kubetorch,
     reset_cost_aggregator,
+    uninstrument_kubetorch,
 )
 
 print("=" * 60)
@@ -70,8 +70,10 @@ for project_name, gpu_type, gpu_hours in projects:
         duration_seconds=3600,
     )
 
-    print(f"  {project_name:25s}: ${result['cost_total']:7.2f} "
-          f"({result['gpu_hours']:.0f} {gpu_type.upper()} GPU-hours)")
+    print(
+        f"  {project_name:25s}: ${result['cost_total']:7.2f} "
+        f"({result['gpu_hours']:.0f} {gpu_type.upper()} GPU-hours)"
+    )
 
 # =============================================
 # Example 3: Customer/Tenant Attribution (Multi-Tenant)
@@ -97,7 +99,7 @@ for customer_id, customer_name, gpu_type, gpu_hours in customers:
     adapter = instrument_kubetorch(
         team="platform-team",
         customer_id=customer_id,
-        metadata={"customer_name": customer_name}
+        metadata={"customer_name": customer_name},
     )
 
     result = adapter.track_compute_deployment(
@@ -107,7 +109,7 @@ for customer_id, customer_name, gpu_type, gpu_hours in customers:
         duration_seconds=3600,
     )
 
-    cost = result['cost_total']
+    cost = result["cost_total"]
     total_platform_cost += cost
 
     print(f"  {customer_name:20s} ({customer_id}): ${cost:8.2f}")
@@ -130,12 +132,12 @@ users = [
 reset_cost_aggregator()
 user_costs = {}
 
-for user_id, team, gpu_type, gpu_hours in users:
+for user_id, _team, gpu_type, gpu_hours in users:
     with create_compute_cost_context(f"{user_id}-job") as ctx:
         ctx.add_gpu_cost(
             instance_type=gpu_type,
             gpu_hours=gpu_hours,
-            operation_name=f"{user_id}-training"
+            operation_name=f"{user_id}-training",
         )
 
     user_costs[user_id] = ctx.summary.total_cost
@@ -170,7 +172,7 @@ result = adapter.track_compute_deployment(
         "service": "recommendation-api",
         "version": "v2.3.0",
         "region": "us-west-2",
-    }
+    },
 )
 
 print("Multi-Dimensional Attribution:")
@@ -187,6 +189,7 @@ print(f"  Total Cost:  ${result['cost_total']:.2f}")
 print("\n6. Dynamic Attribution (Request-Based)")
 print("-" * 60)
 
+
 def process_training_request(request_data):
     """Process training request with dynamic attribution."""
     # Extract attribution from request
@@ -196,9 +199,7 @@ def process_training_request(request_data):
 
     # Create adapter with request-specific attribution
     adapter = instrument_kubetorch(
-        team=team,
-        project=project,
-        metadata={"user_id": user_id}
+        team=team, project=project, metadata={"user_id": user_id}
     )
 
     # Track training operation
@@ -211,17 +212,41 @@ def process_training_request(request_data):
 
     return result
 
+
 # Simulate multiple requests
 requests = [
-    {"team": "ml-research", "project": "nlp", "user_id": "alice", "gpu_type": "a100", "num_gpus": 8, "duration_seconds": 3600},
-    {"team": "ml-vision", "project": "image-classification", "user_id": "bob", "gpu_type": "v100", "num_gpus": 4, "duration_seconds": 1800},
-    {"team": "ml-research", "project": "rl", "user_id": "charlie", "gpu_type": "a10g", "num_gpus": 2, "duration_seconds": 7200},
+    {
+        "team": "ml-research",
+        "project": "nlp",
+        "user_id": "alice",
+        "gpu_type": "a100",
+        "num_gpus": 8,
+        "duration_seconds": 3600,
+    },
+    {
+        "team": "ml-vision",
+        "project": "image-classification",
+        "user_id": "bob",
+        "gpu_type": "v100",
+        "num_gpus": 4,
+        "duration_seconds": 1800,
+    },
+    {
+        "team": "ml-research",
+        "project": "rl",
+        "user_id": "charlie",
+        "gpu_type": "a10g",
+        "num_gpus": 2,
+        "duration_seconds": 7200,
+    },
 ]
 
 print("Processing Training Requests:")
 for i, request in enumerate(requests, 1):
     result = process_training_request(request)
-    print(f"  Request {i}: {request['team']}/{request['project']}/{request['user_id']} = ${result['cost_total']:.2f}")
+    print(
+        f"  Request {i}: {request['team']}/{request['project']}/{request['user_id']} = ${result['cost_total']:.2f}"
+    )
 
 # =============================================
 # Example 7: Cost Center Reporting
@@ -257,7 +282,7 @@ for cost_center, operations in cost_centers.items():
             duration_seconds=3600,
         )
 
-        cost_center_total += result['cost_total']
+        cost_center_total += result["cost_total"]
 
     print(f"  {cost_center:25s}: ${cost_center_total:10.2f}")
 

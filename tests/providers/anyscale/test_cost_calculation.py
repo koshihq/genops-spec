@@ -1,10 +1,10 @@
 """Tests for Anyscale cost calculation accuracy and edge cases."""
 
 import pytest
+
 from genops.providers.anyscale.pricing import (
     calculate_completion_cost,
     calculate_embedding_cost,
-    ANYSCALE_PRICING,
 )
 
 
@@ -14,9 +14,7 @@ class TestCostCalculationAccuracy:
     def test_llama2_70b_cost_accuracy(self):
         """Test Llama-2-70b cost calculation accuracy."""
         cost = calculate_completion_cost(
-            "meta-llama/Llama-2-70b-chat-hf",
-            input_tokens=1000,
-            output_tokens=500
+            "meta-llama/Llama-2-70b-chat-hf", input_tokens=1000, output_tokens=500
         )
 
         # $1.00/M tokens for both input and output
@@ -27,9 +25,7 @@ class TestCostCalculationAccuracy:
     def test_llama2_7b_cost_accuracy(self):
         """Test Llama-2-7b cost calculation accuracy."""
         cost = calculate_completion_cost(
-            "meta-llama/Llama-2-7b-chat-hf",
-            input_tokens=1000,
-            output_tokens=500
+            "meta-llama/Llama-2-7b-chat-hf", input_tokens=1000, output_tokens=500
         )
 
         # $0.15/M tokens for both input and output
@@ -40,9 +36,7 @@ class TestCostCalculationAccuracy:
     def test_mistral_7b_cost_accuracy(self):
         """Test Mistral-7b cost calculation accuracy."""
         cost = calculate_completion_cost(
-            "mistralai/Mistral-7B-Instruct-v0.1",
-            input_tokens=2000,
-            output_tokens=1000
+            "mistralai/Mistral-7B-Instruct-v0.1", input_tokens=2000, output_tokens=1000
         )
 
         # $0.15/M tokens
@@ -52,10 +46,7 @@ class TestCostCalculationAccuracy:
 
     def test_embedding_cost_accuracy(self):
         """Test embedding cost calculation accuracy."""
-        cost = calculate_embedding_cost(
-            "thenlper/gte-large",
-            tokens=5000
-        )
+        cost = calculate_embedding_cost("thenlper/gte-large", tokens=5000)
 
         # $0.05/M tokens
         # 5000 / 1,000,000 * $0.05 = $0.00025
@@ -69,9 +60,7 @@ class TestCostCalculationEdgeCases:
     def test_single_token_cost(self):
         """Test cost calculation with single token."""
         cost = calculate_completion_cost(
-            "meta-llama/Llama-2-70b-chat-hf",
-            input_tokens=1,
-            output_tokens=0
+            "meta-llama/Llama-2-70b-chat-hf", input_tokens=1, output_tokens=0
         )
 
         expected = 1 / 1_000_000 * 1.0
@@ -80,9 +69,7 @@ class TestCostCalculationEdgeCases:
     def test_very_large_token_count(self):
         """Test cost calculation with very large token counts."""
         cost = calculate_completion_cost(
-            "meta-llama/Llama-2-70b-chat-hf",
-            input_tokens=100000,
-            output_tokens=50000
+            "meta-llama/Llama-2-70b-chat-hf", input_tokens=100000, output_tokens=50000
         )
 
         # 150,000 / 1,000,000 * $1.00 = $0.15
@@ -93,9 +80,7 @@ class TestCostCalculationEdgeCases:
         """Test cost calculation maintains high precision."""
         # Test with prime numbers to check precision
         cost = calculate_completion_cost(
-            "meta-llama/Llama-2-70b-chat-hf",
-            input_tokens=1237,
-            output_tokens=4567
+            "meta-llama/Llama-2-70b-chat-hf", input_tokens=1237, output_tokens=4567
         )
 
         expected = (1237 + 4567) / 1_000_000 * 1.0
@@ -106,9 +91,7 @@ class TestCostCalculationEdgeCases:
         # Should handle gracefully or raise error
         try:
             cost = calculate_completion_cost(
-                "meta-llama/Llama-2-70b-chat-hf",
-                input_tokens=-100,
-                output_tokens=50
+                "meta-llama/Llama-2-70b-chat-hf", input_tokens=-100, output_tokens=50
             )
             # If it doesn't raise, cost should be 0 or handle gracefully
             assert cost >= 0
@@ -165,12 +148,8 @@ class TestCostCalculationConsistency:
 
     def test_same_tokens_same_cost(self):
         """Test same token counts produce same cost."""
-        cost1 = calculate_completion_cost(
-            "meta-llama/Llama-2-70b-chat-hf", 100, 50
-        )
-        cost2 = calculate_completion_cost(
-            "meta-llama/Llama-2-70b-chat-hf", 100, 50
-        )
+        cost1 = calculate_completion_cost("meta-llama/Llama-2-70b-chat-hf", 100, 50)
+        cost2 = calculate_completion_cost("meta-llama/Llama-2-70b-chat-hf", 100, 50)
 
         assert cost1 == cost2
 
@@ -178,14 +157,10 @@ class TestCostCalculationConsistency:
         """Test that swapping input/output with same pricing gives same cost."""
         # For models with same input/output pricing
         cost1 = calculate_completion_cost(
-            "meta-llama/Llama-2-70b-chat-hf",
-            input_tokens=100,
-            output_tokens=50
+            "meta-llama/Llama-2-70b-chat-hf", input_tokens=100, output_tokens=50
         )
         cost2 = calculate_completion_cost(
-            "meta-llama/Llama-2-70b-chat-hf",
-            input_tokens=50,
-            output_tokens=100
+            "meta-llama/Llama-2-70b-chat-hf", input_tokens=50, output_tokens=100
         )
 
         # Both should equal 150 tokens * $1.00/M
@@ -213,22 +188,18 @@ class TestRealWorldScenarios:
         """Test cost for typical chat message."""
         # Typical chat: ~50 input tokens, ~100 output tokens
         cost = calculate_completion_cost(
-            "meta-llama/Llama-2-70b-chat-hf",
-            input_tokens=50,
-            output_tokens=100
+            "meta-llama/Llama-2-70b-chat-hf", input_tokens=50, output_tokens=100
         )
 
         # Should be very small cost
         assert cost < 0.001  # Less than $0.001
-        assert cost > 0      # But greater than zero
+        assert cost > 0  # But greater than zero
 
     def test_long_document_analysis_cost(self):
         """Test cost for long document analysis."""
         # Long document: ~5000 input tokens, ~500 output tokens
         cost = calculate_completion_cost(
-            "meta-llama/Llama-2-70b-chat-hf",
-            input_tokens=5000,
-            output_tokens=500
+            "meta-llama/Llama-2-70b-chat-hf", input_tokens=5000, output_tokens=500
         )
 
         # Should be reasonable cost
@@ -242,7 +213,7 @@ class TestRealWorldScenarios:
             cost = calculate_completion_cost(
                 "meta-llama/Llama-2-7b-chat-hf",  # Use cheaper model
                 input_tokens=20,
-                output_tokens=30
+                output_tokens=30,
             )
             total_cost += cost
 
@@ -254,10 +225,7 @@ class TestRealWorldScenarios:
         # Embed 1000 documents, each ~100 tokens
         total_cost = 0
         for _ in range(1000):
-            cost = calculate_embedding_cost(
-                "thenlper/gte-large",
-                tokens=100
-            )
+            cost = calculate_embedding_cost("thenlper/gte-large", tokens=100)
             total_cost += cost
 
         # Total cost for 100,000 tokens

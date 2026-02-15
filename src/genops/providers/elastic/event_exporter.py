@@ -13,8 +13,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
-from queue import Queue, Empty
+from typing import Any, Optional
 
 from .client import ElasticAPIClient, ElasticDocument
 
@@ -23,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 class ExportMode(Enum):
     """Export mode for telemetry data."""
+
     BATCH = "batch"
     REALTIME = "realtime"
     HYBRID = "hybrid"
@@ -31,6 +31,7 @@ class ExportMode(Enum):
 @dataclass
 class ExportStats:
     """Statistics for export operations."""
+
     total_exported: int = 0
     total_failed: int = 0
     total_batches: int = 0
@@ -38,7 +39,7 @@ class ExportStats:
     last_export_timestamp: Optional[str] = None
     last_batch_size: int = 0
     last_export_duration_ms: float = 0.0
-    errors: List[str] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
 
     def record_success(self, count: int, duration_ms: float, is_batch: bool = True):
         """Record a successful export."""
@@ -59,7 +60,7 @@ class ExportStats:
         if len(self.errors) > 10:
             self.errors = self.errors[-10:]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for reporting."""
         return {
             "total_exported": self.total_exported,
@@ -113,7 +114,7 @@ class EventExporter:
         self.batch_interval_seconds = batch_interval_seconds
 
         # Batch buffer and thread safety
-        self._buffer: List[ElasticDocument] = []
+        self._buffer: list[ElasticDocument] = []
         self._buffer_lock = threading.Lock()
 
         # Statistics
@@ -129,7 +130,7 @@ class EventExporter:
 
     def export_span(
         self,
-        span_data: Dict[str, Any],
+        span_data: dict[str, Any],
         is_critical: bool = False,
     ) -> bool:
         """
@@ -147,9 +148,8 @@ class EventExporter:
             document = self._span_to_document(span_data)
 
             # Determine export strategy
-            should_export_immediately = (
-                self.export_mode == ExportMode.REALTIME
-                or (self.export_mode == ExportMode.HYBRID and is_critical)
+            should_export_immediately = self.export_mode == ExportMode.REALTIME or (
+                self.export_mode == ExportMode.HYBRID and is_critical
             )
 
             if should_export_immediately:
@@ -162,7 +162,7 @@ class EventExporter:
             self.stats.record_failure(str(e))
             return False
 
-    def _span_to_document(self, span_data: Dict[str, Any]) -> ElasticDocument:
+    def _span_to_document(self, span_data: dict[str, Any]) -> ElasticDocument:
         """Convert span data to ElasticDocument."""
         # Extract core fields
         trace_id = span_data.get("trace_id", "unknown")
@@ -177,7 +177,9 @@ class EventExporter:
         # Calculate duration
         duration_ms = None
         if start_time and end_time:
-            duration_ms = (end_time - start_time) / 1_000_000  # Convert nanoseconds to milliseconds
+            duration_ms = (
+                end_time - start_time
+            ) / 1_000_000  # Convert nanoseconds to milliseconds
 
         # Use end_time as timestamp, fallback to start_time or current time
         timestamp = end_time or start_time or time.time_ns()
@@ -216,7 +218,9 @@ class EventExporter:
             budget_remaining=attributes.get("genops.budget.remaining"),
             duration_ms=duration_ms,
             status=span_data.get("status", {}).get("status_code", "success"),
-            attributes={k: v for k, v in attributes.items() if not k.startswith("genops.")},
+            attributes={
+                k: v for k, v in attributes.items() if not k.startswith("genops.")
+            },
         )
 
         return document
@@ -247,7 +251,9 @@ class EventExporter:
 
             # Check if batch is full
             if len(self._buffer) >= self.batch_size:
-                logger.debug(f"Batch full ({len(self._buffer)} documents), triggering flush")
+                logger.debug(
+                    f"Batch full ({len(self._buffer)} documents), triggering flush"
+                )
                 self._flush_batch()
 
         return True
@@ -277,12 +283,14 @@ class EventExporter:
             index_name = self._get_index_name()
 
             # Export batch
-            result = self.client.bulk_index(index=index_name, documents=self._buffer)
+            result = self.client.bulk_index(index=index_name, documents=self._buffer)  # type: ignore
 
             duration_ms = (time.time() - start_time) * 1000
             success_count = result.get("success", 0)
 
-            self.stats.record_success(count=success_count, duration_ms=duration_ms, is_batch=True)
+            self.stats.record_success(
+                count=success_count, duration_ms=duration_ms, is_batch=True
+            )
 
             # Log errors if any
             if result.get("errors"):
@@ -373,6 +381,6 @@ class EventExporter:
 
         logger.info("Event exporter shutdown complete")
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get export statistics."""
         return self.stats.to_dict()

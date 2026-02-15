@@ -12,12 +12,12 @@ Prerequisites:
     - Sample traces already exported (run direct_export.py first)
 """
 
+from typing import Any
+
 import requests
-import json
-from typing import Dict, Any, List
 
 
-def execute_traceql_query(query: str, limit: int = 10) -> Dict[str, Any]:
+def execute_traceql_query(query: str, limit: int = 10) -> dict[str, Any]:
     """
     Execute a TraceQL query against Tempo.
 
@@ -31,7 +31,7 @@ def execute_traceql_query(query: str, limit: int = 10) -> Dict[str, Any]:
     response = requests.get(
         "http://localhost:3200/api/search",
         params={"q": query, "limit": limit},
-        timeout=10
+        timeout=10,
     )
 
     if response.status_code == 200:
@@ -40,7 +40,7 @@ def execute_traceql_query(query: str, limit: int = 10) -> Dict[str, Any]:
         return {"error": f"HTTP {response.status_code}", "message": response.text}
 
 
-def print_query_results(title: str, query: str, results: Dict[str, Any]):
+def print_query_results(title: str, query: str, results: dict[str, Any]):
     """Pretty print query results."""
     print(f"\n{'=' * 70}")
     print(f"Query: {title}")
@@ -72,7 +72,7 @@ def print_query_results(title: str, query: str, results: Dict[str, Any]):
                 span = spans[0]
                 attrs = span.get("attributes", [])
                 if attrs:
-                    print(f"   Attributes:")
+                    print("   Attributes:")
                     for attr in attrs[:5]:  # Show first 5 attributes
                         print(f"     - {attr.get('key')}: {attr.get('value')}")
 
@@ -95,30 +95,17 @@ def main():
 
     # Query 1: All traces
     results = execute_traceql_query("{}", limit=10)
-    print_query_results(
-        "All Recent Traces",
-        "{}",
-        results
-    )
+    print_query_results("All Recent Traces", "{}", results)
 
     # Query 2: Traces by service name
-    results = execute_traceql_query(
-        '{resource.service.name = "genops-ai"}',
-        limit=10
-    )
+    results = execute_traceql_query('{resource.service.name = "genops-ai"}', limit=10)
     print_query_results(
-        "Traces by Service Name",
-        '{resource.service.name = "genops-ai"}',
-        results
+        "Traces by Service Name", '{resource.service.name = "genops-ai"}', results
     )
 
     # Query 3: Traces with duration > 500ms
     results = execute_traceql_query("{duration > 500ms}", limit=10)
-    print_query_results(
-        "Slow Traces (>500ms)",
-        "{duration > 500ms}",
-        results
-    )
+    print_query_results("Slow Traces (>500ms)", "{duration > 500ms}", results)
 
     # ========================================================================
     # Governance Attribute Queries
@@ -130,34 +117,24 @@ def main():
 
     # Query 4: Traces by team
     results = execute_traceql_query('{.team = "platform-engineering"}', limit=10)
-    print_query_results(
-        "Traces by Team",
-        '{.team = "platform-engineering"}',
-        results
-    )
+    print_query_results("Traces by Team", '{.team = "platform-engineering"}', results)
 
     # Query 5: Traces by customer
     results = execute_traceql_query('{.customer_id = "enterprise-123"}', limit=10)
     print_query_results(
-        "Traces by Customer ID",
-        '{.customer_id = "enterprise-123"}',
-        results
+        "Traces by Customer ID", '{.customer_id = "enterprise-123"}', results
     )
 
     # Query 6: Traces by project
     results = execute_traceql_query('{.project = "ai-assistant"}', limit=10)
-    print_query_results(
-        "Traces by Project",
-        '{.project = "ai-assistant"}',
-        results
-    )
+    print_query_results("Traces by Project", '{.project = "ai-assistant"}', results)
 
     # Query 7: Traces by environment
-    results = execute_traceql_query('{.deployment.environment = "production"}', limit=10)
+    results = execute_traceql_query(
+        '{.deployment.environment = "production"}', limit=10
+    )
     print_query_results(
-        "Production Traces",
-        '{.deployment.environment = "production"}',
-        results
+        "Production Traces", '{.deployment.environment = "production"}', results
     )
 
     # ========================================================================
@@ -169,28 +146,20 @@ def main():
     print("=" * 70)
 
     # Query 8: High cost traces
-    results = execute_traceql_query('{.genops.cost.total_cost > 0.10}', limit=10)
+    results = execute_traceql_query("{.genops.cost.total_cost > 0.10}", limit=10)
     print_query_results(
-        "High Cost Traces (>$0.10)",
-        '{.genops.cost.total_cost > 0.10}',
-        results
+        "High Cost Traces (>$0.10)", "{.genops.cost.total_cost > 0.10}", results
     )
 
     # Query 9: High token usage
-    results = execute_traceql_query('{.genops.cost.total_tokens > 2000}', limit=10)
+    results = execute_traceql_query("{.genops.cost.total_tokens > 2000}", limit=10)
     print_query_results(
-        "High Token Usage (>2000 tokens)",
-        '{.genops.cost.total_tokens > 2000}',
-        results
+        "High Token Usage (>2000 tokens)", "{.genops.cost.total_tokens > 2000}", results
     )
 
     # Query 10: Cost by provider
     results = execute_traceql_query('{.genops.provider = "openai"}', limit=10)
-    print_query_results(
-        "OpenAI Traces",
-        '{.genops.provider = "openai"}',
-        results
-    )
+    print_query_results("OpenAI Traces", '{.genops.provider = "openai"}', results)
 
     # ========================================================================
     # Complex Queries
@@ -203,29 +172,17 @@ def main():
     # Query 11: Expensive slow traces for specific customer
     complex_query = '{duration > 1s && .genops.cost.total_cost > 0.05 && .customer_id = "enterprise-123"}'
     results = execute_traceql_query(complex_query, limit=10)
-    print_query_results(
-        "Expensive Slow Traces for Customer",
-        complex_query,
-        results
-    )
+    print_query_results("Expensive Slow Traces for Customer", complex_query, results)
 
     # Query 12: Production traces with errors
     error_query = '{.deployment.environment = "production" && status = error}'
     results = execute_traceql_query(error_query, limit=10)
-    print_query_results(
-        "Production Errors",
-        error_query,
-        results
-    )
+    print_query_results("Production Errors", error_query, results)
 
     # Query 13: Multi-team query
     team_query = '{.team = "platform-engineering" || .team = "ml-research"}'
     results = execute_traceql_query(team_query, limit=10)
-    print_query_results(
-        "Multiple Teams",
-        team_query,
-        results
-    )
+    print_query_results("Multiple Teams", team_query, results)
 
     # ========================================================================
     # Aggregation Examples (via API)
@@ -251,15 +208,22 @@ def main():
                     print(f"  - {tag}")
 
                     # Get values for GenOps tags
-                    if tag.startswith("genops") or tag in ["team", "customer_id", "project"]:
+                    if tag.startswith("genops") or tag in [
+                        "team",
+                        "customer_id",
+                        "project",
+                    ]:
                         try:
                             values_response = requests.get(
                                 f"http://localhost:3200/api/search/tag/{tag}/values",
-                                timeout=5
+                                timeout=5,
                             )
                             if values_response.status_code == 200:
                                 values_data = values_response.json()
-                                if isinstance(values_data, dict) and "tagValues" in values_data:
+                                if (
+                                    isinstance(values_data, dict)
+                                    and "tagValues" in values_data
+                                ):
                                     values = values_data["tagValues"][:5]  # First 5
                                     if values:
                                         print(f"    Values: {', '.join(values)}")

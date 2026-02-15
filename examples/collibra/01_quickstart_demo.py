@@ -41,7 +41,8 @@ def check_prerequisites() -> bool:
 
     # Check GenOps
     try:
-        import genops
+        import genops  # noqa: F401
+
         print("  [OK] GenOps installed")
     except ImportError:
         print("  [MISSING] GenOps not installed")
@@ -77,7 +78,7 @@ def check_prerequisites() -> bool:
         print("  [OPTIONAL] GENOPS_PROJECT not set (optional)")
 
     if missing:
-        print(f"\n[MISSING] Missing requirements:")
+        print("\n[MISSING] Missing requirements:")
         for req in missing:
             print(f"   {req}")
         return False
@@ -123,12 +124,7 @@ def demonstrate_quickstart() -> int:
             time.sleep(0.1)
 
             # Record cost (this is the only addition to your existing code)
-            adapter.record_cost(
-                span,
-                cost=0.02,
-                provider="openai",
-                model="gpt-4"
-            )
+            adapter.record_cost(span, cost=0.02, provider="openai", model="gpt-4")
         print("      [OK] Cost: $0.02 → Exported to Collibra")
 
         # Operation 2: Higher-cost operation
@@ -141,7 +137,7 @@ def demonstrate_quickstart() -> int:
                 provider="anthropic",
                 model="claude-3-opus",
                 tokens_input=5000,
-                tokens_output=8000
+                tokens_output=8000,
             )
         print("      [OK] Cost: $1.50 → Exported to Collibra")
 
@@ -150,14 +146,16 @@ def demonstrate_quickstart() -> int:
         with adapter.track_ai_operation("governed-operation") as span:
             time.sleep(0.1)
 
-            adapter.record_cost(span, cost=0.05, provider="openai", model="gpt-3.5-turbo")
+            adapter.record_cost(
+                span, cost=0.05, provider="openai", model="gpt-3.5-turbo"
+            )
 
             # Record policy enforcement
             adapter.record_policy(
                 span,
                 policy_name="cost_optimization",
                 policy_result="allowed",
-                policy_reason="Using cost-effective model"
+                policy_reason="Using cost-effective model",
             )
         print("      [OK] Cost: $0.05 + Policy: allowed → Exported to Collibra")
         print()
@@ -175,7 +173,7 @@ def demonstrate_quickstart() -> int:
         print(f"   Assets Exported: {metrics['assets_exported']}")
         print(f"   Buffer Size: {metrics['buffer_size']}")
 
-        if metrics.get('daily_budget_limit'):
+        if metrics.get("daily_budget_limit"):
             print(f"   Budget Remaining: ${metrics['budget_remaining']:.2f}")
         print()
 
@@ -219,6 +217,7 @@ def demonstrate_quickstart() -> int:
     except Exception as e:
         print(f"[ERROR] Error during quickstart: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 

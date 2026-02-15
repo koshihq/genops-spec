@@ -37,16 +37,18 @@ from genops.core.telemetry import GenOpsTelemetry
 
 class ComplianceFramework(Enum):
     """Supported compliance frameworks."""
-    SOX = "sox"              # Sarbanes-Oxley Act
-    GDPR = "gdpr"            # General Data Protection Regulation
-    HIPAA = "hipaa"          # Health Insurance Portability and Accountability Act
-    SOC2 = "soc2"            # Service Organization Control 2
-    PCI_DSS = "pci_dss"      # Payment Card Industry Data Security Standard
-    CUSTOM = "custom"        # Custom compliance requirements
+
+    SOX = "sox"  # Sarbanes-Oxley Act
+    GDPR = "gdpr"  # General Data Protection Regulation
+    HIPAA = "hipaa"  # Health Insurance Portability and Accountability Act
+    SOC2 = "soc2"  # Service Organization Control 2
+    PCI_DSS = "pci_dss"  # Payment Card Industry Data Security Standard
+    CUSTOM = "custom"  # Custom compliance requirements
 
 
 class DataClassification(Enum):
     """Data classification levels for compliance."""
+
     PUBLIC = "public"
     INTERNAL = "internal"
     CONFIDENTIAL = "confidential"
@@ -82,40 +84,48 @@ class ComplianceAuditor:
         """Set up validation rules for compliance requirements."""
 
         # Require compliance framework specification
-        genops.add_validation_rule(genops.ValidationRule(
-            name="compliance_framework_required",
-            attribute="compliance_framework",
-            rule_type="required",
-            severity=genops.ValidationSeverity.BLOCK,
-            description="Compliance framework must be specified",
-            error_message="compliance_framework is required for audit trail"
-        ))
+        genops.add_validation_rule(
+            genops.ValidationRule(
+                name="compliance_framework_required",
+                attribute="compliance_framework",
+                rule_type="required",
+                severity=genops.ValidationSeverity.BLOCK,
+                description="Compliance framework must be specified",
+                error_message="compliance_framework is required for audit trail",
+            )
+        )
 
         # Require data classification
-        genops.add_validation_rule(genops.ValidationRule(
-            name="data_classification_required",
-            attribute="data_classification",
-            rule_type="required",
-            severity=genops.ValidationSeverity.BLOCK,
-            description="Data classification required for compliance",
-            error_message="data_classification must be specified"
-        ))
+        genops.add_validation_rule(
+            genops.ValidationRule(
+                name="data_classification_required",
+                attribute="data_classification",
+                rule_type="required",
+                severity=genops.ValidationSeverity.BLOCK,
+                description="Data classification required for compliance",
+                error_message="data_classification must be specified",
+            )
+        )
 
         # Validate compliance frameworks
         allowed_frameworks = {f.value for f in ComplianceFramework}
-        genops.add_validation_rule(genops.create_enum_rule(
-            "compliance_framework",
-            allowed_frameworks,
-            genops.ValidationSeverity.BLOCK
-        ))
+        genops.add_validation_rule(
+            genops.create_enum_rule(
+                "compliance_framework",
+                allowed_frameworks,
+                genops.ValidationSeverity.BLOCK,
+            )
+        )
 
         # Validate data classifications
         allowed_classifications = {d.value for d in DataClassification}
-        genops.add_validation_rule(genops.create_enum_rule(
-            "data_classification",
-            allowed_classifications,
-            genops.ValidationSeverity.BLOCK
-        ))
+        genops.add_validation_rule(
+            genops.create_enum_rule(
+                "data_classification",
+                allowed_classifications,
+                genops.ValidationSeverity.BLOCK,
+            )
+        )
 
         # Require audit justification for restricted data
         def validate_audit_justification(value):
@@ -125,15 +135,17 @@ class ComplianceAuditor:
                 return value is not None and len(str(value).strip()) > 10
             return True
 
-        genops.add_validation_rule(genops.ValidationRule(
-            name="audit_justification_required",
-            attribute="audit_justification",
-            rule_type="custom",
-            severity=genops.ValidationSeverity.BLOCK,
-            description="Audit justification required for restricted data",
-            validator_func=validate_audit_justification,
-            error_message="audit_justification (min 10 chars) required for restricted/top_secret data"
-        ))
+        genops.add_validation_rule(
+            genops.ValidationRule(
+                name="audit_justification_required",
+                attribute="audit_justification",
+                rule_type="custom",
+                severity=genops.ValidationSeverity.BLOCK,
+                description="Audit justification required for restricted data",
+                validator_func=validate_audit_justification,
+                error_message="audit_justification (min 10 chars) required for restricted/top_secret data",
+            )
+        )
 
     def _register_compliance_policies(self):
         """Register compliance-specific policies."""
@@ -144,8 +156,8 @@ class ComplianceAuditor:
             enforcement_level=PolicyResult.WARNING,
             conditions={
                 "max_retention_days": 2555,  # 7 years for SOX
-                "sensitive_data_max_days": 90
-            }
+                "sensitive_data_max_days": 90,
+            },
         )
 
         # Access control policy
@@ -155,8 +167,8 @@ class ComplianceAuditor:
             conditions={
                 "require_authentication": True,
                 "require_authorization": True,
-                "max_privilege_level": "standard"
-            }
+                "max_privilege_level": "standard",
+            },
         )
 
         # Evaluation quality policy
@@ -166,8 +178,8 @@ class ComplianceAuditor:
             conditions={
                 "min_safety_score": 0.85,
                 "min_accuracy_score": 0.80,
-                "require_human_review": True
-            }
+                "require_human_review": True,
+            },
         )
 
     def start_compliant_operation(
@@ -179,7 +191,7 @@ class ComplianceAuditor:
         legal_basis: Optional[str] = None,
         retention_period: Optional[int] = None,
         audit_justification: Optional[str] = None,
-        **additional_context
+        **additional_context,
     ) -> str:
         """
         Start a compliance-tracked AI operation.
@@ -203,39 +215,39 @@ class ComplianceAuditor:
 
         # Build compliance context
         compliance_context = {
-            'operation_id': operation_id,
-            'operation_name': operation_name,
-            'compliance_framework': compliance_framework.value,
-            'data_classification': data_classification.value,
-            'purpose': purpose,
-            'timestamp': timestamp.isoformat(),
-            'audit_required': True,
-            **additional_context
+            "operation_id": operation_id,
+            "operation_name": operation_name,
+            "compliance_framework": compliance_framework.value,
+            "data_classification": data_classification.value,
+            "purpose": purpose,
+            "timestamp": timestamp.isoformat(),
+            "audit_required": True,
+            **additional_context,
         }
 
         # Add optional fields
         if legal_basis:
-            compliance_context['legal_basis'] = legal_basis
+            compliance_context["legal_basis"] = legal_basis
         if retention_period:
-            compliance_context['retention_period_days'] = retention_period
+            compliance_context["retention_period_days"] = retention_period
         if audit_justification:
-            compliance_context['audit_justification'] = audit_justification
+            compliance_context["audit_justification"] = audit_justification
 
         # Set context with validation
         try:
             genops.enforce_tags(compliance_context)
         except genops.TagValidationError as e:
-            raise ValueError(f"Compliance validation failed: {e}")
+            raise ValueError(f"Compliance validation failed: {e}") from e
 
         genops.set_context(**compliance_context)
 
         # Create initial audit record
         audit_record = {
-            'operation_id': operation_id,
-            'event_type': 'operation_start',
-            'timestamp': timestamp.isoformat(),
-            'compliance_context': compliance_context,
-            'status': 'started'
+            "operation_id": operation_id,
+            "event_type": "operation_start",
+            "timestamp": timestamp.isoformat(),
+            "compliance_context": compliance_context,
+            "status": "started",
         }
 
         self.audit_records.append(audit_record)
@@ -256,7 +268,7 @@ class ComplianceAuditor:
         privacy_score: float,
         human_reviewed: bool = False,
         reviewer_id: Optional[str] = None,
-        **custom_metrics
+        **custom_metrics,
     ):
         """
         Record compliance evaluation metrics for an AI operation.
@@ -276,10 +288,10 @@ class ComplianceAuditor:
 
         # Validate scores
         scores = {
-            'safety_score': safety_score,
-            'accuracy_score': accuracy_score,
-            'bias_score': bias_score,
-            'privacy_score': privacy_score
+            "safety_score": safety_score,
+            "accuracy_score": accuracy_score,
+            "bias_score": bias_score,
+            "privacy_score": privacy_score,
         }
 
         for metric_name, score in scores.items():
@@ -288,22 +300,32 @@ class ComplianceAuditor:
 
         # Record evaluation metrics in telemetry
         with self.telemetry.trace_operation(
-            operation_name="compliance_evaluation",
-            operation_id=operation_id
+            operation_name="compliance_evaluation", operation_id=operation_id
         ) as span:
-
             # Record all evaluation metrics
             self.telemetry.record_evaluation(
-                span, "safety", safety_score, threshold=0.85, passed=safety_score >= 0.85
+                span,
+                "safety",
+                safety_score,
+                threshold=0.85,
+                passed=safety_score >= 0.85,
             )
             self.telemetry.record_evaluation(
-                span, "accuracy", accuracy_score, threshold=0.80, passed=accuracy_score >= 0.80
+                span,
+                "accuracy",
+                accuracy_score,
+                threshold=0.80,
+                passed=accuracy_score >= 0.80,
             )
             self.telemetry.record_evaluation(
                 span, "bias", bias_score, threshold=0.2, passed=bias_score <= 0.2
             )
             self.telemetry.record_evaluation(
-                span, "privacy", privacy_score, threshold=0.90, passed=privacy_score >= 0.90
+                span,
+                "privacy",
+                privacy_score,
+                threshold=0.90,
+                passed=privacy_score >= 0.90,
             )
 
             # Record custom metrics
@@ -322,17 +344,19 @@ class ComplianceAuditor:
 
         # Create evaluation audit record
         audit_record = {
-            'operation_id': operation_id,
-            'event_type': 'evaluation_completed',
-            'timestamp': timestamp.isoformat(),
-            'evaluation_metrics': {
+            "operation_id": operation_id,
+            "event_type": "evaluation_completed",
+            "timestamp": timestamp.isoformat(),
+            "evaluation_metrics": {
                 **scores,
                 **custom_metrics,
-                'human_reviewed': human_reviewed,
-                'reviewer_id': reviewer_id
+                "human_reviewed": human_reviewed,
+                "reviewer_id": reviewer_id,
             },
-            'policy_results': policy_results,
-            'compliance_status': self._determine_compliance_status(scores, policy_results)
+            "policy_results": policy_results,
+            "compliance_status": self._determine_compliance_status(
+                scores, policy_results
+            ),
         }
 
         self.audit_records.append(audit_record)
@@ -352,37 +376,43 @@ class ComplianceAuditor:
 
         # Safety threshold policy
         if safety_score < 0.85:
-            policy_results.append({
-                'policy_name': 'evaluation_quality_compliance',
-                'rule': 'min_safety_score',
-                'result': 'violation',
-                'threshold': 0.85,
-                'actual': safety_score,
-                'severity': 'warning'
-            })
+            policy_results.append(
+                {
+                    "policy_name": "evaluation_quality_compliance",
+                    "rule": "min_safety_score",
+                    "result": "violation",
+                    "threshold": 0.85,
+                    "actual": safety_score,
+                    "severity": "warning",
+                }
+            )
 
         # Accuracy threshold policy
         if accuracy_score < 0.80:
-            policy_results.append({
-                'policy_name': 'evaluation_quality_compliance',
-                'rule': 'min_accuracy_score',
-                'result': 'violation',
-                'threshold': 0.80,
-                'actual': accuracy_score,
-                'severity': 'warning'
-            })
+            policy_results.append(
+                {
+                    "policy_name": "evaluation_quality_compliance",
+                    "rule": "min_accuracy_score",
+                    "result": "violation",
+                    "threshold": 0.80,
+                    "actual": accuracy_score,
+                    "severity": "warning",
+                }
+            )
 
         # Human review requirement for sensitive data
         context = genops.get_context()
-        data_class = context.get('data_classification')
-        if data_class in ['restricted', 'top_secret'] and not human_reviewed:
-            policy_results.append({
-                'policy_name': 'evaluation_quality_compliance',
-                'rule': 'require_human_review',
-                'result': 'violation',
-                'reason': f'Human review required for {data_class} data',
-                'severity': 'error'
-            })
+        data_class = context.get("data_classification")
+        if data_class in ["restricted", "top_secret"] and not human_reviewed:
+            policy_results.append(
+                {
+                    "policy_name": "evaluation_quality_compliance",
+                    "rule": "require_human_review",
+                    "result": "violation",
+                    "reason": f"Human review required for {data_class} data",
+                    "severity": "error",
+                }
+            )
 
         return policy_results
 
@@ -392,16 +422,18 @@ class ComplianceAuditor:
         """Determine overall compliance status."""
 
         # Check for blocking violations
-        blocking_violations = [r for r in policy_results if r.get('severity') == 'error']
+        blocking_violations = [
+            r for r in policy_results if r.get("severity") == "error"
+        ]
         if blocking_violations:
-            return 'non_compliant'
+            return "non_compliant"
 
         # Check for warnings
-        warnings = [r for r in policy_results if r.get('severity') == 'warning']
+        warnings = [r for r in policy_results if r.get("severity") == "warning"]
         if warnings:
-            return 'compliant_with_warnings'
+            return "compliant_with_warnings"
 
-        return 'compliant'
+        return "compliant"
 
     def complete_operation(
         self,
@@ -409,7 +441,7 @@ class ComplianceAuditor:
         outcome: str,
         cost: Optional[float] = None,
         tokens_used: Optional[int] = None,
-        **completion_metadata
+        **completion_metadata,
     ):
         """
         Complete a compliance-tracked AI operation.
@@ -426,10 +458,8 @@ class ComplianceAuditor:
 
         # Record completion in telemetry
         with self.telemetry.trace_operation(
-            operation_name="compliance_completion",
-            operation_id=operation_id
+            operation_name="compliance_completion", operation_id=operation_id
         ) as span:
-
             if cost is not None:
                 self.telemetry.record_cost(span, cost=cost, currency="USD")
 
@@ -439,14 +469,14 @@ class ComplianceAuditor:
 
         # Create completion audit record
         audit_record = {
-            'operation_id': operation_id,
-            'event_type': 'operation_completed',
-            'timestamp': timestamp.isoformat(),
-            'outcome': outcome,
-            'cost': cost,
-            'tokens_used': tokens_used,
-            'completion_metadata': completion_metadata,
-            'final_context': genops.get_context()
+            "operation_id": operation_id,
+            "event_type": "operation_completed",
+            "timestamp": timestamp.isoformat(),
+            "outcome": outcome,
+            "cost": cost,
+            "tokens_used": tokens_used,
+            "completion_metadata": completion_metadata,
+            "final_context": genops.get_context(),
         }
 
         self.audit_records.append(audit_record)
@@ -465,7 +495,7 @@ class ComplianceAuditor:
         operation_ids: Optional[list[str]] = None,
         compliance_framework: Optional[ComplianceFramework] = None,
         start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None
+        end_date: Optional[datetime] = None,
     ) -> dict[str, Any]:
         """
         Generate compliance audit report.
@@ -484,17 +514,22 @@ class ComplianceAuditor:
         filtered_records = self.audit_records.copy()
 
         if operation_ids:
-            filtered_records = [r for r in filtered_records if r['operation_id'] in operation_ids]
+            filtered_records = [
+                r for r in filtered_records if r["operation_id"] in operation_ids
+            ]
 
         if compliance_framework:
             filtered_records = [
-                r for r in filtered_records
-                if r.get('compliance_context', {}).get('compliance_framework') == compliance_framework.value
+                r
+                for r in filtered_records
+                if r.get("compliance_context", {}).get("compliance_framework")
+                == compliance_framework.value
             ]
 
         if start_date or end_date:
+
             def in_date_range(record):
-                record_time = datetime.fromisoformat(record['timestamp'])
+                record_time = datetime.fromisoformat(record["timestamp"])
                 if start_date and record_time < start_date:
                     return False
                 if end_date and record_time > end_date:
@@ -510,64 +545,84 @@ class ComplianceAuditor:
         compliance_violations = []
 
         for record in filtered_records:
-            op_id = record['operation_id']
+            op_id = record["operation_id"]
 
             if op_id not in operations:
                 operations[op_id] = {
-                    'operation_id': op_id,
-                    'events': [],
-                    'compliance_status': 'unknown',
-                    'cost': 0,
-                    'tokens': 0
+                    "operation_id": op_id,
+                    "events": [],
+                    "compliance_status": "unknown",
+                    "cost": 0,
+                    "tokens": 0,
                 }
 
-            operations[op_id]['events'].append(record)
+            operations[op_id]["events"].append(record)
 
             # Extract metrics
-            if record['event_type'] == 'evaluation_completed':
-                operations[op_id]['compliance_status'] = record['compliance_status']
-                if record.get('policy_results'):
-                    compliance_violations.extend(record['policy_results'])
+            if record["event_type"] == "evaluation_completed":
+                operations[op_id]["compliance_status"] = record["compliance_status"]
+                if record.get("policy_results"):
+                    compliance_violations.extend(record["policy_results"])
 
-            elif record['event_type'] == 'operation_completed':
-                if record.get('cost'):
-                    operations[op_id]['cost'] = record['cost']
-                    total_cost += record['cost']
-                if record.get('tokens_used'):
-                    operations[op_id]['tokens'] = record['tokens_used']
-                    total_tokens += record['tokens_used']
+            elif record["event_type"] == "operation_completed":
+                if record.get("cost"):
+                    operations[op_id]["cost"] = record["cost"]
+                    total_cost += record["cost"]
+                if record.get("tokens_used"):
+                    operations[op_id]["tokens"] = record["tokens_used"]
+                    total_tokens += record["tokens_used"]
 
         # Generate report
         report = {
-            'report_metadata': {
-                'generated_at': datetime.utcnow().isoformat(),
-                'report_period': {
-                    'start': start_date.isoformat() if start_date else None,
-                    'end': end_date.isoformat() if end_date else None
+            "report_metadata": {
+                "generated_at": datetime.utcnow().isoformat(),
+                "report_period": {
+                    "start": start_date.isoformat() if start_date else None,
+                    "end": end_date.isoformat() if end_date else None,
                 },
-                'filters': {
-                    'operation_ids': operation_ids,
-                    'compliance_framework': compliance_framework.value if compliance_framework else None
+                "filters": {
+                    "operation_ids": operation_ids,
+                    "compliance_framework": compliance_framework.value
+                    if compliance_framework
+                    else None,
                 },
-                'total_operations': len(operations),
-                'total_events': len(filtered_records)
+                "total_operations": len(operations),
+                "total_events": len(filtered_records),
             },
-            'compliance_summary': {
-                'compliant_operations': len([op for op in operations.values() if op['compliance_status'] == 'compliant']),
-                'non_compliant_operations': len([op for op in operations.values() if op['compliance_status'] == 'non_compliant']),
-                'operations_with_warnings': len([op for op in operations.values() if op['compliance_status'] == 'compliant_with_warnings']),
-                'total_violations': len(compliance_violations),
-                'violation_types': list({v['rule'] for v in compliance_violations})
+            "compliance_summary": {
+                "compliant_operations": len(
+                    [
+                        op
+                        for op in operations.values()
+                        if op["compliance_status"] == "compliant"
+                    ]
+                ),
+                "non_compliant_operations": len(
+                    [
+                        op
+                        for op in operations.values()
+                        if op["compliance_status"] == "non_compliant"
+                    ]
+                ),
+                "operations_with_warnings": len(
+                    [
+                        op
+                        for op in operations.values()
+                        if op["compliance_status"] == "compliant_with_warnings"
+                    ]
+                ),
+                "total_violations": len(compliance_violations),
+                "violation_types": list({v["rule"] for v in compliance_violations}),
             },
-            'cost_analysis': {
-                'total_cost': total_cost,
-                'average_cost_per_operation': total_cost / max(len(operations), 1),
-                'total_tokens': total_tokens,
-                'average_tokens_per_operation': total_tokens // max(len(operations), 1)
+            "cost_analysis": {
+                "total_cost": total_cost,
+                "average_cost_per_operation": total_cost / max(len(operations), 1),
+                "total_tokens": total_tokens,
+                "average_tokens_per_operation": total_tokens // max(len(operations), 1),
             },
-            'operations': list(operations.values()),
-            'compliance_violations': compliance_violations,
-            'audit_trail': filtered_records
+            "operations": list(operations.values()),
+            "compliance_violations": compliance_violations,
+            "audit_trail": filtered_records,
         }
 
         return report
@@ -588,7 +643,7 @@ def demonstrate_sox_compliance():
         team="risk-assessment",
         department="lending",
         business_unit="commercial_banking",
-        cost_center="risk_management"
+        cost_center="risk_management",
     )
 
     # Start compliant operation
@@ -602,7 +657,7 @@ def demonstrate_sox_compliance():
         customer_id="bank_customer_12345",
         loan_application_id="LA-2024-001234",
         loan_amount=250000,
-        borrower_type="commercial"
+        borrower_type="commercial",
     )
 
     # Simulate AI risk assessment with compliance tracking
@@ -612,16 +667,16 @@ def demonstrate_sox_compliance():
     # Record evaluation metrics
     auditor.evaluate_compliance_metrics(
         operation_id=operation_id,
-        safety_score=0.92,        # High safety - good
-        accuracy_score=0.88,      # High accuracy - good
-        bias_score=0.15,          # Low bias - good
-        privacy_score=0.94,       # High privacy - good
-        human_reviewed=True,      # Required for SOX
+        safety_score=0.92,  # High safety - good
+        accuracy_score=0.88,  # High accuracy - good
+        bias_score=0.15,  # Low bias - good
+        privacy_score=0.94,  # High privacy - good
+        human_reviewed=True,  # Required for SOX
         reviewer_id="risk_analyst_jane_doe",
         # Custom financial metrics
         credit_score_confidence=0.91,
         fraud_detection_score=0.97,
-        regulatory_score=0.89
+        regulatory_score=0.89,
     )
 
     # Complete operation
@@ -631,8 +686,11 @@ def demonstrate_sox_compliance():
         cost=0.0234,
         tokens_used=1250,
         risk_rating="Medium",
-        approval_conditions=["Collateral requirement: 20%", "Personal guarantee required"],
-        approver_id="senior_underwriter_john_smith"
+        approval_conditions=[
+            "Collateral requirement: 20%",
+            "Personal guarantee required",
+        ],
+        approver_id="senior_underwriter_john_smith",
     )
 
     return auditor, operation_id
@@ -653,7 +711,7 @@ def demonstrate_gdpr_compliance():
         team="customer-service",
         data_center="eu-central-1",
         jurisdiction="EU",
-        privacy_officer="dpo@company.eu"
+        privacy_officer="dpo@company.eu",
     )
 
     # Start compliant operation
@@ -668,7 +726,7 @@ def demonstrate_gdpr_compliance():
         customer_id="eu_customer_67890",
         support_ticket_id="TICKET-EU-98765",
         data_subject_consent=True,
-        processing_location="eu-central-1"
+        processing_location="eu-central-1",
     )
 
     # Simulate AI customer service with GDPR considerations
@@ -678,17 +736,17 @@ def demonstrate_gdpr_compliance():
     # Record evaluation metrics with GDPR focus
     auditor.evaluate_compliance_metrics(
         operation_id=operation_id,
-        safety_score=0.89,        # Good safety
-        accuracy_score=0.85,      # Good accuracy
-        bias_score=0.12,          # Low bias
-        privacy_score=0.96,       # Excellent privacy - critical for GDPR
-        human_reviewed=True,      # Required for restricted data
+        safety_score=0.89,  # Good safety
+        accuracy_score=0.85,  # Good accuracy
+        bias_score=0.12,  # Low bias
+        privacy_score=0.96,  # Excellent privacy - critical for GDPR
+        human_reviewed=True,  # Required for restricted data
         reviewer_id="privacy_specialist_maria_garcia",
         # GDPR-specific metrics
         data_minimization_score=0.93,
         purpose_limitation_score=0.91,
         consent_validity_score=1.0,
-        right_to_explanation_score=0.88
+        right_to_explanation_score=0.88,
     )
 
     # Complete operation
@@ -699,7 +757,7 @@ def demonstrate_gdpr_compliance():
         tokens_used=890,
         response_type="product_information",
         personal_data_processed=True,
-        data_retention_scheduled=True
+        data_retention_scheduled=True,
     )
 
     return auditor, operation_id
@@ -720,7 +778,7 @@ def demonstrate_hipaa_compliance():
         team="clinical-ai",
         department="radiology",
         facility="regional_medical_center",
-        hipaa_covered_entity=True
+        hipaa_covered_entity=True,
     )
 
     # Start compliant operation
@@ -736,7 +794,7 @@ def demonstrate_hipaa_compliance():
         medical_record_number="MRN-45678901",
         physician_id="DR_SMITH_MD",
         phi_present=True,
-        minimum_necessary=True
+        minimum_necessary=True,
     )
 
     # Simulate medical AI analysis
@@ -746,17 +804,17 @@ def demonstrate_hipaa_compliance():
     # Record evaluation metrics with HIPAA focus
     auditor.evaluate_compliance_metrics(
         operation_id=operation_id,
-        safety_score=0.95,        # Excellent safety - critical for healthcare
-        accuracy_score=0.91,      # High accuracy for medical decisions
-        bias_score=0.08,          # Very low bias
-        privacy_score=0.98,       # Excellent privacy for PHI
-        human_reviewed=True,      # Required for top secret/PHI data
+        safety_score=0.95,  # Excellent safety - critical for healthcare
+        accuracy_score=0.91,  # High accuracy for medical decisions
+        bias_score=0.08,  # Very low bias
+        privacy_score=0.98,  # Excellent privacy for PHI
+        human_reviewed=True,  # Required for top secret/PHI data
         reviewer_id="radiologist_dr_johnson_md",
         # HIPAA-specific metrics
         phi_protection_score=0.99,
         minimum_necessary_score=0.94,
         audit_log_completeness=1.0,
-        diagnostic_confidence=0.87
+        diagnostic_confidence=0.87,
     )
 
     # Complete operation
@@ -767,7 +825,7 @@ def demonstrate_hipaa_compliance():
         tokens_used=2100,
         diagnosis_suggestion="Preliminary findings suggest further cardiac evaluation needed",
         physician_review="Attending physician concurred with AI analysis",
-        phi_disclosed=False
+        phi_disclosed=False,
     )
 
     return auditor, operation_id
@@ -795,23 +853,33 @@ def generate_comprehensive_audit_report(auditors: list[ComplianceAuditor]):
     print("📊 AUDIT SUMMARY")
     print(f"   Total Operations: {report['report_metadata']['total_operations']}")
     print(f"   Compliant: {report['compliance_summary']['compliant_operations']}")
-    print(f"   Non-Compliant: {report['compliance_summary']['non_compliant_operations']}")
-    print(f"   With Warnings: {report['compliance_summary']['operations_with_warnings']}")
+    print(
+        f"   Non-Compliant: {report['compliance_summary']['non_compliant_operations']}"
+    )
+    print(
+        f"   With Warnings: {report['compliance_summary']['operations_with_warnings']}"
+    )
     print(f"   Total Violations: {report['compliance_summary']['total_violations']}")
 
     print("\n💰 COST ANALYSIS")
     print(f"   Total Cost: ${report['cost_analysis']['total_cost']:.4f}")
-    print(f"   Avg Cost/Operation: ${report['cost_analysis']['average_cost_per_operation']:.4f}")
+    print(
+        f"   Avg Cost/Operation: ${report['cost_analysis']['average_cost_per_operation']:.4f}"
+    )
     print(f"   Total Tokens: {report['cost_analysis']['total_tokens']:,}")
 
-    if report['compliance_violations']:
+    if report["compliance_violations"]:
         print("\n⚠️ COMPLIANCE VIOLATIONS")
-        for violation in report['compliance_violations']:
-            print(f"   • {violation['policy_name']}: {violation['rule']} ({violation['severity']})")
+        for violation in report["compliance_violations"]:
+            print(
+                f"   • {violation['policy_name']}: {violation['rule']} ({violation['severity']})"
+            )
 
     # Save detailed report
-    report_filename = f"compliance_audit_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-    with open(report_filename, 'w') as f:
+    report_filename = (
+        f"compliance_audit_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    )
+    with open(report_filename, "w") as f:
         json.dump(report, f, indent=2)
 
     print(f"\n📄 Detailed audit report saved to: {report_filename}")

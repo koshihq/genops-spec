@@ -10,14 +10,15 @@ def run_git_command(cmd):
     """Run a git command and return result."""
     try:
         result = subprocess.run(
-            ['git'] + cmd.split()[1:] if cmd.startswith('git ') else cmd.split(),
+            ["git"] + cmd.split()[1:] if cmd.startswith("git ") else cmd.split(),
             cwd=os.getcwd(),
             capture_output=True,
-            text=True
+            text=True,
         )
         return result.returncode, result.stdout, result.stderr
     except Exception as e:
         return 1, "", str(e)
+
 
 def main():
     """Check git status and stage auto-instrumentation files."""
@@ -31,7 +32,7 @@ def main():
 
     print("📁 Current changes:")
     if stdout.strip():
-        for line in stdout.strip().split('\n'):
+        for line in stdout.strip().split("\n"):
             print(f"  {line}")
     else:
         print("  No changes detected")
@@ -42,7 +43,7 @@ def main():
         "src/genops/__init__.py",
         "src/genops/cli/main.py",
         "examples/auto_instrumentation.py",
-        "test_auto_init.py"
+        "test_auto_init.py",
     ]
 
     print(f"\n📦 Staging {len(files_to_add)} auto-instrumentation files...")
@@ -61,7 +62,7 @@ def main():
     print("\n🔍 Status after staging:")
     retcode, stdout, stderr = run_git_command("git status --porcelain")
     if retcode == 0 and stdout.strip():
-        for line in stdout.strip().split('\n'):
+        for line in stdout.strip().split("\n"):
             print(f"  {line}")
 
     # Create commit
@@ -97,6 +98,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"""
     else:
         print(f"❌ Commit failed: {stderr}")
         return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def register_langchain_provider(instrumentor: 'GenOpsInstrumentor') -> None:
+def register_langchain_provider(instrumentor: "GenOpsInstrumentor") -> None:
     """
     Register LangChain provider with the auto-instrumentation system.
 
@@ -33,8 +33,8 @@ def register_langchain_provider(instrumentor: 'GenOpsInstrumentor') -> None:
                 "chain_execution_tracking",
                 "multi_provider_cost_aggregation",
                 "agent_decision_telemetry",
-                "rag_operation_monitoring"
-            ]
+                "rag_operation_monitoring",
+            ],
         )
 
         logger.info("LangChain provider registered for auto-instrumentation")
@@ -49,6 +49,9 @@ def auto_register() -> None:
     """Automatically register LangChain provider if auto-instrumentation is available."""
     try:
         from genops.auto_instrumentation import _instrumentor
+
         register_langchain_provider(_instrumentor)
     except ImportError:
-        logger.debug("Auto-instrumentation not available, skipping LangChain registration")
+        logger.debug(
+            "Auto-instrumentation not available, skipping LangChain registration"
+        )

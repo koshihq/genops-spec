@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import time
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any
 from urllib.parse import urljoin
 
 import requests
@@ -19,13 +19,13 @@ logger = logging.getLogger(__name__)
 class CollibraAsset:
     """Collibra asset structure."""
 
-    asset_id: Optional[str] = None
+    asset_id: str | None = None
     domain_id: str = ""
     asset_type: str = ""
     name: str = ""
-    display_name: Optional[str] = None
-    attributes: Dict[str, Any] = None
-    status: Optional[str] = None
+    display_name: str | None = None
+    attributes: dict[str, Any] = None  # type: ignore[assignment]
+    status: str | None = None
 
     def __post_init__(self):
         if self.attributes is None:
@@ -41,9 +41,9 @@ class CollibraPolicy:
     description: str = ""
     enabled: bool = True
     enforcement_level: str = "block"
-    conditions: Dict[str, Any] = None
-    asset_types: List[str] = None
-    tags: List[str] = None
+    conditions: dict[str, Any] = None  # type: ignore[assignment]
+    asset_types: list[str] = None  # type: ignore
+    tags: list[str] = None  # type: ignore
 
     def __post_init__(self):
         if self.conditions is None:
@@ -68,9 +68,7 @@ class RateLimiter:
         while True:
             now = time.time()
             elapsed = now - self.last_update
-            self.tokens = min(
-                self.max_tokens, self.tokens + elapsed * self.rate_limit
-            )
+            self.tokens = min(self.max_tokens, self.tokens + elapsed * self.rate_limit)  # type: ignore[assignment]
             self.last_update = now
 
             if self.tokens >= 1:
@@ -88,8 +86,8 @@ class CollibraAPIError(Exception):
     def __init__(
         self,
         message: str,
-        status_code: Optional[int] = None,
-        response: Optional[Dict] = None,
+        status_code: int | None = None,
+        response: dict | None = None,
     ):
         self.message = message
         self.status_code = status_code
@@ -115,9 +113,9 @@ class CollibraAPIClient:
     def __init__(
         self,
         base_url: str,
-        username: Optional[str] = None,
-        password: Optional[str] = None,
-        api_token: Optional[str] = None,
+        username: str | None = None,
+        password: str | None = None,
+        api_token: str | None = None,
         timeout: int = 30,
         max_retries: int = 3,
         rate_limit_per_second: int = 10,
@@ -177,9 +175,9 @@ class CollibraAPIClient:
         self,
         method: str,
         endpoint: str,
-        data: Optional[Dict] = None,
-        params: Optional[Dict] = None,
-    ) -> Dict:
+        data: dict | None = None,
+        params: dict | None = None,
+    ) -> dict:
         """
         Make HTTP request to Collibra API with rate limiting and error handling.
 
@@ -238,11 +236,11 @@ class CollibraAPIClient:
         except requests.exceptions.Timeout as e:
             raise CollibraAPIError(
                 f"Request timeout after {self.timeout}s: {str(e)}"
-            )
+            ) from e
         except requests.exceptions.ConnectionError as e:
-            raise CollibraAPIError(f"Connection error: {str(e)}")
+            raise CollibraAPIError(f"Connection error: {str(e)}") from e
         except requests.exceptions.RequestException as e:
-            raise CollibraAPIError(f"Request failed: {str(e)}")
+            raise CollibraAPIError(f"Request failed: {str(e)}") from e
 
     def health_check(self) -> bool:
         """
@@ -266,9 +264,9 @@ class CollibraAPIClient:
         domain_id: str,
         asset_type: str,
         name: str,
-        attributes: Optional[Dict[str, Any]] = None,
-        display_name: Optional[str] = None,
-    ) -> Dict:
+        attributes: dict[str, Any] | None = None,
+        display_name: str | None = None,
+    ) -> dict:
         """
         Create a new asset in Collibra.
 
@@ -292,11 +290,11 @@ class CollibraAPIClient:
             data["displayName"] = display_name
 
         if attributes:
-            data["attributes"] = attributes
+            data["attributes"] = attributes  # type: ignore[assignment]
 
         return self._make_request("POST", "/rest/2.0/assets", data=data)
 
-    def update_asset(self, asset_id: str, attributes: Dict[str, Any]) -> Dict:
+    def update_asset(self, asset_id: str, attributes: dict[str, Any]) -> dict:
         """
         Update an existing asset.
 
@@ -308,11 +306,9 @@ class CollibraAPIClient:
             Updated asset data
         """
         data = {"attributes": attributes}
-        return self._make_request(
-            "PATCH", f"/rest/2.0/assets/{asset_id}", data=data
-        )
+        return self._make_request("PATCH", f"/rest/2.0/assets/{asset_id}", data=data)
 
-    def get_asset(self, asset_id: str) -> Dict:
+    def get_asset(self, asset_id: str) -> dict:
         """
         Get asset by ID.
 
@@ -326,12 +322,12 @@ class CollibraAPIClient:
 
     def search_assets(
         self,
-        query: Optional[str] = None,
-        asset_type: Optional[str] = None,
-        domain_id: Optional[str] = None,
+        query: str | None = None,
+        asset_type: str | None = None,
+        domain_id: str | None = None,
         limit: int = 100,
         offset: int = 0,
-    ) -> List[Dict]:
+    ) -> list[dict]:
         """
         Search for assets.
 
@@ -348,18 +344,18 @@ class CollibraAPIClient:
         params = {"limit": limit, "offset": offset}
 
         if query:
-            params["name"] = query
+            params["name"] = query  # type: ignore[assignment]
         if asset_type:
-            params["typeId"] = asset_type
+            params["typeId"] = asset_type  # type: ignore[assignment]
         if domain_id:
-            params["domainId"] = domain_id
+            params["domainId"] = domain_id  # type: ignore[assignment]
 
         response = self._make_request("GET", "/rest/2.0/assets", params=params)
         return response.get("results", [])
 
     # Policy Management (simulated - Collibra may use different API)
 
-    def list_policies(self, domain_id: Optional[str] = None) -> List[Dict]:
+    def list_policies(self, domain_id: str | None = None) -> list[dict]:
         """
         List governance policies.
 
@@ -384,12 +380,10 @@ class CollibraAPIClient:
             )
             return response.get("results", [])
         except CollibraAPIError:
-            logger.warning(
-                "Policy listing not available. Check Collibra API version."
-            )
+            logger.warning("Policy listing not available. Check Collibra API version.")
             return []
 
-    def get_policy(self, policy_id: str) -> Dict:
+    def get_policy(self, policy_id: str) -> dict:
         """
         Get policy by ID.
 
@@ -403,7 +397,7 @@ class CollibraAPIClient:
 
     # Domain Management
 
-    def get_domain(self, domain_id: str) -> Dict:
+    def get_domain(self, domain_id: str) -> dict:
         """
         Get domain by ID.
 
@@ -415,7 +409,7 @@ class CollibraAPIClient:
         """
         return self._make_request("GET", f"/rest/2.0/domains/{domain_id}")
 
-    def list_domains(self, community_id: Optional[str] = None) -> List[Dict]:
+    def list_domains(self, community_id: str | None = None) -> list[dict]:
         """
         List domains.
 
@@ -436,7 +430,7 @@ class CollibraAPIClient:
 
     def create_relation(
         self, source_id: str, target_id: str, relation_type: str
-    ) -> Dict:
+    ) -> dict:
         """
         Create a relationship between assets.
 
@@ -455,7 +449,7 @@ class CollibraAPIClient:
         }
         return self._make_request("POST", "/rest/2.0/relations", data=data)
 
-    def get_application_info(self) -> Dict:
+    def get_application_info(self) -> dict:
         """
         Get Collibra application information.
 

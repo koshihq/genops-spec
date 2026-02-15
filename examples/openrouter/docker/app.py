@@ -26,7 +26,7 @@ structlog.configure(
         structlog.processors.StackInfoRenderer(),
         structlog.processors.format_exc_info,
         structlog.processors.UnicodeDecoder(),
-        structlog.processors.JSONRenderer()
+        structlog.processors.JSONRenderer(),
     ],
     context_class=dict,
     logger_factory=structlog.stdlib.LoggerFactory(),
@@ -37,7 +37,7 @@ structlog.configure(
 logger = structlog.get_logger()
 
 # Initialize GenOps with production configuration
-import genops
+import genops  # noqa: E402
 
 genops.init(
     service_name=os.getenv("OTEL_SERVICE_NAME", "openrouter-production-service"),
@@ -45,18 +45,26 @@ genops.init(
     environment=os.getenv("ENVIRONMENT", "production"),
     exporter_type="otlp",
     otlp_endpoint=os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT"),
-    otlp_headers=dict(pair.split("=") for pair in (os.getenv("OTEL_EXPORTER_OTLP_HEADERS", "").split(",") if os.getenv("OTEL_EXPORTER_OTLP_HEADERS") else [])),
+    otlp_headers=dict(
+        pair.split("=")
+        for pair in (
+            os.getenv("OTEL_EXPORTER_OTLP_HEADERS", "").split(",")
+            if os.getenv("OTEL_EXPORTER_OTLP_HEADERS")
+            else []
+        )
+    ),
     default_team=os.getenv("DEFAULT_TEAM", "platform"),
-    default_project=os.getenv("DEFAULT_PROJECT", "openrouter-service")
+    default_project=os.getenv("DEFAULT_PROJECT", "openrouter-service"),
 )
 
-from genops.providers.openrouter import instrument_openrouter
+from genops.providers.openrouter import instrument_openrouter  # noqa: E402
 
 # Initialize Flask app
 app = Flask(__name__)
 
 # Global OpenRouter client
 openrouter_client = None
+
 
 def get_openrouter_client():
     """Get or create OpenRouter client with proper error handling."""
@@ -67,7 +75,7 @@ def get_openrouter_client():
             openrouter_client = instrument_openrouter(
                 openrouter_api_key=os.getenv("OPENROUTER_API_KEY"),
                 timeout=float(os.getenv("OPENROUTER_TIMEOUT", "30.0")),
-                max_retries=int(os.getenv("OPENROUTER_MAX_RETRIES", "3"))
+                max_retries=int(os.getenv("OPENROUTER_MAX_RETRIES", "3")),
             )
             logger.info("OpenRouter client initialized successfully")
         except Exception as e:
@@ -85,24 +93,25 @@ def health_check():
 
         result = validate_setup()
 
-        return jsonify({
-            "status": "healthy" if result.is_valid else "degraded",
-            "service": os.getenv("OTEL_SERVICE_NAME", "openrouter-service"),
-            "version": os.getenv("OTEL_SERVICE_VERSION", "1.0.0"),
-            "environment": os.getenv("ENVIRONMENT", "production"),
-            "validation": {
-                "is_valid": result.is_valid,
-                "error_count": result.summary.get("error_count", 0),
-                "warning_count": result.summary.get("warning_count", 0)
+        return jsonify(
+            {
+                "status": "healthy" if result.is_valid else "degraded",
+                "service": os.getenv("OTEL_SERVICE_NAME", "openrouter-service"),
+                "version": os.getenv("OTEL_SERVICE_VERSION", "1.0.0"),
+                "environment": os.getenv("ENVIRONMENT", "production"),
+                "validation": {
+                    "is_valid": result.is_valid,
+                    "error_count": result.summary.get("error_count", 0),
+                    "warning_count": result.summary.get("warning_count", 0),
+                },
             }
-        }), 200 if result.is_valid else 503
+        ), 200 if result.is_valid else 503
 
     except Exception as e:
         logger.error("Health check failed", error=str(e))
-        return jsonify({
-            "status": "unhealthy",
-            "error": "An internal error occurred"
-        }), 500
+        return jsonify(
+            {"status": "unhealthy", "error": "An internal error occurred"}
+        ), 500
 
 
 @app.route("/ready")
@@ -111,18 +120,19 @@ def readiness_check():
     try:
         get_openrouter_client()
 
-        return jsonify({
-            "status": "ready",
-            "openrouter_client": "initialized",
-            "timestamp": structlog.processors.TimeStamper(fmt="iso").__call__(None, None, None)["timestamp"]
-        }), 200
+        return jsonify(
+            {
+                "status": "ready",
+                "openrouter_client": "initialized",
+                "timestamp": structlog.processors.TimeStamper(fmt="iso").__call__(
+                    None, None, None
+                )["timestamp"],
+            }
+        ), 200
 
     except Exception as e:
         logger.error("Readiness check failed", error=str(e))
-        return jsonify({
-            "status": "not_ready",
-            "error": "Service not ready"
-        }), 503
+        return jsonify({"status": "not_ready", "error": "Service not ready"}), 503
 
 
 @app.route("/chat/completions", methods=["POST"])
@@ -151,9 +161,19 @@ def chat_completions():
         # Extract governance attributes from request
         governance_attrs = {}
         governance_keys = [
-            "team", "project", "customer_id", "customer", "environment",
-            "cost_center", "feature", "user_id", "experiment_id", "region",
-            "model_version", "priority", "compliance_level"
+            "team",
+            "project",
+            "customer_id",
+            "customer",
+            "environment",
+            "cost_center",
+            "feature",
+            "user_id",
+            "experiment_id",
+            "region",
+            "model_version",
+            "priority",
+            "compliance_level",
         ]
 
         for key in governance_keys:
@@ -161,23 +181,33 @@ def chat_completions():
                 governance_attrs[key] = data[key]
 
         # Add request-level context
-        governance_attrs.update({
-            "request_id": request.headers.get("X-Request-ID", "unknown"),
-            "user_agent": request.headers.get("User-Agent", "unknown"),
-            "endpoint": "/chat/completions"
-        })
+        governance_attrs.update(
+            {
+                "request_id": request.headers.get("X-Request-ID", "unknown"),
+                "user_agent": request.headers.get("User-Agent", "unknown"),
+                "endpoint": "/chat/completions",
+            }
+        )
 
         # Prepare OpenAI-compatible parameters
-        openai_params = {
-            "model": data["model"],
-            "messages": data["messages"]
-        }
+        openai_params = {"model": data["model"], "messages": data["messages"]}
 
         # Add optional OpenAI parameters
         openai_optional_params = [
-            "temperature", "max_tokens", "top_p", "frequency_penalty",
-            "presence_penalty", "stream", "stop", "n", "logit_bias",
-            "user", "response_format", "seed", "tools", "tool_choice"
+            "temperature",
+            "max_tokens",
+            "top_p",
+            "frequency_penalty",
+            "presence_penalty",
+            "stream",
+            "stop",
+            "n",
+            "logit_bias",
+            "user",
+            "response_format",
+            "seed",
+            "tools",
+            "tool_choice",
         ]
 
         for param in openai_optional_params:
@@ -194,37 +224,42 @@ def chat_completions():
             "Processing chat completion request",
             model=data["model"],
             team=governance_attrs.get("team"),
-            customer_id=governance_attrs.get("customer_id")
+            customer_id=governance_attrs.get("customer_id"),
         )
 
         # Make the instrumented request
-        response = client.chat_completions_create(
-            **openai_params,
-            **governance_attrs
-        )
+        response = client.chat_completions_create(**openai_params, **governance_attrs)
 
         logger.info(
             "Chat completion successful",
             model=data["model"],
-            tokens_used=getattr(response.usage, "total_tokens", 0) if hasattr(response, "usage") else 0
+            tokens_used=getattr(response.usage, "total_tokens", 0)
+            if hasattr(response, "usage")
+            else 0,
         )
 
         # Return the response in OpenAI-compatible format
-        return response.model_dump() if hasattr(response, 'model_dump') else response.dict()
+        return (
+            response.model_dump()
+            if hasattr(response, "model_dump")
+            else response.dict()
+        )
 
     except Exception as e:
         logger.error(
             "Chat completion failed",
             error=str(e),
-            model=data.get("model") if 'data' in locals() else "unknown"
+            model=data.get("model") if "data" in locals() else "unknown",
         )
-        return jsonify({
-            "error": {
-                "message": "An internal error occurred",
-                "type": "internal_error",
-                "code": "openrouter_error"
+        return jsonify(
+            {
+                "error": {
+                    "message": "An internal error occurred",
+                    "type": "internal_error",
+                    "code": "openrouter_error",
+                }
             }
-        }), 500
+        ), 500
 
 
 @app.route("/models")
@@ -235,18 +270,39 @@ def list_models():
         # For now, return a sample of supported models
         models = [
             {"id": "openai/gpt-4o", "provider": "openai", "pricing_tier": "premium"},
-            {"id": "anthropic/claude-3-5-sonnet", "provider": "anthropic", "pricing_tier": "premium"},
-            {"id": "google/gemini-1.5-pro", "provider": "google", "pricing_tier": "premium"},
-            {"id": "meta-llama/llama-3.1-8b-instruct", "provider": "meta", "pricing_tier": "balanced"},
-            {"id": "meta-llama/llama-3.2-3b-instruct", "provider": "meta", "pricing_tier": "economy"},
-            {"id": "anthropic/claude-3-haiku", "provider": "anthropic", "pricing_tier": "balanced"},
-            {"id": "openai/gpt-3.5-turbo", "provider": "openai", "pricing_tier": "balanced"}
+            {
+                "id": "anthropic/claude-3-5-sonnet",
+                "provider": "anthropic",
+                "pricing_tier": "premium",
+            },
+            {
+                "id": "google/gemini-1.5-pro",
+                "provider": "google",
+                "pricing_tier": "premium",
+            },
+            {
+                "id": "meta-llama/llama-3.1-8b-instruct",
+                "provider": "meta",
+                "pricing_tier": "balanced",
+            },
+            {
+                "id": "meta-llama/llama-3.2-3b-instruct",
+                "provider": "meta",
+                "pricing_tier": "economy",
+            },
+            {
+                "id": "anthropic/claude-3-haiku",
+                "provider": "anthropic",
+                "pricing_tier": "balanced",
+            },
+            {
+                "id": "openai/gpt-3.5-turbo",
+                "provider": "openai",
+                "pricing_tier": "balanced",
+            },
         ]
 
-        return jsonify({
-            "object": "list",
-            "data": models
-        })
+        return jsonify({"object": "list", "data": models})
 
     except Exception as e:
         logger.error("Failed to list models", error=str(e))
@@ -268,18 +324,18 @@ def estimate_cost():
         output_tokens = data.get("output_tokens", 50)
 
         cost = calculate_openrouter_cost(
-            model,
-            input_tokens=input_tokens,
-            output_tokens=output_tokens
+            model, input_tokens=input_tokens, output_tokens=output_tokens
         )
 
-        return jsonify({
-            "model": model,
-            "input_tokens": input_tokens,
-            "output_tokens": output_tokens,
-            "estimated_cost": cost,
-            "currency": "USD"
-        })
+        return jsonify(
+            {
+                "model": model,
+                "input_tokens": input_tokens,
+                "output_tokens": output_tokens,
+                "estimated_cost": cost,
+                "currency": "USD",
+            }
+        )
 
     except Exception as e:
         logger.error("Cost estimation failed", error=str(e))
@@ -290,12 +346,9 @@ def estimate_cost():
 def handle_error(error):
     """Global error handler."""
     logger.error("Unhandled exception", error=str(error), exc_info=True)
-    return jsonify({
-        "error": {
-            "message": "An internal error occurred",
-            "type": "internal_error"
-        }
-    }), 500
+    return jsonify(
+        {"error": {"message": "An internal error occurred", "type": "internal_error"}}
+    ), 500
 
 
 if __name__ == "__main__":
@@ -306,7 +359,7 @@ if __name__ == "__main__":
         "Starting OpenRouter service",
         port=port,
         debug=debug,
-        environment=os.getenv("ENVIRONMENT", "production")
+        environment=os.getenv("ENVIRONMENT", "production"),
     )
 
     app.run(host="0.0.0.0", port=port, debug=debug)

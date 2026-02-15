@@ -15,12 +15,14 @@ Quick start Tempo:
 """
 
 import time
-from genops import track_usage
+
 from genops.integrations.tempo import (
     configure_tempo,
-    validate_tempo_setup,
     print_tempo_validation,
+    validate_tempo_setup,
 )
+
+from genops import track_usage
 
 
 def main():
@@ -50,7 +52,7 @@ def main():
     configure_tempo(
         endpoint="http://localhost:3200",
         service_name="tempo-direct-export-example",
-        environment="development"
+        environment="development",
     )
 
     print("✅ Configured direct OTLP export to Tempo")
@@ -64,7 +66,7 @@ def main():
         team="platform-engineering",
         project="tempo-examples",
         customer_id="internal-testing",
-        feature="direct-export"
+        feature="direct-export",
     )
     def example_ai_operation():
         """Simulated AI operation with governance tracking."""
@@ -85,7 +87,9 @@ def main():
     print("-" * 60)
     print("Query traces using:")
     print("  1. TraceQL (command line):")
-    print('     curl "http://localhost:3200/api/search?q={.team=\\"platform-engineering\\"}&limit=10"')
+    print(
+        '     curl "http://localhost:3200/api/search?q={.team=\\"platform-engineering\\"}&limit=10"'
+    )
     print()
     print("  2. Grafana UI:")
     print("     http://localhost:3000 → Explore → Tempo")

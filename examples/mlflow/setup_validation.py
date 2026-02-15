@@ -34,13 +34,10 @@ def main():
 
     try:
         # Import validation functions
-        from genops.providers.mlflow import validate_setup, print_validation_result
+        from genops.providers.mlflow import print_validation_result, validate_setup
 
         # Run comprehensive validation
-        result = validate_setup(
-            check_connectivity=True,
-            check_governance=True
-        )
+        result = validate_setup(check_connectivity=True, check_governance=True)
 
         # Print formatted results
         print_validation_result(result)
@@ -69,6 +66,7 @@ def main():
         print(f"\n❌ Unexpected Error: {e}")
         print("\nPlease check your installation and configuration.\n")
         import traceback
+
         traceback.print_exc()
         return 1
 

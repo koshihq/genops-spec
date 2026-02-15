@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 import os
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -14,6 +13,7 @@ logger = logging.getLogger(__name__)
 # Dataclasses
 # ============================================================================
 
+
 @dataclass
 class ValidationIssue:
     """Represents a validation issue with suggested fix."""
@@ -21,8 +21,8 @@ class ValidationIssue:
     severity: str  # "error", "warning", "info"
     component: str  # "dependencies", "configuration", "connectivity", "governance"
     message: str
-    suggested_fix: Optional[str] = None
-    documentation_link: Optional[str] = None
+    suggested_fix: str | None = None
+    documentation_link: str | None = None
 
 
 @dataclass
@@ -30,16 +30,16 @@ class ValidationResult:
     """Result of validation checks."""
 
     passed: bool = False
-    issues: List[ValidationIssue] = field(default_factory=list)
-    configuration: Dict[str, str] = field(default_factory=dict)
-    dependencies: Dict[str, bool] = field(default_factory=dict)
-    connectivity: Dict[str, bool] = field(default_factory=dict)
+    issues: list[ValidationIssue] = field(default_factory=list)
+    configuration: dict[str, str] = field(default_factory=dict)
+    dependencies: dict[str, bool] = field(default_factory=dict)
+    connectivity: dict[str, bool] = field(default_factory=dict)
 
     def has_errors(self) -> bool:
         """Check if there are any error-level issues."""
         return any(issue.severity == "error" for issue in self.issues)
 
-    def get_issues_by_severity(self, severity: str) -> List[ValidationIssue]:
+    def get_issues_by_severity(self, severity: str) -> list[ValidationIssue]:
         """Get issues filtered by severity level."""
         return [issue for issue in self.issues if issue.severity == severity]
 
@@ -54,11 +54,12 @@ class ValidationResult:
 # Main Validation Function
 # ============================================================================
 
+
 def validate_setup(
-    tracking_uri: Optional[str] = None,
+    tracking_uri: str | None = None,
     check_connectivity: bool = True,
     check_governance: bool = True,
-    **kwargs
+    **kwargs,
 ) -> ValidationResult:
     """
     Validate MLflow setup for GenOps governance.
@@ -126,6 +127,7 @@ def validate_setup(
 # Validation Helper Functions
 # ============================================================================
 
+
 def _validate_dependencies(result: ValidationResult) -> None:
     """Validate required dependencies."""
     dependencies = {
@@ -137,49 +139,64 @@ def _validate_dependencies(result: ValidationResult) -> None:
     # Check MLflow
     try:
         import mlflow
+
         dependencies["mlflow"] = True
         result.configuration["mlflow_version"] = mlflow.__version__
     except ImportError:
-        result.add_issue(ValidationIssue(
-            severity="error",
-            component="dependencies",
-            message="MLflow not installed",
-            suggested_fix="pip install mlflow",
-            documentation_link="https://mlflow.org/docs/latest/quickstart.html"
-        ))
+        result.add_issue(
+            ValidationIssue(
+                severity="error",
+                component="dependencies",
+                message="MLflow not installed",
+                suggested_fix="pip install mlflow",
+                documentation_link="https://mlflow.org/docs/latest/quickstart.html",
+            )
+        )
 
     # Check OpenTelemetry
     try:
         import opentelemetry
+
         dependencies["opentelemetry"] = True
-        result.configuration["opentelemetry_version"] = opentelemetry.version.__version__
+        result.configuration["opentelemetry_version"] = (
+            opentelemetry.version.__version__
+        )
     except ImportError:
-        result.add_issue(ValidationIssue(
-            severity="error",
-            component="dependencies",
-            message="OpenTelemetry not installed",
-            suggested_fix="pip install opentelemetry-api opentelemetry-sdk",
-            documentation_link="https://opentelemetry.io/docs/instrumentation/python/"
-        ))
+        result.add_issue(
+            ValidationIssue(
+                severity="error",
+                component="dependencies",
+                message="OpenTelemetry not installed",
+                suggested_fix="pip install opentelemetry-api opentelemetry-sdk",
+                documentation_link="https://opentelemetry.io/docs/instrumentation/python/",
+            )
+        )
 
     # Check GenOps
     try:
         import genops
+
         dependencies["genops"] = True
-        result.configuration["genops_version"] = getattr(genops, "__version__", "development")
+        result.configuration["genops_version"] = getattr(
+            genops, "__version__", "development"
+        )
     except ImportError:
-        result.add_issue(ValidationIssue(
-            severity="error",
-            component="dependencies",
-            message="GenOps not installed",
-            suggested_fix="pip install genops",
-            documentation_link="https://github.com/KoshiHQ/GenOps-AI"
-        ))
+        result.add_issue(
+            ValidationIssue(
+                severity="error",
+                component="dependencies",
+                message="GenOps not installed",
+                suggested_fix="pip install genops",
+                documentation_link="https://github.com/KoshiHQ/GenOps-AI",
+            )
+        )
 
     result.dependencies = dependencies
 
 
-def _validate_configuration(result: ValidationResult, tracking_uri: Optional[str] = None) -> None:
+def _validate_configuration(
+    result: ValidationResult, tracking_uri: str | None = None
+) -> None:
     """Validate MLflow configuration."""
     # Check tracking URI
     tracking_uri = tracking_uri or os.getenv("MLFLOW_TRACKING_URI") or "file:///mlruns"
@@ -196,12 +213,14 @@ def _validate_configuration(result: ValidationResult, tracking_uri: Optional[str
         # Databricks
         result.configuration["storage_type"] = "databricks"
     else:
-        result.add_issue(ValidationIssue(
-            severity="warning",
-            component="configuration",
-            message=f"Unrecognized tracking URI format: {tracking_uri}",
-            suggested_fix="Set MLFLOW_TRACKING_URI to a valid URI (file://, http://, or databricks://)"
-        ))
+        result.add_issue(
+            ValidationIssue(
+                severity="warning",
+                component="configuration",
+                message=f"Unrecognized tracking URI format: {tracking_uri}",
+                suggested_fix="Set MLFLOW_TRACKING_URI to a valid URI (file://, http://, or databricks://)",
+            )
+        )
 
     # Check registry URI (optional)
     registry_uri = os.getenv("MLFLOW_REGISTRY_URI")
@@ -225,12 +244,14 @@ def _validate_configuration(result: ValidationResult, tracking_uri: Optional[str
         missing_critical.append("GENOPS_PROJECT")
 
     if missing_critical:
-        result.add_issue(ValidationIssue(
-            severity="warning",
-            component="configuration",
-            message=f"Critical GenOps governance attributes not set: {missing_critical}",
-            suggested_fix=f"Set environment variables: {', '.join(missing_critical)}"
-        ))
+        result.add_issue(
+            ValidationIssue(
+                severity="warning",
+                component="configuration",
+                message=f"Critical GenOps governance attributes not set: {missing_critical}",
+                suggested_fix=f"Set environment variables: {', '.join(missing_critical)}",
+            )
+        )
 
     # Add configured values
     for key, value in genops_config.items():
@@ -247,7 +268,6 @@ def _validate_connectivity(result: ValidationResult) -> None:
     }
 
     try:
-        import mlflow
         from mlflow.tracking import MlflowClient
 
         tracking_uri = result.configuration.get("tracking_uri")
@@ -259,24 +279,28 @@ def _validate_connectivity(result: ValidationResult) -> None:
             connectivity_checks["tracking_server"] = True
             result.configuration["experiment_count"] = str(len(experiments))
         except Exception as e:
-            result.add_issue(ValidationIssue(
-                severity="error",
-                component="connectivity",
-                message=f"Cannot connect to MLflow tracking server: {e}",
-                suggested_fix="Verify tracking URI and ensure MLflow server is running"
-            ))
+            result.add_issue(
+                ValidationIssue(
+                    severity="error",
+                    component="connectivity",
+                    message=f"Cannot connect to MLflow tracking server: {e}",
+                    suggested_fix="Verify tracking URI and ensure MLflow server is running",
+                )
+            )
 
         # Test artifact store (basic check)
         try:
             # Artifact store check - simplified
             connectivity_checks["artifact_store"] = True
         except Exception as e:
-            result.add_issue(ValidationIssue(
-                severity="warning",
-                component="connectivity",
-                message=f"Artifact store connectivity issue: {e}",
-                suggested_fix="Ensure artifact storage backend is properly configured"
-            ))
+            result.add_issue(
+                ValidationIssue(
+                    severity="warning",
+                    component="connectivity",
+                    message=f"Artifact store connectivity issue: {e}",
+                    suggested_fix="Ensure artifact storage backend is properly configured",
+                )
+            )
 
         # Test model registry
         try:
@@ -284,20 +308,24 @@ def _validate_connectivity(result: ValidationResult) -> None:
             connectivity_checks["model_registry"] = True
             result.configuration["registered_model_count"] = str(len(registered_models))
         except Exception as e:
-            result.add_issue(ValidationIssue(
-                severity="info",
-                component="connectivity",
-                message=f"Model registry not accessible: {e}",
-                suggested_fix="Model registry may not be configured (optional feature)"
-            ))
+            result.add_issue(
+                ValidationIssue(
+                    severity="info",
+                    component="connectivity",
+                    message=f"Model registry not accessible: {e}",
+                    suggested_fix="Model registry may not be configured (optional feature)",
+                )
+            )
 
     except Exception as e:
-        result.add_issue(ValidationIssue(
-            severity="error",
-            component="connectivity",
-            message=f"Connectivity test failed: {e}",
-            suggested_fix="Check MLflow installation and configuration"
-        ))
+        result.add_issue(
+            ValidationIssue(
+                severity="error",
+                component="connectivity",
+                message=f"Connectivity test failed: {e}",
+                suggested_fix="Check MLflow installation and configuration",
+            )
+        )
 
     result.connectivity = connectivity_checks
 
@@ -307,11 +335,13 @@ def _validate_governance_features(result: ValidationResult) -> None:
     try:
         # Test GenOps telemetry
         from genops.core.telemetry import GenOpsTelemetry
-        telemetry = GenOpsTelemetry()
+
+        GenOpsTelemetry()
         result.configuration["telemetry_enabled"] = "true"
 
         # Test OpenTelemetry integration
         from opentelemetry import trace
+
         tracer = trace.get_tracer(__name__)
         with tracer.start_as_current_span("genops.validation.test") as span:
             span.set_attribute("genops.provider", "mlflow")
@@ -320,28 +350,34 @@ def _validate_governance_features(result: ValidationResult) -> None:
 
         # Test provider components
         try:
-            from . import adapter, cost_aggregator, validation
+            from . import adapter, cost_aggregator, validation  # noqa: F401
+
             result.configuration["provider_components"] = "loaded"
         except ImportError as e:
-            result.add_issue(ValidationIssue(
-                severity="error",
-                component="governance",
-                message=f"Provider components not available: {e}",
-                suggested_fix="Ensure GenOps MLflow provider is properly installed"
-            ))
+            result.add_issue(
+                ValidationIssue(
+                    severity="error",
+                    component="governance",
+                    message=f"Provider components not available: {e}",
+                    suggested_fix="Ensure GenOps MLflow provider is properly installed",
+                )
+            )
 
     except Exception as e:
-        result.add_issue(ValidationIssue(
-            severity="warning",
-            component="governance",
-            message=f"Governance feature validation failed: {e}",
-            suggested_fix="Check GenOps installation and configuration"
-        ))
+        result.add_issue(
+            ValidationIssue(
+                severity="warning",
+                component="governance",
+                message=f"Governance feature validation failed: {e}",
+                suggested_fix="Check GenOps installation and configuration",
+            )
+        )
 
 
 # ============================================================================
 # Output Formatting
 # ============================================================================
+
 
 def print_validation_result(result: ValidationResult) -> None:
     """
@@ -350,35 +386,35 @@ def print_validation_result(result: ValidationResult) -> None:
     Args:
         result: ValidationResult to display
     """
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("MLFLOW GENOPS VALIDATION REPORT")
-    print("="*70)
+    print("=" * 70)
 
     # Overall status
     status_icon = "✅" if result.passed else "❌"
     print(f"\nOverall Status: {status_icon} {'PASSED' if result.passed else 'FAILED'}")
 
     # Dependencies
-    print(f"\n📦 Dependencies:")
+    print("\n📦 Dependencies:")
     for dep, status in result.dependencies.items():
         status_icon = "✅" if status else "❌"
         print(f"  {status_icon} {dep}")
 
     # Configuration
-    print(f"\n⚙️  Configuration:")
+    print("\n⚙️  Configuration:")
     for key, value in sorted(result.configuration.items()):
         print(f"  • {key}: {value}")
 
     # Connectivity
     if result.connectivity:
-        print(f"\n🌐 Connectivity:")
+        print("\n🌐 Connectivity:")
         for check, status in result.connectivity.items():
             status_icon = "✅" if status else "❌"
             print(f"  {status_icon} {check.replace('_', ' ').title()}")
 
     # Issues (errors, warnings, info)
     if result.issues:
-        print(f"\n🔍 Issues Found:")
+        print("\n🔍 Issues Found:")
 
         errors = result.get_issues_by_severity("error")
         if errors:
@@ -407,14 +443,14 @@ def print_validation_result(result: ValidationResult) -> None:
                 print(f"    {i}. {issue.message}")
                 print()
     else:
-        print(f"\n✨ No issues found!")
+        print("\n✨ No issues found!")
 
     # Next steps
     if result.passed:
-        print(f"\n🎉 SUCCESS! You're ready to use MLflow with GenOps.")
-        print(f"   Try running: python examples/mlflow/basic_tracking.py")
+        print("\n🎉 SUCCESS! You're ready to use MLflow with GenOps.")
+        print("   Try running: python examples/mlflow/basic_tracking.py")
     else:
-        print(f"\n🔧 Please fix the errors above and run validation again.")
-        print(f"   Command: python examples/mlflow/setup_validation.py")
+        print("\n🔧 Please fix the errors above and run validation again.")
+        print("   Command: python examples/mlflow/setup_validation.py")
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)

@@ -17,6 +17,7 @@ Usage:
 
 import os
 import time
+
 from openai import OpenAI
 
 # Set API key (or use OPENAI_API_KEY environment variable)
@@ -36,7 +37,7 @@ def main():
     print("Step 1: Validating Prometheus setup...")
     print("-" * 80)
 
-    from genops.exporters.prometheus import validate_setup, print_validation_result
+    from genops.exporters.prometheus import print_validation_result, validate_setup
 
     result = validate_setup()
     print_validation_result(result)
@@ -53,7 +54,9 @@ def main():
     from genops.exporters.prometheus import auto_instrument
 
     exporter = auto_instrument()
-    print(f"✅ Prometheus metrics server started at http://localhost:{exporter.config.port}/metrics")
+    print(
+        f"✅ Prometheus metrics server started at http://localhost:{exporter.config.port}/metrics"
+    )
     print()
 
     # Step 3: Set governance context (cost attribution)
@@ -62,12 +65,14 @@ def main():
 
     from genops.core.context import set_governance_context
 
-    set_governance_context({
-        "team": "ml-research",
-        "project": "prometheus-demo",
-        "environment": "development",
-        "customer_id": "demo-customer"
-    })
+    set_governance_context(
+        {
+            "team": "ml-research",
+            "project": "prometheus-demo",
+            "environment": "development",
+            "customer_id": "demo-customer",
+        }
+    )
     print("✅ Governance context configured:")
     print("   - team: ml-research")
     print("   - project: prometheus-demo")
@@ -83,14 +88,12 @@ def main():
 
     # Make a few requests
     for i in range(3):
-        print(f"\nRequest {i+1}/3:")
+        print(f"\nRequest {i + 1}/3:")
         try:
             response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
-                messages=[
-                    {"role": "user", "content": f"What is {i+1} + {i+1}?"}
-                ],
-                max_tokens=50
+                messages=[{"role": "user", "content": f"What is {i + 1} + {i + 1}?"}],
+                max_tokens=50,
             )
 
             print(f"   ✅ Response: {response.choices[0].message.content.strip()}")
@@ -108,7 +111,9 @@ def main():
     # Step 5: View metrics
     print("Step 5: Viewing exported metrics...")
     print("-" * 80)
-    print(f"\nMetrics are now available at: http://localhost:{exporter.config.port}/metrics")
+    print(
+        f"\nMetrics are now available at: http://localhost:{exporter.config.port}/metrics"
+    )
     print()
     print("Key metrics to check:")
     print("  • genops_cost_total_usd - Total cost across all operations")
@@ -125,7 +130,9 @@ def main():
     print("Step 6: Example PromQL queries for Prometheus...")
     print("-" * 80)
     print()
-    print("After configuring Prometheus to scrape http://localhost:8000, try these queries:")
+    print(
+        "After configuring Prometheus to scrape http://localhost:8000, try these queries:"
+    )
     print()
     print("# Total cost")
     print("sum(genops_cost_total_usd)")

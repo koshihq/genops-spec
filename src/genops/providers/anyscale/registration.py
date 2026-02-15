@@ -2,14 +2,14 @@
 
 import functools
 import logging
-from typing import Optional, Dict, Any, Callable
+from typing import Any, Callable, Optional
 
 logger = logging.getLogger(__name__)
 
 # Global registry state
 _is_registered = False
 _adapter_instance: Optional[Any] = None
-_original_methods: Dict[str, Callable] = {}
+_original_methods: dict[str, Callable] = {}
 
 
 def auto_instrument(**governance_defaults) -> bool:
@@ -57,44 +57,68 @@ def auto_instrument(**governance_defaults) -> bool:
 
         # Check if OpenAI SDK is available (Anyscale is OpenAI-compatible)
         try:
-            from openai import OpenAI
+            from openai import OpenAI  # noqa: F401
             from openai.resources.chat import completions as chat_completions_module
 
             # Store original chat.completions.create method
-            if 'chat.completions.create' not in _original_methods:
+            if "chat.completions.create" not in _original_methods:
                 original_create = chat_completions_module.Completions.create
-                _original_methods['chat.completions.create'] = original_create
+                _original_methods["chat.completions.create"] = original_create
 
                 @functools.wraps(original_create)
                 def _instrumented_create(self, *args, **kwargs):
                     """Instrumented completion with GenOps tracking."""
                     # Check if this is an Anyscale endpoint (by base_url)
-                    base_url = getattr(self._client, '_base_url', None) if hasattr(self, '_client') else None
-                    if base_url and 'anyscale' in str(base_url).lower():
+                    base_url = (
+                        getattr(self._client, "_base_url", None)
+                        if hasattr(self, "_client")
+                        else None
+                    )
+                    if base_url and "anyscale" in str(base_url).lower():
                         # Extract governance attributes
                         gov_attrs = {}
-                        for key in ['team', 'project', 'customer_id', 'environment', 'cost_center', 'feature']:
+                        for key in [
+                            "team",
+                            "project",
+                            "customer_id",
+                            "environment",
+                            "cost_center",
+                            "feature",
+                        ]:
                             if key in kwargs:
                                 gov_attrs[key] = kwargs.pop(key)
 
                         # Merge with default governance attributes
                         if _adapter_instance:
-                            final_gov_attrs = {**_adapter_instance.governance_defaults, **gov_attrs}
+                            final_gov_attrs = {
+                                **_adapter_instance.governance_defaults,
+                                **gov_attrs,
+                            }
 
                             # Extract model and messages from args/kwargs
-                            model = kwargs.get('model') or (args[0] if len(args) > 0 else None)
-                            messages = kwargs.get('messages') or (args[1] if len(args) > 1 else [])
+                            model = kwargs.get("model") or (
+                                args[0] if len(args) > 0 else None
+                            )
+                            messages = kwargs.get("messages") or (
+                                args[1] if len(args) > 1 else []
+                            )
 
                             # Route through GenOps adapter for tracking
                             try:
                                 return _adapter_instance.completion_create(
                                     model=model,
                                     messages=messages,
-                                    **{k: v for k, v in kwargs.items() if k not in ['model', 'messages']},
-                                    **final_gov_attrs
+                                    **{
+                                        k: v
+                                        for k, v in kwargs.items()
+                                        if k not in ["model", "messages"]
+                                    },
+                                    **final_gov_attrs,
                                 )
                             except Exception as e:
-                                logger.warning(f"GenOps tracking failed, falling back to original method: {e}")
+                                logger.warning(
+                                    f"GenOps tracking failed, falling back to original method: {e}"
+                                )
                                 # Fall back to original method if tracking fails
                                 return original_create(self, *args, **kwargs)
 
@@ -103,7 +127,9 @@ def auto_instrument(**governance_defaults) -> bool:
 
                 # Apply patch
                 chat_completions_module.Completions.create = _instrumented_create
-                logger.info("Anyscale auto-instrumentation enabled (OpenAI SDK patched)")
+                logger.info(
+                    "Anyscale auto-instrumentation enabled (OpenAI SDK patched)"
+                )
 
             _is_registered = True
             return True
@@ -133,10 +159,13 @@ def disable_auto_instrument() -> bool:
 
     try:
         # Restore original methods if any were patched
-        if 'chat.completions.create' in _original_methods:
+        if "chat.completions.create" in _original_methods:
             try:
                 from openai.resources.chat import completions as chat_completions_module
-                chat_completions_module.Completions.create = _original_methods['chat.completions.create']
+
+                chat_completions_module.Completions.create = _original_methods[
+                    "chat.completions.create"
+                ]
                 logger.debug("Restored original OpenAI chat.completions.create method")
             except ImportError:
                 logger.debug("OpenAI SDK not available, nothing to unpatch")
@@ -153,7 +182,7 @@ def disable_auto_instrument() -> bool:
         return False
 
 
-def register_anyscale_provider(instrumentor: 'GenOpsInstrumentor') -> None:
+def register_anyscale_provider(instrumentor: "GenOpsInstrumentor") -> None:  # type: ignore  # noqa: F821
     """
     Register Anyscale provider with the auto-instrumentation system.
 
@@ -183,8 +212,8 @@ def register_anyscale_provider(instrumentor: 'GenOpsInstrumentor') -> None:
                 "multi_model_support",
                 "chat_completions",
                 "embeddings",
-                "governance_attribution"
-            ]
+                "governance_attribution",
+            ],
         )
         logger.debug("Anyscale provider registered with GenOps instrumentation system")
 
@@ -192,7 +221,7 @@ def register_anyscale_provider(instrumentor: 'GenOpsInstrumentor') -> None:
         logger.warning(f"Failed to register Anyscale provider: {e}")
 
 
-def get_adapter_instance() -> Optional['GenOpsAnyscaleAdapter']:
+def get_adapter_instance() -> Optional["GenOpsAnyscaleAdapter"]:  # type: ignore  # noqa: F821
     """
     Get the current adapter instance (if auto-instrumentation is enabled).
 
@@ -204,8 +233,8 @@ def get_adapter_instance() -> Optional['GenOpsAnyscaleAdapter']:
 
 # Export public API
 __all__ = [
-    'auto_instrument',
-    'disable_auto_instrument',
-    'register_anyscale_provider',
-    'get_adapter_instance',
+    "auto_instrument",
+    "disable_auto_instrument",
+    "register_anyscale_provider",
+    "get_adapter_instance",
 ]

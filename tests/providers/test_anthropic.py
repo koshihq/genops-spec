@@ -3,9 +3,9 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
-from tests.utils.mock_providers import MockAnthropicClient, MockProviderFactory
 
 from genops.providers.anthropic import GenOpsAnthropicAdapter
+from tests.utils.mock_providers import MockAnthropicClient, MockProviderFactory
 
 
 class TestGenOpsAnthropicAdapter:
@@ -248,7 +248,7 @@ class TestGenOpsAnthropicAdapter:
         attrs = span.attributes
 
         # Streaming should be noted in telemetry
-        assert attrs.get("genops.request.streaming") is True
+        assert attrs.get("genops.request.stream") is True
 
     def test_temperature_and_parameters_capture(
         self, mock_anthropic_import, mock_span_recorder

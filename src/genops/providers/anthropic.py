@@ -34,11 +34,21 @@ class GenOpsAnthropicAdapter:
 
         # Define governance and request attributes
         self.GOVERNANCE_ATTRIBUTES = {
-            'team', 'project', 'feature', 'customer_id', 'customer',
-            'environment', 'cost_center', 'user_id'
+            "team",
+            "project",
+            "feature",
+            "customer_id",
+            "customer",
+            "environment",
+            "cost_center",
+            "user_id",
         }
         self.REQUEST_ATTRIBUTES = {
-            'temperature', 'max_tokens', 'top_p', 'top_k', 'stop_sequences'
+            "temperature",
+            "max_tokens",
+            "top_p",
+            "top_k",
+            "stop_sequences",
         }
 
     def _extract_attributes(self, kwargs: dict) -> tuple[dict, dict, dict]:
@@ -70,8 +80,9 @@ class GenOpsAnthropicAdapter:
         system = api_kwargs.get("system", "")
 
         # Estimate input tokens (rough approximation)
+        system_text = system if isinstance(system, str) else str(system)
         input_text = (
-            system
+            system_text
             + " "
             + " ".join(
                 [
@@ -97,10 +108,17 @@ class GenOpsAnthropicAdapter:
         # Add effective attributes (defaults + context + governance)
         try:
             from genops.core.context import get_effective_attributes
+
             effective_attrs = get_effective_attributes(**governance_attrs)
             trace_attrs.update(effective_attrs)
-        except (ImportError, Exception):
-            # Fallback to just governance attributes
+        except ImportError:
+            # Context module not available, use raw governance attributes
+            trace_attrs.update(governance_attrs)
+        except Exception:
+            logger.warning(
+                "Failed to compute effective attributes, falling back to raw governance attrs",
+                exc_info=True,
+            )
             trace_attrs.update(governance_attrs)
 
         with self.telemetry.trace_operation(**trace_attrs) as span:
@@ -108,9 +126,29 @@ class GenOpsAnthropicAdapter:
             for param, value in request_attrs.items():
                 span.set_attribute(f"genops.request.{param}", value)
 
+            # Record optional telemetry attributes defensively
+            try:
+                if system:
+                    system_text = system if isinstance(system, str) else str(system)
+                    span.set_attribute("genops.request.system", system_text)
+
+                stream = api_kwargs.get("stream", False)
+                if stream:
+                    span.set_attribute("genops.request.stream", True)
+            except Exception:
+                logger.debug(
+                    "Failed to set optional telemetry attributes", exc_info=True
+                )
+
             try:
                 # Call Anthropic API with cleaned kwargs (no governance attributes)
                 response = self.client.messages.create(**api_kwargs)
+
+                # Record content block count if available
+                if hasattr(response, "content") and response.content:
+                    span.set_attribute(
+                        "genops.response.content_blocks", len(response.content)
+                    )
 
                 # Extract usage and cost information
                 if hasattr(response, "usage") and response.usage:
@@ -164,10 +202,17 @@ class GenOpsAnthropicAdapter:
         # Add effective attributes (defaults + context + governance)
         try:
             from genops.core.context import get_effective_attributes
+
             effective_attrs = get_effective_attributes(**governance_attrs)
             trace_attrs.update(effective_attrs)
-        except (ImportError, Exception):
-            # Fallback to just governance attributes
+        except ImportError:
+            # Context module not available, use raw governance attributes
+            trace_attrs.update(governance_attrs)
+        except Exception:
+            logger.warning(
+                "Failed to compute effective attributes, falling back to raw governance attrs",
+                exc_info=True,
+            )
             trace_attrs.update(governance_attrs)
 
         with self.telemetry.trace_operation(**trace_attrs) as span:
@@ -248,6 +293,11 @@ class GenOpsAnthropicAdapter:
             "claude-3-haiku-20240307": {
                 "input": 0.25 / 1000000,
                 "output": 1.25 / 1000000,
+            },
+            # Legacy models
+            "claude-instant-1.2": {
+                "input": 1.63 / 1000000,
+                "output": 5.51 / 1000000,
             },
             # Simplified model name mappings
             "claude-3-5-sonnet": {"input": 3.00 / 1000000, "output": 15.00 / 1000000},
@@ -375,6 +425,7 @@ def validate_setup():
     """Validate Anthropic provider setup."""
     try:
         from .anthropic_validation import validate_anthropic_setup
+
         return validate_anthropic_setup()
     except ImportError:
         logger.warning("Anthropic validation utilities not available")
@@ -385,6 +436,7 @@ def print_validation_result(result):
     """Print validation result in user-friendly format."""
     try:
         from .anthropic_validation import print_anthropic_validation_result
+
         print_anthropic_validation_result(result)
     except ImportError:
         logger.warning("Anthropic validation utilities not available")

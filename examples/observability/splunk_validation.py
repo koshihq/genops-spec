@@ -3,15 +3,14 @@
 from __future__ import annotations
 
 import os
-import warnings
 from dataclasses import dataclass, field
-from typing import List, Optional
 from urllib.parse import urlparse
 
 # SSL warnings will be shown when verify_ssl=False to ensure users are aware of security implications
 
 try:
     import requests
+
     HAS_REQUESTS = True
 except ImportError:
     HAS_REQUESTS = False
@@ -22,11 +21,11 @@ class SplunkValidationResult:
     """Result of Splunk HEC setup validation."""
 
     valid: bool
-    errors: List[str] = field(default_factory=list)
-    warnings: List[str] = field(default_factory=list)
-    recommendations: List[str] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+    recommendations: list[str] = field(default_factory=list)
     connectivity: bool = False
-    hec_version: Optional[str] = None
+    hec_version: str | None = None
     index_accessible: bool = False
 
     @property
@@ -40,7 +39,7 @@ class SplunkValidationResult:
         return len(self.warnings) > 0
 
 
-def validate_url_format(url: str) -> tuple[bool, Optional[str]]:
+def validate_url_format(url: str) -> tuple[bool, str | None]:
     """
     Validate Splunk HEC endpoint URL format.
 
@@ -58,7 +57,10 @@ def validate_url_format(url: str) -> tuple[bool, Optional[str]]:
         if not parsed.scheme:
             return False, "URL missing scheme (http/https)"
         if parsed.scheme not in ["http", "https"]:
-            return False, f"Invalid URL scheme: {parsed.scheme} (expected http or https)"
+            return (
+                False,
+                f"Invalid URL scheme: {parsed.scheme} (expected http or https)",
+            )
         if not parsed.netloc:
             return False, "URL missing domain"
         return True, None
@@ -67,8 +69,8 @@ def validate_url_format(url: str) -> tuple[bool, Optional[str]]:
 
 
 def validate_setup(
-    splunk_hec_endpoint: Optional[str] = None,
-    splunk_hec_token: Optional[str] = None,
+    splunk_hec_endpoint: str | None = None,
+    splunk_hec_token: str | None = None,
     splunk_index: str = "genops_ai",
     check_connectivity: bool = True,
     verify_ssl: bool = True,
@@ -137,7 +139,7 @@ def validate_setup(
     if not final_endpoint:
         result.errors.append("SPLUNK_HEC_ENDPOINT not set")
         result.recommendations.append(
-            'Set environment variable:\n'
+            "Set environment variable:\n"
             '  export SPLUNK_HEC_ENDPOINT="https://splunk.example.com:8088"'
         )
     else:
@@ -157,13 +159,13 @@ def validate_setup(
     if not final_token:
         result.errors.append("SPLUNK_HEC_TOKEN not set")
         result.recommendations.append(
-            'Set environment variable:\n'
+            "Set environment variable:\n"
             '  export SPLUNK_HEC_TOKEN="your-hec-token"\n'
-            '\n'
-            'To create HEC token in Splunk:\n'
-            '  1. Navigate to Settings → Data Inputs → HTTP Event Collector\n'
+            "\n"
+            "To create HEC token in Splunk:\n"
+            "  1. Navigate to Settings → Data Inputs → HTTP Event Collector\n"
             '  2. Click "New Token"\n'
-            '  3. Configure and save token'
+            "  3. Configure and save token"
         )
 
     # If basic validation failed, return early
@@ -180,9 +182,7 @@ def validate_setup(
                 response = requests.get(health_url, verify=verify_ssl, timeout=5)
             except requests.exceptions.SSLError as ssl_error:
                 # SSL verification failed - provide helpful error
-                result.errors.append(
-                    "SSL certificate verification failed"
-                )
+                result.errors.append("SSL certificate verification failed")
                 result.recommendations.append(
                     "SSL certificate verification failed:\n"
                     f"  Error: {str(ssl_error)}\n"
@@ -219,7 +219,7 @@ def validate_setup(
                 "  • Confirm Splunk is running and accessible\n"
                 f"  • Test manually: curl -k {final_endpoint}/services/collector/health"
             )
-        except requests.exceptions.ConnectionError as e:
+        except requests.exceptions.ConnectionError:
             result.errors.append("Connection refused - HEC endpoint not accessible")
             result.recommendations.append(
                 f"Verify HEC endpoint configuration:\n"
@@ -245,7 +245,7 @@ def validate_setup(
                 test_event = {
                     "event": "genops_validation_test",
                     "sourcetype": "_json",
-                    "index": splunk_index
+                    "index": splunk_index,
                 }
 
                 try:
@@ -254,7 +254,7 @@ def validate_setup(
                         json=test_event,
                         headers=headers,
                         verify=verify_ssl,
-                        timeout=5
+                        timeout=5,
                     )
                 except requests.exceptions.SSLError as ssl_error:
                     result.errors.append(
@@ -288,9 +288,7 @@ def validate_setup(
                         "  4. Ensure Global Settings has HEC enabled"
                     )
                 elif response.status_code == 403:
-                    result.errors.append(
-                        "HEC token forbidden (403 Forbidden)"
-                    )
+                    result.errors.append("HEC token forbidden (403 Forbidden)")
                     result.recommendations.append(
                         "Token exists but lacks permissions:\n"
                         f"  • Verify token has write permission to index '{splunk_index}'\n"
@@ -298,9 +296,7 @@ def validate_setup(
                         "  • Confirm index exists and is writable"
                     )
                 elif response.status_code == 404:
-                    result.errors.append(
-                        "HEC endpoint not found (404 Not Found)"
-                    )
+                    result.errors.append("HEC endpoint not found (404 Not Found)")
                     result.recommendations.append(
                         f"Check endpoint URL: {test_url}\n"
                         "Verify HEC is enabled in Splunk Global Settings"
@@ -322,8 +318,10 @@ def validate_setup(
 
     # 4. Check OpenTelemetry dependencies
     try:
-        import opentelemetry
-        from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+        import opentelemetry  # noqa: F401
+        from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
+            OTLPSpanExporter,  # noqa: F401
+        )
     except ImportError:
         result.warnings.append("OpenTelemetry not installed")
         result.recommendations.append(
@@ -345,7 +343,9 @@ def validate_setup(
     # Final validation status
     if check_connectivity:
         # Full validation requires connectivity and authentication
-        result.valid = result.connectivity and result.index_accessible and not result.errors
+        result.valid = (
+            result.connectivity and result.index_accessible and not result.errors
+        )
     else:
         # Config-only validation just checks for errors
         result.valid = not result.errors

@@ -30,7 +30,9 @@ except ImportError:
 class GenOpsLangChainCallbackHandler(BaseCallbackHandler):
     """Custom callback handler for LangChain to capture telemetry."""
 
-    def __init__(self, telemetry_adapter: 'GenOpsLangChainAdapter', chain_id: str | None = None):
+    def __init__(
+        self, telemetry_adapter: "GenOpsLangChainAdapter", chain_id: str | None = None
+    ):
         self.telemetry_adapter = telemetry_adapter
         self.chain_id = chain_id or str(uuid.uuid4())
         self.chain_context = {}
@@ -42,12 +44,14 @@ class GenOpsLangChainCallbackHandler(BaseCallbackHandler):
     ) -> None:
         """Called when a chain starts running."""
         chain_name = serialized.get("name", "unknown_chain")
-        self.operation_stack.append({
-            "type": "chain",
-            "name": chain_name,
-            "inputs": inputs,
-            "start_time": None  # Will be set by telemetry
-        })
+        self.operation_stack.append(
+            {
+                "type": "chain",
+                "name": chain_name,
+                "inputs": inputs,
+                "start_time": None,  # Will be set by telemetry
+            }
+        )
 
         logger.debug(f"Chain started: {chain_name}")
 
@@ -70,12 +74,15 @@ class GenOpsLangChainCallbackHandler(BaseCallbackHandler):
     ) -> None:
         """Called when LLM starts generating."""
         model_name = serialized.get("name", "unknown_llm")
-        self.operation_stack.append({
-            "type": "llm",
-            "name": model_name,
-            "prompts": prompts,
-            "prompt_tokens": sum(len(p.split()) for p in prompts) * 1.3,  # Rough estimate
-        })
+        self.operation_stack.append(
+            {
+                "type": "llm",
+                "name": model_name,
+                "prompts": prompts,
+                "prompt_tokens": sum(len(p.split()) for p in prompts)
+                * 1.3,  # Rough estimate
+            }
+        )
 
     def on_llm_end(self, response: Any, **kwargs) -> None:
         """Called when LLM finishes generating."""
@@ -83,18 +90,18 @@ class GenOpsLangChainCallbackHandler(BaseCallbackHandler):
             operation = self.operation_stack.pop()
 
             # Extract token usage and provider information if available
-            if hasattr(response, 'llm_output') and response.llm_output:
-                token_usage = response.llm_output.get('token_usage', {})
-                operation['token_usage'] = token_usage
+            if hasattr(response, "llm_output") and response.llm_output:
+                token_usage = response.llm_output.get("token_usage", {})
+                operation["token_usage"] = token_usage
 
                 # Extract cost information and add to aggregator
                 if token_usage:
-                    tokens_input = token_usage.get('prompt_tokens', 0)
-                    tokens_output = token_usage.get('completion_tokens', 0)
+                    tokens_input = token_usage.get("prompt_tokens", 0)
+                    tokens_output = token_usage.get("completion_tokens", 0)
 
                     # Try to determine provider from the model name or response
                     provider = self._detect_provider_from_response(response)
-                    model = operation.get('name', 'unknown_model')
+                    model = operation.get("name", "unknown_model")
 
                     if provider and tokens_input > 0:
                         try:
@@ -104,38 +111,42 @@ class GenOpsLangChainCallbackHandler(BaseCallbackHandler):
                                 model=model,
                                 tokens_input=tokens_input,
                                 tokens_output=tokens_output,
-                                operation_name=f"llm.{model}"
+                                operation_name=f"llm.{model}",
                             )
-                            logger.debug(f"Recorded LLM cost for {provider}/{model}: {tokens_input}+{tokens_output} tokens")
+                            logger.debug(
+                                f"Recorded LLM cost for {provider}/{model}: {tokens_input}+{tokens_output} tokens"
+                            )
                         except Exception as e:
                             logger.warning(f"Failed to record LLM cost: {e}")
 
     def _detect_provider_from_response(self, response: Any) -> str | None:
         """Detect the provider from LLM response object."""
         # Try to detect provider based on response structure or model name
-        if hasattr(response, 'llm_output') and response.llm_output:
-            model_name = response.llm_output.get('model_name', '').lower()
+        if hasattr(response, "llm_output") and response.llm_output:
+            model_name = response.llm_output.get("model_name", "").lower()
 
-            if 'gpt' in model_name or 'openai' in model_name:
-                return 'openai'
-            elif 'claude' in model_name or 'anthropic' in model_name:
-                return 'anthropic'
-            elif 'gemini' in model_name or 'google' in model_name:
-                return 'google'
+            if "gpt" in model_name or "openai" in model_name:
+                return "openai"
+            elif "claude" in model_name or "anthropic" in model_name:
+                return "anthropic"
+            elif "gemini" in model_name or "google" in model_name:
+                return "google"
 
         # Fallback detection based on response type
         response_type = type(response).__name__.lower()
-        if 'openai' in response_type:
-            return 'openai'
-        elif 'anthropic' in response_type:
-            return 'anthropic'
+        if "openai" in response_type:
+            return "openai"
+        elif "anthropic" in response_type:
+            return "anthropic"
 
         # Default fallback
-        return 'unknown'
+        return "unknown"
 
     def on_agent_action(self, action: Any, **kwargs) -> None:
         """Called when agent takes an action."""
-        logger.debug(f"Agent action: {action.tool if hasattr(action, 'tool') else 'unknown'}")
+        logger.debug(
+            f"Agent action: {action.tool if hasattr(action, 'tool') else 'unknown'}"
+        )
 
     def on_agent_finish(self, finish: Any, **kwargs) -> None:
         """Called when agent finishes."""
@@ -155,8 +166,15 @@ class GenOpsLangChainAdapter(BaseFrameworkProvider):
 
         # LangChain-specific request attributes
         self.REQUEST_ATTRIBUTES = {
-            'temperature', 'max_tokens', 'top_p', 'frequency_penalty',
-            'presence_penalty', 'stop', 'model', 'verbose', 'streaming'
+            "temperature",
+            "max_tokens",
+            "top_p",
+            "frequency_penalty",
+            "presence_penalty",
+            "stop",
+            "model",
+            "verbose",
+            "streaming",
         }
 
         # Chain cost tracking
@@ -208,26 +226,29 @@ class GenOpsLangChainAdapter(BaseFrameworkProvider):
             cost_per_1k_input = 0.001  # Default pricing
             cost_per_1k_output = 0.002
 
-            total_cost = (tokens_input * cost_per_1k_input / 1000) + \
-                        (tokens_output * cost_per_1k_output / 1000)
+            total_cost = (tokens_input * cost_per_1k_input / 1000) + (
+                tokens_output * cost_per_1k_output / 1000
+            )
 
         return total_cost
 
     def get_operation_mappings(self) -> dict[str, str]:
         """Return mapping of LangChain operations to instrumentation methods."""
         return {
-            'chain.run': 'instrument_chain_run',
-            'chain.invoke': 'instrument_chain_invoke',
-            'chain.batch': 'instrument_chain_batch',
-            'agent.run': 'instrument_agent_run',
-            'llm.predict': 'instrument_llm_predict',
-            'retriever.get_relevant_documents': 'instrument_retriever',
-            'rag.query': 'instrument_rag_query',
-            'embeddings.embed': 'instrument_embeddings',
-            'vectorstore.similarity_search': 'instrument_vector_search'
+            "chain.run": "instrument_chain_run",
+            "chain.invoke": "instrument_chain_invoke",
+            "chain.batch": "instrument_chain_batch",
+            "agent.run": "instrument_agent_run",
+            "llm.predict": "instrument_llm_predict",
+            "retriever.get_relevant_documents": "instrument_retriever",
+            "rag.query": "instrument_rag_query",
+            "embeddings.embed": "instrument_embeddings",
+            "vectorstore.similarity_search": "instrument_vector_search",
         }
 
-    def _record_framework_metrics(self, span: Any, operation_type: str, context: dict) -> None:
+    def _record_framework_metrics(
+        self, span: Any, operation_type: str, context: dict
+    ) -> None:
         """Record LangChain-specific metrics."""
         # Record chain-specific metrics
         if operation_type == "chain":
@@ -257,7 +278,7 @@ class GenOpsLangChainAdapter(BaseFrameworkProvider):
         """Instrument chain.run() with governance tracking."""
         governance_attrs, request_attrs, api_kwargs = self._extract_attributes(kwargs)
 
-        chain_name = getattr(chain, '_chain_type', chain.__class__.__name__)
+        chain_name = getattr(chain, "_chain_type", chain.__class__.__name__)
         operation_name = f"langchain.chain.run.{chain_name}"
         chain_id = str(uuid.uuid4())
 
@@ -268,7 +289,7 @@ class GenOpsLangChainAdapter(BaseFrameworkProvider):
             governance_attrs=governance_attrs,
             chain_name=chain_name,
             chain_type=chain.__class__.__name__,
-            chain_id=chain_id
+            chain_id=chain_id,
         )
 
         with self.telemetry.trace_operation(**trace_attrs) as span:
@@ -283,12 +304,12 @@ class GenOpsLangChainAdapter(BaseFrameworkProvider):
                     callback_handler = GenOpsLangChainCallbackHandler(self, chain_id)
 
                     # Modify callbacks to include our handler
-                    if 'callbacks' in api_kwargs:
-                        if api_kwargs['callbacks'] is None:
-                            api_kwargs['callbacks'] = []
-                        api_kwargs['callbacks'].append(callback_handler)
+                    if "callbacks" in api_kwargs:
+                        if api_kwargs["callbacks"] is None:
+                            api_kwargs["callbacks"] = []
+                        api_kwargs["callbacks"].append(callback_handler)
                     else:
-                        api_kwargs['callbacks'] = [callback_handler]
+                        api_kwargs["callbacks"] = [callback_handler]
 
                     # Execute the chain
                     result = chain.run(**api_kwargs)
@@ -305,20 +326,26 @@ class GenOpsLangChainAdapter(BaseFrameworkProvider):
                             provider="langchain_aggregated",
                             model=chain_name,
                             tokens_input=cost_summary.total_tokens_input,
-                            tokens_output=cost_summary.total_tokens_output
+                            tokens_output=cost_summary.total_tokens_output,
                         )
 
                         # Record detailed cost breakdown
                         cost_breakdown = cost_summary.to_dict()
                         for key, value in cost_breakdown.items():
                             if isinstance(value, (int, float, str)):
-                                span.set_attribute(f"genops.langchain.cost.{key}", value)
+                                span.set_attribute(
+                                    f"genops.langchain.cost.{key}", value
+                                )
                             elif isinstance(value, list):
-                                span.set_attribute(f"genops.langchain.cost.{key}_count", len(value))
+                                span.set_attribute(
+                                    f"genops.langchain.cost.{key}_count", len(value)
+                                )
 
-                        logger.info(f"Chain {chain_name} completed: ${cost_summary.total_cost:.4f} "
-                                  f"({cost_summary.total_tokens_input}+{cost_summary.total_tokens_output} tokens, "
-                                  f"{len(cost_summary.unique_providers)} providers)")
+                        logger.info(
+                            f"Chain {chain_name} completed: ${cost_summary.total_cost:.4f} "
+                            f"({cost_summary.total_tokens_input}+{cost_summary.total_tokens_output} tokens, "
+                            f"{len(cost_summary.unique_providers)} providers)"
+                        )
 
                     # Calculate and record additional metrics
                     operation_context = {
@@ -326,8 +353,12 @@ class GenOpsLangChainAdapter(BaseFrameworkProvider):
                         "chain_name": chain_name,
                         "chain_id": chain_id,
                         "cost_summary": cost_summary,
-                        "provider_count": len(cost_summary.unique_providers) if cost_summary else 0,
-                        "model_count": len(cost_summary.unique_models) if cost_summary else 0
+                        "provider_count": len(cost_summary.unique_providers)
+                        if cost_summary
+                        else 0,
+                        "model_count": len(cost_summary.unique_models)
+                        if cost_summary
+                        else 0,
                     }
 
                     self.record_operation_telemetry(span, "chain", operation_context)
@@ -343,14 +374,14 @@ class GenOpsLangChainAdapter(BaseFrameworkProvider):
         # Similar implementation to run() but for the invoke interface
         governance_attrs, request_attrs, api_kwargs = self._extract_attributes(kwargs)
 
-        chain_name = getattr(chain, '_chain_type', chain.__class__.__name__)
+        chain_name = getattr(chain, "_chain_type", chain.__class__.__name__)
         operation_name = f"langchain.chain.invoke.{chain_name}"
 
         trace_attrs = self._build_trace_attributes(
             operation_name=operation_name,
             operation_type="chain",
             governance_attrs=governance_attrs,
-            chain_name=chain_name
+            chain_name=chain_name,
         )
 
         with self.telemetry.trace_operation(**trace_attrs) as span:
@@ -358,18 +389,18 @@ class GenOpsLangChainAdapter(BaseFrameworkProvider):
                 # Add callback handler
                 callback_handler = GenOpsLangChainCallbackHandler(self)
 
-                if 'config' in api_kwargs and api_kwargs['config']:
-                    callbacks = api_kwargs['config'].get('callbacks', [])
+                if "config" in api_kwargs and api_kwargs["config"]:
+                    callbacks = api_kwargs["config"].get("callbacks", [])
                     callbacks.append(callback_handler)
-                    api_kwargs['config']['callbacks'] = callbacks
+                    api_kwargs["config"]["callbacks"] = callbacks
                 else:
-                    api_kwargs['config'] = {'callbacks': [callback_handler]}
+                    api_kwargs["config"] = {"callbacks": [callback_handler]}
 
                 result = chain.invoke(**api_kwargs)
 
                 operation_context = {
                     "operation_type": "chain",
-                    "chain_name": chain_name
+                    "chain_name": chain_name,
                 }
 
                 self.record_operation_telemetry(span, "chain", operation_context)
@@ -397,7 +428,7 @@ class GenOpsLangChainAdapter(BaseFrameworkProvider):
             operation_name=operation_name,
             operation_type="rag_query",
             governance_attrs=governance_attrs,
-            query_length=len(query)
+            query_length=len(query),
         )
 
         with self.telemetry.trace_operation(**trace_attrs) as span:
@@ -409,8 +440,10 @@ class GenOpsLangChainAdapter(BaseFrameworkProvider):
 
                     # If retriever provided, instrument it
                     if retriever:
-                        instrumented_retriever = self.rag_instrumentor.instrument_retriever(
-                            retriever, rag_context.get_operation_id()
+                        instrumented_retriever = (
+                            self.rag_instrumentor.instrument_retriever(
+                                retriever, rag_context.get_operation_id()
+                            )
                         )
 
                         # Perform retrieval
@@ -422,7 +455,9 @@ class GenOpsLangChainAdapter(BaseFrameworkProvider):
                             rag_metrics = summary.to_dict()
                             for key, value in rag_metrics.items():
                                 if isinstance(value, (int, float, str)):
-                                    span.set_attribute(f"genops.langchain.rag.{key}", value)
+                                    span.set_attribute(
+                                        f"genops.langchain.rag.{key}", value
+                                    )
 
                         return documents
                     else:
@@ -447,7 +482,9 @@ class GenOpsLangChainAdapter(BaseFrameworkProvider):
         operation_id = str(uuid.uuid4())
 
         # Instrument the retriever
-        instrumented_retriever = self.rag_instrumentor.instrument_retriever(retriever, operation_id)
+        instrumented_retriever = self.rag_instrumentor.instrument_retriever(
+            retriever, operation_id
+        )
 
         logger.info(f"Retriever instrumented with operation ID: {operation_id}")
         return instrumented_retriever
@@ -466,7 +503,9 @@ class GenOpsLangChainAdapter(BaseFrameworkProvider):
         operation_id = str(uuid.uuid4())
 
         # Instrument the embeddings
-        instrumented_embeddings = self.rag_instrumentor.instrument_embeddings(embeddings, operation_id)
+        instrumented_embeddings = self.rag_instrumentor.instrument_embeddings(
+            embeddings, operation_id
+        )
 
         logger.info(f"Embeddings instrumented with operation ID: {operation_id}")
         return instrumented_embeddings
@@ -489,25 +528,27 @@ class GenOpsLangChainAdapter(BaseFrameworkProvider):
             operation_type="vector_search",
             governance_attrs=governance_attrs,
             query_length=len(query),
-            vector_store_type=type(vector_store).__name__
+            vector_store_type=type(vector_store).__name__,
         )
 
         with self.telemetry.trace_operation(**trace_attrs) as span:
             try:
                 # Record search parameters
                 span.set_attribute("genops.langchain.vector.query", query)
-                span.set_attribute("genops.langchain.vector.store_type", type(vector_store).__name__)
+                span.set_attribute(
+                    "genops.langchain.vector.store_type", type(vector_store).__name__
+                )
 
                 # Extract search parameters
-                k = api_kwargs.get('k', 4)
-                search_type = api_kwargs.get('search_type', 'similarity')
+                k = api_kwargs.get("k", 4)
+                search_type = api_kwargs.get("search_type", "similarity")
 
                 span.set_attribute("genops.langchain.vector.k", k)
                 span.set_attribute("genops.langchain.vector.search_type", search_type)
 
                 # Perform the search
                 start_time = time.time()
-                if hasattr(vector_store, 'similarity_search'):
+                if hasattr(vector_store, "similarity_search"):
                     results = vector_store.similarity_search(query, **api_kwargs)
                 else:
                     logger.warning("Vector store does not support similarity_search")
@@ -516,15 +557,23 @@ class GenOpsLangChainAdapter(BaseFrameworkProvider):
                 search_time = time.time() - start_time
 
                 # Record search metrics
-                span.set_attribute("genops.langchain.vector.results_count", len(results))
+                span.set_attribute(
+                    "genops.langchain.vector.results_count", len(results)
+                )
                 span.set_attribute("genops.langchain.vector.search_time", search_time)
 
                 if results:
                     # Calculate average document length
-                    avg_doc_length = sum(len(doc.page_content) for doc in results) / len(results)
-                    span.set_attribute("genops.langchain.vector.avg_doc_length", avg_doc_length)
+                    avg_doc_length = sum(
+                        len(doc.page_content) for doc in results
+                    ) / len(results)
+                    span.set_attribute(
+                        "genops.langchain.vector.avg_doc_length", avg_doc_length
+                    )
 
-                logger.debug(f"Vector search completed: {len(results)} results in {search_time:.3f}s")
+                logger.debug(
+                    f"Vector search completed: {len(results)} results in {search_time:.3f}s"
+                )
                 return results
 
             except Exception as e:
@@ -535,7 +584,9 @@ class GenOpsLangChainAdapter(BaseFrameworkProvider):
         """Apply LangChain instrumentation."""
         # This will be implemented with monkey patching
         # For now, this is a placeholder
-        logger.info("LangChain instrumentation applied (manual instrumentation required)")
+        logger.info(
+            "LangChain instrumentation applied (manual instrumentation required)"
+        )
 
     def _remove_instrumentation(self) -> None:
         """Remove LangChain instrumentation."""

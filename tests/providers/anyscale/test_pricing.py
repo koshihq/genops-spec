@@ -1,16 +1,17 @@
 """Tests for Anyscale pricing functionality."""
 
-import pytest
 from dataclasses import asdict
 
+import pytest
+
 from genops.providers.anyscale.pricing import (
-    ModelPricing,
-    AnyscalePricing,
     ANYSCALE_PRICING,
+    MODEL_ALIASES,
+    AnyscalePricing,
+    ModelPricing,
     calculate_completion_cost,
     calculate_embedding_cost,
     get_model_pricing,
-    MODEL_ALIASES,
 )
 
 
@@ -24,7 +25,7 @@ class TestModelPricing:
             input_cost_per_million=1.0,
             output_cost_per_million=2.0,
             currency="USD",
-            category="chat"
+            category="chat",
         )
 
         assert pricing.model_name == "test-model"
@@ -36,9 +37,7 @@ class TestModelPricing:
     def test_model_pricing_with_defaults(self):
         """Test ModelPricing with default values."""
         pricing = ModelPricing(
-            model_name="test",
-            input_cost_per_million=1.0,
-            output_cost_per_million=1.0
+            model_name="test", input_cost_per_million=1.0, output_cost_per_million=1.0
         )
 
         assert pricing.currency == "USD"
@@ -52,7 +51,7 @@ class TestModelPricing:
             model_name="test-model",
             input_cost_per_million=1.0,
             output_cost_per_million=2.0,
-            context_window=4096
+            context_window=4096,
         )
 
         pricing_dict = asdict(pricing)
@@ -114,7 +113,9 @@ class TestModelAliases:
     def test_alias_targets_valid(self):
         """Test all alias targets exist in pricing database."""
         for alias, target in MODEL_ALIASES.items():
-            assert target in ANYSCALE_PRICING, f"Alias {alias} points to non-existent model {target}"
+            assert target in ANYSCALE_PRICING, (
+                f"Alias {alias} points to non-existent model {target}"
+            )
 
 
 class TestCalculateCompletionCost:
@@ -123,9 +124,7 @@ class TestCalculateCompletionCost:
     def test_basic_cost_calculation(self):
         """Test basic cost calculation for completion."""
         cost = calculate_completion_cost(
-            model="meta-llama/Llama-2-70b-chat-hf",
-            input_tokens=100,
-            output_tokens=50
+            model="meta-llama/Llama-2-70b-chat-hf", input_tokens=100, output_tokens=50
         )
 
         # Llama-2-70b is $1.00/M tokens for both input and output
@@ -135,9 +134,7 @@ class TestCalculateCompletionCost:
     def test_zero_tokens_cost(self):
         """Test cost calculation with zero tokens."""
         cost = calculate_completion_cost(
-            model="meta-llama/Llama-2-70b-chat-hf",
-            input_tokens=0,
-            output_tokens=0
+            model="meta-llama/Llama-2-70b-chat-hf", input_tokens=0, output_tokens=0
         )
 
         assert cost == 0.0
@@ -145,9 +142,7 @@ class TestCalculateCompletionCost:
     def test_input_only_cost(self):
         """Test cost calculation with only input tokens."""
         cost = calculate_completion_cost(
-            model="meta-llama/Llama-2-70b-chat-hf",
-            input_tokens=1000,
-            output_tokens=0
+            model="meta-llama/Llama-2-70b-chat-hf", input_tokens=1000, output_tokens=0
         )
 
         # 1000 / 1,000,000 * $1.00 = $0.001
@@ -156,9 +151,7 @@ class TestCalculateCompletionCost:
     def test_output_only_cost(self):
         """Test cost calculation with only output tokens."""
         cost = calculate_completion_cost(
-            model="meta-llama/Llama-2-70b-chat-hf",
-            input_tokens=0,
-            output_tokens=500
+            model="meta-llama/Llama-2-70b-chat-hf", input_tokens=0, output_tokens=500
         )
 
         # 500 / 1,000,000 * $1.00 = $0.0005
@@ -166,15 +159,9 @@ class TestCalculateCompletionCost:
 
     def test_different_model_costs(self):
         """Test cost calculation varies by model."""
-        cost_70b = calculate_completion_cost(
-            "meta-llama/Llama-2-70b-chat-hf",
-            100, 100
-        )
+        cost_70b = calculate_completion_cost("meta-llama/Llama-2-70b-chat-hf", 100, 100)
 
-        cost_7b = calculate_completion_cost(
-            "meta-llama/Llama-2-7b-chat-hf",
-            100, 100
-        )
+        cost_7b = calculate_completion_cost("meta-llama/Llama-2-7b-chat-hf", 100, 100)
 
         # Llama-2-7b should be cheaper than Llama-2-70b
         assert cost_7b < cost_70b
@@ -184,7 +171,7 @@ class TestCalculateCompletionCost:
         cost = calculate_completion_cost(
             model="meta-llama/Llama-2-70b-chat-hf",
             input_tokens=10000,
-            output_tokens=5000
+            output_tokens=5000,
         )
 
         # 15000 / 1,000,000 * $1.00 = $0.015
@@ -194,9 +181,7 @@ class TestCalculateCompletionCost:
         """Test cost calculation falls back for unknown models."""
         # Unknown model should use fallback pricing
         cost = calculate_completion_cost(
-            model="unknown-model/test",
-            input_tokens=100,
-            output_tokens=100
+            model="unknown-model/test", input_tokens=100, output_tokens=100
         )
 
         # Should return some cost (fallback pricing)
@@ -208,10 +193,7 @@ class TestCalculateEmbeddingCost:
 
     def test_basic_embedding_cost(self):
         """Test basic embedding cost calculation."""
-        cost = calculate_embedding_cost(
-            model="thenlper/gte-large",
-            tokens=1000
-        )
+        cost = calculate_embedding_cost(model="thenlper/gte-large", tokens=1000)
 
         # gte-large is $0.05/M tokens
         # 1000 / 1,000,000 * $0.05 = $0.00005
@@ -219,19 +201,13 @@ class TestCalculateEmbeddingCost:
 
     def test_zero_tokens_embedding(self):
         """Test embedding cost with zero tokens."""
-        cost = calculate_embedding_cost(
-            model="thenlper/gte-large",
-            tokens=0
-        )
+        cost = calculate_embedding_cost(model="thenlper/gte-large", tokens=0)
 
         assert cost == 0.0
 
     def test_large_embedding_tokens(self):
         """Test embedding cost with large token count."""
-        cost = calculate_embedding_cost(
-            model="thenlper/gte-large",
-            tokens=50000
-        )
+        cost = calculate_embedding_cost(model="thenlper/gte-large", tokens=50000)
 
         # 50000 / 1,000,000 * $0.05 = $0.0025
         assert cost == pytest.approx(0.0025, abs=1e-8)
@@ -283,9 +259,7 @@ class TestAnyscalePricing:
     def test_calculate_cost_for_chat_model(self, pricing_calculator):
         """Test cost calculation for chat model."""
         cost = pricing_calculator.calculate_cost(
-            model="meta-llama/Llama-2-70b-chat-hf",
-            input_tokens=100,
-            output_tokens=50
+            model="meta-llama/Llama-2-70b-chat-hf", input_tokens=100, output_tokens=50
         )
 
         assert cost == pytest.approx(0.00015, abs=1e-8)
@@ -309,7 +283,7 @@ class TestAnyscalePricing:
 
         # If alternatives exist, they should be cheaper
         if alternatives:
-            for alt_model, cost_ratio, description in alternatives:
+            for _alt_model, cost_ratio, description in alternatives:
                 assert cost_ratio < 1.0  # Cheaper than original
                 assert isinstance(description, str)
                 assert len(description) > 0
@@ -317,7 +291,8 @@ class TestAnyscalePricing:
     def test_list_chat_models(self, pricing_calculator):
         """Test listing chat models."""
         chat_models = [
-            name for name, pricing in ANYSCALE_PRICING.items()
+            name
+            for name, pricing in ANYSCALE_PRICING.items()
             if pricing.category == "chat"
         ]
 
@@ -326,7 +301,8 @@ class TestAnyscalePricing:
     def test_list_embedding_models(self, pricing_calculator):
         """Test listing embedding models."""
         embedding_models = [
-            name for name, pricing in ANYSCALE_PRICING.items()
+            name
+            for name, pricing in ANYSCALE_PRICING.items()
             if pricing.category == "embedding"
         ]
 
@@ -361,9 +337,7 @@ class TestPricingAccuracy:
 
         for input_tokens, output_tokens in test_cases:
             cost = calculate_completion_cost(
-                "meta-llama/Llama-2-70b-chat-hf",
-                input_tokens,
-                output_tokens
+                "meta-llama/Llama-2-70b-chat-hf", input_tokens, output_tokens
             )
 
             expected = (input_tokens + output_tokens) / 1_000_000 * 1.0

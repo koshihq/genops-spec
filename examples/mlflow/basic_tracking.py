@@ -29,8 +29,8 @@ Expected output:
 
 import os
 import sys
-import time
 import tempfile
+import time
 from pathlib import Path
 
 # Add project root to path for imports
@@ -55,17 +55,19 @@ def main():
         print("-" * 70)
 
         # Use environment variable or tempfile for cross-platform compatibility
-        tracking_uri = os.getenv('MLFLOW_TRACKING_URI') or f"file://{tempfile.gettempdir()}/mlruns"
+        tracking_uri = (
+            os.getenv("MLFLOW_TRACKING_URI") or f"file://{tempfile.gettempdir()}/mlruns"
+        )
 
         # Create adapter with governance attributes
         adapter = instrument_mlflow(
             tracking_uri=tracking_uri,  # Local tracking for demo
             team="ml-team",
             project="basic-tracking-demo",
-            environment="development"
+            environment="development",
         )
 
-        print(f"✅ Adapter initialized")
+        print("✅ Adapter initialized")
         print(f"   Team: {adapter.team}")
         print(f"   Project: {adapter.project}")
         print(f"   Tracking URI: {adapter.tracking_uri}")
@@ -78,7 +80,7 @@ def main():
             experiment_name="basic-tracking-demo",
             run_name="demo-run-001",
             customer_id="demo-customer",
-            cost_center="ml-research"
+            cost_center="ml-research",
         ) as run:
             print(f"✅ Started MLflow run: {run.info.run_id}")
 
@@ -107,12 +109,14 @@ def main():
 
             # Log artifact (create a simple text file)
             print("   Logging artifacts...")
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".txt", delete=False
+            ) as f:
                 f.write("Model Summary\n")
                 f.write("=" * 40 + "\n")
-                f.write(f"Learning Rate: 0.01\n")
-                f.write(f"Batch Size: 32\n")
-                f.write(f"Final Accuracy: 0.92\n")
+                f.write("Learning Rate: 0.01\n")
+                f.write("Batch Size: 32\n")
+                f.write("Final Accuracy: 0.92\n")
                 artifact_path = f.name
 
             mlflow.log_artifact(artifact_path)
@@ -120,14 +124,14 @@ def main():
 
             print("✅ Completed logging operations")
 
-        print(f"\n✅ Run completed successfully")
+        print("\n✅ Run completed successfully")
         print(f"   Run ID: {run.info.run_id}")
         print(f"   Experiment ID: {run.info.experiment_id}")
 
         print("\n📊 Step 3: Cost Summary")
         print("-" * 70)
 
-        print(f"✅ Governance tracking enabled")
+        print("✅ Governance tracking enabled")
         print(f"   Total operations tracked: {adapter.operation_count}")
         print(f"   Daily usage: ${adapter.daily_usage:.6f}")
 
@@ -164,6 +168,7 @@ def main():
     except Exception as e:
         print(f"\n❌ Error: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
 

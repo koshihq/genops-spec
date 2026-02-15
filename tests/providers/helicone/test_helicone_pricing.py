@@ -9,26 +9,28 @@ Tests the pricing intelligence including:
 - Cost comparison utilities
 """
 
-import pytest
-from unittest.mock import Mock, patch
 from decimal import Decimal
-from typing import Dict, Any
+
+import pytest
 
 # Import the modules under test
 try:
     from genops.providers.helicone_pricing import (
         HeliconeProvider,
-        calculate_provider_cost,
         calculate_gateway_fees,
+        calculate_provider_cost,
+        compare_provider_costs,
         get_cost_optimized_provider,
-        compare_provider_costs
     )
+
     HELICONE_PRICING_AVAILABLE = True
 except ImportError:
     HELICONE_PRICING_AVAILABLE = False
 
 
-@pytest.mark.skipif(not HELICONE_PRICING_AVAILABLE, reason="Helicone pricing not available")
+@pytest.mark.skipif(
+    not HELICONE_PRICING_AVAILABLE, reason="Helicone pricing not available"
+)
 class TestHeliconeProviderCosts:
     """Test suite for provider cost calculations."""
 
@@ -38,9 +40,9 @@ class TestHeliconeProviderCosts:
             provider=HeliconeProvider.OPENAI,
             model="gpt-3.5-turbo",
             input_tokens=100,
-            output_tokens=50
+            output_tokens=50,
         )
-        
+
         assert isinstance(cost, (float, Decimal))
         assert cost > 0
 
@@ -50,9 +52,9 @@ class TestHeliconeProviderCosts:
             provider=HeliconeProvider.ANTHROPIC,
             model="claude-3-haiku",
             input_tokens=100,
-            output_tokens=50
+            output_tokens=50,
         )
-        
+
         assert isinstance(cost, (float, Decimal))
         assert cost > 0
 
@@ -69,17 +71,16 @@ class TestHeliconeProviderCosts:
         pass
 
 
-@pytest.mark.skipif(not HELICONE_PRICING_AVAILABLE, reason="Helicone pricing not available")
+@pytest.mark.skipif(
+    not HELICONE_PRICING_AVAILABLE, reason="Helicone pricing not available"
+)
 class TestHeliconeGatewayFees:
     """Test suite for Helicone gateway fee calculations."""
 
     def test_gateway_fee_calculation(self):
         """Test gateway fee calculation based on usage tier."""
-        fees = calculate_gateway_fees(
-            monthly_requests=1000,
-            base_cost=10.00
-        )
-        
+        fees = calculate_gateway_fees(monthly_requests=1000, base_cost=10.00)
+
         assert isinstance(fees, (float, Decimal))
         assert fees >= 0
 
@@ -92,7 +93,9 @@ class TestHeliconeGatewayFees:
         pass
 
 
-@pytest.mark.skipif(not HELICONE_PRICING_AVAILABLE, reason="Helicone pricing not available")
+@pytest.mark.skipif(
+    not HELICONE_PRICING_AVAILABLE, reason="Helicone pricing not available"
+)
 class TestCostOptimization:
     """Test suite for cost optimization features."""
 
@@ -100,9 +103,9 @@ class TestCostOptimization:
         """Test selection of most cost-effective provider."""
         provider = get_cost_optimized_provider(
             providers=[HeliconeProvider.OPENAI, HeliconeProvider.GROQ],
-            estimated_tokens={"input": 100, "output": 50}
+            estimated_tokens={"input": 100, "output": 50},
         )
-        
+
         assert provider in [HeliconeProvider.OPENAI, HeliconeProvider.GROQ]
 
     def test_provider_cost_comparison(self):
@@ -110,9 +113,9 @@ class TestCostOptimization:
         comparison = compare_provider_costs(
             providers=[HeliconeProvider.OPENAI, HeliconeProvider.ANTHROPIC],
             input_tokens=100,
-            output_tokens=50
+            output_tokens=50,
         )
-        
+
         assert isinstance(comparison, dict)
         assert len(comparison) == 2
 
@@ -125,7 +128,9 @@ class TestCostOptimization:
         pass
 
 
-@pytest.mark.skipif(not HELICONE_PRICING_AVAILABLE, reason="Helicone pricing not available")
+@pytest.mark.skipif(
+    not HELICONE_PRICING_AVAILABLE, reason="Helicone pricing not available"
+)
 class TestPricingDataAccuracy:
     """Test suite for pricing data accuracy and updates."""
 
