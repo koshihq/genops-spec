@@ -1,7 +1,6 @@
 """Unit tests for Collibra asset exporter."""
 
-import time
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, Mock
 
 import pytest
 
@@ -297,7 +296,9 @@ def test_background_flush_not_started_in_realtime_mode(mock_client):
     )
 
     # Background thread should not start for real-time mode
-    assert exporter.background_thread is None or not exporter.background_thread.is_alive()
+    assert (
+        exporter.background_thread is None or not exporter.background_thread.is_alive()
+    )
 
 
 def test_is_critical_event_policy_blocked():

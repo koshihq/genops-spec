@@ -64,7 +64,11 @@ def create_sample_knowledge_base() -> list[Document]:
             mechanisms. Organizations implementing AI governance typically establish cross-functional
             committees, conduct regular audits, and maintain comprehensive documentation of AI systems.
             """,
-            "metadata": {"source": "ai_governance_guide.pdf", "section": "introduction", "priority": "high"}
+            "metadata": {
+                "source": "ai_governance_guide.pdf",
+                "section": "introduction",
+                "priority": "high",
+            },
         },
         {
             "content": """
@@ -74,7 +78,11 @@ def create_sample_knowledge_base() -> list[Document]:
             cost-performance ratios, and establishing cost allocation frameworks for different business
             units or projects. OpenTelemetry integration enables real-time cost visibility.
             """,
-            "metadata": {"source": "cost_management.pdf", "section": "best_practices", "priority": "medium"}
+            "metadata": {
+                "source": "cost_management.pdf",
+                "section": "best_practices",
+                "priority": "medium",
+            },
         },
         {
             "content": """
@@ -85,7 +93,11 @@ def create_sample_knowledge_base() -> list[Document]:
             RAG systems require careful tuning of retrieval parameters, embedding models, and
             generation strategies.
             """,
-            "metadata": {"source": "rag_technical_guide.pdf", "section": "overview", "priority": "high"}
+            "metadata": {
+                "source": "rag_technical_guide.pdf",
+                "section": "overview",
+                "priority": "high",
+            },
         },
         {
             "content": """
@@ -95,7 +107,11 @@ def create_sample_knowledge_base() -> list[Document]:
             complex AI workflows. Modern observability platforms support custom metrics for AI-specific
             concerns like model drift, prediction accuracy, and bias detection.
             """,
-            "metadata": {"source": "observability_handbook.pdf", "section": "ai_metrics", "priority": "medium"}
+            "metadata": {
+                "source": "observability_handbook.pdf",
+                "section": "ai_metrics",
+                "priority": "medium",
+            },
         },
         {
             "content": """
@@ -105,15 +121,18 @@ def create_sample_knowledge_base() -> list[Document]:
             AI workflows to provide real-time enforcement, while governance dashboards provide
             visibility into policy violations and compliance status.
             """,
-            "metadata": {"source": "policy_enforcement.pdf", "section": "automation", "priority": "high"}
-        }
+            "metadata": {
+                "source": "policy_enforcement.pdf",
+                "section": "automation",
+                "priority": "high",
+            },
+        },
     ]
 
     documents = []
     for doc_data in sample_documents:
         doc = Document(
-            page_content=doc_data["content"].strip(),
-            metadata=doc_data["metadata"]
+            page_content=doc_data["content"].strip(), metadata=doc_data["metadata"]
         )
         documents.append(doc)
 
@@ -133,22 +152,18 @@ def setup_vector_store_with_monitoring(documents: list[Document]) -> tuple:
     print("   Creating embeddings model...")
     embeddings = OpenAIEmbeddings(
         model="text-embedding-ada-002",
-        chunk_size=1000  # Optimize for cost
+        chunk_size=1000,  # Optimize for cost
     )
 
     # Instrument embeddings for cost tracking
     instrumented_embeddings = adapter.instrument_embeddings(
-        embeddings,
-        team="knowledge-base",
-        project="rag-demo"
+        embeddings, team="knowledge-base", project="rag-demo"
     )
 
     # Split documents for better retrieval
     print("   Splitting documents...")
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=500,
-        chunk_overlap=50,
-        length_function=len
+        chunk_size=500, chunk_overlap=50, length_function=len
     )
 
     split_docs = text_splitter.split_documents(documents)
@@ -157,11 +172,10 @@ def setup_vector_store_with_monitoring(documents: list[Document]) -> tuple:
     # Create vector store with cost tracking
     print("   Creating vector store and computing embeddings...")
     with create_chain_cost_context("vector_store_setup") as cost_context:
-
         vectorstore = Chroma.from_documents(
             documents=split_docs,
             embedding=instrumented_embeddings,
-            persist_directory=None  # Use in-memory for demo
+            persist_directory=None,  # Use in-memory for demo
         )
 
         # Record setup cost
@@ -183,14 +197,12 @@ def demonstrate_basic_rag_query(vectorstore, adapter):
     # Create retriever with instrumentation
     retriever = vectorstore.as_retriever(
         search_type="similarity",
-        search_kwargs={"k": 3}  # Retrieve top 3 documents
+        search_kwargs={"k": 3},  # Retrieve top 3 documents
     )
 
     # Instrument retriever for monitoring
     instrumented_retriever = adapter.instrument_retriever(
-        retriever,
-        team="qa-system",
-        project="knowledge-retrieval"
+        retriever, team="qa-system", project="knowledge-retrieval"
     )
 
     # Test query
@@ -203,7 +215,7 @@ def demonstrate_basic_rag_query(vectorstore, adapter):
         retriever=instrumented_retriever,
         team="qa-system",
         project="knowledge-retrieval",
-        k=3
+        k=3,
     )
 
     print(f"✅ Retrieved {len(documents)} documents:")
@@ -226,16 +238,13 @@ def demonstrate_complete_rag_pipeline(vectorstore, adapter):
     llm = OpenAI(
         temperature=0.2,  # Low temperature for factual responses
         max_tokens=300,
-        model_name="gpt-3.5-turbo-instruct"
+        model_name="gpt-3.5-turbo-instruct",
     )
 
     # Create retriever
     retriever = vectorstore.as_retriever(
         search_type="similarity_score_threshold",
-        search_kwargs={
-            "k": 4,
-            "score_threshold": 0.3
-        }
+        search_kwargs={"k": 4, "score_threshold": 0.3},
     )
 
     # Create QA chain
@@ -244,7 +253,7 @@ def demonstrate_complete_rag_pipeline(vectorstore, adapter):
         chain_type="stuff",  # Stuff all retrieved docs into prompt
         retriever=retriever,
         return_source_documents=True,
-        verbose=True
+        verbose=True,
     )
 
     # Test queries with comprehensive monitoring
@@ -252,18 +261,18 @@ def demonstrate_complete_rag_pipeline(vectorstore, adapter):
         {
             "query": "How can organizations implement effective AI cost management?",
             "customer_id": "enterprise_customer_001",
-            "team": "cost-optimization"
+            "team": "cost-optimization",
         },
         {
             "query": "What is RAG and how does it work?",
             "customer_id": "tech_customer_002",
-            "team": "technical-support"
+            "team": "technical-support",
         },
         {
             "query": "What are the key requirements for AI observability?",
             "customer_id": "platform_customer_003",
-            "team": "platform-engineering"
-        }
+            "team": "platform-engineering",
+        },
     ]
 
     pipeline_results = []
@@ -273,51 +282,54 @@ def demonstrate_complete_rag_pipeline(vectorstore, adapter):
         print(f"👤 Customer: {query_config['customer_id']}")
 
         with create_chain_cost_context(f"rag_query_{i}") as cost_context:
-
             try:
                 # Execute QA chain with monitoring
                 result = adapter.instrument_chain_run(
                     qa_chain,
-                    query=query_config['query'],
-
+                    query=query_config["query"],
                     # Governance attributes
-                    team=query_config['team'],
+                    team=query_config["team"],
                     project="rag-qa-system",
-                    customer_id=query_config['customer_id'],
+                    customer_id=query_config["customer_id"],
                     environment="demo",
-
                     # RAG-specific attributes
                     retrieval_type="similarity_score_threshold",
                     k=4,
-                    score_threshold=0.3
+                    score_threshold=0.3,
                 )
 
                 print(f"✅ Answer: {result['result'][:200]}...")
                 print(f"📚 Sources: {len(result['source_documents'])} documents used")
 
-                pipeline_results.append({
-                    "query": query_config['query'],
-                    "customer_id": query_config['customer_id'],
-                    "answer": result['result'],
-                    "sources": len(result['source_documents']),
-                    "success": True
-                })
+                pipeline_results.append(
+                    {
+                        "query": query_config["query"],
+                        "customer_id": query_config["customer_id"],
+                        "answer": result["result"],
+                        "sources": len(result["source_documents"]),
+                        "success": True,
+                    }
+                )
 
             except Exception as e:
                 print(f"❌ Query failed: {e}")
-                pipeline_results.append({
-                    "query": query_config['query'],
-                    "customer_id": query_config['customer_id'],
-                    "success": False,
-                    "error": str(e)
-                })
+                pipeline_results.append(
+                    {
+                        "query": query_config["query"],
+                        "customer_id": query_config["customer_id"],
+                        "success": False,
+                        "error": str(e),
+                    }
+                )
 
         # Show cost information for this query
         query_summary = cost_context.get_final_summary()
         if query_summary:
             print(f"💰 Query cost: ${query_summary.total_cost:.4f}")
             print(f"⏱️  Query time: {query_summary.total_time:.2f}s")
-            print(f"🔢 Tokens used: {query_summary.total_tokens_input + query_summary.total_tokens_output}")
+            print(
+                f"🔢 Tokens used: {query_summary.total_tokens_input + query_summary.total_tokens_output}"
+            )
 
     return pipeline_results
 
@@ -328,23 +340,19 @@ def demonstrate_vector_search_performance(vectorstore, adapter):
     print("=" * 60)
 
     search_scenarios = [
-        {
-            "query": "AI governance best practices",
-            "k": 5,
-            "search_type": "similarity"
-        },
+        {"query": "AI governance best practices", "k": 5, "search_type": "similarity"},
         {
             "query": "cost optimization strategies",
             "k": 3,
             "search_type": "similarity_score_threshold",
-            "score_threshold": 0.4
+            "score_threshold": 0.4,
         },
         {
             "query": "observability metrics and monitoring",
             "k": 2,
             "search_type": "mmr",  # Maximal Marginal Relevance
-            "fetch_k": 10
-        }
+            "fetch_k": 10,
+        },
     ]
 
     performance_results = []
@@ -355,39 +363,45 @@ def demonstrate_vector_search_performance(vectorstore, adapter):
 
         try:
             # Perform instrumented vector search
-            search_kwargs = {k: v for k, v in scenario.items() if k not in ['query', 'search_type']}
+            search_kwargs = {
+                k: v for k, v in scenario.items() if k not in ["query", "search_type"]
+            }
 
             results = adapter.instrument_vector_search(
                 vector_store=vectorstore,
-                query=scenario['query'],
-                search_type=scenario['search_type'],
+                query=scenario["query"],
+                search_type=scenario["search_type"],
                 team="search-optimization",
                 project="vector-performance-test",
-                **search_kwargs
+                **search_kwargs,
             )
 
             print(f"   ✅ Found {len(results)} results")
             for j, doc in enumerate(results[:2], 1):  # Show first 2 results
-                source = doc.metadata.get('source', 'unknown')
-                priority = doc.metadata.get('priority', 'unknown')
+                source = doc.metadata.get("source", "unknown")
+                priority = doc.metadata.get("priority", "unknown")
                 print(f"      {j}. {source} (priority: {priority})")
                 print(f"         {doc.page_content[:80]}...")
 
-            performance_results.append({
-                "scenario": i,
-                "query": scenario['query'],
-                "results_count": len(results),
-                "success": True
-            })
+            performance_results.append(
+                {
+                    "scenario": i,
+                    "query": scenario["query"],
+                    "results_count": len(results),
+                    "success": True,
+                }
+            )
 
         except Exception as e:
             print(f"   ❌ Search failed: {e}")
-            performance_results.append({
-                "scenario": i,
-                "query": scenario['query'],
-                "success": False,
-                "error": str(e)
-            })
+            performance_results.append(
+                {
+                    "scenario": i,
+                    "query": scenario["query"],
+                    "success": False,
+                    "error": str(e),
+                }
+            )
 
     return performance_results
 
@@ -398,27 +412,41 @@ def generate_rag_monitoring_report(pipeline_results, performance_results):
     print("=" * 70)
 
     # Pipeline success rate
-    successful_queries = sum(1 for r in pipeline_results if r['success'])
+    successful_queries = sum(1 for r in pipeline_results if r["success"])
     total_queries = len(pipeline_results)
-    success_rate = (successful_queries / total_queries * 100) if total_queries > 0 else 0
+    success_rate = (
+        (successful_queries / total_queries * 100) if total_queries > 0 else 0
+    )
 
     print("🎯 Pipeline Performance:")
-    print(f"   ✅ Successful queries: {successful_queries}/{total_queries} ({success_rate:.1f}%)")
+    print(
+        f"   ✅ Successful queries: {successful_queries}/{total_queries} ({success_rate:.1f}%)"
+    )
 
     if successful_queries > 0:
-        avg_sources = sum(r.get('sources', 0) for r in pipeline_results if r['success']) / successful_queries
+        avg_sources = (
+            sum(r.get("sources", 0) for r in pipeline_results if r["success"])
+            / successful_queries
+        )
         print(f"   📚 Average sources per query: {avg_sources:.1f}")
 
     # Search performance
-    successful_searches = sum(1 for r in performance_results if r['success'])
+    successful_searches = sum(1 for r in performance_results if r["success"])
     total_searches = len(performance_results)
-    search_success_rate = (successful_searches / total_searches * 100) if total_searches > 0 else 0
+    search_success_rate = (
+        (successful_searches / total_searches * 100) if total_searches > 0 else 0
+    )
 
     print("\n🔍 Search Performance:")
-    print(f"   ✅ Successful searches: {successful_searches}/{total_searches} ({search_success_rate:.1f}%)")
+    print(
+        f"   ✅ Successful searches: {successful_searches}/{total_searches} ({search_success_rate:.1f}%)"
+    )
 
     if successful_searches > 0:
-        avg_results = sum(r.get('results_count', 0) for r in performance_results if r['success']) / successful_searches
+        avg_results = (
+            sum(r.get("results_count", 0) for r in performance_results if r["success"])
+            / successful_searches
+        )
         print(f"   📄 Average results per search: {avg_results:.1f}")
 
     print("\n📈 Monitoring Capabilities Demonstrated:")
@@ -461,7 +489,9 @@ def main():
         pipeline_results = demonstrate_complete_rag_pipeline(vectorstore, adapter)
 
         # Demonstrate vector search performance
-        performance_results = demonstrate_vector_search_performance(vectorstore, adapter)
+        performance_results = demonstrate_vector_search_performance(
+            vectorstore, adapter
+        )
 
         # Generate comprehensive report
         generate_rag_monitoring_report(pipeline_results, performance_results)

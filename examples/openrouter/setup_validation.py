@@ -95,7 +95,7 @@ if __name__ == "__main__":
         quick_setup_guide()
 
         response = input("Continue with validation anyway? (y/N): ")
-        if response.lower() not in ['y', 'yes']:
+        if response.lower() not in ["y", "yes"]:
             print("Come back after setup! 👍")
             sys.exit(0)
         print()

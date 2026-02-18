@@ -16,9 +16,11 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class ProviderCostEntry:
     """Single cost entry from a specific provider."""
+
     provider: str
     model: str
     operation_type: str
@@ -31,9 +33,11 @@ class ProviderCostEntry:
     operation_id: str | None = None
     governance_attributes: dict[str, Any] = field(default_factory=dict)
 
+
 @dataclass
 class MultiProviderCostSummary:
     """Aggregated cost summary across multiple providers."""
+
     total_cost: float
     currency: str = "USD"
     cost_by_provider: dict[str, float] = field(default_factory=dict)
@@ -45,6 +49,7 @@ class MultiProviderCostSummary:
     total_operations: int = 0
     time_range: tuple | None = None
     governance_attributes: dict[str, Any] = field(default_factory=dict)
+
 
 class MultiProviderCostAggregator:
     """Aggregates costs across multiple AI providers with governance tracking."""
@@ -69,16 +74,18 @@ class MultiProviderCostAggregator:
         self._governance_context.update(attributes)
         logger.debug(f"Set governance context: {attributes}")
 
-    def add_cost_entry(self,
-                      provider: str,
-                      model: str,
-                      operation_type: str,
-                      cost: float,
-                      tokens_input: int = 0,
-                      tokens_output: int = 0,
-                      currency: str = "USD",
-                      operation_id: str | None = None,
-                      **governance_attrs) -> None:
+    def add_cost_entry(
+        self,
+        provider: str,
+        model: str,
+        operation_type: str,
+        cost: float,
+        tokens_input: int = 0,
+        tokens_output: int = 0,
+        currency: str = "USD",
+        operation_id: str | None = None,
+        **governance_attrs,
+    ) -> None:
         """Add a cost entry from a provider operation.
 
         Args:
@@ -106,18 +113,20 @@ class MultiProviderCostAggregator:
             tokens_total=tokens_input + tokens_output,
             timestamp=datetime.now(),
             operation_id=operation_id,
-            governance_attributes=merged_governance
+            governance_attributes=merged_governance,
         )
 
         self.cost_entries.append(entry)
         logger.info(f"Added cost entry: {provider}/{model} - ${cost:.6f}")
 
-    def add_openai_cost(self,
-                       model: str,
-                       tokens_input: int,
-                       tokens_output: int,
-                       operation_type: str = "completion",
-                       **governance_attrs) -> float:
+    def add_openai_cost(
+        self,
+        model: str,
+        tokens_input: int,
+        tokens_output: int,
+        operation_type: str = "completion",
+        **governance_attrs,
+    ) -> float:
         """Add OpenAI cost entry with automatic cost calculation.
 
         Args:
@@ -139,17 +148,19 @@ class MultiProviderCostAggregator:
             cost=cost,
             tokens_input=tokens_input,
             tokens_output=tokens_output,
-            **governance_attrs
+            **governance_attrs,
         )
 
         return cost
 
-    def add_anthropic_cost(self,
-                          model: str,
-                          tokens_input: int,
-                          tokens_output: int,
-                          operation_type: str = "message",
-                          **governance_attrs) -> float:
+    def add_anthropic_cost(
+        self,
+        model: str,
+        tokens_input: int,
+        tokens_output: int,
+        operation_type: str = "message",
+        **governance_attrs,
+    ) -> float:
         """Add Anthropic cost entry with automatic cost calculation.
 
         Args:
@@ -171,7 +182,7 @@ class MultiProviderCostAggregator:
             cost=cost,
             tokens_input=tokens_input,
             tokens_output=tokens_output,
-            **governance_attrs
+            **governance_attrs,
         )
 
         return cost
@@ -190,7 +201,9 @@ class MultiProviderCostAggregator:
         # Aggregate by provider
         cost_by_provider = {}
         for entry in self.cost_entries:
-            cost_by_provider[entry.provider] = cost_by_provider.get(entry.provider, 0.0) + entry.cost
+            cost_by_provider[entry.provider] = (
+                cost_by_provider.get(entry.provider, 0.0) + entry.cost
+            )
 
         # Aggregate by model
         cost_by_model = {}
@@ -201,11 +214,15 @@ class MultiProviderCostAggregator:
         # Aggregate by operation type
         cost_by_operation = {}
         for entry in self.cost_entries:
-            cost_by_operation[entry.operation_type] = cost_by_operation.get(entry.operation_type, 0.0) + entry.cost
+            cost_by_operation[entry.operation_type] = (
+                cost_by_operation.get(entry.operation_type, 0.0) + entry.cost
+            )
 
         # Collect unique providers and models
         unique_providers = {entry.provider for entry in self.cost_entries}
-        unique_models = {f"{entry.provider}/{entry.model}" for entry in self.cost_entries}
+        unique_models = {
+            f"{entry.provider}/{entry.model}" for entry in self.cost_entries
+        }
 
         # Calculate totals
         total_tokens = sum(entry.tokens_total for entry in self.cost_entries)
@@ -224,7 +241,7 @@ class MultiProviderCostAggregator:
             total_tokens=total_tokens,
             total_operations=len(self.cost_entries),
             time_range=time_range,
-            governance_attributes=self._governance_context
+            governance_attributes=self._governance_context,
         )
 
     def get_cost_breakdown(self) -> dict[str, Any]:
@@ -241,8 +258,12 @@ class MultiProviderCostAggregator:
 
         # Find most/least expensive providers
         if summary.cost_by_provider:
-            most_expensive_provider = max(summary.cost_by_provider.items(), key=lambda x: x[1])
-            least_expensive_provider = min(summary.cost_by_provider.items(), key=lambda x: x[1])
+            most_expensive_provider = max(
+                summary.cost_by_provider.items(), key=lambda x: x[1]
+            )
+            least_expensive_provider = min(
+                summary.cost_by_provider.items(), key=lambda x: x[1]
+            )
         else:
             most_expensive_provider = ("none", 0.0)
             least_expensive_provider = ("none", 0.0)
@@ -260,14 +281,14 @@ class MultiProviderCostAggregator:
                 "avg_cost_per_operation": avg_cost_per_operation,
                 "total_cost": summary.total_cost,
                 "total_tokens": summary.total_tokens,
-                "total_operations": summary.total_operations
+                "total_operations": summary.total_operations,
             },
             "cost_leaders": {
                 "most_expensive_provider": most_expensive_provider,
-                "least_expensive_provider": least_expensive_provider
+                "least_expensive_provider": least_expensive_provider,
             },
             "provider_distribution": provider_ratios,
-            "recommendations": self._generate_recommendations(summary)
+            "recommendations": self._generate_recommendations(summary),
         }
 
     def export_telemetry(self) -> None:
@@ -283,15 +304,20 @@ class MultiProviderCostAggregator:
                 operation_name="multi_provider_cost_summary",
                 operation_type="cost.aggregation",
                 session_id=self.session_id,
-                **summary.governance_attributes
+                **summary.governance_attributes,
             ) as span:
-
                 # Set cost attributes
                 span.set_attribute("multi_provider.total_cost", summary.total_cost)
                 span.set_attribute("multi_provider.total_tokens", summary.total_tokens)
-                span.set_attribute("multi_provider.total_operations", summary.total_operations)
-                span.set_attribute("multi_provider.unique_providers", len(summary.unique_providers))
-                span.set_attribute("multi_provider.unique_models", len(summary.unique_models))
+                span.set_attribute(
+                    "multi_provider.total_operations", summary.total_operations
+                )
+                span.set_attribute(
+                    "multi_provider.unique_providers", len(summary.unique_providers)
+                )
+                span.set_attribute(
+                    "multi_provider.unique_models", len(summary.unique_models)
+                )
 
                 # Set provider-specific costs
                 for provider, cost in summary.cost_by_provider.items():
@@ -299,14 +325,20 @@ class MultiProviderCostAggregator:
 
                 # Set operation-specific costs
                 for operation, cost in summary.cost_by_operation.items():
-                    span.set_attribute(f"multi_provider.cost.operation.{operation}", cost)
+                    span.set_attribute(
+                        f"multi_provider.cost.operation.{operation}", cost
+                    )
 
-                logger.info(f"Exported multi-provider cost telemetry: ${summary.total_cost:.6f}")
+                logger.info(
+                    f"Exported multi-provider cost telemetry: ${summary.total_cost:.6f}"
+                )
 
         except Exception as e:
             logger.warning(f"Failed to export cost telemetry: {e}")
 
-    def _calculate_openai_cost(self, model: str, tokens_input: int, tokens_output: int) -> float:
+    def _calculate_openai_cost(
+        self, model: str, tokens_input: int, tokens_output: int
+    ) -> float:
         """Calculate OpenAI cost based on model pricing."""
         # Current OpenAI pricing (as of 2024)
         pricing = {
@@ -329,16 +361,36 @@ class MultiProviderCostAggregator:
 
         return input_cost + output_cost
 
-    def _calculate_anthropic_cost(self, model: str, tokens_input: int, tokens_output: int) -> float:
+    def _calculate_anthropic_cost(
+        self, model: str, tokens_input: int, tokens_output: int
+    ) -> float:
         """Calculate Anthropic cost based on model pricing."""
         # Current Anthropic pricing (as of 2024)
         pricing = {
-            "claude-3-5-sonnet-20241022": {"input": 3.00 / 1000000, "output": 15.00 / 1000000},
-            "claude-3-5-sonnet-20240620": {"input": 3.00 / 1000000, "output": 15.00 / 1000000},
-            "claude-3-5-haiku-20241022": {"input": 1.00 / 1000000, "output": 5.00 / 1000000},
-            "claude-3-opus-20240229": {"input": 15.00 / 1000000, "output": 75.00 / 1000000},
-            "claude-3-sonnet-20240229": {"input": 3.00 / 1000000, "output": 15.00 / 1000000},
-            "claude-3-haiku-20240307": {"input": 0.25 / 1000000, "output": 1.25 / 1000000},
+            "claude-3-5-sonnet-20241022": {
+                "input": 3.00 / 1000000,
+                "output": 15.00 / 1000000,
+            },
+            "claude-3-5-sonnet-20240620": {
+                "input": 3.00 / 1000000,
+                "output": 15.00 / 1000000,
+            },
+            "claude-3-5-haiku-20241022": {
+                "input": 1.00 / 1000000,
+                "output": 5.00 / 1000000,
+            },
+            "claude-3-opus-20240229": {
+                "input": 15.00 / 1000000,
+                "output": 75.00 / 1000000,
+            },
+            "claude-3-sonnet-20240229": {
+                "input": 3.00 / 1000000,
+                "output": 15.00 / 1000000,
+            },
+            "claude-3-haiku-20240307": {
+                "input": 0.25 / 1000000,
+                "output": 1.25 / 1000000,
+            },
         }
 
         # Default to Claude 3.5 Sonnet pricing for unknown models
@@ -359,28 +411,40 @@ class MultiProviderCostAggregator:
 
         # Provider cost analysis
         if len(summary.unique_providers) > 1:
-            providers_by_cost = sorted(summary.cost_by_provider.items(), key=lambda x: x[1])
+            providers_by_cost = sorted(
+                summary.cost_by_provider.items(), key=lambda x: x[1]
+            )
             cheapest_provider = providers_by_cost[0][0]
             providers_by_cost[-1][0]
 
             cost_diff = providers_by_cost[-1][1] - providers_by_cost[0][1]
             if cost_diff > summary.total_cost * 0.2:  # >20% difference
-                recommendations.append(f"Consider using {cheapest_provider} more frequently - could save ${cost_diff:.4f}")
+                recommendations.append(
+                    f"Consider using {cheapest_provider} more frequently - could save ${cost_diff:.4f}"
+                )
 
         # Token efficiency analysis
         if summary.total_tokens > 0:
             cost_per_token = summary.total_cost / summary.total_tokens
             if cost_per_token > 0.0001:  # High cost per token threshold
-                recommendations.append("High cost per token detected - consider using more efficient models")
+                recommendations.append(
+                    "High cost per token detected - consider using more efficient models"
+                )
 
         # Operation type analysis
         if summary.cost_by_operation:
-            operations_by_cost = sorted(summary.cost_by_operation.items(), key=lambda x: x[1], reverse=True)
+            operations_by_cost = sorted(
+                summary.cost_by_operation.items(), key=lambda x: x[1], reverse=True
+            )
             most_expensive_op = operations_by_cost[0]
             if most_expensive_op[1] > summary.total_cost * 0.5:  # >50% of total cost
-                recommendations.append(f"Operation '{most_expensive_op[0]}' accounts for {most_expensive_op[1]/summary.total_cost*100:.1f}% of costs - review for optimization")
+                recommendations.append(
+                    f"Operation '{most_expensive_op[0]}' accounts for {most_expensive_op[1] / summary.total_cost * 100:.1f}% of costs - review for optimization"
+                )
 
-        return recommendations or ["No specific optimization recommendations at this time"]
+        return recommendations or [
+            "No specific optimization recommendations at this time"
+        ]
 
 
 @contextmanager
@@ -423,15 +487,15 @@ def compare_provider_costs(cost_entries: list[dict[str, Any]]) -> dict[str, Any]
             operation_type=entry.get("operation_type", "unknown"),
             cost=entry.get("cost", 0.0),
             tokens_input=entry.get("tokens_input", 0),
-            tokens_output=entry.get("tokens_output", 0)
+            tokens_output=entry.get("tokens_output", 0),
         )
 
     return aggregator.get_cost_breakdown()
 
 
-def estimate_migration_costs(current_usage: dict[str, Any],
-                           target_provider: str,
-                           target_model: str) -> dict[str, Any]:
+def estimate_migration_costs(
+    current_usage: dict[str, Any], target_provider: str, target_model: str
+) -> dict[str, Any]:
     """Estimate costs for migrating to a different provider/model.
 
     Args:
@@ -453,19 +517,19 @@ def estimate_migration_costs(current_usage: dict[str, Any],
         estimated_cost = aggregator._calculate_openai_cost(
             target_model,
             current_tokens // 2,  # Rough input/output split
-            current_tokens // 2
+            current_tokens // 2,
         )
     elif target_provider == "anthropic":
         estimated_cost = aggregator._calculate_anthropic_cost(
-            target_model,
-            current_tokens // 2,
-            current_tokens // 2
+            target_model, current_tokens // 2, current_tokens // 2
         )
     else:
         estimated_cost = current_cost  # No change if unknown provider
 
     cost_difference = estimated_cost - current_cost
-    percentage_change = (cost_difference / current_cost * 100) if current_cost > 0 else 0
+    percentage_change = (
+        (cost_difference / current_cost * 100) if current_cost > 0 else 0
+    )
 
     return {
         "current_cost": current_cost,
@@ -473,5 +537,5 @@ def estimate_migration_costs(current_usage: dict[str, Any],
         "cost_difference": cost_difference,
         "percentage_change": percentage_change,
         "recommendation": "migrate" if cost_difference < 0 else "evaluate",
-        "savings_potential": abs(cost_difference) if cost_difference < 0 else 0
+        "savings_potential": abs(cost_difference) if cost_difference < 0 else 0,
     }

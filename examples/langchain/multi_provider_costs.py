@@ -19,6 +19,7 @@ except ImportError:
 # Try to import additional providers
 try:
     from langchain.llms import Anthropic
+
     ANTHROPIC_AVAILABLE = True
 except ImportError:
     ANTHROPIC_AVAILABLE = False
@@ -26,6 +27,7 @@ except ImportError:
 
 try:
     from langchain.llms import Cohere
+
     COHERE_AVAILABLE = True
 except ImportError:
     COHERE_AVAILABLE = False
@@ -51,7 +53,7 @@ def check_provider_availability() -> dict[str, bool]:
     providers = {
         "openai": bool(os.getenv("OPENAI_API_KEY")),
         "anthropic": ANTHROPIC_AVAILABLE and bool(os.getenv("ANTHROPIC_API_KEY")),
-        "cohere": COHERE_AVAILABLE and bool(os.getenv("COHERE_API_KEY"))
+        "cohere": COHERE_AVAILABLE and bool(os.getenv("COHERE_API_KEY")),
     }
 
     print("🔍 Provider Availability Check:")
@@ -76,18 +78,16 @@ def create_provider_chains(available_providers: dict[str, bool]) -> dict[str, LL
     # OpenAI - Good for general text generation
     if available_providers["openai"]:
         openai_llm = OpenAI(
-            temperature=0.7,
-            max_tokens=200,
-            model_name="gpt-3.5-turbo-instruct"
+            temperature=0.7, max_tokens=200, model_name="gpt-3.5-turbo-instruct"
         )
 
         openai_chain = LLMChain(
             llm=openai_llm,
             prompt=PromptTemplate(
                 input_variables=["task", "context"],
-                template="Task: {task}\nContext: {context}\n\nResponse:"
+                template="Task: {task}\nContext: {context}\n\nResponse:",
             ),
-            output_key="openai_response"
+            output_key="openai_response",
         )
         chains["openai"] = openai_chain
         print("✅ Created OpenAI chain (general text generation)")
@@ -95,37 +95,31 @@ def create_provider_chains(available_providers: dict[str, bool]) -> dict[str, LL
     # Anthropic - Good for analysis and reasoning
     if available_providers["anthropic"]:
         anthropic_llm = Anthropic(
-            temperature=0.3,
-            max_tokens_to_sample=300,
-            model="claude-instant-1"
+            temperature=0.3, max_tokens_to_sample=300, model="claude-instant-1"
         )
 
         anthropic_chain = LLMChain(
             llm=anthropic_llm,
             prompt=PromptTemplate(
                 input_variables=["content"],
-                template="Analyze the following content and provide insights:\n\n{content}\n\nAnalysis:"
+                template="Analyze the following content and provide insights:\n\n{content}\n\nAnalysis:",
             ),
-            output_key="anthropic_analysis"
+            output_key="anthropic_analysis",
         )
         chains["anthropic"] = anthropic_chain
         print("✅ Created Anthropic chain (analysis and reasoning)")
 
     # Cohere - Good for summarization
     if available_providers["cohere"]:
-        cohere_llm = Cohere(
-            temperature=0.1,
-            max_tokens=150,
-            model="command"
-        )
+        cohere_llm = Cohere(temperature=0.1, max_tokens=150, model="command")
 
         cohere_chain = LLMChain(
             llm=cohere_llm,
             prompt=PromptTemplate(
                 input_variables=["text"],
-                template="Summarize the following text concisely:\n\n{text}\n\nSummary:"
+                template="Summarize the following text concisely:\n\n{text}\n\nSummary:",
             ),
-            output_key="cohere_summary"
+            output_key="cohere_summary",
         )
         chains["cohere"] = cohere_chain
         print("✅ Created Cohere chain (summarization)")
@@ -160,7 +154,7 @@ def demonstrate_individual_provider_costs(chains: dict[str, LLMChain]):
                     context=sample_content,
                     team="content-team",
                     project="multi-provider-demo",
-                    provider_test=provider_name
+                    provider_test=provider_name,
                 )
             elif provider_name == "anthropic":
                 result = adapter.instrument_chain_run(
@@ -168,7 +162,7 @@ def demonstrate_individual_provider_costs(chains: dict[str, LLMChain]):
                     content=sample_content,
                     team="analysis-team",
                     project="multi-provider-demo",
-                    provider_test=provider_name
+                    provider_test=provider_name,
                 )
             elif provider_name == "cohere":
                 result = adapter.instrument_chain_run(
@@ -176,7 +170,7 @@ def demonstrate_individual_provider_costs(chains: dict[str, LLMChain]):
                     text=sample_content,
                     team="summarization-team",
                     project="multi-provider-demo",
-                    provider_test=provider_name
+                    provider_test=provider_name,
                 )
 
             print(f"   ✅ {provider_name.title()} result: {result[:100]}...")
@@ -214,8 +208,7 @@ def demonstrate_multi_provider_workflow(chains: dict[str, LLMChain]):
             print("   Step 1: OpenAI - Initial content generation...")
             try:
                 openai_result = chains["openai"].run(
-                    task="Create 3 discussion questions",
-                    context=sample_document
+                    task="Create 3 discussion questions", context=sample_document
                 )
                 workflow_results["questions"] = openai_result
                 print(f"   ✅ Generated questions: {openai_result[:100]}...")
@@ -267,14 +260,13 @@ def demonstrate_customer_cost_attribution(chains: dict[str, LLMChain]):
         print(f"\n🔄 Processing requests for {customer_id}...")
 
         with create_chain_cost_context(f"customer_{customer_id}") as cost_context:
-
             # Each customer gets processed by available providers
             for provider_name, chain in chains.items():
                 try:
                     if provider_name == "openai":
                         result = chain.run(
                             task="Create a personalized greeting",
-                            context=f"Customer {customer_id} preferences"
+                            context=f"Customer {customer_id} preferences",
                         )
                     elif provider_name == "anthropic":
                         result = chain.run(
@@ -297,7 +289,8 @@ def demonstrate_customer_cost_attribution(chains: dict[str, LLMChain]):
                 "total_cost": final_summary.total_cost,
                 "providers": list(final_summary.unique_providers),
                 "models": list(final_summary.unique_models),
-                "tokens": final_summary.total_tokens_input + final_summary.total_tokens_output
+                "tokens": final_summary.total_tokens_input
+                + final_summary.total_tokens_output,
             }
 
     # Print customer cost breakdown
@@ -309,7 +302,7 @@ def demonstrate_customer_cost_attribution(chains: dict[str, LLMChain]):
         print(f"     🏢 Providers: {costs['providers']}")
         print(f"     🤖 Models: {costs['models']}")
         print(f"     🔢 Tokens: {costs['tokens']}")
-        total_all_customers += costs['total_cost']
+        total_all_customers += costs["total_cost"]
 
     print(f"\n💰 Total across all customers: ${total_all_customers:.4f}")
 
@@ -362,7 +355,9 @@ def generate_cost_report(individual_costs, workflow_results, customer_costs):
     print("   ✅ No code changes needed for existing LangChain applications")
 
     total_customers_processed = len(customer_costs)
-    total_providers_used = len([p for p, status in individual_costs.items() if status == "tracked"])
+    total_providers_used = len(
+        [p for p, status in individual_costs.items() if status == "tracked"]
+    )
 
     print("\n📊 This Demo Statistics:")
     print(f"   🏢 Providers Used: {total_providers_used}")

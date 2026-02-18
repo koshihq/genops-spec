@@ -13,12 +13,12 @@ Time to run: < 1 minute
 """
 
 import os
+
 from genops.providers.kubetorch import (
-    auto_instrument_kubetorch,
-    instrument_kubetorch,
     create_compute_cost_context,
-    validate_kubetorch_setup,
+    instrument_kubetorch,
     reset_cost_aggregator,
+    validate_kubetorch_setup,
 )
 
 print("=" * 60)
@@ -30,6 +30,7 @@ print("=" * 60)
 # =============================================
 print("\n1. Environment-Based Configuration")
 print("-" * 60)
+
 
 def setup_genops_for_environment(env: str):
     """Configure GenOps based on deployment environment."""
@@ -59,12 +60,13 @@ def setup_genops_for_environment(env: str):
         team=os.getenv("GENOPS_TEAM", "default-team"),
         project=os.getenv("GENOPS_PROJECT", "default-project"),
         environment=env,
-        **env_config
+        **env_config,
     )
+
 
 # Configure for production
 adapter = setup_genops_for_environment("production")
-print(f"✓ Configured for production environment")
+print("✓ Configured for production environment")
 print(f"  Team: {adapter.team}")
 print(f"  Environment: {adapter.environment}")
 print(f"  Telemetry: {'Enabled' if adapter.telemetry_enabled else 'Disabled'}")
@@ -77,13 +79,15 @@ print("\n2. Kubernetes ConfigMap Configuration")
 print("-" * 60)
 
 # Simulating environment variables from Kubernetes ConfigMap
-os.environ.update({
-    "OTEL_EXPORTER_OTLP_ENDPOINT": "http://otel-collector:4317",
-    "GENOPS_TEAM": "ml-platform",
-    "GENOPS_PROJECT": "recommendation-engine",
-    "GENOPS_ENVIRONMENT": "production",
-    "GENOPS_COST_CENTER": "ml-infrastructure",
-})
+os.environ.update(
+    {
+        "OTEL_EXPORTER_OTLP_ENDPOINT": "http://otel-collector:4317",
+        "GENOPS_TEAM": "ml-platform",
+        "GENOPS_PROJECT": "recommendation-engine",
+        "GENOPS_ENVIRONMENT": "production",
+        "GENOPS_COST_CENTER": "ml-infrastructure",
+    }
+)
 
 # Auto-configure from environment
 adapter_k8s = instrument_kubetorch(
@@ -93,7 +97,7 @@ adapter_k8s = instrument_kubetorch(
     cost_center=os.getenv("GENOPS_COST_CENTER"),
 )
 
-print(f"✓ Configured from Kubernetes ConfigMap")
+print("✓ Configured from Kubernetes ConfigMap")
 print(f"  Team: {adapter_k8s.team}")
 print(f"  Project: {adapter_k8s.project}")
 print(f"  Environment: {adapter_k8s.environment}")
@@ -104,6 +108,7 @@ print(f"  Cost Center: {adapter_k8s.cost_center}")
 # =============================================
 print("\n3. Production Startup Validation")
 print("-" * 60)
+
 
 def production_startup_validation():
     """Run validation checks at startup."""
@@ -127,8 +132,11 @@ def production_startup_validation():
             if issue.level.value == "warning":
                 print(f"  {issue.message}")
 
-    print(f"✓ Validation passed: {result.successful_checks}/{result.total_checks} checks successful")
+    print(
+        f"✓ Validation passed: {result.successful_checks}/{result.total_checks} checks successful"
+    )
     return True
+
 
 # Run validation
 validation_passed = production_startup_validation()
@@ -138,6 +146,7 @@ validation_passed = production_startup_validation()
 # =============================================
 print("\n4. Cost Budget Monitoring")
 print("-" * 60)
+
 
 class CostBudgetMonitor:
     """Monitor costs against budget limits."""
@@ -154,11 +163,15 @@ class CostBudgetMonitor:
         utilization = self.current_cost / self.daily_budget
 
         if utilization >= 1.0:
-            print(f"  🚨 BUDGET EXCEEDED: ${self.current_cost:.2f} / ${self.daily_budget:.2f}")
+            print(
+                f"  🚨 BUDGET EXCEEDED: ${self.current_cost:.2f} / ${self.daily_budget:.2f}"
+            )
             print(f"     Operation: {operation_id}")
             return "budget_exceeded"
         elif utilization >= self.warning_threshold:
-            print(f"  ⚠️  BUDGET WARNING: {utilization * 100:.1f}% used (${self.current_cost:.2f} / ${self.daily_budget:.2f})")
+            print(
+                f"  ⚠️  BUDGET WARNING: {utilization * 100:.1f}% used (${self.current_cost:.2f} / ${self.daily_budget:.2f})"
+            )
             print(f"     Operation: {operation_id}")
             return "budget_warning"
         else:
@@ -168,6 +181,7 @@ class CostBudgetMonitor:
     def get_remaining_budget(self) -> float:
         """Get remaining budget."""
         return max(0, self.daily_budget - self.current_cost)
+
 
 # Create budget monitor
 budget_monitor = CostBudgetMonitor(daily_budget=1000.0, warning_threshold=0.8)
@@ -187,7 +201,7 @@ for op_id, gpu_type, gpu_hours in operations:
 
     status = budget_monitor.track_operation(ctx.summary.total_cost, op_id)
 
-print(f"\nDaily Summary:")
+print("\nDaily Summary:")
 print(f"  Total Spent: ${budget_monitor.current_cost:.2f}")
 print(f"  Remaining: ${budget_monitor.get_remaining_budget():.2f}")
 
@@ -196,6 +210,7 @@ print(f"  Remaining: ${budget_monitor.get_remaining_budget():.2f}")
 # =============================================
 print("\n5. Multi-Tenant Cost Isolation")
 print("-" * 60)
+
 
 class TenantCostTracker:
     """Track costs per tenant with isolation."""
@@ -217,6 +232,7 @@ class TenantCostTracker:
     def get_tenant_report(self):
         """Generate tenant cost report."""
         return self.tenant_costs
+
 
 # Create tenant tracker
 tenant_tracker = TenantCostTracker()
@@ -250,7 +266,9 @@ for tenant_id, gpu_type, gpu_hours in tenants:
 # Generate report
 print("Tenant Cost Report:")
 for tenant_id, data in tenant_tracker.get_tenant_report().items():
-    print(f"  {tenant_id:20s}: ${data['total_cost']:8.2f} ({data['operation_count']} ops)")
+    print(
+        f"  {tenant_id:20s}: ${data['total_cost']:8.2f} ({data['operation_count']} ops)"
+    )
 
 # =============================================
 # Example 6: High-Availability Configuration
@@ -258,24 +276,23 @@ for tenant_id, data in tenant_tracker.get_tenant_report().items():
 print("\n6. High-Availability Setup")
 print("-" * 60)
 
+
 def create_ha_adapter():
     """Create adapter with HA configuration."""
     return instrument_kubetorch(
         team="production-ml",
         project="critical-service",
         environment="production",
-
         # Retry configuration
         enable_retry=True,
         max_retries=3,
-
         # Telemetry configuration
         telemetry_enabled=True,
         cost_tracking_enabled=True,
-
         # Debug disabled for performance
         debug=False,
     )
+
 
 ha_adapter = create_ha_adapter()
 
@@ -291,6 +308,7 @@ print("    - Cost tracking with graceful degradation")
 print("\n7. Operational Metrics Dashboard")
 print("-" * 60)
 
+
 class OperationalMetrics:
     """Track operational metrics for monitoring."""
 
@@ -303,7 +321,9 @@ class OperationalMetrics:
             "cost_by_team": {},
         }
 
-    def record_operation(self, team: str, workload_type: str, cost: float, gpu_hours: float):
+    def record_operation(
+        self, team: str, workload_type: str, cost: float, gpu_hours: float
+    ):
         """Record operation metrics."""
         self.metrics["total_operations"] += 1
         self.metrics["total_cost"] += cost
@@ -311,7 +331,10 @@ class OperationalMetrics:
 
         # By type
         if workload_type not in self.metrics["operations_by_type"]:
-            self.metrics["operations_by_type"][workload_type] = {"count": 0, "cost": 0.0}
+            self.metrics["operations_by_type"][workload_type] = {
+                "count": 0,
+                "cost": 0.0,
+            }
         self.metrics["operations_by_type"][workload_type]["count"] += 1
         self.metrics["operations_by_type"][workload_type]["cost"] += cost
 
@@ -326,7 +349,9 @@ class OperationalMetrics:
         print(f"  Total Operations: {self.metrics['total_operations']}")
         print(f"  Total Cost: ${self.metrics['total_cost']:.2f}")
         print(f"  Total GPU Hours: {self.metrics['total_gpu_hours']:.1f}")
-        print(f"  Avg Cost/Operation: ${self.metrics['total_cost'] / max(1, self.metrics['total_operations']):.2f}")
+        print(
+            f"  Avg Cost/Operation: ${self.metrics['total_cost'] / max(1, self.metrics['total_operations']):.2f}"
+        )
 
         print("\n  By Workload Type:")
         for wtype, data in self.metrics["operations_by_type"].items():
@@ -334,8 +359,13 @@ class OperationalMetrics:
 
         print("\n  By Team:")
         for team, cost in self.metrics["cost_by_team"].items():
-            pct = (cost / self.metrics['total_cost']) * 100 if self.metrics['total_cost'] > 0 else 0
+            pct = (
+                (cost / self.metrics["total_cost"]) * 100
+                if self.metrics["total_cost"] > 0
+                else 0
+            )
             print(f"    {team:20s}: ${cost:8.2f} ({pct:5.1f}%)")
+
 
 # Create metrics tracker
 metrics = OperationalMetrics()
@@ -361,7 +391,9 @@ for team, workload_type, gpu_type, gpu_hours in workloads:
         duration_seconds=3600,
     )
 
-    metrics.record_operation(team, workload_type, result["cost_total"], result["gpu_hours"])
+    metrics.record_operation(
+        team, workload_type, result["cost_total"], result["gpu_hours"]
+    )
 
 # Print dashboard
 metrics.print_dashboard()
@@ -371,6 +403,7 @@ metrics.print_dashboard()
 # =============================================
 print("\n8. Graceful Shutdown Procedure")
 print("-" * 60)
+
 
 def graceful_shutdown():
     """Graceful shutdown procedure for production."""
@@ -384,6 +417,7 @@ def graceful_shutdown():
     # Generate final cost summary
 
     print("  ✓ Graceful shutdown complete")
+
 
 graceful_shutdown()
 

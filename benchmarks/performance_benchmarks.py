@@ -48,9 +48,7 @@ class PerformanceBenchmark:
 
         # Set minimal defaults for benchmarking
         genops.set_default_attributes(
-            team="benchmark-team",
-            project="performance-test",
-            environment="benchmark"
+            team="benchmark-team", project="performance-test", environment="benchmark"
         )
 
         # Configure validation for benchmarking
@@ -60,7 +58,9 @@ class PerformanceBenchmark:
         # Force garbage collection
         gc.collect()
 
-    def benchmark_function(self, func: Callable, name: str, *args, **kwargs) -> dict[str, Any]:
+    def benchmark_function(
+        self, func: Callable, name: str, *args, **kwargs
+    ) -> dict[str, Any]:
         """Benchmark a function's execution time."""
 
         print(f"🔄 Benchmarking {name}...")
@@ -82,22 +82,24 @@ class PerformanceBenchmark:
 
         # Calculate statistics
         results = {
-            'name': name,
-            'iterations': self.benchmark_iterations,
-            'timings_ms': timings,
-            'mean_ms': statistics.mean(timings),
-            'median_ms': statistics.median(timings),
-            'min_ms': min(timings),
-            'max_ms': max(timings),
-            'stddev_ms': statistics.stdev(timings) if len(timings) > 1 else 0,
-            'p95_ms': sorted(timings)[int(0.95 * len(timings))],
-            'p99_ms': sorted(timings)[int(0.99 * len(timings))]
+            "name": name,
+            "iterations": self.benchmark_iterations,
+            "timings_ms": timings,
+            "mean_ms": statistics.mean(timings),
+            "median_ms": statistics.median(timings),
+            "min_ms": min(timings),
+            "max_ms": max(timings),
+            "stddev_ms": statistics.stdev(timings) if len(timings) > 1 else 0,
+            "p95_ms": sorted(timings)[int(0.95 * len(timings))],
+            "p99_ms": sorted(timings)[int(0.99 * len(timings))],
         }
 
         self.results[name] = results
         return results
 
-    def benchmark_memory_usage(self, func: Callable, name: str, *args, **kwargs) -> dict[str, Any]:
+    def benchmark_memory_usage(
+        self, func: Callable, name: str, *args, **kwargs
+    ) -> dict[str, Any]:
         """Benchmark memory usage of a function."""
 
         print(f"🧠 Memory benchmarking {name}...")
@@ -116,18 +118,22 @@ class PerformanceBenchmark:
         final_snapshot = tracemalloc.take_snapshot()
 
         # Calculate memory diff
-        top_stats = final_snapshot.compare_to(baseline_snapshot, 'lineno')
+        top_stats = final_snapshot.compare_to(baseline_snapshot, "lineno")
 
         # Get total memory increase
-        total_memory_increase = sum(stat.size_diff for stat in top_stats if stat.size_diff > 0)
+        total_memory_increase = sum(
+            stat.size_diff for stat in top_stats if stat.size_diff > 0
+        )
 
         tracemalloc.stop()
 
         results = {
-            'name': f"{name}_memory",
-            'total_memory_increase_bytes': total_memory_increase,
-            'memory_per_operation_bytes': total_memory_increase / 100,
-            'top_memory_stats': [(stat.traceback.format()[-1], stat.size_diff) for stat in top_stats[:5]]
+            "name": f"{name}_memory",
+            "total_memory_increase_bytes": total_memory_increase,
+            "memory_per_operation_bytes": total_memory_increase / 100,
+            "top_memory_stats": [
+                (stat.traceback.format()[-1], stat.size_diff) for stat in top_stats[:5]
+            ],
         }
 
         return results
@@ -147,7 +153,7 @@ def genops_attribution_operation():
     genops.set_context(
         customer_id="benchmark-customer",
         feature="benchmark-feature",
-        user_id="benchmark-user"
+        user_id="benchmark-user",
     )
 
     # Simulate operation
@@ -160,7 +166,11 @@ def genops_attribution_operation():
     # Clean up
     genops.clear_context()
 
-    return {"tokens": result, "cost": result * 0.0001, "attributes": len(effective_attrs)}
+    return {
+        "tokens": result,
+        "cost": result * 0.0001,
+        "attributes": len(effective_attrs),
+    }
 
 
 def genops_validation_operation():
@@ -168,19 +178,21 @@ def genops_validation_operation():
 
     # Add validation rules
     validator = genops.get_validator()
-    validator.add_rule(genops.ValidationRule(
-        name="benchmark_customer_required",
-        attribute="customer_id",
-        rule_type="required",
-        severity=ValidationSeverity.WARNING,
-        description="Customer ID required"
-    ))
+    validator.add_rule(
+        genops.ValidationRule(
+            name="benchmark_customer_required",
+            attribute="customer_id",
+            rule_type="required",
+            severity=ValidationSeverity.WARNING,
+            description="Customer ID required",
+        )
+    )
 
     # Set context with validation
     genops.set_context(
         customer_id="benchmark-customer",
         feature="benchmark-feature",
-        user_id="benchmark-user"
+        user_id="benchmark-user",
     )
 
     # Get effective attributes (triggers validation)
@@ -201,9 +213,8 @@ def genops_telemetry_operation():
     with telemetry.trace_operation(
         operation_name="benchmark_operation",
         customer_id="benchmark-customer",
-        feature="benchmark-feature"
+        feature="benchmark-feature",
     ) as span:
-
         # Simulate operation
         data = {"input": "Hello world", "model": "gpt-3.5-turbo"}
         result = len(data["input"]) * 1.3
@@ -223,14 +234,11 @@ def genops_policy_operation():
     register_policy(
         name="benchmark_cost_limit",
         enforcement_level=PolicyResult.WARNING,
-        conditions={"max_cost": 1.0}
+        conditions={"max_cost": 1.0},
     )
 
     # Set context and evaluate
-    genops.set_context(
-        customer_id="benchmark-customer",
-        cost_estimate=0.001
-    )
+    genops.set_context(customer_id="benchmark-customer", cost_estimate=0.001)
 
     # Simulate policy evaluation (would normally be done by policy engine)
     context = genops.get_context()
@@ -246,8 +254,7 @@ def concurrent_genops_operations():
 
     def single_operation(operation_id: int):
         genops.set_context(
-            customer_id=f"customer-{operation_id}",
-            operation_id=operation_id
+            customer_id=f"customer-{operation_id}", operation_id=operation_id
         )
 
         effective_attrs = genops.get_effective_attributes()
@@ -273,7 +280,7 @@ def run_performance_benchmarks():
 
     benchmark = PerformanceBenchmark(
         warmup_iterations=100,
-        benchmark_iterations=10000  # More iterations for accuracy
+        benchmark_iterations=10000,  # More iterations for accuracy
     )
 
     # Benchmark different operation types
@@ -283,7 +290,7 @@ def run_performance_benchmarks():
         (genops_validation_operation, "genops_validation"),
         (genops_telemetry_operation, "genops_telemetry"),
         (genops_policy_operation, "genops_policy"),
-        (concurrent_genops_operations, "genops_concurrent")
+        (concurrent_genops_operations, "genops_concurrent"),
     ]
 
     results = []
@@ -307,38 +314,44 @@ def analyze_performance_results(results: list[dict[str, Any]]):
     print("=" * 80)
 
     # Filter timing results
-    timing_results = [r for r in results if 'mean_ms' in r]
+    timing_results = [r for r in results if "mean_ms" in r]
 
     # Find baseline performance
-    baseline = next((r for r in timing_results if r['name'] == 'baseline_no_genops'), None)
+    baseline = next(
+        (r for r in timing_results if r["name"] == "baseline_no_genops"), None
+    )
 
     if not baseline:
         print("❌ No baseline found for comparison")
         return
 
-    baseline_mean = baseline['mean_ms']
+    baseline_mean = baseline["mean_ms"]
 
     print(f"🏁 LATENCY COMPARISON (vs baseline: {baseline_mean:.4f}ms)")
     print("-" * 60)
 
     for result in timing_results:
-        name = result['name']
-        mean_ms = result['mean_ms']
-        p95_ms = result['p95_ms']
-        overhead_pct = ((mean_ms - baseline_mean) / baseline_mean * 100) if name != 'baseline_no_genops' else 0
+        name = result["name"]
+        mean_ms = result["mean_ms"]
+        p95_ms = result["p95_ms"]
+        overhead_pct = (
+            ((mean_ms - baseline_mean) / baseline_mean * 100)
+            if name != "baseline_no_genops"
+            else 0
+        )
 
         print(f"{name:25} | {mean_ms:8.4f}ms | {p95_ms:8.4f}ms | {overhead_pct:6.2f}%")
 
     # Memory analysis
-    memory_results = [r for r in results if 'memory' in r['name']]
+    memory_results = [r for r in results if "memory" in r["name"]]
 
     if memory_results:
         print("\n🧠 MEMORY USAGE ANALYSIS")
         print("-" * 60)
 
         for result in memory_results:
-            name = result['name']
-            per_op_bytes = result['memory_per_operation_bytes']
+            name = result["name"]
+            per_op_bytes = result["memory_per_operation_bytes"]
             per_op_kb = per_op_bytes / 1024
 
             print(f"{name:25} | {per_op_bytes:8.1f} bytes | {per_op_kb:6.2f} KB per op")
@@ -347,23 +360,35 @@ def analyze_performance_results(results: list[dict[str, Any]]):
     print("\n🎯 PERFORMANCE SUMMARY")
     print("=" * 60)
 
-    genops_results = [r for r in timing_results if r['name'].startswith('genops_')]
+    genops_results = [r for r in timing_results if r["name"].startswith("genops_")]
 
     if genops_results:
         # Exclude concurrent test from overhead calculation as it measures different workload
-        single_op_results = [r for r in genops_results if r['name'] != 'genops_concurrent']
+        single_op_results = [
+            r for r in genops_results if r["name"] != "genops_concurrent"
+        ]
 
         if single_op_results:
-            max_overhead = max((r['mean_ms'] - baseline_mean) / baseline_mean * 100 for r in single_op_results)
-            avg_overhead = sum((r['mean_ms'] - baseline_mean) / baseline_mean * 100 for r in single_op_results) / len(single_op_results)
+            max_overhead = max(
+                (r["mean_ms"] - baseline_mean) / baseline_mean * 100
+                for r in single_op_results
+            )
+            avg_overhead = sum(
+                (r["mean_ms"] - baseline_mean) / baseline_mean * 100
+                for r in single_op_results
+            ) / len(single_op_results)
         else:
             max_overhead = avg_overhead = 0
 
-        print(f"Maximum GenOps overhead: {max_overhead:.2f}% ({max([r['mean_ms'] for r in single_op_results]):.4f}ms)")
-        print(f"Average GenOps overhead: {avg_overhead:.2f}% ({sum(r['mean_ms'] for r in single_op_results) / len(single_op_results):.4f}ms)")
+        print(
+            f"Maximum GenOps overhead: {max_overhead:.2f}% ({max([r['mean_ms'] for r in single_op_results]):.4f}ms)"
+        )
+        print(
+            f"Average GenOps overhead: {avg_overhead:.2f}% ({sum(r['mean_ms'] for r in single_op_results) / len(single_op_results):.4f}ms)"
+        )
 
         # Get absolute latency numbers for better analysis
-        max_latency_ms = max([r['mean_ms'] for r in single_op_results])
+        max_latency_ms = max([r["mean_ms"] for r in single_op_results])
 
         # Performance recommendations based on absolute latency
         print("\n💡 PERFORMANCE RECOMMENDATIONS")
@@ -376,18 +401,28 @@ def analyze_performance_results(results: list[dict[str, Any]]):
         elif max_latency_ms < 1.0:  # Less than 1ms
             print("⚠️ Acceptable: GenOps latency is reasonable (<1ms)")
         else:
-            print("❌ High latency: Consider optimization for performance-critical paths")
+            print(
+                "❌ High latency: Consider optimization for performance-critical paths"
+            )
 
         # Feature-specific recommendations
-        validation_result = next((r for r in timing_results if r['name'] == 'genops_validation'), None)
+        validation_result = next(
+            (r for r in timing_results if r["name"] == "genops_validation"), None
+        )
         if validation_result:
-            validation_overhead = ((validation_result['mean_ms'] - baseline_mean) / baseline_mean * 100)
+            validation_overhead = (
+                (validation_result["mean_ms"] - baseline_mean) / baseline_mean * 100
+            )
             if validation_overhead > 10:
                 print("• Consider disabling validation in performance-critical code")
 
-        telemetry_result = next((r for r in timing_results if r['name'] == 'genops_telemetry'), None)
+        telemetry_result = next(
+            (r for r in timing_results if r["name"] == "genops_telemetry"), None
+        )
         if telemetry_result:
-            telemetry_overhead = ((telemetry_result['mean_ms'] - baseline_mean) / baseline_mean * 100)
+            telemetry_overhead = (
+                (telemetry_result["mean_ms"] - baseline_mean) / baseline_mean * 100
+            )
             if telemetry_overhead > 15:
                 print("• Consider using async telemetry export")
 
@@ -408,7 +443,7 @@ def run_stress_test():
     while (time.time() - start_time) < test_duration:
         genops.set_context(
             customer_id=f"stress-customer-{operation_count % 100}",
-            operation_id=operation_count
+            operation_id=operation_count,
         )
 
         genops.get_effective_attributes()

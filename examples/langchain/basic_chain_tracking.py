@@ -48,14 +48,14 @@ def create_simple_chain() -> LLMChain:
     # Simple prompt template
     prompt = PromptTemplate(
         input_variables=["topic"],
-        template="Write a brief, informative summary about {topic} in 2-3 sentences."
+        template="Write a brief, informative summary about {topic} in 2-3 sentences.",
     )
 
     # Initialize OpenAI LLM
     llm = OpenAI(
         temperature=0.7,
         max_tokens=150,
-        model_name="gpt-3.5-turbo-instruct"  # Cost-effective for examples
+        model_name="gpt-3.5-turbo-instruct",  # Cost-effective for examples
     )
 
     # Create chain
@@ -83,19 +83,16 @@ def basic_chain_tracking_example():
     try:
         result = adapter.instrument_chain_run(
             chain=chain,
-
             # Chain input
             topic="artificial intelligence",
-
             # Governance attributes for cost attribution and compliance
             team="examples-team",
             project="basic-chain-demo",
             environment="development",
             customer_id="example_customer_001",
-
             # Optional: Chain execution parameters
             # These get passed to the chain's run() method
-            verbose=True
+            verbose=True,
         )
 
         print("✅ Chain execution successful!")
@@ -117,6 +114,7 @@ def verify_telemetry():
     # Check if OpenTelemetry is configured
     try:
         from opentelemetry import trace
+
         tracer = trace.get_tracer(__name__)
 
         with tracer.start_as_current_span("telemetry_test") as span:
@@ -143,7 +141,9 @@ def verify_telemetry():
 
     print("\n💡 To view telemetry in observability platform:")
     print("   1. Ensure OTEL_EXPORTER_OTLP_ENDPOINT is set")
-    print("   2. Run observability stack: docker-compose -f docker-compose.observability.yml up")
+    print(
+        "   2. Run observability stack: docker-compose -f docker-compose.observability.yml up"
+    )
     print("   3. Visit Grafana at http://localhost:3000")
 
 
@@ -166,7 +166,9 @@ def demonstrate_cost_information():
         current_summary = cost_context.get_current_summary()
         if current_summary and current_summary.llm_calls:
             print(f"💰 Total cost so far: ${current_summary.total_cost:.4f}")
-            print(f"🔢 Total tokens: {current_summary.total_tokens_input + current_summary.total_tokens_output}")
+            print(
+                f"🔢 Total tokens: {current_summary.total_tokens_input + current_summary.total_tokens_output}"
+            )
             print(f"🏢 Providers used: {list(current_summary.unique_providers)}")
 
     # Get final summary after context closes

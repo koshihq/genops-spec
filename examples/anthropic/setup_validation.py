@@ -28,6 +28,7 @@ def main():
             print_validation_result,
             validate_setup,
         )
+
         print("✅ GenOps Anthropic validation utilities loaded successfully")
     except ImportError as e:
         print(f"❌ Failed to import GenOps Anthropic validation utilities: {e}")
@@ -64,6 +65,7 @@ def main():
         print(f"   • Current working directory: {os.getcwd()}")
         return False
 
+
 def manual_check():
     """Perform manual validation checks as fallback."""
     print("\n🔧 Manual Validation Checks")
@@ -77,7 +79,9 @@ def manual_check():
         print("❌ ANTHROPIC_API_KEY environment variable not set")
         issues.append("Set ANTHROPIC_API_KEY environment variable")
     elif not api_key.startswith("sk-ant-"):
-        print("⚠️  ANTHROPIC_API_KEY doesn't look like a valid Anthropic key (should start with 'sk-ant-')")
+        print(
+            "⚠️  ANTHROPIC_API_KEY doesn't look like a valid Anthropic key (should start with 'sk-ant-')"
+        )
         issues.append("Verify ANTHROPIC_API_KEY format")
     else:
         # Security: Never log API key content, even partially
@@ -86,7 +90,10 @@ def manual_check():
     # Check GenOps installation
     try:
         import genops
-        print(f"✅ GenOps package imported successfully (version: {getattr(genops, '__version__', 'unknown')})")
+
+        print(
+            f"✅ GenOps package imported successfully (version: {getattr(genops, '__version__', 'unknown')})"
+        )
     except ImportError as e:
         print(f"❌ Failed to import genops: {e}")
         issues.append("Install genops with: pip install genops-ai[anthropic]")
@@ -94,7 +101,10 @@ def manual_check():
     # Check Anthropic installation
     try:
         import anthropic
-        print(f"✅ Anthropic package imported successfully (version: {getattr(anthropic, '__version__', 'unknown')})")
+
+        print(
+            f"✅ Anthropic package imported successfully (version: {getattr(anthropic, '__version__', 'unknown')})"
+        )
     except ImportError as e:
         print(f"❌ Failed to import anthropic: {e}")
         issues.append("Install anthropic with: pip install anthropic")
@@ -102,7 +112,8 @@ def manual_check():
     # Check OpenTelemetry (optional)
     try:
         import opentelemetry
-        opentelemetry.__name__  # Reference to avoid unused import warning
+
+        opentelemetry.__name__  # Reference to avoid unused import warning  # noqa: B018
         print("✅ OpenTelemetry is available")
 
         # Check if OTLP endpoint is configured
@@ -119,16 +130,17 @@ def manual_check():
     if api_key and api_key.startswith("sk-ant-"):
         try:
             from anthropic import Anthropic
+
             client = Anthropic()
 
             # Simple test call
             response = client.messages.create(
                 model="claude-3-haiku-20240307",
                 max_tokens=10,
-                messages=[{"role": "user", "content": "Hi"}]
+                messages=[{"role": "user", "content": "Hi"}],
             )
 
-            if response and hasattr(response, 'content') and response.content:
+            if response and hasattr(response, "content") and response.content:
                 print("✅ Anthropic API connectivity test successful")
             else:
                 print("⚠️  Anthropic API returned unexpected response format")
@@ -148,6 +160,7 @@ def manual_check():
         for i, issue in enumerate(issues, 1):
             print(f"   {i}. {issue}")
         return False
+
 
 if __name__ == "__main__":
     success = main()

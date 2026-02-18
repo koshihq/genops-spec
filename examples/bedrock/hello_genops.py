@@ -20,43 +20,51 @@ Note: This example assumes genops-ai is installed via pip.
 For development, install in editable mode: pip install -e .
 """
 
+
 def main():
     """The simplest possible GenOps Bedrock example."""
-    
+
     print("👋 GenOps Bedrock Hello World Example")
     print("=" * 40)
     print("This is the simplest way to confirm GenOps Bedrock is working.")
     print()
-    
+
     try:
         # Step 1: Enable GenOps instrumentation for Bedrock
         print("📡 Enabling GenOps Bedrock instrumentation...")
         from genops.providers.bedrock import instrument_bedrock
+
         instrument_bedrock()
         print("✅ GenOps Bedrock instrumentation enabled!")
-        
+
         # Step 2: Use Bedrock normally with boto3
         print("\n🏗️  Making AWS Bedrock API call...")
-        import boto3
         import json
-        
-        bedrock_runtime = boto3.client('bedrock-runtime', region_name='us-east-1')
-        
+        import sys  # noqa: F401
+
+        import boto3
+
+        bedrock_runtime = boto3.client("bedrock-runtime", region_name="us-east-1")
+
         # This single call now has comprehensive AI governance!
         response = bedrock_runtime.invoke_model(
             modelId="anthropic.claude-3-haiku-20240307-v1:0",
-            body=json.dumps({
-                "messages": [{"role": "user", "content": "Hello GenOps!"}],
-                "max_tokens": 20,
-                "anthropic_version": "bedrock-2023-05-31"
-            }),
-            contentType="application/json"
+            body=json.dumps(
+                {
+                    "messages": [{"role": "user", "content": "Hello GenOps!"}],
+                    "max_tokens": 20,
+                    "anthropic_version": "bedrock-2023-05-31",
+                }
+            ),
+            contentType="application/json",
         )
-        
+
         # Extract and display response
-        response_body = json.loads(response['body'].read())
-        ai_response = response_body.get('content', [{}])[0].get('text', 'Hello from Claude!')
-        
+        response_body = json.loads(response["body"].read())
+        ai_response = response_body.get("content", [{}])[0].get(
+            "text", "Hello from Claude!"
+        )
+
         # Step 3: Celebrate success!
         print("✅ Success! AI operation completed with GenOps governance!")
         print(f"🤖 Claude Response: {ai_response.strip()}")
@@ -64,31 +72,33 @@ def main():
         print("🎉 Congratulations! GenOps is now tracking:")
         print("   💰 Cost calculation and attribution across AWS regions")
         print("   🏛️  Governance and compliance data with CloudTrail integration")
-        print("   📊 Performance and usage metrics with AWS Cost Explorer") 
+        print("   📊 Performance and usage metrics with AWS Cost Explorer")
         print("   🔍 Error tracking and debugging info")
         print("   📡 OpenTelemetry export to your observability platform")
         print()
         print("🚀 You're ready to explore more advanced GenOps Bedrock features!")
-        
+
         return True
-        
-    except ImportError as e:
-        print(f"❌ Import error: {e}")
+
+    except ImportError as e:  # noqa: F821
+        print(f"❌ Import error: {e}")  # noqa: F821
         print("\n💡 Fix this by installing GenOps with Bedrock support:")
         print("   pip install genops-ai[bedrock]")
         print("   # or")
         print("   pip install genops-ai boto3")
         return False
-    
-    except Exception as e:
-        error_str = str(e)
+
+    except Exception as e:  # noqa: F821
+        error_str = str(e)  # noqa: F821
         print(f"❌ Error: {error_str}")
         print(f"   Error type: {type(e).__name__}")
         print("\n💡 Common fixes:")
-        
+
         if "credentials" in error_str.lower() or "NoCredentialsError" in str(type(e)):
             print("   - Configure AWS credentials: aws configure")
-            print("   - Or set environment variables: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY")
+            print(
+                "   - Or set environment variables: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY"
+            )
             print("   - Or use IAM roles if running on AWS infrastructure")
         elif "region" in error_str.lower():
             print("   - Verify Bedrock is available in your region (try us-east-1)")
@@ -104,20 +114,21 @@ def main():
             print("   - Verify AWS Bedrock service is accessible")
             print("   - Run validation script: python bedrock_validation.py")
             print("   - Check AWS service status")
-        
+
         return False
 
-if __name__ == "__main__":
+
+if __name__ == "__main__":  # noqa: F821
     success = main()
-    
+
     if success:
         print("\n🎯 What's Next?")
         print("   1. Try: python auto_instrumentation.py")
-        print("   2. Explore: python basic_tracking.py")  
+        print("   2. Explore: python basic_tracking.py")
         print("   3. Advanced: python cost_optimization.py")
         print("   4. Production: python production_patterns.py")
         print("\n📖 Learn More:")
         print("   → Quickstart: docs/bedrock-quickstart.md")
         print("   → Full Guide: docs/integrations/bedrock.md")
-        
-    sys.exit(0 if success else 1)
+
+    sys.exit(0 if success else 1)  # noqa: F821

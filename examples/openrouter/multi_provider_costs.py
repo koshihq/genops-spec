@@ -45,34 +45,44 @@ def multi_provider_cost_demo():
         provider_scenarios = [
             {
                 "provider_family": "OpenAI",
-                "models": ["openai/gpt-4o", "openai/gpt-4o-mini", "openai/gpt-3.5-turbo"],
+                "models": [
+                    "openai/gpt-4o",
+                    "openai/gpt-4o-mini",
+                    "openai/gpt-3.5-turbo",
+                ],
                 "task": "Code a simple Python function to calculate fibonacci numbers.",
-                "expected_provider": "openai"
+                "expected_provider": "openai",
             },
             {
                 "provider_family": "Anthropic",
                 "models": ["anthropic/claude-3-5-sonnet", "anthropic/claude-3-haiku"],
                 "task": "Explain the philosophical implications of artificial consciousness.",
-                "expected_provider": "anthropic"
+                "expected_provider": "anthropic",
             },
             {
                 "provider_family": "Meta",
-                "models": ["meta-llama/llama-3.2-3b-instruct", "meta-llama/llama-3.1-8b-instruct"],
+                "models": [
+                    "meta-llama/llama-3.2-3b-instruct",
+                    "meta-llama/llama-3.1-8b-instruct",
+                ],
                 "task": "Summarize the key benefits of open source software.",
-                "expected_provider": "meta"
+                "expected_provider": "meta",
             },
             {
                 "provider_family": "Google",
                 "models": ["google/gemini-1.5-flash", "google/gemma-2-9b-it"],
                 "task": "What are the latest developments in quantum computing?",
-                "expected_provider": "google"
+                "expected_provider": "google",
             },
             {
                 "provider_family": "Mistral",
-                "models": ["mistralai/mistral-small", "mistralai/mixtral-8x7b-instruct"],
+                "models": [
+                    "mistralai/mistral-small",
+                    "mistralai/mixtral-8x7b-instruct",
+                ],
                 "task": "Design a marketing strategy for a sustainable energy company.",
-                "expected_provider": "mistral"
-            }
+                "expected_provider": "mistral",
+            },
         ]
 
         # Track results across all providers
@@ -83,10 +93,12 @@ def multi_provider_cost_demo():
             "team": "multi-provider-research",
             "project": "cost-optimization-study",
             "customer_id": "research-division",
-            "environment": "analysis"
+            "environment": "analysis",
         }
 
-        print(f"\n🔄 Testing models across {len(provider_scenarios)} provider families...")
+        print(
+            f"\n🔄 Testing models across {len(provider_scenarios)} provider families..."
+        )
 
         for scenario in provider_scenarios:
             provider_name = scenario["provider_family"]
@@ -105,7 +117,7 @@ def multi_provider_cost_demo():
                         model=model,
                         messages=[{"role": "user", "content": scenario["task"]}],
                         max_tokens=150,
-                        **governance_attrs
+                        **governance_attrs,
                     )
                     request_time = time.time() - start_time
 
@@ -117,14 +129,16 @@ def multi_provider_cost_demo():
                             model,
                             actual_provider=scenario["expected_provider"],
                             input_tokens=usage.prompt_tokens,
-                            output_tokens=usage.completion_tokens
+                            output_tokens=usage.completion_tokens,
                         )
 
                         cost = cost_breakdown["total_cost"]
                         actual_provider = cost_breakdown["provider"]
 
                         print(f"      ✅ Success! Cost: ${cost:.6f}")
-                        print(f"         Tokens: {usage.prompt_tokens} in, {usage.completion_tokens} out")
+                        print(
+                            f"         Tokens: {usage.prompt_tokens} in, {usage.completion_tokens} out"
+                        )
                         print(f"         Provider: {actual_provider}")
                         print(f"         Latency: {request_time:.2f}s")
 
@@ -157,16 +171,24 @@ def multi_provider_cost_demo():
             print(f"🤖 Models Tested: {len(model_costs)}")
 
             print("\n📈 Cost Breakdown by Provider:")
-            sorted_providers = sorted(provider_costs.items(), key=lambda x: x[1], reverse=True)
+            sorted_providers = sorted(
+                provider_costs.items(), key=lambda x: x[1], reverse=True
+            )
             for provider, cost in sorted_providers:
                 percentage = (cost / total_cost) * 100
                 print(f"   • {provider}: ${cost:.6f} ({percentage:.1f}%)")
 
             print("\n🎯 Most/Least Expensive Models:")
-            sorted_models = sorted(model_costs.items(), key=lambda x: x[1], reverse=True)
+            sorted_models = sorted(
+                model_costs.items(), key=lambda x: x[1], reverse=True
+            )
             if sorted_models:
-                print(f"   💸 Most expensive: {sorted_models[0][0]} (${sorted_models[0][1]:.6f})")
-                print(f"   💰 Least expensive: {sorted_models[-1][0]} (${sorted_models[-1][1]:.6f})")
+                print(
+                    f"   💸 Most expensive: {sorted_models[0][0]} (${sorted_models[0][1]:.6f})"
+                )
+                print(
+                    f"   💰 Least expensive: {sorted_models[-1][0]} (${sorted_models[-1][1]:.6f})"
+                )
 
             print("\n🔍 GenOps Multi-Provider Features:")
             print("   ✅ Automatic provider detection and attribution")
@@ -178,7 +200,9 @@ def multi_provider_cost_demo():
             print("\n📊 Telemetry Attributes Captured:")
             print("   • genops.cost.total: Per-request and aggregated costs")
             print("   • genops.openrouter.actual_provider: Backend provider used")
-            print("   • genops.openrouter.predicted_provider: Initial provider prediction")
+            print(
+                "   • genops.openrouter.predicted_provider: Initial provider prediction"
+            )
             print("   • genops.team: multi-provider-research")
             print("   • genops.project: cost-optimization-study")
             print("   • genops.customer_id: research-division")
@@ -219,14 +243,16 @@ def show_cost_attribution_example():
         ("📁 Project", "chatbot, content-generation, code-assistant"),
         ("👤 Customer", "customer-123, enterprise-client, internal"),
         ("🌍 Environment", "development, staging, production"),
-        ("💼 Cost Center", "R&D, Marketing, Engineering")
+        ("💼 Cost Center", "R&D, Marketing, Engineering"),
     ]
 
     for dimension, examples in dimensions:
         print(f"{dimension}: {examples}")
 
     print("\n🎯 Example Multi-Dimensional Query:")
-    print("'Show me costs for ml-team using Anthropic models in production for customer-123'")
+    print(
+        "'Show me costs for ml-team using Anthropic models in production for customer-123'"
+    )
     print("→ Precise cost attribution across all dimensions simultaneously")
 
 

@@ -24,16 +24,17 @@ Usage:
 
 import logging
 from dataclasses import dataclass
-from typing import Dict, Optional, List, Tuple
+from typing import Optional
 
 logger = logging.getLogger(__name__)
+
 
 @dataclass
 class ModelPricing:
     """Pricing information for an Anyscale model."""
 
     model_name: str
-    input_cost_per_million: float   # Cost per 1M input tokens in USD
+    input_cost_per_million: float  # Cost per 1M input tokens in USD
     output_cost_per_million: float  # Cost per 1M output tokens in USD
     currency: str = "USD"
     category: str = "chat"  # 'chat' or 'embedding'
@@ -53,104 +54,100 @@ class ModelPricing:
 
 # Official Anyscale Endpoints Pricing (as of January 2026)
 # Source: https://www.anyscale.com/endpoints pricing page
-ANYSCALE_PRICING: Dict[str, ModelPricing] = {
+ANYSCALE_PRICING: dict[str, ModelPricing] = {
     # Meta Llama Models
     "meta-llama/Llama-2-70b-chat-hf": ModelPricing(
         model_name="meta-llama/Llama-2-70b-chat-hf",
         input_cost_per_million=1.00,
         output_cost_per_million=1.00,
         context_window=4096,
-        notes="50% lower than GPT-3.5 Turbo"
+        notes="50% lower than GPT-3.5 Turbo",
     ),
     "meta-llama/Llama-2-13b-chat-hf": ModelPricing(
         model_name="meta-llama/Llama-2-13b-chat-hf",
         input_cost_per_million=0.25,
         output_cost_per_million=0.25,
         context_window=4096,
-        notes="Cost-effective for smaller tasks"
+        notes="Cost-effective for smaller tasks",
     ),
     "meta-llama/Llama-2-7b-chat-hf": ModelPricing(
         model_name="meta-llama/Llama-2-7b-chat-hf",
         input_cost_per_million=0.15,
         output_cost_per_million=0.15,
         context_window=4096,
-        notes="Optimized for speed and cost"
+        notes="Optimized for speed and cost",
     ),
-
     # Meta Llama 3 Models (newer generation)
     "meta-llama/Meta-Llama-3-70B-Instruct": ModelPricing(
         model_name="meta-llama/Meta-Llama-3-70B-Instruct",
         input_cost_per_million=1.00,
         output_cost_per_million=1.00,
         context_window=8192,
-        notes="Improved context and capabilities vs Llama-2"
+        notes="Improved context and capabilities vs Llama-2",
     ),
     "meta-llama/Meta-Llama-3-8B-Instruct": ModelPricing(
         model_name="meta-llama/Meta-Llama-3-8B-Instruct",
         input_cost_per_million=0.15,
         output_cost_per_million=0.15,
         context_window=8192,
-        notes="Llama 3 efficiency at lower cost"
+        notes="Llama 3 efficiency at lower cost",
     ),
-
     # Mistral AI Models
     "mistralai/Mistral-7B-Instruct-v0.1": ModelPricing(
         model_name="mistralai/Mistral-7B-Instruct-v0.1",
         input_cost_per_million=0.15,
         output_cost_per_million=0.15,
         context_window=8192,
-        notes="European AI provider with strong performance"
+        notes="European AI provider with strong performance",
     ),
     "mistralai/Mixtral-8x7B-Instruct-v0.1": ModelPricing(
         model_name="mistralai/Mixtral-8x7B-Instruct-v0.1",
         input_cost_per_million=0.50,
         output_cost_per_million=0.50,
         context_window=32768,
-        notes="Mixture of experts with large context window"
+        notes="Mixture of experts with large context window",
     ),
     "mistralai/Mixtral-8x22B-Instruct-v0.1": ModelPricing(
         model_name="mistralai/Mixtral-8x22B-Instruct-v0.1",
         input_cost_per_million=0.90,
         output_cost_per_million=0.90,
         context_window=65536,
-        notes="Large mixture of experts model"
+        notes="Large mixture of experts model",
     ),
-
     # Embedding Models
     "thenlper/gte-large": ModelPricing(
         model_name="thenlper/gte-large",
         input_cost_per_million=0.05,
         output_cost_per_million=0.00,  # No output tokens for embeddings
         category="embedding",
-        notes="High-quality embeddings at low cost"
+        notes="High-quality embeddings at low cost",
     ),
     "BAAI/bge-large-en-v1.5": ModelPricing(
         model_name="BAAI/bge-large-en-v1.5",
         input_cost_per_million=0.05,
         output_cost_per_million=0.00,
         category="embedding",
-        notes="State-of-the-art English embeddings"
+        notes="State-of-the-art English embeddings",
     ),
-
     # Code Models
     "codellama/CodeLlama-34b-Instruct-hf": ModelPricing(
         model_name="codellama/CodeLlama-34b-Instruct-hf",
         input_cost_per_million=0.75,
         output_cost_per_million=0.75,
         context_window=16384,
-        notes="Specialized for code generation"
+        notes="Specialized for code generation",
     ),
     "codellama/CodeLlama-70b-Instruct-hf": ModelPricing(
         model_name="codellama/CodeLlama-70b-Instruct-hf",
         input_cost_per_million=1.00,
         output_cost_per_million=1.00,
         context_window=16384,
-        notes="Large code model for complex tasks"
+        notes="Large code model for complex tasks",
     ),
 }
 
 # Model aliases for flexible name matching
-MODEL_ALIASES: Dict[str, str] = {
+MODEL_ALIASES: dict[str, str] = {
     # Llama 2 aliases
     "llama-2-70b-chat": "meta-llama/Llama-2-70b-chat-hf",
     "llama-2-70b": "meta-llama/Llama-2-70b-chat-hf",
@@ -159,22 +156,18 @@ MODEL_ALIASES: Dict[str, str] = {
     "llama-2-13b": "meta-llama/Llama-2-13b-chat-hf",
     "llama-2-7b-chat": "meta-llama/Llama-2-7b-chat-hf",
     "llama-2-7b": "meta-llama/Llama-2-7b-chat-hf",
-
     # Llama 3 aliases
     "llama-3-70b": "meta-llama/Meta-Llama-3-70B-Instruct",
     "llama3-70b": "meta-llama/Meta-Llama-3-70B-Instruct",
     "llama-3-8b": "meta-llama/Meta-Llama-3-8B-Instruct",
     "llama3-8b": "meta-llama/Meta-Llama-3-8B-Instruct",
-
     # Mistral aliases
     "mistral-7b": "mistralai/Mistral-7B-Instruct-v0.1",
     "mixtral-8x7b": "mistralai/Mixtral-8x7B-Instruct-v0.1",
     "mixtral-8x22b": "mistralai/Mixtral-8x22B-Instruct-v0.1",
-
     # CodeLlama aliases
     "codellama-34b": "codellama/CodeLlama-34b-Instruct-hf",
     "codellama-70b": "codellama/CodeLlama-70b-Instruct-hf",
-
     # Embedding aliases
     "gte-large": "thenlper/gte-large",
     "bge-large": "BAAI/bge-large-en-v1.5",
@@ -274,14 +267,11 @@ class AnyscalePricing:
             model_name=model,
             input_cost_per_million=input_cost,
             output_cost_per_million=output_cost,
-            notes=notes
+            notes=notes,
         )
 
     def calculate_cost(
-        self,
-        model: str,
-        input_tokens: int,
-        output_tokens: int
+        self, model: str, input_tokens: int, output_tokens: int
     ) -> float:
         """
         Calculate total cost for a completion.
@@ -304,12 +294,8 @@ class AnyscalePricing:
         return input_cost + output_cost
 
     def get_optimization_suggestions(
-        self,
-        model: str,
-        input_tokens: int,
-        output_tokens: int,
-        cost: float
-    ) -> List[str]:
+        self, model: str, input_tokens: int, output_tokens: int, cost: float
+    ) -> list[str]:
         """
         Get cost optimization suggestions.
 
@@ -352,7 +338,7 @@ class AnyscalePricing:
 
         return suggestions
 
-    def get_model_alternatives(self, model: str) -> List[Tuple[str, float, str]]:
+    def get_model_alternatives(self, model: str) -> list[tuple[str, float, str]]:
         """
         Get alternative models for cost optimization.
 
@@ -369,8 +355,8 @@ class AnyscalePricing:
             return alternatives
 
         current_avg_cost = (
-            current_pricing.input_cost_per_million +
-            current_pricing.output_cost_per_million
+            current_pricing.input_cost_per_million
+            + current_pricing.output_cost_per_million
         ) / 2
 
         # Find cheaper alternatives in same category
@@ -382,8 +368,7 @@ class AnyscalePricing:
                 continue
 
             alt_avg_cost = (
-                alt_pricing.input_cost_per_million +
-                alt_pricing.output_cost_per_million
+                alt_pricing.input_cost_per_million + alt_pricing.output_cost_per_million
             ) / 2
 
             if alt_avg_cost < current_avg_cost:
@@ -404,9 +389,7 @@ _pricing_calculator = AnyscalePricing()
 
 
 def calculate_completion_cost(
-    model: str,
-    input_tokens: int,
-    output_tokens: int
+    model: str, input_tokens: int, output_tokens: int
 ) -> float:
     """
     Calculate cost for a chat completion.
@@ -451,11 +434,11 @@ def get_model_pricing(model: str) -> Optional[ModelPricing]:
 
 # Export public API
 __all__ = [
-    'ModelPricing',
-    'AnyscalePricing',
-    'ANYSCALE_PRICING',
-    'MODEL_ALIASES',
-    'calculate_completion_cost',
-    'calculate_embedding_cost',
-    'get_model_pricing',
+    "ModelPricing",
+    "AnyscalePricing",
+    "ANYSCALE_PRICING",
+    "MODEL_ALIASES",
+    "calculate_completion_cost",
+    "calculate_embedding_cost",
+    "get_model_pricing",
 ]

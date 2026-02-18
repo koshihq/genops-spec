@@ -15,6 +15,7 @@ try:
     from langchain.retrievers.base import BaseRetriever
     from langchain.schema import Document
     from langchain.vectorstores.base import VectorStore
+
     HAS_LANGCHAIN = True
 except ImportError:
     HAS_LANGCHAIN = False
@@ -27,6 +28,7 @@ except ImportError:
 @dataclass
 class RetrievalMetrics:
     """Metrics for a retrieval operation."""
+
     query: str
     documents_retrieved: int
     retrieval_time: float
@@ -39,7 +41,11 @@ class RetrievalMetrics:
     @property
     def avg_relevance_score(self) -> float:
         """Calculate average relevance score."""
-        return sum(self.relevance_scores) / len(self.relevance_scores) if self.relevance_scores else 0.0
+        return (
+            sum(self.relevance_scores) / len(self.relevance_scores)
+            if self.relevance_scores
+            else 0.0
+        )
 
     @property
     def min_relevance_score(self) -> float:
@@ -55,6 +61,7 @@ class RetrievalMetrics:
 @dataclass
 class EmbeddingMetrics:
     """Metrics for embedding operations."""
+
     texts_embedded: int
     embedding_time: float
     embedding_model: str
@@ -66,6 +73,7 @@ class EmbeddingMetrics:
 @dataclass
 class RAGOperationSummary:
     """Summary of a complete RAG operation."""
+
     operation_id: str
     query: str
     retrieval_metrics: RetrievalMetrics | None = None
@@ -86,12 +94,20 @@ class RAGOperationSummary:
         return {
             "operation_id": self.operation_id,
             "query_length": len(self.query),
-            "documents_retrieved": self.retrieval_metrics.documents_retrieved if self.retrieval_metrics else 0,
-            "retrieval_time": self.retrieval_metrics.retrieval_time if self.retrieval_metrics else 0.0,
-            "avg_relevance_score": self.retrieval_metrics.avg_relevance_score if self.retrieval_metrics else 0.0,
+            "documents_retrieved": self.retrieval_metrics.documents_retrieved
+            if self.retrieval_metrics
+            else 0,
+            "retrieval_time": self.retrieval_metrics.retrieval_time
+            if self.retrieval_metrics
+            else 0.0,
+            "avg_relevance_score": self.retrieval_metrics.avg_relevance_score
+            if self.retrieval_metrics
+            else 0.0,
             "embedding_operations": len(self.embedding_metrics),
             "total_embeddings": sum(em.texts_embedded for em in self.embedding_metrics),
-            "total_embedding_tokens": sum(em.total_tokens for em in self.embedding_metrics),
+            "total_embedding_tokens": sum(
+                em.total_tokens for em in self.embedding_metrics
+            ),
             "total_cost": self.calculate_total_cost(),
             "generation_cost": self.generation_cost,
             "embedding_cost": sum(em.cost for em in self.embedding_metrics),
@@ -119,8 +135,7 @@ class RAGOperationMonitor:
             operation_id = str(uuid.uuid4())
 
         self.active_operations[operation_id] = RAGOperationSummary(
-            operation_id=operation_id,
-            query=query
+            operation_id=operation_id, query=query
         )
 
         logger.debug(f"Started RAG operation tracking: {operation_id}")
@@ -135,7 +150,7 @@ class RAGOperationMonitor:
         vector_store_type: str | None = None,
         embedding_model: str | None = None,
         search_type: str = "similarity",
-        **search_params
+        **search_params,
     ) -> None:
         """Record a retrieval operation."""
         if operation_id not in self.active_operations:
@@ -145,8 +160,8 @@ class RAGOperationMonitor:
         # Extract relevance scores if available
         relevance_scores = []
         for doc in documents:
-            if hasattr(doc, 'metadata') and 'score' in doc.metadata:
-                relevance_scores.append(doc.metadata['score'])
+            if hasattr(doc, "metadata") and "score" in doc.metadata:
+                relevance_scores.append(doc.metadata["score"])
 
         retrieval_metrics = RetrievalMetrics(
             query=query,
@@ -156,7 +171,7 @@ class RAGOperationMonitor:
             vector_store_type=vector_store_type,
             embedding_model=embedding_model,
             search_type=search_type,
-            search_params=search_params
+            search_params=search_params,
         )
 
         self.active_operations[operation_id].retrieval_metrics = retrieval_metrics
@@ -166,7 +181,9 @@ class RAGOperationMonitor:
         context_length = sum(len(doc.page_content) for doc in documents)
         self.active_operations[operation_id].context_length = context_length
 
-        logger.debug(f"Recorded retrieval: {len(documents)} docs, {retrieval_time:.3f}s")
+        logger.debug(
+            f"Recorded retrieval: {len(documents)} docs, {retrieval_time:.3f}s"
+        )
 
     def record_embedding_operation(
         self,
@@ -174,7 +191,7 @@ class RAGOperationMonitor:
         texts: list[str],
         embedding_time: float,
         embedding_model: str,
-        embeddings: list[list[float]] | None = None
+        embeddings: list[list[float]] | None = None,
     ) -> None:
         """Record an embedding operation."""
         if operation_id not in self.active_operations:
@@ -185,7 +202,7 @@ class RAGOperationMonitor:
         total_tokens = sum(len(text.split()) * 1.3 for text in texts)
 
         # Calculate cost
-        cost = self._calculate_embedding_cost(embedding_model, total_tokens)
+        cost = self._calculate_embedding_cost(embedding_model, total_tokens)  # type: ignore
 
         # Get embedding dimensions if available
         embedding_dimensions = None
@@ -198,11 +215,13 @@ class RAGOperationMonitor:
             embedding_model=embedding_model,
             total_tokens=int(total_tokens),
             cost=cost,
-            embedding_dimensions=embedding_dimensions
+            embedding_dimensions=embedding_dimensions,
         )
 
         self.active_operations[operation_id].embedding_metrics.append(embedding_metrics)
-        logger.debug(f"Recorded embedding: {len(texts)} texts, ${cost:.4f}, {embedding_time:.3f}s")
+        logger.debug(
+            f"Recorded embedding: {len(texts)} texts, ${cost:.4f}, {embedding_time:.3f}s"
+        )
 
     def record_generation_cost(self, operation_id: str, cost: float) -> None:
         """Record the cost of text generation in the RAG operation."""
@@ -212,7 +231,9 @@ class RAGOperationMonitor:
 
         self.active_operations[operation_id].generation_cost = cost
 
-    def finalize_rag_operation(self, operation_id: str, total_time: float) -> RAGOperationSummary | None:
+    def finalize_rag_operation(
+        self, operation_id: str, total_time: float
+    ) -> RAGOperationSummary | None:
         """Finalize a RAG operation and return summary."""
         if operation_id not in self.active_operations:
             logger.warning(f"RAG operation {operation_id} not found")
@@ -222,7 +243,9 @@ class RAGOperationMonitor:
         summary.total_time = total_time
         summary.total_cost = summary.calculate_total_cost()
 
-        logger.debug(f"Finalized RAG operation {operation_id}: ${summary.total_cost:.4f}, {total_time:.3f}s")
+        logger.debug(
+            f"Finalized RAG operation {operation_id}: ${summary.total_cost:.4f}, {total_time:.3f}s"
+        )
         return summary
 
     def _calculate_embedding_cost(self, model: str, tokens: int) -> float:
@@ -252,7 +275,9 @@ class LangChainRAGInstrumentor:
         self.telemetry_adapter = telemetry_adapter
         self.monitor = RAGOperationMonitor()
 
-    def instrument_retriever(self, retriever: BaseRetriever, operation_id: str) -> BaseRetriever:
+    def instrument_retriever(
+        self, retriever: BaseRetriever, operation_id: str
+    ) -> BaseRetriever:
         """Instrument a retriever with monitoring."""
         if not HAS_LANGCHAIN:
             return retriever
@@ -269,15 +294,17 @@ class LangChainRAGInstrumentor:
 
                 # Try to determine vector store type
                 vector_store_type = None
-                if hasattr(retriever, 'vectorstore'):
+                if hasattr(retriever, "vectorstore"):
                     vector_store_type = type(retriever.vectorstore).__name__
-                elif hasattr(retriever, 'vector_store'):
+                elif hasattr(retriever, "vector_store"):
                     vector_store_type = type(retriever.vector_store).__name__
 
                 # Try to determine embedding model
                 embedding_model = None
-                if hasattr(retriever, 'embedding') or hasattr(retriever, 'embeddings'):
-                    embedding_obj = getattr(retriever, 'embedding', None) or getattr(retriever, 'embeddings', None)
+                if hasattr(retriever, "embedding") or hasattr(retriever, "embeddings"):
+                    embedding_obj = getattr(retriever, "embedding", None) or getattr(
+                        retriever, "embeddings", None
+                    )
                     if embedding_obj:
                         embedding_model = type(embedding_obj).__name__
 
@@ -288,7 +315,7 @@ class LangChainRAGInstrumentor:
                     retrieval_time=retrieval_time,
                     vector_store_type=vector_store_type,
                     embedding_model=embedding_model,
-                    **kwargs
+                    **kwargs,
                 )
 
                 return documents
@@ -300,7 +327,9 @@ class LangChainRAGInstrumentor:
         retriever.get_relevant_documents = instrumented_get_relevant_documents
         return retriever
 
-    def instrument_embeddings(self, embeddings: Embeddings, operation_id: str) -> Embeddings:
+    def instrument_embeddings(
+        self, embeddings: Embeddings, operation_id: str
+    ) -> Embeddings:
         """Instrument embeddings with monitoring."""
         if not HAS_LANGCHAIN:
             return embeddings
@@ -320,7 +349,7 @@ class LangChainRAGInstrumentor:
                     texts=texts,
                     embedding_time=embedding_time,
                     embedding_model=type(embeddings).__name__,
-                    embeddings=result
+                    embeddings=result,
                 )
 
                 return result
@@ -341,7 +370,7 @@ class LangChainRAGInstrumentor:
                     texts=[text],
                     embedding_time=embedding_time,
                     embedding_model=type(embeddings).__name__,
-                    embeddings=[result] if result else None
+                    embeddings=[result] if result else None,
                 )
 
                 return result
@@ -355,7 +384,7 @@ class LangChainRAGInstrumentor:
 
         return embeddings
 
-    def create_rag_context(self, query: str) -> 'RAGContext':
+    def create_rag_context(self, query: str) -> "RAGContext":
         """Create a context manager for RAG operation tracking."""
         return RAGContext(query, self.monitor, self.telemetry_adapter)
 
@@ -371,15 +400,17 @@ class RAGContext:
         self.start_time = None
         self.summary = None
 
-    def __enter__(self) -> 'RAGContext':
-        self.start_time = time.time()
-        self.operation_id = self.monitor.start_rag_operation(self.query)
+    def __enter__(self) -> "RAGContext":
+        self.start_time = time.time()  # type: ignore[assignment]
+        self.operation_id = self.monitor.start_rag_operation(self.query)  # type: ignore[assignment]
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         if self.start_time and self.operation_id:
             total_time = time.time() - self.start_time
-            self.summary = self.monitor.finalize_rag_operation(self.operation_id, total_time)
+            self.summary = self.monitor.finalize_rag_operation(
+                self.operation_id, total_time
+            )
 
     def get_operation_id(self) -> str | None:
         """Get the operation ID for this RAG context."""

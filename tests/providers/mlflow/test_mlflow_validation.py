@@ -1,21 +1,20 @@
 """Tests for MLflow validation."""
 
 import os
-import pytest
-from unittest.mock import MagicMock, patch
 from io import StringIO
+from unittest.mock import MagicMock, patch
 
 from src.genops.providers.mlflow.validation import (
     ValidationIssue,
     ValidationResult,
-    validate_setup,
     print_validation_result,
+    validate_setup,
 )
-
 
 # ============================================================================
 # ValidationIssue Tests (2 tests)
 # ============================================================================
+
 
 def test_validation_issue_creation():
     """Test ValidationIssue dataclass creation."""
@@ -24,7 +23,7 @@ def test_validation_issue_creation():
         component="dependencies",
         message="MLflow not installed",
         suggested_fix="pip install mlflow",
-        documentation_link="https://mlflow.org"
+        documentation_link="https://mlflow.org",
     )
 
     assert issue.severity == "error"
@@ -37,9 +36,7 @@ def test_validation_issue_creation():
 def test_validation_issue_minimal():
     """Test ValidationIssue with minimal fields."""
     issue = ValidationIssue(
-        severity="warning",
-        component="configuration",
-        message="Config warning"
+        severity="warning", component="configuration", message="Config warning"
     )
 
     assert issue.severity == "warning"
@@ -52,6 +49,7 @@ def test_validation_issue_minimal():
 # ============================================================================
 # ValidationResult Tests (3 tests)
 # ============================================================================
+
 
 def test_validation_result_creation():
     """Test ValidationResult dataclass creation."""
@@ -70,19 +68,15 @@ def test_validation_result_has_errors():
 
     assert result.has_errors() is False
 
-    result.add_issue(ValidationIssue(
-        severity="warning",
-        component="test",
-        message="Warning"
-    ))
+    result.add_issue(
+        ValidationIssue(severity="warning", component="test", message="Warning")
+    )
 
     assert result.has_errors() is False
 
-    result.add_issue(ValidationIssue(
-        severity="error",
-        component="test",
-        message="Error"
-    ))
+    result.add_issue(
+        ValidationIssue(severity="error", component="test", message="Error")
+    )
 
     assert result.has_errors() is True
 
@@ -91,10 +85,18 @@ def test_validation_result_get_issues_by_severity():
     """Test ValidationResult.get_issues_by_severity() method."""
     result = ValidationResult()
 
-    result.add_issue(ValidationIssue(severity="error", component="test", message="Error 1"))
-    result.add_issue(ValidationIssue(severity="warning", component="test", message="Warning 1"))
-    result.add_issue(ValidationIssue(severity="error", component="test", message="Error 2"))
-    result.add_issue(ValidationIssue(severity="info", component="test", message="Info 1"))
+    result.add_issue(
+        ValidationIssue(severity="error", component="test", message="Error 1")
+    )
+    result.add_issue(
+        ValidationIssue(severity="warning", component="test", message="Warning 1")
+    )
+    result.add_issue(
+        ValidationIssue(severity="error", component="test", message="Error 2")
+    )
+    result.add_issue(
+        ValidationIssue(severity="info", component="test", message="Info 1")
+    )
 
     errors = result.get_issues_by_severity("error")
     warnings = result.get_issues_by_severity("warning")
@@ -109,34 +111,34 @@ def test_validation_result_get_issues_by_severity():
 # Validation Function Tests (5 tests)
 # ============================================================================
 
+
 def test_validate_setup_all_passed():
     """Test validate_setup when all checks pass."""
-    with patch('src.genops.providers.mlflow.validation.mlflow'):
-        with patch('src.genops.providers.mlflow.validation.opentelemetry'):
-            with patch('src.genops.providers.mlflow.validation.genops'):
-                with patch('src.genops.providers.mlflow.validation.MlflowClient'):
+    with patch("src.genops.providers.mlflow.validation.mlflow"):
+        with patch("src.genops.providers.mlflow.validation.opentelemetry"):
+            with patch("src.genops.providers.mlflow.validation.genops"):
+                with patch("src.genops.providers.mlflow.validation.MlflowClient"):
                     result = validate_setup(
                         tracking_uri="http://localhost:5000",
                         check_connectivity=False,  # Skip connectivity
-                        check_governance=False      # Skip governance
+                        check_governance=False,  # Skip governance
                     )
 
                     assert result.passed is True
-                    assert result.dependencies['mlflow'] is True
-                    assert result.dependencies['opentelemetry'] is True
-                    assert result.dependencies['genops'] is True
+                    assert result.dependencies["mlflow"] is True
+                    assert result.dependencies["opentelemetry"] is True
+                    assert result.dependencies["genops"] is True
 
 
 def test_validate_setup_mlflow_missing():
     """Test validate_setup when MLflow is missing."""
-    with patch('src.genops.providers.mlflow.validation.mlflow', side_effect=ImportError):
-        result = validate_setup(
-            check_connectivity=False,
-            check_governance=False
-        )
+    with patch(
+        "src.genops.providers.mlflow.validation.mlflow", side_effect=ImportError
+    ):
+        result = validate_setup(check_connectivity=False, check_governance=False)
 
         assert result.passed is False
-        assert result.dependencies['mlflow'] is False
+        assert result.dependencies["mlflow"] is False
 
         errors = result.get_issues_by_severity("error")
         assert any("MLflow not installed" in e.message for e in errors)
@@ -144,30 +146,38 @@ def test_validate_setup_mlflow_missing():
 
 def test_validate_setup_configuration():
     """Test validate_setup configuration checks."""
-    with patch('src.genops.providers.mlflow.validation.mlflow'):
-        with patch('src.genops.providers.mlflow.validation.opentelemetry'):
-            with patch('src.genops.providers.mlflow.validation.genops'):
-                with patch.dict(os.environ, {
-                    'MLFLOW_TRACKING_URI': 'http://test-server:5000',
-                    'GENOPS_TEAM': 'test-team',
-                    'GENOPS_PROJECT': 'test-project'
-                }, clear=True):
+    with patch("src.genops.providers.mlflow.validation.mlflow"):
+        with patch("src.genops.providers.mlflow.validation.opentelemetry"):
+            with patch("src.genops.providers.mlflow.validation.genops"):
+                with patch.dict(
+                    os.environ,
+                    {
+                        "MLFLOW_TRACKING_URI": "http://test-server:5000",
+                        "GENOPS_TEAM": "test-team",
+                        "GENOPS_PROJECT": "test-project",
+                    },
+                    clear=True,
+                ):
                     result = validate_setup(
-                        check_connectivity=False,
-                        check_governance=False
+                        check_connectivity=False, check_governance=False
                     )
 
-                    assert result.configuration['tracking_uri'] == 'http://test-server:5000'
-                    assert result.configuration['genops_team'] == 'test-team'
-                    assert result.configuration['genops_project'] == 'test-project'
+                    assert (
+                        result.configuration["tracking_uri"]
+                        == "http://test-server:5000"
+                    )
+                    assert result.configuration["genops_team"] == "test-team"
+                    assert result.configuration["genops_project"] == "test-project"
 
 
 def test_validate_setup_with_connectivity():
     """Test validate_setup with connectivity checks."""
-    with patch('src.genops.providers.mlflow.validation.mlflow'):
-        with patch('src.genops.providers.mlflow.validation.opentelemetry'):
-            with patch('src.genops.providers.mlflow.validation.genops'):
-                with patch('src.genops.providers.mlflow.validation.MlflowClient') as mock_client:
+    with patch("src.genops.providers.mlflow.validation.mlflow"):
+        with patch("src.genops.providers.mlflow.validation.opentelemetry"):
+            with patch("src.genops.providers.mlflow.validation.genops"):
+                with patch(
+                    "src.genops.providers.mlflow.validation.MlflowClient"
+                ) as mock_client:
                     # Mock successful connectivity
                     mock_instance = MagicMock()
                     mock_instance.search_experiments.return_value = []
@@ -177,27 +187,31 @@ def test_validate_setup_with_connectivity():
                     result = validate_setup(
                         tracking_uri="http://localhost:5000",
                         check_connectivity=True,
-                        check_governance=False
+                        check_governance=False,
                     )
 
-                    assert result.connectivity['tracking_server'] is True
+                    assert result.connectivity["tracking_server"] is True
 
 
 def test_validate_setup_connectivity_failure():
     """Test validate_setup when connectivity fails."""
-    with patch('src.genops.providers.mlflow.validation.mlflow'):
-        with patch('src.genops.providers.mlflow.validation.opentelemetry'):
-            with patch('src.genops.providers.mlflow.validation.genops'):
-                with patch('src.genops.providers.mlflow.validation.MlflowClient') as mock_client:
+    with patch("src.genops.providers.mlflow.validation.mlflow"):
+        with patch("src.genops.providers.mlflow.validation.opentelemetry"):
+            with patch("src.genops.providers.mlflow.validation.genops"):
+                with patch(
+                    "src.genops.providers.mlflow.validation.MlflowClient"
+                ) as mock_client:
                     # Mock connection failure
                     mock_instance = MagicMock()
-                    mock_instance.search_experiments.side_effect = Exception("Connection refused")
+                    mock_instance.search_experiments.side_effect = Exception(
+                        "Connection refused"
+                    )
                     mock_client.return_value = mock_instance
 
                     result = validate_setup(
                         tracking_uri="http://localhost:5000",
                         check_connectivity=True,
-                        check_governance=False
+                        check_governance=False,
                     )
 
                     assert result.passed is False
@@ -209,15 +223,16 @@ def test_validate_setup_connectivity_failure():
 # Print Validation Tests (3 tests)
 # ============================================================================
 
+
 def test_print_validation_result_success():
     """Test print_validation_result for successful validation."""
     result = ValidationResult(passed=True)
-    result.dependencies = {'mlflow': True, 'opentelemetry': True, 'genops': True}
-    result.configuration = {'tracking_uri': 'http://localhost:5000'}
+    result.dependencies = {"mlflow": True, "opentelemetry": True, "genops": True}
+    result.configuration = {"tracking_uri": "http://localhost:5000"}
 
     # Capture output
     import sys
-    from io import StringIO
+
     captured_output = StringIO()
     sys.stdout = captured_output
 
@@ -235,16 +250,18 @@ def test_print_validation_result_success():
 def test_print_validation_result_with_errors():
     """Test print_validation_result with errors."""
     result = ValidationResult(passed=False)
-    result.dependencies = {'mlflow': False, 'opentelemetry': True, 'genops': True}
-    result.add_issue(ValidationIssue(
-        severity="error",
-        component="dependencies",
-        message="MLflow not installed",
-        suggested_fix="pip install mlflow"
-    ))
+    result.dependencies = {"mlflow": False, "opentelemetry": True, "genops": True}
+    result.add_issue(
+        ValidationIssue(
+            severity="error",
+            component="dependencies",
+            message="MLflow not installed",
+            suggested_fix="pip install mlflow",
+        )
+    )
 
     import sys
-    from io import StringIO
+
     captured_output = StringIO()
     sys.stdout = captured_output
 
@@ -263,16 +280,18 @@ def test_print_validation_result_with_errors():
 def test_print_validation_result_with_warnings():
     """Test print_validation_result with warnings."""
     result = ValidationResult(passed=True)
-    result.dependencies = {'mlflow': True, 'opentelemetry': True, 'genops': True}
-    result.add_issue(ValidationIssue(
-        severity="warning",
-        component="configuration",
-        message="Governance attributes not set",
-        suggested_fix="Set GENOPS_TEAM and GENOPS_PROJECT"
-    ))
+    result.dependencies = {"mlflow": True, "opentelemetry": True, "genops": True}
+    result.add_issue(
+        ValidationIssue(
+            severity="warning",
+            component="configuration",
+            message="Governance attributes not set",
+            suggested_fix="Set GENOPS_TEAM and GENOPS_PROJECT",
+        )
+    )
 
     import sys
-    from io import StringIO
+
     captured_output = StringIO()
     sys.stdout = captured_output
 
@@ -290,50 +309,70 @@ def test_print_validation_result_with_warnings():
 # Integration Test (1 test)
 # ============================================================================
 
+
 def test_validate_setup_full_integration():
     """Test validate_setup full integration with all checks."""
     # This test simulates a complete validation scenario
-    with patch('src.genops.providers.mlflow.validation.mlflow') as mock_mlflow:
+    with patch("src.genops.providers.mlflow.validation.mlflow") as mock_mlflow:
         mock_mlflow.__version__ = "2.9.0"
 
-        with patch('src.genops.providers.mlflow.validation.opentelemetry') as mock_otel:
+        with patch("src.genops.providers.mlflow.validation.opentelemetry") as mock_otel:
             mock_otel.version.__version__ = "1.20.0"
 
-            with patch('src.genops.providers.mlflow.validation.genops') as mock_genops:
+            with patch("src.genops.providers.mlflow.validation.genops") as mock_genops:
                 mock_genops.__version__ = "0.1.0"
 
-                with patch('src.genops.providers.mlflow.validation.MlflowClient') as mock_client:
+                with patch(
+                    "src.genops.providers.mlflow.validation.MlflowClient"
+                ) as mock_client:
                     # Mock successful connectivity
                     mock_instance = MagicMock()
                     mock_instance.search_experiments.return_value = []
                     mock_instance.search_registered_models.return_value = []
                     mock_client.return_value = mock_instance
 
-                    with patch('src.genops.providers.mlflow.validation.GenOpsTelemetry'):
-                        with patch('src.genops.providers.mlflow.validation.trace'):
-                            with patch.dict(os.environ, {
-                                'GENOPS_TEAM': 'integration-team',
-                                'GENOPS_PROJECT': 'integration-project'
-                            }):
+                    with patch(
+                        "src.genops.providers.mlflow.validation.GenOpsTelemetry"
+                    ):
+                        with patch("src.genops.providers.mlflow.validation.trace"):
+                            with patch.dict(
+                                os.environ,
+                                {
+                                    "GENOPS_TEAM": "integration-team",
+                                    "GENOPS_PROJECT": "integration-project",
+                                },
+                            ):
                                 result = validate_setup(
                                     tracking_uri="http://localhost:5000",
                                     check_connectivity=True,
-                                    check_governance=True
+                                    check_governance=True,
                                 )
 
                                 # Check all validations passed
-                                assert result.dependencies['mlflow'] is True
-                                assert result.dependencies['opentelemetry'] is True
-                                assert result.dependencies['genops'] is True
+                                assert result.dependencies["mlflow"] is True
+                                assert result.dependencies["opentelemetry"] is True
+                                assert result.dependencies["genops"] is True
 
                                 # Check configuration
-                                assert 'mlflow_version' in result.configuration
-                                assert 'opentelemetry_version' in result.configuration
-                                assert 'genops_version' in result.configuration
-                                assert result.configuration['tracking_uri'] == "http://localhost:5000"
-                                assert result.configuration['genops_team'] == 'integration-team'
-                                assert result.configuration['genops_project'] == 'integration-project'
+                                assert "mlflow_version" in result.configuration
+                                assert "opentelemetry_version" in result.configuration
+                                assert "genops_version" in result.configuration
+                                assert (
+                                    result.configuration["tracking_uri"]
+                                    == "http://localhost:5000"
+                                )
+                                assert (
+                                    result.configuration["genops_team"]
+                                    == "integration-team"
+                                )
+                                assert (
+                                    result.configuration["genops_project"]
+                                    == "integration-project"
+                                )
 
                                 # Check connectivity
                                 if result.connectivity:
-                                    assert result.connectivity.get('tracking_server') is True
+                                    assert (
+                                        result.connectivity.get("tracking_server")
+                                        is True
+                                    )

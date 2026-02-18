@@ -31,25 +31,25 @@ import os
 logger = logging.getLogger(__name__)
 
 # Core components
-from .config import PrometheusConfig
-from .exporter import PrometheusExporter
-from .metrics import (
+from .config import PrometheusConfig  # noqa: E402
+from .exporter import PrometheusExporter  # noqa: E402
+from .metrics import (  # noqa: E402
+    ALL_METRICS,
     MetricDefinition,
     MetricType,
-    ALL_METRICS,
-    get_metric_definition,
     get_full_metric_name,
+    get_metric_definition,
 )
 
 # Validation utilities
-from .validation import (
-    validate_setup,
-    print_validation_result,
-    ValidationResult,
+from .validation import (  # noqa: E402
+    PrometheusValidator,
+    ValidationCategory,
     ValidationIssue,
     ValidationLevel,
-    ValidationCategory,
-    PrometheusValidator,
+    ValidationResult,
+    print_validation_result,
+    validate_setup,
 )
 
 # Version info
@@ -60,12 +60,12 @@ _global_exporter: PrometheusExporter | None = None
 
 
 def instrument_prometheus(
-    port: int = None,
-    namespace: str = None,
-    prometheus_url: str = None,
+    port: int = None,  # type: ignore[assignment]
+    namespace: str = None,  # type: ignore[assignment]
+    prometheus_url: str = None,  # type: ignore[assignment]
     validate: bool = True,
     auto_start: bool = True,
-    **config_kwargs
+    **config_kwargs,
 ) -> PrometheusExporter:
     """Instrument Prometheus metrics exporter for GenOps governance telemetry.
 
@@ -110,11 +110,12 @@ def instrument_prometheus(
     config_dict = {
         "port": port or int(os.getenv("PROMETHEUS_EXPORTER_PORT", "8000")),
         "namespace": namespace or os.getenv("PROMETHEUS_NAMESPACE", "genops"),
-        "prometheus_url": prometheus_url or os.getenv("PROMETHEUS_URL", "http://localhost:9090"),
+        "prometheus_url": prometheus_url
+        or os.getenv("PROMETHEUS_URL", "http://localhost:9090"),
     }
     config_dict.update(config_kwargs)
 
-    config = PrometheusConfig(**config_dict)
+    config = PrometheusConfig(**config_dict)  # type: ignore
 
     # Run validation if requested
     if validate:
@@ -123,20 +124,24 @@ def instrument_prometheus(
         result = run_validation(
             port=config.port,
             prometheus_url=config.prometheus_url,
-            namespace=config.namespace
+            namespace=config.namespace,
         )
 
         if result.has_critical_issues:
             logger.error("Critical validation issues detected")
             print_validation_result(result)
-            raise ValueError("Prometheus exporter validation failed with critical issues")
+            raise ValueError(
+                "Prometheus exporter validation failed with critical issues"
+            )
 
         if result.has_errors:
             logger.warning("Validation errors detected")
             print_validation_result(result)
 
         if not result.success:
-            logger.warning(f"Validation completed with warnings (score: {result.score:.1f}%)")
+            logger.warning(
+                f"Validation completed with warnings (score: {result.score:.1f}%)"
+            )
 
     # Create exporter
     exporter = PrometheusExporter(config, validate=False)  # Already validated above
@@ -144,7 +149,9 @@ def instrument_prometheus(
     # Auto-start if requested
     if auto_start:
         exporter.start()
-        logger.info(f"Prometheus exporter started at http://localhost:{config.port}/metrics")
+        logger.info(
+            f"Prometheus exporter started at http://localhost:{config.port}/metrics"
+        )
 
     return exporter
 
@@ -243,30 +250,26 @@ def disable_auto_instrument() -> None:
 # Export public API
 __all__ = [
     # Main API
-    'instrument_prometheus',
-    'auto_instrument',
-    'get_exporter',
-    'disable_auto_instrument',
-
+    "instrument_prometheus",
+    "auto_instrument",
+    "get_exporter",
+    "disable_auto_instrument",
     # Configuration
-    'PrometheusConfig',
-
+    "PrometheusConfig",
     # Exporter
-    'PrometheusExporter',
-
+    "PrometheusExporter",
     # Metrics
-    'MetricDefinition',
-    'MetricType',
-    'ALL_METRICS',
-    'get_metric_definition',
-    'get_full_metric_name',
-
+    "MetricDefinition",
+    "MetricType",
+    "ALL_METRICS",
+    "get_metric_definition",
+    "get_full_metric_name",
     # Validation
-    'validate_setup',
-    'print_validation_result',
-    'ValidationResult',
-    'ValidationIssue',
-    'ValidationLevel',
-    'ValidationCategory',
-    'PrometheusValidator',
+    "validate_setup",
+    "print_validation_result",
+    "ValidationResult",
+    "ValidationIssue",
+    "ValidationLevel",
+    "ValidationCategory",
+    "PrometheusValidator",
 ]

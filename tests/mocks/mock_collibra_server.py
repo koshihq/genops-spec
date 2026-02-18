@@ -5,7 +5,6 @@ from __future__ import annotations
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
 
 
 @dataclass
@@ -14,8 +13,8 @@ class MockAPICall:
 
     method: str
     endpoint: str
-    data: Optional[Dict] = None
-    params: Optional[Dict] = None
+    data: dict | None = None
+    params: dict | None = None
     timestamp: float = field(default_factory=time.time)
 
 
@@ -30,11 +29,11 @@ class MockCollibraServer:
             api_version: Simulated Collibra API version
         """
         self.api_version = api_version
-        self.assets: Dict[str, Dict] = {}
-        self.policies: Dict[str, Dict] = {}
-        self.domains: Dict[str, Dict] = {}
-        self.relations: Dict[str, Dict] = {}
-        self.api_calls: List[MockAPICall] = []
+        self.assets: dict[str, dict] = {}
+        self.policies: dict[str, dict] = {}
+        self.domains: dict[str, dict] = {}
+        self.relations: dict[str, dict] = {}
+        self.api_calls: list[MockAPICall] = []
 
         # Authentication state
         self.valid_username = "test_user"
@@ -62,7 +61,7 @@ class MockCollibraServer:
         }
 
     def _check_auth(
-        self, username: Optional[str], password: Optional[str], token: Optional[str]
+        self, username: str | None, password: str | None, token: str | None
     ) -> bool:
         """
         Check if authentication is valid.
@@ -82,9 +81,7 @@ class MockCollibraServer:
             return token == self.valid_token
 
         if username and password:
-            return (
-                username == self.valid_username and password == self.valid_password
-            )
+            return username == self.valid_username and password == self.valid_password
 
         return False
 
@@ -92,8 +89,8 @@ class MockCollibraServer:
         self,
         method: str,
         endpoint: str,
-        data: Optional[Dict] = None,
-        params: Optional[Dict] = None,
+        data: dict | None = None,
+        params: dict | None = None,
     ):
         """Record API call for inspection."""
         self.api_calls.append(
@@ -101,7 +98,7 @@ class MockCollibraServer:
         )
         self.request_count += 1
 
-    def get_api_call_count(self, endpoint: Optional[str] = None) -> int:
+    def get_api_call_count(self, endpoint: str | None = None) -> int:
         """
         Get count of API calls.
 
@@ -127,7 +124,7 @@ class MockCollibraServer:
 
     # API Endpoint Handlers
 
-    def handle_health_check(self) -> Dict:
+    def handle_health_check(self) -> dict:
         """Handle health check endpoint."""
         self._record_api_call("GET", "/rest/2.0/application/info")
         return {
@@ -141,9 +138,9 @@ class MockCollibraServer:
         domain_id: str,
         asset_type: str,
         name: str,
-        attributes: Optional[Dict] = None,
-        display_name: Optional[str] = None,
-    ) -> Dict:
+        attributes: dict | None = None,
+        display_name: str | None = None,
+    ) -> dict:
         """
         Handle asset creation.
 
@@ -185,7 +182,7 @@ class MockCollibraServer:
 
         return asset
 
-    def handle_update_asset(self, asset_id: str, attributes: Dict) -> Dict:
+    def handle_update_asset(self, asset_id: str, attributes: dict) -> dict:
         """
         Handle asset update.
 
@@ -212,7 +209,7 @@ class MockCollibraServer:
 
         return asset
 
-    def handle_get_asset(self, asset_id: str) -> Dict:
+    def handle_get_asset(self, asset_id: str) -> dict:
         """
         Handle get asset.
 
@@ -233,12 +230,12 @@ class MockCollibraServer:
 
     def handle_search_assets(
         self,
-        query: Optional[str] = None,
-        asset_type: Optional[str] = None,
-        domain_id: Optional[str] = None,
+        query: str | None = None,
+        asset_type: str | None = None,
+        domain_id: str | None = None,
         limit: int = 100,
         offset: int = 0,
-    ) -> Dict:
+    ) -> dict:
         """
         Handle asset search.
 
@@ -280,7 +277,7 @@ class MockCollibraServer:
 
         return {"results": results, "total": total, "offset": offset, "limit": limit}
 
-    def handle_list_policies(self, domain_id: Optional[str] = None) -> Dict:
+    def handle_list_policies(self, domain_id: str | None = None) -> dict:
         """
         Handle list policies.
 
@@ -301,7 +298,7 @@ class MockCollibraServer:
 
         return {"results": results, "total": len(results)}
 
-    def handle_get_policy(self, policy_id: str) -> Dict:
+    def handle_get_policy(self, policy_id: str) -> dict:
         """
         Handle get policy.
 
@@ -320,7 +317,7 @@ class MockCollibraServer:
         self._record_api_call("GET", f"/rest/2.0/dataQualityRules/{policy_id}")
         return self.policies[policy_id]
 
-    def handle_list_domains(self, community_id: Optional[str] = None) -> Dict:
+    def handle_list_domains(self, community_id: str | None = None) -> dict:
         """
         Handle list domains.
 
@@ -341,7 +338,7 @@ class MockCollibraServer:
 
         return {"results": results, "total": len(results)}
 
-    def handle_get_domain(self, domain_id: str) -> Dict:
+    def handle_get_domain(self, domain_id: str) -> dict:
         """
         Handle get domain.
 
@@ -362,7 +359,7 @@ class MockCollibraServer:
 
     def handle_create_relation(
         self, source_id: str, target_id: str, relation_type: str
-    ) -> Dict:
+    ) -> dict:
         """
         Handle create relation.
 
@@ -388,14 +385,18 @@ class MockCollibraServer:
         self._record_api_call(
             "POST",
             "/rest/2.0/relations",
-            data={"sourceId": source_id, "targetId": target_id, "typeId": relation_type},
+            data={
+                "sourceId": source_id,
+                "targetId": target_id,
+                "typeId": relation_type,
+            },
         )
 
         return relation
 
     # Test Utilities
 
-    def inject_policy(self, policy: Dict):
+    def inject_policy(self, policy: dict):
         """
         Inject a policy into the mock server for testing.
 
@@ -406,7 +407,7 @@ class MockCollibraServer:
         policy["id"] = policy_id
         self.policies[policy_id] = policy
 
-    def inject_domain(self, domain: Dict):
+    def inject_domain(self, domain: dict):
         """
         Inject a domain into the mock server for testing.
 
@@ -444,4 +445,6 @@ class MockCollibraServer:
         Returns:
             True if rate limit should be applied
         """
-        return self.rate_limit_enabled and self.request_count >= self.rate_limit_threshold
+        return (
+            self.rate_limit_enabled and self.request_count >= self.rate_limit_threshold
+        )

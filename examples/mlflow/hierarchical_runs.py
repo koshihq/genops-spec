@@ -11,16 +11,17 @@ Demonstrates:
 import os
 import sys
 from pathlib import Path
+
 import numpy as np
 
 # Add src to path for local development
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 import mlflow
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.datasets import make_classification
-from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, f1_score
+from sklearn.model_selection import train_test_split
 
 from genops.providers.mlflow import instrument_mlflow
 
@@ -28,9 +29,9 @@ from genops.providers.mlflow import instrument_mlflow
 def hyperparameter_search(adapter, X_train, X_test, y_train, y_test):
     """Perform hyperparameter search with nested runs."""
     param_grid = {
-        'n_estimators': [50, 100, 200],
-        'max_depth': [5, 10, None],
-        'min_samples_split': [2, 5, 10]
+        "n_estimators": [50, 100, 200],
+        "max_depth": [5, 10, None],
+        "min_samples_split": [2, 5, 10],
     }
 
     best_accuracy = 0
@@ -39,43 +40,45 @@ def hyperparameter_search(adapter, X_train, X_test, y_train, y_test):
 
     # Parent run for hyperparameter search
     with adapter.track_mlflow_run(
-        experiment_name="hierarchical-demo",
-        run_name="hyperparameter-search"
+        experiment_name="hierarchical-demo", run_name="hyperparameter-search"
     ) as parent_run:
         print(f"Parent Run: {parent_run.info.run_id}")
         print()
 
         mlflow.log_param("search_type", "grid_search")
-        mlflow.log_param("total_combinations", len(param_grid['n_estimators']) *
-                                                len(param_grid['max_depth']) *
-                                                len(param_grid['min_samples_split']))
+        mlflow.log_param(
+            "total_combinations",
+            len(param_grid["n_estimators"])
+            * len(param_grid["max_depth"])
+            * len(param_grid["min_samples_split"]),
+        )
 
         # Iterate through parameter combinations
         run_count = 0
-        for n_est in param_grid['n_estimators']:
-            for max_d in param_grid['max_depth']:
-                for min_split in param_grid['min_samples_split']:
+        for n_est in param_grid["n_estimators"]:
+            for max_d in param_grid["max_depth"]:
+                for min_split in param_grid["min_samples_split"]:
                     run_count += 1
 
                     # Child run for each parameter combination
                     with adapter.track_mlflow_run(
                         experiment_name="hierarchical-demo",
                         run_name=f"config-{run_count}",
-                        parent_run_id=parent_run.info.run_id
+                        parent_run_id=parent_run.info.run_id,
                     ) as child_run:
                         # Train model
                         model = RandomForestClassifier(
                             n_estimators=n_est,
                             max_depth=max_d,
                             min_samples_split=min_split,
-                            random_state=42
+                            random_state=42,
                         )
                         model.fit(X_train, y_train)
 
                         # Evaluate
                         y_pred = model.predict(X_test)
                         accuracy = accuracy_score(y_test, y_pred)
-                        f1 = f1_score(y_test, y_pred, average='weighted')
+                        f1 = f1_score(y_test, y_pred, average="weighted")
 
                         # Log parameters
                         mlflow.log_param("n_estimators", n_est)
@@ -86,25 +89,27 @@ def hyperparameter_search(adapter, X_train, X_test, y_train, y_test):
                         mlflow.log_metric("accuracy", accuracy)
                         mlflow.log_metric("f1_score", f1)
 
-                        print(f"  Run {run_count}: n_est={n_est}, "
-                              f"max_depth={max_d}, min_split={min_split} "
-                              f"→ Accuracy: {accuracy:.4f}")
+                        print(
+                            f"  Run {run_count}: n_est={n_est}, "
+                            f"max_depth={max_d}, min_split={min_split} "
+                            f"→ Accuracy: {accuracy:.4f}"
+                        )
 
                         # Track best
                         if accuracy > best_accuracy:
                             best_accuracy = accuracy
                             best_params = {
-                                'n_estimators': n_est,
-                                'max_depth': max_d,
-                                'min_samples_split': min_split
+                                "n_estimators": n_est,
+                                "max_depth": max_d,
+                                "min_samples_split": min_split,
                             }
                             best_run_id = child_run.info.run_id
 
         # Log best results to parent
         mlflow.log_metric("best_accuracy", best_accuracy)
-        mlflow.log_param("best_n_estimators", best_params['n_estimators'])
-        mlflow.log_param("best_max_depth", best_params['max_depth'])
-        mlflow.log_param("best_min_samples_split", best_params['min_samples_split'])
+        mlflow.log_param("best_n_estimators", best_params["n_estimators"])
+        mlflow.log_param("best_max_depth", best_params["max_depth"])
+        mlflow.log_param("best_min_samples_split", best_params["min_samples_split"])
         mlflow.set_tag("best_child_run_id", best_run_id)
 
         print()
@@ -123,8 +128,7 @@ def cross_validation_runs(adapter, X, y):
     kf = KFold(n_splits=5, shuffle=True, random_state=42)
 
     with adapter.track_mlflow_run(
-        experiment_name="hierarchical-demo",
-        run_name="cross-validation"
+        experiment_name="hierarchical-demo", run_name="cross-validation"
     ) as parent_run:
         print(f"Parent Run: {parent_run.info.run_id}")
         print()
@@ -139,8 +143,8 @@ def cross_validation_runs(adapter, X, y):
             with adapter.track_mlflow_run(
                 experiment_name="hierarchical-demo",
                 run_name=f"fold-{fold}",
-                parent_run_id=parent_run.info.run_id
-            ) as child_run:
+                parent_run_id=parent_run.info.run_id,
+            ):
                 X_train, X_val = X[train_idx], X[val_idx]
                 y_train, y_val = y[train_idx], y[val_idx]
 
@@ -171,7 +175,7 @@ def cross_validation_runs(adapter, X, y):
         mlflow.log_metric("max_accuracy", max(fold_accuracies))
 
         print()
-        print(f"✓ Cross-validation complete")
+        print("✓ Cross-validation complete")
         print(f"✓ Mean accuracy: {mean_accuracy:.4f} (+/- {std_accuracy:.4f})")
         print()
 
@@ -180,20 +184,21 @@ def cross_validation_runs(adapter, X, y):
 
 def ensemble_training(adapter, X_train, X_test, y_train, y_test):
     """Train ensemble with multiple models as child runs."""
-    from sklearn.linear_model import LogisticRegression
     from sklearn.ensemble import GradientBoostingClassifier
+    from sklearn.linear_model import LogisticRegression
     from sklearn.svm import SVC
 
     models = {
-        'random_forest': RandomForestClassifier(n_estimators=100, random_state=42),
-        'gradient_boosting': GradientBoostingClassifier(n_estimators=50, random_state=42),
-        'logistic_regression': LogisticRegression(max_iter=1000, random_state=42),
-        'svm': SVC(kernel='rbf', random_state=42)
+        "random_forest": RandomForestClassifier(n_estimators=100, random_state=42),
+        "gradient_boosting": GradientBoostingClassifier(
+            n_estimators=50, random_state=42
+        ),
+        "logistic_regression": LogisticRegression(max_iter=1000, random_state=42),
+        "svm": SVC(kernel="rbf", random_state=42),
     }
 
     with adapter.track_mlflow_run(
-        experiment_name="hierarchical-demo",
-        run_name="ensemble-training"
+        experiment_name="hierarchical-demo", run_name="ensemble-training"
     ) as parent_run:
         print(f"Parent Run: {parent_run.info.run_id}")
         print()
@@ -209,8 +214,8 @@ def ensemble_training(adapter, X_train, X_test, y_train, y_test):
             with adapter.track_mlflow_run(
                 experiment_name="hierarchical-demo",
                 run_name=f"model-{model_name}",
-                parent_run_id=parent_run.info.run_id
-            ) as child_run:
+                parent_run_id=parent_run.info.run_id,
+            ):
                 print(f"  Training {model_name}...")
 
                 # Train
@@ -256,11 +261,11 @@ def main():
     print()
 
     # Configuration
-    tracking_uri = os.getenv('MLFLOW_TRACKING_URI', 'file:///tmp/mlruns')
-    team = os.getenv('GENOPS_TEAM', 'ml-team')
-    project = os.getenv('GENOPS_PROJECT', 'hierarchical-demo')
+    tracking_uri = os.getenv("MLFLOW_TRACKING_URI", "file:///tmp/mlruns")
+    team = os.getenv("GENOPS_TEAM", "ml-team")
+    project = os.getenv("GENOPS_PROJECT", "hierarchical-demo")
 
-    print(f"Configuration:")
+    print("Configuration:")
     print(f"  Tracking URI: {tracking_uri}")
     print(f"  Team: {team}")
     print(f"  Project: {project}")
@@ -268,10 +273,7 @@ def main():
 
     # Create adapter
     adapter = instrument_mlflow(
-        tracking_uri=tracking_uri,
-        team=team,
-        project=project,
-        environment="development"
+        tracking_uri=tracking_uri, team=team, project=project, environment="development"
     )
 
     print("✓ MLflow adapter created")
@@ -280,11 +282,7 @@ def main():
     # Generate dataset
     print("Generating synthetic classification dataset...")
     X, y = make_classification(
-        n_samples=1000,
-        n_features=20,
-        n_informative=15,
-        n_redundant=5,
-        random_state=42
+        n_samples=1000, n_features=20, n_informative=15, n_redundant=5, random_state=42
     )
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42
@@ -322,7 +320,7 @@ def main():
     print("=" * 70)
 
     metrics = adapter.get_metrics()
-    print(f"\nGovernance Metrics:")
+    print("\nGovernance Metrics:")
     print(f"  Daily Usage: ${metrics['daily_usage']:.6f}")
     print(f"  Operations Tracked: {metrics['operation_count']}")
     print(f"  Runs: {metrics.get('run_count', 'N/A')}")
@@ -352,9 +350,9 @@ def main():
     print()
     print("View your hierarchical runs:")
     print(f"  1. Start MLflow UI: mlflow ui --backend-store-uri {tracking_uri}")
-    print(f"  2. Open browser: http://localhost:5000")
-    print(f"  3. Navigate to experiment 'hierarchical-demo'")
-    print(f"  4. Expand parent runs to see nested children")
+    print("  2. Open browser: http://localhost:5000")
+    print("  3. Navigate to experiment 'hierarchical-demo'")
+    print("  4. Expand parent runs to see nested children")
     print()
     print("Governance features enabled:")
     print(f"  ✓ All runs attributed to team '{team}'")
@@ -374,5 +372,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n\nError running example: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

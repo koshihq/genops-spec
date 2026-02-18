@@ -27,10 +27,10 @@ from typing import Any, Optional
 
 # Set up production-grade logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
 
 class ProductionOpenRouterClient:
     """Production-ready OpenRouter client with GenOps governance."""
@@ -49,8 +49,8 @@ class ProductionOpenRouterClient:
                 max_retries=3,
                 default_headers={
                     "HTTP-Referer": os.getenv("APP_URL", "https://production-app.com"),
-                    "X-Title": os.getenv("APP_NAME", "Production GenOps Application")
-                }
+                    "X-Title": os.getenv("APP_NAME", "Production GenOps Application"),
+                },
             )
 
             # Production governance defaults
@@ -58,7 +58,7 @@ class ProductionOpenRouterClient:
                 "environment": environment,
                 "service_name": os.getenv("SERVICE_NAME", "openrouter-service"),
                 "service_version": os.getenv("SERVICE_VERSION", "1.0.0"),
-                "deployment": os.getenv("DEPLOYMENT_ID", "unknown")
+                "deployment": os.getenv("DEPLOYMENT_ID", "unknown"),
             }
 
             # Circuit breaker state for reliability
@@ -67,7 +67,7 @@ class ProductionOpenRouterClient:
                 "last_failure": None,
                 "is_open": False,
                 "failure_threshold": 5,
-                "recovery_timeout": 60  # seconds
+                "recovery_timeout": 60,  # seconds
             }
 
             logger.info(f"Production OpenRouter client initialized for {environment}")
@@ -82,7 +82,9 @@ class ProductionOpenRouterClient:
             return True
 
         # Check if recovery timeout has passed
-        if (time.time() - self.circuit_breaker["last_failure"]) > self.circuit_breaker["recovery_timeout"]:
+        if (time.time() - self.circuit_breaker["last_failure"]) > self.circuit_breaker[
+            "recovery_timeout"
+        ]:
             logger.info("Circuit breaker recovery attempt")
             self.circuit_breaker["is_open"] = False
             self.circuit_breaker["failure_count"] = 0
@@ -95,7 +97,10 @@ class ProductionOpenRouterClient:
         self.circuit_breaker["failure_count"] += 1
         self.circuit_breaker["last_failure"] = time.time()
 
-        if self.circuit_breaker["failure_count"] >= self.circuit_breaker["failure_threshold"]:
+        if (
+            self.circuit_breaker["failure_count"]
+            >= self.circuit_breaker["failure_threshold"]
+        ):
             logger.warning("Circuit breaker opened due to repeated failures")
             self.circuit_breaker["is_open"] = True
 
@@ -111,7 +116,7 @@ class ProductionOpenRouterClient:
         model: str,
         messages: list[dict],
         governance_attrs: dict[str, Any],
-        **kwargs
+        **kwargs,
     ) -> Optional[dict[str, Any]]:
         """
         Production-safe completion with comprehensive error handling.
@@ -123,7 +128,7 @@ class ProductionOpenRouterClient:
             return {
                 "success": False,
                 "error": "circuit_breaker_open",
-                "message": "Service temporarily unavailable"
+                "message": "Service temporarily unavailable",
             }
 
         # Merge governance attributes with defaults
@@ -135,11 +140,13 @@ class ProductionOpenRouterClient:
 
         # Validate input
         if not model or not messages:
-            logger.error(f"Invalid input - model: {model}, messages: {len(messages) if messages else 0}")
+            logger.error(
+                f"Invalid input - model: {model}, messages: {len(messages) if messages else 0}"
+            )
             return {
                 "success": False,
                 "error": "invalid_input",
-                "message": "Model and messages are required"
+                "message": "Model and messages are required",
             }
 
         max_retries = 3
@@ -153,10 +160,7 @@ class ProductionOpenRouterClient:
 
                 # Make the request with full governance tracking
                 response = self.client.chat_completions_create(
-                    model=model,
-                    messages=messages,
-                    **kwargs,
-                    **final_governance
+                    model=model, messages=messages, **kwargs, **final_governance
                 )
 
                 response_time = time.time() - start_time
@@ -165,8 +169,10 @@ class ProductionOpenRouterClient:
                 self._record_success()
 
                 # Extract response data
-                usage = response.usage if hasattr(response, 'usage') else None
-                content = response.choices[0].message.content if response.choices else ""
+                usage = response.usage if hasattr(response, "usage") else None
+                content = (
+                    response.choices[0].message.content if response.choices else ""
+                )
 
                 logger.info(f"Request {request_id} successful in {response_time:.2f}s")
 
@@ -176,30 +182,39 @@ class ProductionOpenRouterClient:
                     "usage": {
                         "prompt_tokens": usage.prompt_tokens if usage else 0,
                         "completion_tokens": usage.completion_tokens if usage else 0,
-                        "total_tokens": usage.total_tokens if usage else 0
+                        "total_tokens": usage.total_tokens if usage else 0,
                     },
                     "metadata": {
                         "model": model,
                         "request_id": request_id,
                         "response_time": response_time,
-                        "attempt": attempt + 1
-                    }
+                        "attempt": attempt + 1,
+                    },
                 }
 
             except Exception as e:
                 error_type = type(e).__name__
                 error_msg = str(e)
 
-                logger.warning(f"Request {request_id} attempt {attempt + 1} failed: {error_type}: {error_msg}")
+                logger.warning(
+                    f"Request {request_id} attempt {attempt + 1} failed: {error_type}: {error_msg}"
+                )
 
                 # Check if this is a retryable error
-                retryable_errors = ["timeout", "rate_limit", "server_error", "network_error"]
+                retryable_errors = [
+                    "timeout",
+                    "rate_limit",
+                    "server_error",
+                    "network_error",
+                ]
                 is_retryable = any(err in error_msg.lower() for err in retryable_errors)
 
                 if not is_retryable or attempt == max_retries - 1:
                     # Final failure
                     self._record_failure()
-                    logger.error(f"Request {request_id} failed permanently: {error_type}: {error_msg}")
+                    logger.error(
+                        f"Request {request_id} failed permanently: {error_type}: {error_msg}"
+                    )
 
                     return {
                         "success": False,
@@ -208,8 +223,8 @@ class ProductionOpenRouterClient:
                         "metadata": {
                             "model": model,
                             "request_id": request_id,
-                            "final_attempt": attempt + 1
-                        }
+                            "final_attempt": attempt + 1,
+                        },
                     }
                 else:
                     # Wait before retry
@@ -218,7 +233,7 @@ class ProductionOpenRouterClient:
         return {
             "success": False,
             "error": "max_retries_exceeded",
-            "message": f"Failed after {max_retries} attempts"
+            "message": f"Failed after {max_retries} attempts",
         }
 
 
@@ -240,14 +255,15 @@ async def production_patterns_demo():
 
     print("🔧 Production Configuration:")
     print(f"   Service: {service_name}")
-    print(f"   OTLP Endpoint: {otlp_endpoint if otlp_endpoint else '❌ Not configured'}")
+    print(
+        f"   OTLP Endpoint: {otlp_endpoint if otlp_endpoint else '❌ Not configured'}"
+    )
     print(f"   Environment: {os.getenv('ENVIRONMENT', 'development')}")
 
     try:
         # Initialize production client
         production_client = ProductionOpenRouterClient(
-            api_key=api_key,
-            environment=os.getenv("ENVIRONMENT", "production")
+            api_key=api_key, environment=os.getenv("ENVIRONMENT", "production")
         )
 
         print("\n✅ Production client initialized")
@@ -266,8 +282,8 @@ async def production_patterns_demo():
                     "project": "customer-support-ai",
                     "customer_id": "enterprise-customer-001",
                     "priority": "high",
-                    "sla_requirement": "sub_5s"
-                }
+                    "sla_requirement": "sub_5s",
+                },
             },
             {
                 "name": "Real-time Analytics Query",
@@ -277,8 +293,8 @@ async def production_patterns_demo():
                     "team": "analytics",
                     "project": "real-time-insights",
                     "urgency": "real-time",
-                    "dashboard": "executive"
-                }
+                    "dashboard": "executive",
+                },
             },
             {
                 "name": "Compliance Document Review",
@@ -288,9 +304,9 @@ async def production_patterns_demo():
                     "team": "legal",
                     "project": "contract-analysis",
                     "compliance_level": "high",
-                    "audit_trail": "required"
-                }
-            }
+                    "audit_trail": "required",
+                },
+            },
         ]
 
         for scenario in ha_scenarios:
@@ -301,7 +317,7 @@ async def production_patterns_demo():
                 model=scenario["model"],
                 messages=[{"role": "user", "content": scenario["prompt"]}],
                 max_tokens=150,
-                governance_attrs=scenario["governance"]
+                governance_attrs=scenario["governance"],
             )
 
             if result["success"]:
@@ -316,7 +332,10 @@ async def production_patterns_demo():
         print("=" * 40)
 
         batch_tasks = [
-            {"id": f"task_{i}", "content": f"Analyze customer feedback {i}: 'Great service, very helpful staff!'"}
+            {
+                "id": f"task_{i}",
+                "content": f"Analyze customer feedback {i}: 'Great service, very helpful staff!'",
+            }
             for i in range(1, 6)
         ]
 
@@ -338,16 +357,20 @@ async def production_patterns_demo():
                         "team": "data-processing",
                         "project": "feedback-analysis",
                         "batch_id": "batch_001",
-                        "task_id": task["id"]
-                    }
+                        "task_id": task["id"],
+                    },
                 )
 
         # Execute batch with concurrency control
         batch_tasks_coroutines = [process_batch_item(task) for task in batch_tasks]
-        batch_results = await asyncio.gather(*batch_tasks_coroutines, return_exceptions=True)
+        batch_results = await asyncio.gather(
+            *batch_tasks_coroutines, return_exceptions=True
+        )
 
         batch_time = time.time() - batch_start
-        successful_tasks = sum(1 for r in batch_results if isinstance(r, dict) and r.get("success"))
+        successful_tasks = sum(
+            1 for r in batch_results if isinstance(r, dict) and r.get("success")
+        )
 
         print(f"   ✅ Batch completed in {batch_time:.2f}s")
         print(f"      Successful: {successful_tasks}/{len(batch_tasks)}")
@@ -362,14 +385,14 @@ async def production_patterns_demo():
             {
                 "name": "Invalid Model Test",
                 "model": "nonexistent/invalid-model",
-                "expected_error": "model_not_found"
+                "expected_error": "model_not_found",
             },
             {
                 "name": "Empty Messages Test",
                 "model": "openai/gpt-3.5-turbo",
                 "messages": [],
-                "expected_error": "invalid_input"
-            }
+                "expected_error": "invalid_input",
+            },
         ]
 
         for scenario in error_scenarios:
@@ -378,13 +401,15 @@ async def production_patterns_demo():
             try:
                 result = await production_client.safe_completion(
                     model=scenario["model"],
-                    messages=scenario.get("messages", [{"role": "user", "content": "test"}]),
+                    messages=scenario.get(
+                        "messages", [{"role": "user", "content": "test"}]
+                    ),
                     max_tokens=50,
                     governance_attrs={
                         "team": "testing",
                         "project": "error-handling",
-                        "test_scenario": scenario["name"]
-                    }
+                        "test_scenario": scenario["name"],
+                    },
                 )
 
                 if result["success"]:
@@ -407,13 +432,21 @@ async def production_patterns_demo():
             "avg_response_time": 1.25,
             "total_tokens": 2420,
             "total_cost_estimate": 0.0156,
-            "top_models": ["openai/gpt-4o", "anthropic/claude-3-haiku", "meta-llama/llama-3.2-3b"],
-            "top_teams": ["customer-success", "analytics", "data-processing"]
+            "top_models": [
+                "openai/gpt-4o",
+                "anthropic/claude-3-haiku",
+                "meta-llama/llama-3.2-3b",
+            ],
+            "top_teams": ["customer-success", "analytics", "data-processing"],
         }
 
         print("   📈 Production Metrics Summary:")
-        print(f"      Success Rate: {(monitoring_metrics['requests_successful']/monitoring_metrics['requests_total'])*100:.1f}%")
-        print(f"      Avg Response Time: {monitoring_metrics['avg_response_time']:.2f}s")
+        print(
+            f"      Success Rate: {(monitoring_metrics['requests_successful'] / monitoring_metrics['requests_total']) * 100:.1f}%"
+        )
+        print(
+            f"      Avg Response Time: {monitoring_metrics['avg_response_time']:.2f}s"
+        )
         print(f"      Total Cost: ${monitoring_metrics['total_cost_estimate']:.4f}")
         print(f"      Tokens Processed: {monitoring_metrics['total_tokens']:,}")
 
@@ -426,7 +459,7 @@ async def production_patterns_demo():
             "encryption": "TLS 1.3 for all API communications",
             "audit_logging": "Complete request/response audit trail",
             "access_control": "Role-based access with team attribution",
-            "compliance": "SOC2, GDPR, HIPAA governance attributes"
+            "compliance": "SOC2, GDPR, HIPAA governance attributes",
         }
 
         for feature, description in security_demo.items():
@@ -442,32 +475,32 @@ async def production_patterns_demo():
                 "Deploy with container orchestration (Kubernetes)",
                 "Use application load balancers with health checks",
                 "Implement horizontal pod autoscaling",
-                "Set up centralized logging (ELK stack or similar)"
+                "Set up centralized logging (ELK stack or similar)",
             ],
             "Monitoring": [
                 "Configure OpenTelemetry OTLP export to observability platform",
                 "Set up alerts for error rates > 5%",
                 "Monitor response time SLA violations",
-                "Track cost anomalies and budget overruns"
+                "Track cost anomalies and budget overruns",
             ],
             "Security": [
                 "Rotate API keys regularly using secret management",
                 "Implement network policies and VPC isolation",
                 "Enable PII detection and redaction",
-                "Maintain comprehensive audit logs"
+                "Maintain comprehensive audit logs",
             ],
             "Reliability": [
                 "Configure circuit breakers for external dependencies",
                 "Implement exponential backoff retry logic",
                 "Use multiple availability zones",
-                "Test disaster recovery procedures regularly"
+                "Test disaster recovery procedures regularly",
             ],
             "Cost Management": [
                 "Set up real-time cost monitoring and alerts",
                 "Implement budget controls per team/project",
                 "Use cost-optimized model selection strategies",
-                "Monitor and optimize token usage patterns"
-            ]
+                "Monitor and optimize token usage patterns",
+            ],
         }
 
         for category, items in recommendations.items():
@@ -503,7 +536,7 @@ def show_production_config_examples():
         "DEPLOYMENT_ID": "prod-2024-001",
         "ENVIRONMENT": "production",
         "APP_URL": "https://your-production-app.com",
-        "LOG_LEVEL": "INFO"
+        "LOG_LEVEL": "INFO",
     }
 
     for var, value in env_vars.items():

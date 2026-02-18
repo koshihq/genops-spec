@@ -28,7 +28,9 @@ from genops.core.telemetry import GenOpsTelemetry
 from genops.providers.openai import instrument_openai
 
 # Setup logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 # Simulate customer and usage data
@@ -37,20 +39,20 @@ CUSTOMERS = {
         "name": "Acme Corporation",
         "tier": "enterprise",
         "billing_rate": 1.25,  # 25% markup on AI costs
-        "monthly_budget": 500.0
+        "monthly_budget": 500.0,
     },
     "startup-456": {
         "name": "InnovateCorp",
         "tier": "startup",
         "billing_rate": 1.15,  # 15% markup
-        "monthly_budget": 150.0
+        "monthly_budget": 150.0,
     },
     "premium-789": {
         "name": "TechGiant Ltd",
         "tier": "premium",
         "billing_rate": 1.30,  # 30% markup
-        "monthly_budget": 1000.0
-    }
+        "monthly_budget": 1000.0,
+    },
 }
 
 FEATURES = {
@@ -58,8 +60,9 @@ FEATURES = {
     "document_analysis": {"base_cost_per_request": 0.15},
     "content_generation": {"base_cost_per_request": 0.08},
     "data_insights": {"base_cost_per_request": 0.25},
-    "translation_service": {"base_cost_per_request": 0.05}
+    "translation_service": {"base_cost_per_request": 0.05},
 }
+
 
 def demonstrate_multi_tenant_cost_tracking():
     """
@@ -79,7 +82,7 @@ def demonstrate_multi_tenant_cost_tracking():
             "operation": "customer_support_chat",
             "team": "support-team",
             "project": "ai-assistant",
-            "requests": 5
+            "requests": 5,
         },
         {
             "customer": "startup-456",
@@ -87,7 +90,7 @@ def demonstrate_multi_tenant_cost_tracking():
             "operation": "contract_analysis",
             "team": "legal-ai-team",
             "project": "contract-analyzer",
-            "requests": 3
+            "requests": 3,
         },
         {
             "customer": "premium-789",
@@ -95,7 +98,7 @@ def demonstrate_multi_tenant_cost_tracking():
             "operation": "marketing_copy",
             "team": "content-team",
             "project": "ai-writer",
-            "requests": 8
+            "requests": 8,
         },
         {
             "customer": "enterprise-123",
@@ -103,7 +106,7 @@ def demonstrate_multi_tenant_cost_tracking():
             "operation": "analytics_summary",
             "team": "analytics-team",
             "project": "insights-engine",
-            "requests": 2
+            "requests": 2,
         },
         {
             "customer": "startup-456",
@@ -111,8 +114,8 @@ def demonstrate_multi_tenant_cost_tracking():
             "operation": "multilingual_support",
             "team": "localization-team",
             "project": "translator",
-            "requests": 10
-        }
+            "requests": 10,
+        },
     ]
 
     total_costs_by_customer = {}
@@ -137,7 +140,9 @@ def demonstrate_multi_tenant_cost_tracking():
             total_costs_by_customer[customer_id] = 0
         total_costs_by_customer[customer_id] += total_cost
 
-        print(f"   💰 Cost: ${total_cost:.4f} (${actual_cost_per_request:.4f} per request)")
+        print(
+            f"   💰 Cost: ${total_cost:.4f} (${actual_cost_per_request:.4f} per request)"
+        )
 
         # Record detailed telemetry for each request batch
         with telemetry.trace_operation(
@@ -148,9 +153,8 @@ def demonstrate_multi_tenant_cost_tracking():
             customer=customer_id,
             customer_name=customer_info["name"],
             customer_tier=customer_info["tier"],
-            feature=op["feature"]
+            feature=op["feature"],
         ) as span:
-
             # Record cost telemetry with customer attribution
             telemetry.record_cost(
                 span=span,
@@ -163,12 +167,14 @@ def demonstrate_multi_tenant_cost_tracking():
                 # Custom attributes for attribution
                 cost_per_unit=actual_cost_per_request,
                 request_count=op["requests"],
-                billing_rate=customer_info["billing_rate"]
+                billing_rate=customer_info["billing_rate"],
             )
 
             # Record customer budget tracking
             monthly_budget = customer_info["monthly_budget"]
-            budget_used_pct = (total_costs_by_customer[customer_id] / monthly_budget) * 100
+            budget_used_pct = (
+                total_costs_by_customer[customer_id] / monthly_budget
+            ) * 100
 
             telemetry.record_budget(
                 span=span,
@@ -176,11 +182,13 @@ def demonstrate_multi_tenant_cost_tracking():
                 allocated=monthly_budget,
                 consumed=total_costs_by_customer[customer_id],
                 period="monthly",
-                customer_tier=customer_info["tier"]
+                customer_tier=customer_info["tier"],
             )
 
             if budget_used_pct > 80:
-                print(f"   ⚠️  Budget Warning: {budget_used_pct:.1f}% of monthly budget used")
+                print(
+                    f"   ⚠️  Budget Warning: {budget_used_pct:.1f}% of monthly budget used"
+                )
             else:
                 print(f"   ✅ Budget: {budget_used_pct:.1f}% of monthly budget used")
 
@@ -197,8 +205,10 @@ def demonstrate_multi_tenant_cost_tracking():
         # Security: Sanitize sensitive financial data for logging
         # Only log aggregate metrics, not specific financial details
         sanitized_info = {
-            'customer_tier': customer_info['tier'],
-            'usage_percentage': round((total_cost/customer_info['monthly_budget']*100), 1)
+            "customer_tier": customer_info["tier"],
+            "usage_percentage": round(
+                (total_cost / customer_info["monthly_budget"] * 100), 1
+            ),
         }
 
         print(f"\n🏢 {customer_info['name']} ({sanitized_info['customer_tier']})")
@@ -206,8 +216,11 @@ def demonstrate_multi_tenant_cost_tracking():
         print(f"   Budget Used: {sanitized_info['usage_percentage']}%")
 
         # Log sanitized data for audit (no sensitive financial details)
-        logger.info(f"Customer usage summary - Tier: {sanitized_info['customer_tier']}, "
-                   f"Usage: {sanitized_info['usage_percentage']}% of budget")
+        logger.info(
+            f"Customer usage summary - Tier: {sanitized_info['customer_tier']}, "
+            f"Usage: {sanitized_info['usage_percentage']}% of budget"
+        )
+
 
 def demonstrate_real_time_cost_tracking():
     """
@@ -230,14 +243,14 @@ def demonstrate_real_time_cost_tracking():
                 "customer_id": "enterprise-123",
                 "prompt": "Summarize the quarterly sales performance in 2 sentences",
                 "feature": "data_insights",
-                "model": "gpt-3.5-turbo"
+                "model": "gpt-3.5-turbo",
             },
             {
                 "customer_id": "startup-456",
                 "prompt": "Generate a product description for an AI-powered analytics tool",
                 "feature": "content_generation",
-                "model": "gpt-3.5-turbo"
-            }
+                "model": "gpt-3.5-turbo",
+            },
         ]
 
         for op in customer_operations:
@@ -259,14 +272,17 @@ def demonstrate_real_time_cost_tracking():
                 customer_name=customer_info["name"],
                 customer_tier=customer_info["tier"],
                 feature=op["feature"],
-                billing_rate=customer_info["billing_rate"]
+                billing_rate=customer_info["billing_rate"],
             )
 
-            print(f"   ✅ Response generated and costs attributed to {customer_info['name']}")
+            print(
+                f"   ✅ Response generated and costs attributed to {customer_info['name']}"
+            )
             print("   📊 Real-time telemetry sent to observability platform")
 
     except Exception as e:
         print(f"❌ Error: {e}")
+
 
 def show_cost_attribution_analytics():
     """
@@ -282,34 +298,35 @@ def show_cost_attribution_analytics():
         {
             "metric": "Customer Profitability Analysis",
             "value": "Enterprise customers: 25% avg margin, Startup customers: 15% avg margin",
-            "action": "Consider tiered pricing optimization"
+            "action": "Consider tiered pricing optimization",
         },
         {
             "metric": "Feature Cost Efficiency",
             "value": "Data Insights: $0.25/request, Chat Assistant: $0.02/request",
-            "action": "Focus optimization efforts on high-cost features"
+            "action": "Focus optimization efforts on high-cost features",
         },
         {
             "metric": "Usage Pattern Insights",
             "value": "70% of AI costs come from 20% of customers",
-            "action": "Implement usage-based pricing for heavy users"
+            "action": "Implement usage-based pricing for heavy users",
         },
         {
             "metric": "Budget Utilization",
             "value": "3 customers approaching monthly budget limits",
-            "action": "Proactive customer success outreach needed"
+            "action": "Proactive customer success outreach needed",
         },
         {
             "metric": "Cost Trend Analysis",
             "value": "AI costs growing 15% month-over-month",
-            "action": "Review pricing strategy and cost optimization"
-        }
+            "action": "Review pricing strategy and cost optimization",
+        },
     ]
 
     for i, analytic in enumerate(analytics_examples, 1):
         print(f"\n{i}. 📊 {analytic['metric']}")
         print(f"   📈 Insight: {analytic['value']}")
         print(f"   💡 Action: {analytic['action']}")
+
 
 def show_telemetry_for_cost_attribution():
     """
@@ -341,7 +358,7 @@ def show_telemetry_for_cost_attribution():
         "genops.budget.name": "enterprise-123_monthly_ai_budget",
         "genops.budget.allocated": 500.0,
         "genops.budget.consumed": 45.67,
-        "genops.budget.utilization_percent": 9.13
+        "genops.budget.utilization_percent": 9.13,
     }
 
     print("📈 Sample cost attribution telemetry:")
@@ -355,6 +372,7 @@ def show_telemetry_for_cost_attribution():
     print("   • Usage-based billing automation")
     print("   • Customer profitability analysis")
 
+
 def show_integration_examples():
     """
     Show how this integrates with billing and analytics systems.
@@ -367,26 +385,27 @@ def show_integration_examples():
             "Stripe - Usage-based billing with metered API costs",
             "Chargebee - Subscription billing with AI usage add-ons",
             "Zuora - Enterprise billing with detailed cost attribution",
-            "Custom billing - API-driven cost allocation and invoicing"
+            "Custom billing - API-driven cost allocation and invoicing",
         ],
         "Analytics Platforms": [
             "Datadog - Cost dashboards and customer profitability metrics",
             "Grafana - Real-time cost visualization and budget alerts",
             "Tableau - Customer analytics and cost trend reporting",
-            "Custom dashboards - OpenTelemetry data to any visualization tool"
+            "Custom dashboards - OpenTelemetry data to any visualization tool",
         ],
         "Business Intelligence": [
             "Looker - Customer LTV analysis with AI cost components",
             "PowerBI - Executive reporting on AI cost efficiency",
             "Amplitude - Product analytics with AI feature cost correlation",
-            "Mixpanel - User behavior analysis with cost attribution"
-        ]
+            "Mixpanel - User behavior analysis with cost attribution",
+        ],
     }
 
     for category, tools in integrations.items():
         print(f"\n🔧 {category}:")
         for tool in tools:
             print(f"   • {tool}")
+
 
 def main():
     """
@@ -429,6 +448,7 @@ def main():
     print("5. Analyze customer profitability and optimize pricing strategy")
 
     print("\n🔗 Learn more: https://github.com/KoshiHQ/GenOps-AI/tree/main/docs")
+
 
 if __name__ == "__main__":
     main()

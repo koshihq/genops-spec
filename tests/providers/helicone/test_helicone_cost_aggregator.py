@@ -9,25 +9,29 @@ Tests the cost aggregation including:
 - Gateway overhead analysis
 """
 
+from datetime import datetime
+from unittest.mock import Mock
+
 import pytest
-from unittest.mock import Mock, patch
-from datetime import datetime, timedelta
-from typing import Dict, Any
 
 # Import the modules under test
 try:
     from genops.providers.helicone_cost_aggregator import (
         HeliconeSession,
         HeliconeSessionSummary,
+        aggregate_session_costs,  # noqa: F401
         multi_provider_cost_tracking,
-        aggregate_session_costs
     )
+
     HELICONE_COST_AGGREGATOR_AVAILABLE = True
 except ImportError:
     HELICONE_COST_AGGREGATOR_AVAILABLE = False
 
 
-@pytest.mark.skipif(not HELICONE_COST_AGGREGATOR_AVAILABLE, reason="Helicone cost aggregator not available")
+@pytest.mark.skipif(
+    not HELICONE_COST_AGGREGATOR_AVAILABLE,
+    reason="Helicone cost aggregator not available",
+)
 class TestHeliconeSession:
     """Test suite for Helicone session management."""
 
@@ -48,9 +52,9 @@ class TestHeliconeSession:
             input_tokens=100,
             output_tokens=50,
             provider_cost=0.002,
-            gateway_cost=0.0001
+            gateway_cost=0.0001,
         )
-        
+
         assert len(self.session.calls) == 1
         call = self.session.calls[0]
         assert call.provider == "openai"
@@ -59,10 +63,12 @@ class TestHeliconeSession:
     def test_session_summary_generation(self):
         """Test session summary generation."""
         self.session.add_llm_call("openai", "gpt-3.5-turbo", 100, 50, 0.002, 0.0001)
-        self.session.add_llm_call("anthropic", "claude-3-haiku", 120, 60, 0.0015, 0.0001)
-        
+        self.session.add_llm_call(
+            "anthropic", "claude-3-haiku", 120, 60, 0.0015, 0.0001
+        )
+
         summary = self.session.get_summary()
-        
+
         assert isinstance(summary, HeliconeSessionSummary)
         assert summary.total_cost > 0
         assert len(summary.cost_by_provider) == 2
@@ -72,7 +78,10 @@ class TestHeliconeSession:
         pass
 
 
-@pytest.mark.skipif(not HELICONE_COST_AGGREGATOR_AVAILABLE, reason="Helicone cost aggregator not available")
+@pytest.mark.skipif(
+    not HELICONE_COST_AGGREGATOR_AVAILABLE,
+    reason="Helicone cost aggregator not available",
+)
 class TestMultiProviderCostTracking:
     """Test suite for multi-provider cost tracking."""
 
@@ -95,16 +104,34 @@ class TestMultiProviderCostTracking:
         pass
 
 
-@pytest.mark.skipif(not HELICONE_COST_AGGREGATOR_AVAILABLE, reason="Helicone cost aggregator not available")
+@pytest.mark.skipif(
+    not HELICONE_COST_AGGREGATOR_AVAILABLE,
+    reason="Helicone cost aggregator not available",
+)
 class TestHeliconeSessionSummary:
     """Test suite for session summary functionality."""
 
     def setup_method(self):
         """Set up test fixtures."""
         self.sample_calls = [
-            Mock(provider="openai", model="gpt-3.5-turbo", provider_cost=0.002, gateway_cost=0.0001),
-            Mock(provider="anthropic", model="claude-3-haiku", provider_cost=0.0015, gateway_cost=0.0001),
-            Mock(provider="groq", model="mixtral-8x7b", provider_cost=0.0005, gateway_cost=0.0001)
+            Mock(
+                provider="openai",
+                model="gpt-3.5-turbo",
+                provider_cost=0.002,
+                gateway_cost=0.0001,
+            ),
+            Mock(
+                provider="anthropic",
+                model="claude-3-haiku",
+                provider_cost=0.0015,
+                gateway_cost=0.0001,
+            ),
+            Mock(
+                provider="groq",
+                model="mixtral-8x7b",
+                provider_cost=0.0005,
+                gateway_cost=0.0001,
+            ),
         ]
 
     def test_summary_cost_calculations(self):
@@ -124,7 +151,10 @@ class TestHeliconeSessionSummary:
         pass
 
 
-@pytest.mark.skipif(not HELICONE_COST_AGGREGATOR_AVAILABLE, reason="Helicone cost aggregator not available")
+@pytest.mark.skipif(
+    not HELICONE_COST_AGGREGATOR_AVAILABLE,
+    reason="Helicone cost aggregator not available",
+)
 class TestCostAggregationEdgeCases:
     """Test suite for edge cases in cost aggregation."""
 

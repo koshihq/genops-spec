@@ -6,20 +6,23 @@ Provides shared fixtures, test configuration, and utilities
 for comprehensive Together AI provider testing.
 """
 
-import pytest
 import os
 import sys
-from unittest.mock import Mock, patch, MagicMock
 from decimal import Decimal
-from typing import Dict, Any
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 # Add project root to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 
 try:
     from src.genops.providers.together import GenOpsTogetherAdapter, TogetherModel
     from src.genops.providers.together_pricing import TogetherPricingCalculator
-    from src.genops.providers.together_validation import ValidationResult, ValidationError
+    from src.genops.providers.together_validation import (
+        ValidationError,
+        ValidationResult,
+    )
 except ImportError:
     # Skip all tests if Together AI provider is not available
     pytest.skip("Together AI provider not available", allow_module_level=True)
@@ -33,7 +36,7 @@ def test_config():
         "test_project": "comprehensive-testing",
         "test_environment": "test",
         "default_budget": 5.0,
-        "default_governance": "advisory"
+        "default_governance": "advisory",
     }
 
 
@@ -46,29 +49,40 @@ def mock_together_response():
         model="meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
         id="test-response-id",
         created=1234567890,
-        object="chat.completion"
+        object="chat.completion",
     )
 
 
 @pytest.fixture
 def mock_together_client(mock_together_response):
     """Fixture providing fully mocked Together client."""
-    with patch('src.genops.providers.together.Together') as mock_together:
+    with patch("src.genops.providers.together.Together") as mock_together:
         client = MagicMock()
-        
+
         # Mock chat completions
         client.chat.completions.create.return_value = mock_together_response
-        
+
         # Mock models list
-        client.models.list.return_value = MagicMock(data=[
-            {"id": "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo", "object": "model"},
-            {"id": "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo", "object": "model"},
-            {"id": "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo", "object": "model"},
-            {"id": "deepseek-ai/DeepSeek-R1-Distill-Llama-8B", "object": "model"},
-            {"id": "deepseek-ai/DeepSeek-Coder-V2-Instruct", "object": "model"},
-            {"id": "Qwen/Qwen2.5-VL-72B-Instruct", "object": "model"}
-        ])
-        
+        client.models.list.return_value = MagicMock(
+            data=[
+                {
+                    "id": "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+                    "object": "model",
+                },
+                {
+                    "id": "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+                    "object": "model",
+                },
+                {
+                    "id": "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",
+                    "object": "model",
+                },
+                {"id": "deepseek-ai/DeepSeek-R1-Distill-Llama-8B", "object": "model"},
+                {"id": "deepseek-ai/DeepSeek-Coder-V2-Instruct", "object": "model"},
+                {"id": "Qwen/Qwen2.5-VL-72B-Instruct", "object": "model"},
+            ]
+        )
+
         mock_together.return_value = client
         yield client
 
@@ -81,7 +95,7 @@ def standard_test_adapter(test_config):
         project=test_config["test_project"],
         environment=test_config["test_environment"],
         daily_budget_limit=test_config["default_budget"],
-        governance_policy=test_config["default_governance"]
+        governance_policy=test_config["default_governance"],
     )
 
 
@@ -98,11 +112,7 @@ def enterprise_test_adapter(test_config):
         monthly_budget_limit=500.0,
         governance_policy="strict",
         enable_cost_alerts=True,
-        tags={
-            "tier": "enterprise",
-            "department": "engineering",
-            "priority": "high"
-        }
+        tags={"tier": "enterprise", "department": "engineering", "priority": "high"},
     )
 
 
@@ -116,8 +126,14 @@ def pricing_calculator():
 def sample_messages():
     """Fixture providing sample chat messages for testing."""
     return [
-        {"role": "system", "content": "You are a helpful AI assistant specialized in testing."},
-        {"role": "user", "content": "This is a test message for the Together AI integration."}
+        {
+            "role": "system",
+            "content": "You are a helpful AI assistant specialized in testing.",
+        },
+        {
+            "role": "user",
+            "content": "This is a test message for the Together AI integration.",
+        },
     ]
 
 
@@ -130,11 +146,11 @@ def validation_success_result():
         model_access=[
             "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
             "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
-            "deepseek-ai/DeepSeek-R1-Distill-Llama-8B"
+            "deepseek-ai/DeepSeek-R1-Distill-Llama-8B",
         ],
         api_key_valid=True,
         dependencies_available=True,
-        connectivity_working=True
+        connectivity_working=True,
     )
 
 
@@ -147,17 +163,17 @@ def validation_failure_result():
             ValidationError(
                 code="API_KEY_MISSING",
                 message="Together AI API key not found",
-                remediation="Set TOGETHER_API_KEY environment variable with your API key"
+                remediation="Set TOGETHER_API_KEY environment variable with your API key",
             ),
             ValidationError(
-                code="DEPENDENCY_MISSING", 
+                code="DEPENDENCY_MISSING",
                 message="Together AI client library not installed",
-                remediation="Install with: pip install together"
-            )
+                remediation="Install with: pip install together",
+            ),
         ],
         api_key_valid=False,
         dependencies_available=False,
-        connectivity_working=False
+        connectivity_working=False,
     )
 
 
@@ -166,20 +182,20 @@ def clean_environment():
     """Auto-use fixture to ensure clean test environment."""
     # Store original environment
     original_env = os.environ.copy()
-    
+
     # Set up test environment variables if not present
     test_env_vars = {
         "GENOPS_TEAM": "test-team",
-        "GENOPS_PROJECT": "test-project", 
-        "GENOPS_ENVIRONMENT": "test"
+        "GENOPS_PROJECT": "test-project",
+        "GENOPS_ENVIRONMENT": "test",
     }
-    
+
     for key, value in test_env_vars.items():
         if key not in os.environ:
             os.environ[key] = value
-    
+
     yield
-    
+
     # Restore original environment
     os.environ.clear()
     os.environ.update(original_env)
@@ -193,7 +209,7 @@ def mock_budget_exceeded_adapter():
         project="budget-exceeded",
         daily_budget_limit=0.001,  # Very low budget
         governance_policy="strict",  # Strict enforcement
-        enable_cost_alerts=True
+        enable_cost_alerts=True,
     )
 
 
@@ -202,12 +218,21 @@ def performance_test_data():
     """Fixture providing data for performance testing."""
     return {
         "small_message": [{"role": "user", "content": "Hi"}],
-        "medium_message": [{"role": "user", "content": "Please explain machine learning in simple terms for a beginner audience."}],
-        "large_message": [{"role": "user", "content": "Write a comprehensive analysis of artificial intelligence trends, including deep learning, natural language processing, computer vision, and their applications across various industries like healthcare, finance, automotive, and entertainment. Include both current developments and future predictions."}],
+        "medium_message": [
+            {
+                "role": "user",
+                "content": "Please explain machine learning in simple terms for a beginner audience.",
+            }
+        ],
+        "large_message": [
+            {
+                "role": "user",
+                "content": "Write a comprehensive analysis of artificial intelligence trends, including deep learning, natural language processing, computer vision, and their applications across various industries like healthcare, finance, automotive, and entertainment. Include both current developments and future predictions.",
+            }
+        ],
         "batch_messages": [
-            [{"role": "user", "content": f"Batch message {i}"}] 
-            for i in range(50)
-        ]
+            [{"role": "user", "content": f"Batch message {i}"}] for i in range(50)
+        ],
     }
 
 
@@ -219,31 +244,23 @@ def models_for_testing():
         TogetherModel.LLAMA_3_1_70B_INSTRUCT,
         TogetherModel.DEEPSEEK_R1,
         TogetherModel.DEEPSEEK_CODER_V2,
-        TogetherModel.QWEN_VL_72B
+        TogetherModel.QWEN_VL_72B,
     ]
 
 
 # Test markers for categorizing tests
 def pytest_configure(config):
     """Configure pytest with custom markers."""
-    config.addinivalue_line(
-        "markers", "unit: Unit tests for individual components"
-    )
+    config.addinivalue_line("markers", "unit: Unit tests for individual components")
     config.addinivalue_line(
         "markers", "integration: Integration tests for end-to-end workflows"
     )
-    config.addinivalue_line(
-        "markers", "performance: Performance and load testing"
-    )
+    config.addinivalue_line("markers", "performance: Performance and load testing")
     config.addinivalue_line(
         "markers", "cross_provider: Cross-provider compatibility tests"
     )
-    config.addinivalue_line(
-        "markers", "slow: Tests that take longer to run"
-    )
-    config.addinivalue_line(
-        "markers", "requires_api_key: Tests that need real API key"
-    )
+    config.addinivalue_line("markers", "slow: Tests that take longer to run")
+    config.addinivalue_line("markers", "requires_api_key: Tests that need real API key")
 
 
 def pytest_collection_modifyitems(config, items):
@@ -268,19 +285,19 @@ def pytest_collection_modifyitems(config, items):
 # Helper functions for tests
 def assert_valid_governance_result(result):
     """Helper function to assert result has valid governance attributes."""
-    assert hasattr(result, 'response')
-    assert hasattr(result, 'tokens_used')
-    assert hasattr(result, 'cost')
-    assert hasattr(result, 'model_used')
-    assert hasattr(result, 'governance_attributes')
-    
+    assert hasattr(result, "response")
+    assert hasattr(result, "tokens_used")
+    assert hasattr(result, "cost")
+    assert hasattr(result, "model_used")
+    assert hasattr(result, "governance_attributes")
+
     assert result.response is not None
     assert result.tokens_used > 0
     assert isinstance(result.cost, Decimal)
     assert result.cost > 0
     assert result.model_used is not None
     assert isinstance(result.governance_attributes, dict)
-    
+
     # Check essential governance attributes
     required_attrs = ["team", "project", "environment"]
     for attr in required_attrs:
@@ -291,13 +308,16 @@ def assert_valid_governance_result(result):
 def assert_valid_cost_summary(summary):
     """Helper function to assert cost summary is valid."""
     required_keys = [
-        "daily_costs", "daily_budget_limit", "daily_budget_utilization",
-        "governance_policy", "operations_count"
+        "daily_costs",
+        "daily_budget_limit",
+        "daily_budget_utilization",
+        "governance_policy",
+        "operations_count",
     ]
-    
+
     for key in required_keys:
         assert key in summary
-    
+
     assert isinstance(summary["daily_costs"], (int, float, Decimal))
     assert summary["daily_costs"] >= 0
     assert isinstance(summary["daily_budget_limit"], (int, float))
@@ -309,14 +329,14 @@ def assert_valid_cost_summary(summary):
     assert summary["operations_count"] >= 0
 
 
-def assert_valid_pricing_calculation(cost, expected_min=0, expected_max=float('inf')):
+def assert_valid_pricing_calculation(cost, expected_min=0, expected_max=float("inf")):
     """Helper function to assert pricing calculation is valid."""
     assert isinstance(cost, Decimal)
     assert cost > 0
     assert expected_min <= float(cost) <= expected_max
-    
+
     # Cost should have reasonable precision (at least 6 decimal places)
     cost_str = str(cost)
-    if '.' in cost_str:
-        decimal_places = len(cost_str.split('.')[1])
+    if "." in cost_str:
+        decimal_places = len(cost_str.split(".")[1])
         assert decimal_places >= 4  # At least 4 decimal places for precision

@@ -19,12 +19,8 @@ Prerequisites:
 import os
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from typing import List, Dict
 
-from genops.providers.anyscale import (
-    instrument_anyscale,
-    calculate_completion_cost
-)
+from genops.providers.anyscale import calculate_completion_cost, instrument_anyscale
 
 # Check API key
 if not os.getenv("ANYSCALE_API_KEY"):
@@ -41,10 +37,7 @@ print("=" * 70)
 print("PATTERN 1: Basic Governance Context")
 print("=" * 70 + "\n")
 
-adapter = instrument_anyscale(
-    team="ml-engineering",
-    project="workflows"
-)
+adapter = instrument_anyscale(team="ml-engineering", project="workflows")
 
 print("Using governance context for a customer workflow...\n")
 
@@ -52,9 +45,8 @@ print("Using governance context for a customer workflow...\n")
 with adapter.governance_context(
     customer_id="customer-abc-123",
     feature="document-processing",
-    workflow_id="doc-proc-001"
+    workflow_id="doc-proc-001",
 ) as context:
-
     print(f"📋 Context attributes: {list(context.keys())}\n")
 
     # Step 1: Classify document
@@ -62,16 +54,18 @@ with adapter.governance_context(
     response1 = adapter.completion_create(
         model="meta-llama/Llama-2-7b-chat-hf",
         messages=[{"role": "user", "content": "Classify: invoice document"}],
-        max_tokens=20
+        max_tokens=20,
     )
-    print(f"   ✅ Classification: {response1['choices'][0]['message']['content'][:50]}...")
+    print(
+        f"   ✅ Classification: {response1['choices'][0]['message']['content'][:50]}..."
+    )
 
     # Step 2: Extract data
     print("\nStep 2: Data extraction...")
     response2 = adapter.completion_create(
         model="meta-llama/Llama-2-13b-chat-hf",
         messages=[{"role": "user", "content": "Extract invoice details"}],
-        max_tokens=100
+        max_tokens=100,
     )
     print(f"   ✅ Extraction: {response2['choices'][0]['message']['content'][:50]}...")
 
@@ -80,7 +74,7 @@ with adapter.governance_context(
     response3 = adapter.completion_create(
         model="meta-llama/Llama-2-7b-chat-hf",
         messages=[{"role": "user", "content": "Validate extracted data"}],
-        max_tokens=50
+        max_tokens=50,
     )
     print(f"   ✅ Validation: {response3['choices'][0]['message']['content'][:50]}...")
 
@@ -92,39 +86,42 @@ print("=" * 70)
 print("PATTERN 2: Multi-Step Workflow with Cost Tracking")
 print("=" * 70 + "\n")
 
+
 @dataclass
 class WorkflowTracker:
     """Track workflow execution and costs."""
 
     workflow_id: str
-    steps: List[Dict] = field(default_factory=list)
+    steps: list[dict] = field(default_factory=list)
     total_cost: float = 0.0
     total_tokens: int = 0
 
-    def add_step(self, step_name: str, response: Dict, model: str):
+    def add_step(self, step_name: str, response: dict, model: str):
         """Add completed step with cost calculation."""
-        usage = response['usage']
+        usage = response["usage"]
         cost = calculate_completion_cost(
             model=model,
-            input_tokens=usage['prompt_tokens'],
-            output_tokens=usage['completion_tokens']
+            input_tokens=usage["prompt_tokens"],
+            output_tokens=usage["completion_tokens"],
         )
 
-        self.steps.append({
-            'step': step_name,
-            'model': model,
-            'tokens': usage['total_tokens'],
-            'cost': cost
-        })
+        self.steps.append(
+            {
+                "step": step_name,
+                "model": model,
+                "tokens": usage["total_tokens"],
+                "cost": cost,
+            }
+        )
 
         self.total_cost += cost
-        self.total_tokens += usage['total_tokens']
+        self.total_tokens += usage["total_tokens"]
 
     def print_summary(self):
         """Print workflow summary."""
-        print(f"\n{'='*70}")
+        print(f"\n{'=' * 70}")
         print(f"WORKFLOW SUMMARY: {self.workflow_id}")
-        print(f"{'='*70}")
+        print(f"{'=' * 70}")
 
         for i, step in enumerate(self.steps, 1):
             print(f"\nStep {i}: {step['step']}")
@@ -132,12 +129,12 @@ class WorkflowTracker:
             print(f"   Tokens: {step['tokens']}")
             print(f"   Cost: ${step['cost']:.8f}")
 
-        print(f"\n{'='*70}")
+        print(f"\n{'=' * 70}")
         print(f"Total Steps: {len(self.steps)}")
         print(f"Total Tokens: {self.total_tokens}")
         print(f"Total Cost: ${self.total_cost:.6f}")
-        print(f"Avg Cost/Step: ${self.total_cost/len(self.steps):.8f}")
-        print(f"{'='*70}\n")
+        print(f"Avg Cost/Step: ${self.total_cost / len(self.steps):.8f}")
+        print(f"{'=' * 70}\n")
 
 
 workflow_tracker = WorkflowTracker(workflow_id="sentiment-analysis-001")
@@ -147,37 +144,48 @@ print("Executing multi-step sentiment analysis workflow...\n")
 with adapter.governance_context(
     customer_id="analytics-customer",
     feature="sentiment-analysis",
-    workflow_id=workflow_tracker.workflow_id
+    workflow_id=workflow_tracker.workflow_id,
 ):
-
     # Step 1: Preprocessing
     print("Step 1: Text preprocessing...")
     response = adapter.completion_create(
         model="meta-llama/Llama-2-7b-chat-hf",
-        messages=[{"role": "user", "content": "Clean and normalize: Customer feedback text"}],
-        max_tokens=50
+        messages=[
+            {"role": "user", "content": "Clean and normalize: Customer feedback text"}
+        ],
+        max_tokens=50,
     )
-    workflow_tracker.add_step("Preprocessing", response, "meta-llama/Llama-2-7b-chat-hf")
+    workflow_tracker.add_step(
+        "Preprocessing", response, "meta-llama/Llama-2-7b-chat-hf"
+    )
     print("   ✅ Preprocessing complete")
 
     # Step 2: Sentiment classification
     print("\nStep 2: Sentiment classification...")
     response = adapter.completion_create(
         model="meta-llama/Llama-2-13b-chat-hf",
-        messages=[{"role": "user", "content": "Classify sentiment: This product is amazing!"}],
-        max_tokens=30
+        messages=[
+            {"role": "user", "content": "Classify sentiment: This product is amazing!"}
+        ],
+        max_tokens=30,
     )
-    workflow_tracker.add_step("Classification", response, "meta-llama/Llama-2-13b-chat-hf")
+    workflow_tracker.add_step(
+        "Classification", response, "meta-llama/Llama-2-13b-chat-hf"
+    )
     print("   ✅ Classification complete")
 
     # Step 3: Entity extraction
     print("\nStep 3: Entity extraction...")
     response = adapter.completion_create(
         model="meta-llama/Llama-2-13b-chat-hf",
-        messages=[{"role": "user", "content": "Extract entities: product names, features"}],
-        max_tokens=50
+        messages=[
+            {"role": "user", "content": "Extract entities: product names, features"}
+        ],
+        max_tokens=50,
     )
-    workflow_tracker.add_step("Entity Extraction", response, "meta-llama/Llama-2-13b-chat-hf")
+    workflow_tracker.add_step(
+        "Entity Extraction", response, "meta-llama/Llama-2-13b-chat-hf"
+    )
     print("   ✅ Entity extraction complete")
 
     # Step 4: Summary generation
@@ -185,7 +193,7 @@ with adapter.governance_context(
     response = adapter.completion_create(
         model="meta-llama/Llama-2-7b-chat-hf",
         messages=[{"role": "user", "content": "Summarize sentiment analysis results"}],
-        max_tokens=80
+        max_tokens=80,
     )
     workflow_tracker.add_step("Summary", response, "meta-llama/Llama-2-7b-chat-hf")
     print("   ✅ Summary complete")
@@ -197,6 +205,7 @@ workflow_tracker.print_summary()
 print("=" * 70)
 print("PATTERN 3: Error Handling with Context")
 print("=" * 70 + "\n")
+
 
 @contextmanager
 def safe_workflow_context(adapter, **governance_attrs):
@@ -219,17 +228,14 @@ print("Testing error handling in workflow context...\n")
 
 try:
     with safe_workflow_context(
-        adapter,
-        customer_id="error-test-customer",
-        workflow_id="error-workflow-001"
+        adapter, customer_id="error-test-customer", workflow_id="error-workflow-001"
     ) as ctx:
-
         # Successful operation
         print("Step 1: Successful operation...")
         _ = adapter.completion_create(
             model="meta-llama/Llama-2-7b-chat-hf",
             messages=[{"role": "user", "content": "Test successful operation"}],
-            max_tokens=20
+            max_tokens=20,
         )
         print("   ✅ Operation successful\n")
 
@@ -253,51 +259,44 @@ print("Executing nested workflow: Document processing with sub-workflows...\n")
 with adapter.governance_context(
     customer_id="enterprise-customer",
     feature="document-processing",
-    workflow_id="doc-master-001"
+    workflow_id="doc-master-001",
 ) as outer_ctx:
-
     print("📄 Main workflow: Document processing")
     print(f"   Context: {list(outer_ctx.keys())}\n")
 
     # Sub-workflow 1: Text extraction
     print("  → Sub-workflow 1: Text extraction")
     with adapter.governance_context(
-        sub_workflow="text-extraction",
-        workflow_step="1"
+        sub_workflow="text-extraction", workflow_step="1"
     ) as sub_ctx1:
-
         response = adapter.completion_create(
             model="meta-llama/Llama-2-7b-chat-hf",
             messages=[{"role": "user", "content": "Extract text from PDF"}],
-            max_tokens=50
+            max_tokens=50,
         )
         print(f"     ✅ Extracted {response['usage']['total_tokens']} tokens\n")
 
     # Sub-workflow 2: Translation
     print("  → Sub-workflow 2: Translation")
     with adapter.governance_context(
-        sub_workflow="translation",
-        workflow_step="2"
+        sub_workflow="translation", workflow_step="2"
     ) as sub_ctx2:
-
         response = adapter.completion_create(
             model="meta-llama/Llama-2-13b-chat-hf",
             messages=[{"role": "user", "content": "Translate to Spanish"}],
-            max_tokens=100
+            max_tokens=100,
         )
         print(f"     ✅ Translated {response['usage']['total_tokens']} tokens\n")
 
     # Sub-workflow 3: Summarization
     print("  → Sub-workflow 3: Summarization")
     with adapter.governance_context(
-        sub_workflow="summarization",
-        workflow_step="3"
+        sub_workflow="summarization", workflow_step="3"
     ) as sub_ctx3:
-
         response = adapter.completion_create(
             model="meta-llama/Llama-2-7b-chat-hf",
             messages=[{"role": "user", "content": "Summarize document"}],
-            max_tokens=80
+            max_tokens=80,
         )
         print(f"     ✅ Summarized {response['usage']['total_tokens']} tokens\n")
 
@@ -324,9 +323,8 @@ batch_costs = []
 with adapter.governance_context(
     customer_id="batch-processing-customer",
     feature="batch-analysis",
-    workflow_id="batch-001"
+    workflow_id="batch-001",
 ):
-
     for i, doc in enumerate(documents, 1):
         print(f"Processing document {i}/{len(documents)}...")
 
@@ -334,14 +332,14 @@ with adapter.governance_context(
             model="meta-llama/Llama-2-7b-chat-hf",
             messages=[{"role": "user", "content": f"Analyze: {doc}"}],
             max_tokens=50,
-            document_id=f"doc-{i}"  # Additional tracking per document
+            document_id=f"doc-{i}",  # Additional tracking per document
         )
 
-        usage = response['usage']
+        usage = response["usage"]
         cost = calculate_completion_cost(
             model="meta-llama/Llama-2-7b-chat-hf",
-            input_tokens=usage['prompt_tokens'],
-            output_tokens=usage['completion_tokens']
+            input_tokens=usage["prompt_tokens"],
+            output_tokens=usage["completion_tokens"],
         )
 
         batch_costs.append(cost)
@@ -352,7 +350,7 @@ print("BATCH PROCESSING SUMMARY")
 print("=" * 70)
 print(f"Documents processed: {len(documents)}")
 print(f"Total cost: ${sum(batch_costs):.6f}")
-print(f"Avg cost/document: ${sum(batch_costs)/len(batch_costs):.8f}")
+print(f"Avg cost/document: ${sum(batch_costs) / len(batch_costs):.8f}")
 print(f"Min cost: ${min(batch_costs):.8f}")
 print(f"Max cost: ${max(batch_costs):.8f}")
 print("=" * 70 + "\n")

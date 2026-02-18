@@ -43,7 +43,8 @@ def check_prerequisites() -> bool:
 
     # Check GenOps
     try:
-        import genops
+        import genops  # noqa: F401
+
         print("  [OK] GenOps installed")
     except ImportError:
         print("  [ERROR] GenOps not installed")
@@ -68,7 +69,7 @@ def check_prerequisites() -> bool:
         missing.append('export COLLIBRA_PASSWORD="your-password"')
 
     if missing:
-        print(f"\n[ERROR] Missing requirements:")
+        print("\n[ERROR] Missing requirements:")
         for req in missing:
             print(f"   {req}")
         return False
@@ -150,9 +151,10 @@ def demonstrate_policy_import() -> int:
         # Example 1: Check cost limit policy
         print("   Example 1: Cost limit policy enforcement")
         policy_result = check_policy(
-            "cost_limit", {"cost": 5.0}  # Estimated operation cost
+            "cost_limit",
+            {"cost": 5.0},  # Estimated operation cost
         )
-        print(f"      Policy: cost_limit")
+        print("      Policy: cost_limit")
         print(f"      Result: {policy_result.result.value}")
         if policy_result.reason:
             print(f"      Reason: {policy_result.reason}")
@@ -166,7 +168,7 @@ def demonstrate_policy_import() -> int:
                 "request_count": 50,  # Current requests
             },
         )
-        print(f"      Policy: rate_limit")
+        print("      Policy: rate_limit")
         print(f"      Result: {policy_result.result.value}")
         if policy_result.reason:
             print(f"      Reason: {policy_result.reason}")
@@ -180,7 +182,7 @@ def demonstrate_policy_import() -> int:
                 "team": os.getenv("GENOPS_TEAM", "ml-platform"),
             },
         )
-        print(f"      Policy: team_access")
+        print("      Policy: team_access")
         print(f"      Result: {policy_result.result.value}")
         if policy_result.reason:
             print(f"      Reason: {policy_result.reason}")
@@ -244,7 +246,7 @@ def demonstrate_policy_import() -> int:
 
         sync_result = adapter.sync_policies()
 
-        print(f"   Sync Results:")
+        print("   Sync Results:")
         print(f"      • Policies Imported: {sync_result.get('imported', 0)}")
         print(f"      • Policies Updated: {sync_result.get('updated', 0)}")
         print(f"      • Failures: {sync_result.get('failed', 0)}")
@@ -267,7 +269,7 @@ def demonstrate_policy_import() -> int:
                 print(f"   [TIME] Last Sync: {time_since_sync:.1f} seconds ago")
 
             if stats.errors:
-                print(f"   [ERROR] Recent Errors:")
+                print("   [ERROR] Recent Errors:")
                 for error in stats.errors[-5:]:  # Show last 5 errors
                     print(f"      • {error}")
         print()

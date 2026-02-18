@@ -5,22 +5,24 @@ This module tests edge cases, boundary conditions, and error scenarios
 that might not be covered in the main test suites.
 """
 
-import pytest
 import json
 import sys
-import time
-from unittest.mock import Mock, patch, MagicMock
-from decimal import Decimal, InvalidOperation
 import threading
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Any, Dict, List
+from decimal import Decimal
+from unittest.mock import Mock, patch
 
-from genops.providers.flowise import instrument_flowise, auto_instrument
-from genops.providers.flowise_validation import (
-    validate_flowise_setup, ValidationResult, ValidationIssue
-)
+import pytest
+
+from genops.providers.flowise import auto_instrument, instrument_flowise
 from genops.providers.flowise_pricing import (
-    FlowiseCostCalculator, FlowisePricingTier, calculate_flowise_cost
+    FlowiseCostCalculator,
+    FlowisePricingTier,
+)
+from genops.providers.flowise_validation import (
+    ValidationResult,
+    validate_flowise_setup,
 )
 
 
@@ -32,7 +34,7 @@ class TestFlowiseEdgeCases:
         # Create a very long URL (beyond typical limits)
         long_host = "a" * 1000
         long_url = f"http://{long_host}.example.com:3000"
-        
+
         adapter = instrument_flowise(base_url=long_url)
         assert adapter.base_url == long_url
 
@@ -41,9 +43,9 @@ class TestFlowiseEdgeCases:
         unicode_urls = [
             "http://テスト.example.com:3000",
             "http://пример.рф:3000",
-            "http://例え.テスト:3000"
+            "http://例え.テスト:3000",
         ]
-        
+
         for url in unicode_urls:
             try:
                 adapter = instrument_flowise(base_url=url)
@@ -56,31 +58,26 @@ class TestFlowiseEdgeCases:
         """Test handling of special characters in team names."""
         special_teams = [
             "team-with-hyphens",
-            "team_with_underscores", 
+            "team_with_underscores",
             "team.with.dots",
             "team@company.com",
             "team with spaces",
             "team-123-numbers",
             "UPPERCASE-TEAM",
-            "MiXeD-cAsE-TeAm"
+            "MiXeD-cAsE-TeAm",
         ]
-        
+
         for team in special_teams:
-            adapter = instrument_flowise(
-                base_url="http://localhost:3000",
-                team=team
-            )
+            adapter = instrument_flowise(base_url="http://localhost:3000", team=team)
             assert adapter.team == team
 
     def test_empty_and_whitespace_values(self):
         """Test handling of empty and whitespace-only values."""
         edge_values = ["", " ", "\t", "\n", "\r\n", "   \t\n  "]
-        
+
         for value in edge_values:
             adapter = instrument_flowise(
-                base_url="http://localhost:3000",
-                team=value,
-                project=value
+                base_url="http://localhost:3000", team=value, project=value
             )
             # Should handle gracefully without crashing
             assert adapter.team == value
@@ -95,25 +92,25 @@ class TestFlowiseEdgeCases:
             customer_id=None,
             environment=None,
             cost_center=None,
-            feature=None
+            feature=None,
         )
-        
+
         # Should handle None values gracefully
-        assert hasattr(adapter, 'team')
-        assert hasattr(adapter, 'project')
+        assert hasattr(adapter, "team")
+        assert hasattr(adapter, "project")
 
     def test_very_large_numbers(self):
         """Test handling of very large numbers in cost calculations."""
         calculator = FlowiseCostCalculator()
-        
+
         # Test with extremely large token counts
         very_large_number = 10**10  # 10 billion tokens
-        
+
         try:
             cost = calculator.calculate_cost(
                 input_tokens=very_large_number,
                 output_tokens=very_large_number,
-                model_name="gpt-3.5-turbo"
+                model_name="gpt-3.5-turbo",
             )
             assert isinstance(cost, Decimal)
             assert cost >= 0
@@ -124,18 +121,16 @@ class TestFlowiseEdgeCases:
     def test_decimal_precision_edge_cases(self):
         """Test decimal precision in edge cases."""
         calculator = FlowiseCostCalculator()
-        
+
         # Test with very small numbers
         cost = calculator.calculate_cost(
-            input_tokens=1,
-            output_tokens=1,
-            model_name="gpt-3.5-turbo"
+            input_tokens=1, output_tokens=1, model_name="gpt-3.5-turbo"
         )
-        
+
         # Should maintain precision
         assert isinstance(cost, Decimal)
         assert cost > 0
-        
+
         # Test precision is maintained in calculations
         cost_str = str(cost)
         recreated_cost = Decimal(cost_str)
@@ -144,7 +139,7 @@ class TestFlowiseEdgeCases:
     def test_model_name_edge_cases(self):
         """Test model name edge cases."""
         calculator = FlowiseCostCalculator()
-        
+
         edge_case_models = [
             "",  # Empty string
             " ",  # Space
@@ -156,13 +151,11 @@ class TestFlowiseEdgeCases:
             None,  # None value
             123,  # Number instead of string
         ]
-        
+
         for model in edge_case_models:
             try:
                 cost = calculator.calculate_cost(
-                    input_tokens=100,
-                    output_tokens=50,
-                    model_name=model
+                    input_tokens=100, output_tokens=50, model_name=model
                 )
                 assert isinstance(cost, Decimal)
                 assert cost >= 0
@@ -174,24 +167,24 @@ class TestFlowiseEdgeCases:
         """Test creating many adapters concurrently."""
         adapters = []
         errors = []
-        
+
         def create_adapter(i):
             try:
                 adapter = instrument_flowise(
                     base_url="http://localhost:3000",
                     team=f"team-{i}",
-                    project=f"project-{i}"
+                    project=f"project-{i}",
                 )
                 adapters.append(adapter)
             except Exception as e:
                 errors.append(str(e))
-        
+
         # Create adapters concurrently
         with ThreadPoolExecutor(max_workers=50) as executor:
             futures = [executor.submit(create_adapter, i) for i in range(100)]
             for future in as_completed(futures):
                 future.result()  # Wait for completion
-        
+
         # Should create all adapters successfully
         assert len(adapters) == 100
         assert len(errors) == 0
@@ -199,35 +192,34 @@ class TestFlowiseEdgeCases:
     def test_memory_usage_with_many_objects(self):
         """Test memory usage with many objects."""
         import gc
-        
+
         gc.collect()
-        
+
         # Create many objects
         adapters = []
         calculators = []
-        
+
         for i in range(1000):
             adapter = instrument_flowise(
-                base_url="http://localhost:3000",
-                team=f"team-{i}"
+                base_url="http://localhost:3000", team=f"team-{i}"
             )
             adapters.append(adapter)
-            
+
             calculator = FlowiseCostCalculator()
             calculators.append(calculator)
-        
+
         # Use objects briefly
         for adapter in adapters[:10]:
             str(adapter)
-        
+
         for calculator in calculators[:10]:
             calculator.calculate_cost(100, 50, "gpt-3.5-turbo")
-        
+
         # Cleanup
         del adapters
         del calculators
         gc.collect()
-        
+
         # Test passes if no memory errors
 
     def test_recursive_data_structures(self):
@@ -235,17 +227,17 @@ class TestFlowiseEdgeCases:
         # Create circular reference
         data = {"key": None}
         data["key"] = data  # Circular reference
-        
+
         # Should handle without infinite recursion
         adapter = instrument_flowise("http://localhost:3000")
-        
+
         # Test with circular data in predict_flow
-        with patch('requests.post') as mock_post:
+        with patch("requests.post") as mock_post:
             mock_response = Mock()
             mock_response.status_code = 200
             mock_response.json.return_value = {"text": "Response"}
             mock_post.return_value = mock_response
-            
+
             # This might fail due to JSON serialization, but shouldn't hang
             try:
                 adapter.predict_flow("test-flow", "question", custom_data=data)
@@ -255,22 +247,23 @@ class TestFlowiseEdgeCases:
 
     def test_system_resource_limits(self):
         """Test behavior at system resource limits."""
+
         # Test with many simultaneous operations
         def stress_test():
             calculator = FlowiseCostCalculator()
             for _ in range(100):
                 calculator.calculate_cost(100, 50, "gpt-3.5-turbo")
-        
+
         # Run stress test in multiple threads
         threads = []
         for _ in range(10):
             thread = threading.Thread(target=stress_test)
             threads.append(thread)
             thread.start()
-        
+
         for thread in threads:
             thread.join()
-        
+
         # Should complete without errors
 
     def test_locale_and_encoding_edge_cases(self):
@@ -285,14 +278,12 @@ class TestFlowiseEdgeCases:
             "中文测试",
             "日本語テスト",
             "🚀 Emoji test 🤖",
-            "Mixed: English + 中文 + 🎉"
+            "Mixed: English + 中文 + 🎉",
         ]
-        
+
         for text in unicode_strings:
             adapter = instrument_flowise(
-                base_url="http://localhost:3000",
-                team=text,
-                project=text
+                base_url="http://localhost:3000", team=text, project=text
             )
             assert adapter.team == text
             assert adapter.project == text
@@ -300,7 +291,7 @@ class TestFlowiseEdgeCases:
     def test_json_serialization_edge_cases(self):
         """Test JSON serialization edge cases."""
         import json
-        
+
         # Test with problematic data types
         edge_case_data = {
             "decimal": Decimal("123.456"),
@@ -312,9 +303,9 @@ class TestFlowiseEdgeCases:
             "boolean": True,
             "number": 42,
             "float": 3.14159,
-            "list": [1, 2, 3, "four", {"five": 5}]
+            "list": [1, 2, 3, "four", {"five": 5}],
         }
-        
+
         # Should be serializable
         try:
             json_str = json.dumps(edge_case_data, default=str)
@@ -332,24 +323,28 @@ class TestFlowiseEdgeCases:
             "{",  # Incomplete JSON
             '{"key": value}',  # Invalid JSON
             '{"key": "value", }',  # Trailing comma
-            b'binary data',  # Binary data
+            b"binary data",  # Binary data
             None,  # None response
         ]
-        
+
         for response_data in malformed_responses:
-            with patch('requests.get') as mock_get:
+            with patch("requests.get") as mock_get:
                 mock_response = Mock()
                 mock_response.status_code = 200
-                
+
                 if isinstance(response_data, bytes):
-                    mock_response.json.side_effect = UnicodeDecodeError('utf-8', response_data, 0, len(response_data), 'invalid')
+                    mock_response.json.side_effect = UnicodeDecodeError(
+                        "utf-8", response_data, 0, len(response_data), "invalid"
+                    )
                 elif response_data is None:
                     mock_response.json.side_effect = AttributeError("No JSON")
                 else:
-                    mock_response.json.side_effect = json.JSONDecodeError("Invalid JSON", response_data or "", 0)
-                
+                    mock_response.json.side_effect = json.JSONDecodeError(
+                        "Invalid JSON", response_data or "", 0
+                    )
+
                 mock_get.return_value = mock_response
-                
+
                 # Should handle malformed responses gracefully
                 result = validate_flowise_setup("http://localhost:3000", "api-key")
                 assert isinstance(result, ValidationResult)
@@ -358,7 +353,7 @@ class TestFlowiseEdgeCases:
     def test_cost_calculation_boundary_values(self):
         """Test cost calculations at boundary values."""
         calculator = FlowiseCostCalculator()
-        
+
         boundary_cases = [
             (0, 0),  # Zero tokens
             (1, 0),  # Only input
@@ -366,13 +361,13 @@ class TestFlowiseEdgeCases:
             (sys.maxsize, 0),  # Maximum integer
             (0, sys.maxsize),  # Maximum integer
         ]
-        
+
         for input_tokens, output_tokens in boundary_cases:
             try:
                 cost = calculator.calculate_cost(
                     input_tokens=input_tokens,
                     output_tokens=output_tokens,
-                    model_name="gpt-3.5-turbo"
+                    model_name="gpt-3.5-turbo",
                 )
                 assert isinstance(cost, Decimal)
                 assert cost >= 0
@@ -388,7 +383,7 @@ class TestFlowiseEdgeCases:
             ("tier", Decimal("999999.999999")),  # Very high cost
             ("tier", Decimal("0.000000001")),  # Very low cost
         ]
-        
+
         for name, cost in edge_cases:
             try:
                 tier = FlowisePricingTier(name, cost)
@@ -407,7 +402,7 @@ class TestFlowiseEdgeCases:
             {"invalid_param": "value"},  # Invalid parameters
             {"team": None, "project": None},  # None values
         ]
-        
+
         for config in edge_configs:
             try:
                 result = auto_instrument(**config)
@@ -420,23 +415,23 @@ class TestFlowiseEdgeCases:
     def test_adapter_method_chaining(self):
         """Test method chaining and state consistency."""
         adapter = instrument_flowise("http://localhost:3000")
-        
+
         # Test multiple operations
-        with patch('requests.get') as mock_get:
+        with patch("requests.get") as mock_get:
             mock_get_response = Mock()
             mock_get_response.status_code = 200
             mock_get_response.json.return_value = [{"id": "test", "name": "Test"}]
             mock_get.return_value = mock_get_response
-            
+
             # Multiple sequential calls should work
             chatflows1 = adapter.get_chatflows()
             chatflows2 = adapter.get_chatflows()
-            
+
             assert chatflows1 == chatflows2
 
     def test_error_message_internationalization(self):
         """Test error messages with international characters."""
-        with patch('requests.get') as mock_get:
+        with patch("requests.get") as mock_get:
             # Mock responses with international error messages
             international_errors = [
                 "Erreur de serveur interne",  # French
@@ -445,13 +440,13 @@ class TestFlowiseEdgeCases:
                 "内部服务器错误",  # Chinese
                 "サーバー内部エラー",  # Japanese
             ]
-            
+
             for error_msg in international_errors:
                 mock_response = Mock()
                 mock_response.status_code = 500
                 mock_response.text = error_msg
                 mock_get.return_value = mock_response
-                
+
                 result = validate_flowise_setup("http://localhost:3000", "api-key")
                 assert isinstance(result, ValidationResult)
                 assert result.is_valid is False
@@ -459,9 +454,9 @@ class TestFlowiseEdgeCases:
 
     def test_timestamp_and_timezone_handling(self):
         """Test timestamp and timezone handling."""
-        from datetime import datetime, timezone
         import time
-        
+        from datetime import datetime, timezone
+
         # Test with various timestamp formats
         timestamps = [
             datetime.now(),
@@ -469,29 +464,27 @@ class TestFlowiseEdgeCases:
             time.time(),
             "2024-01-01T00:00:00Z",
             "2024-01-01T00:00:00.000Z",
-            "2024-01-01 00:00:00"
+            "2024-01-01 00:00:00",
         ]
-        
+
         # Should handle various timestamp formats without errors
-        for ts in timestamps:
+        for _ts in timestamps:
             # Create adapter with timestamp in metadata
-            adapter = instrument_flowise(
-                base_url="http://localhost:3000",
-                team="test"
-            )
+            instrument_flowise(base_url="http://localhost:3000", team="test")
             # Test passes if no exceptions are raised
 
     def test_nested_exception_handling(self):
         """Test handling of nested exceptions."""
+
         def raise_nested_exception():
             try:
                 raise ValueError("Inner exception")
             except ValueError:
-                raise RuntimeError("Outer exception")
-        
-        with patch('requests.get') as mock_get:
+                raise RuntimeError("Outer exception")  # noqa: B904
+
+        with patch("requests.get") as mock_get:
             mock_get.side_effect = raise_nested_exception
-            
+
             # Should handle nested exceptions gracefully
             result = validate_flowise_setup("http://localhost:3000", "api-key")
             assert isinstance(result, ValidationResult)
@@ -501,12 +494,11 @@ class TestFlowiseEdgeCases:
         """Test cleanup and resource management."""
         # Create many objects and ensure they can be cleaned up
         resources = []
-        
+
         try:
             for i in range(100):
                 adapter = instrument_flowise(
-                    base_url="http://localhost:3000",
-                    team=f"team-{i}"
+                    base_url="http://localhost:3000", team=f"team-{i}"
                 )
                 calculator = FlowiseCostCalculator()
                 resources.extend([adapter, calculator])
@@ -514,49 +506,43 @@ class TestFlowiseEdgeCases:
             # Cleanup should work without errors
             del resources
             import gc
+
             gc.collect()
 
     def test_compatibility_with_different_python_versions(self):
         """Test compatibility features across Python versions."""
         # Test features that might behave differently across Python versions
-        
+
         # Dictionary ordering (Python 3.7+)
         config = {"z": 1, "a": 2, "m": 3}
-        adapter = instrument_flowise(
-            base_url="http://localhost:3000",
-            **config
-        )
+        adapter = instrument_flowise(base_url="http://localhost:3000", **config)
         # Should work regardless of Python version
-        
+
         # String formatting
         team_name = f"team-{123}"
-        adapter = instrument_flowise(
-            base_url="http://localhost:3000",
-            team=team_name
-        )
+        adapter = instrument_flowise(base_url="http://localhost:3000", team=team_name)
         assert adapter.team == "team-123"
 
     def test_signal_handling(self):
         """Test behavior with system signals."""
         import signal
-        import os
-        
+
         def timeout_handler(signum, frame):
             raise TimeoutError("Operation timed out")
-        
+
         # Set up timeout signal
         old_handler = signal.signal(signal.SIGALRM, timeout_handler)
-        
+
         try:
             signal.alarm(1)  # 1 second timeout
-            
+
             # Perform operation that should complete quickly
-            adapter = instrument_flowise("http://localhost:3000")
+            instrument_flowise("http://localhost:3000")
             calculator = FlowiseCostCalculator()
             cost = calculator.calculate_cost(100, 50, "gpt-3.5-turbo")
-            
+
             signal.alarm(0)  # Cancel alarm
-            
+
             assert isinstance(cost, Decimal)
         except TimeoutError:
             # Operation took too long
@@ -572,13 +558,13 @@ class TestFlowiseStressConditions:
     def test_rapid_successive_calls(self):
         """Test rapid successive API calls."""
         adapter = instrument_flowise("http://localhost:3000")
-        
-        with patch('requests.post') as mock_post:
+
+        with patch("requests.post") as mock_post:
             mock_response = Mock()
             mock_response.status_code = 200
             mock_response.json.return_value = {"text": "Response"}
             mock_post.return_value = mock_response
-            
+
             # Make many rapid calls
             results = []
             for i in range(100):
@@ -587,7 +573,7 @@ class TestFlowiseStressConditions:
                     results.append(result)
                 except Exception as e:
                     results.append(f"Error: {e}")
-            
+
             # Should handle rapid calls without major issues
             success_count = len([r for r in results if isinstance(r, dict)])
             assert success_count > 0  # At least some should succeed
@@ -595,10 +581,10 @@ class TestFlowiseStressConditions:
     def test_memory_pressure(self):
         """Test behavior under memory pressure."""
         import gc
-        
+
         # Force garbage collection
         gc.collect()
-        
+
         large_objects = []
         try:
             # Create memory pressure
@@ -608,17 +594,17 @@ class TestFlowiseStressConditions:
                 adapter = instrument_flowise(
                     base_url="http://localhost:3000",
                     team=f"team-{i}",
-                    project=large_data[:100]  # Use part of large data
+                    project=large_data[:100],  # Use part of large data
                 )
                 large_objects.append((adapter, large_data))
-                
+
                 # Periodic cleanup
                 if i % 10 == 0:
                     gc.collect()
-            
+
             # Should still function under memory pressure
             assert len(large_objects) == 100
-            
+
         finally:
             # Cleanup
             del large_objects
@@ -626,12 +612,12 @@ class TestFlowiseStressConditions:
 
     def test_high_concurrency_operations(self):
         """Test high concurrency operations."""
-        import threading
         import queue
-        
+        import threading
+
         results_queue = queue.Queue()
         error_queue = queue.Queue()
-        
+
         def worker():
             try:
                 calculator = FlowiseCostCalculator()
@@ -640,41 +626,41 @@ class TestFlowiseStressConditions:
                     results_queue.put(cost)
             except Exception as e:
                 error_queue.put(str(e))
-        
+
         # Start many threads
         threads = []
         for _ in range(20):
             thread = threading.Thread(target=worker)
             threads.append(thread)
             thread.start()
-        
+
         # Wait for completion
         for thread in threads:
             thread.join()
-        
+
         # Check results
         total_results = results_queue.qsize()
         total_errors = error_queue.qsize()
-        
+
         assert total_results > 0  # Should have some results
         assert total_errors == 0  # Should have no errors
 
     def test_long_running_operations(self):
         """Test long-running operations don't degrade."""
         calculator = FlowiseCostCalculator()
-        
+
         start_time = time.time()
         costs = []
-        
+
         # Run calculations for a period of time
         while time.time() - start_time < 5:  # 5 seconds
             cost = calculator.calculate_cost(100, 50, "gpt-3.5-turbo")
             costs.append(cost)
-        
+
         # Performance shouldn't degrade significantly
         assert len(costs) > 100  # Should calculate many costs
         assert all(isinstance(cost, Decimal) for cost in costs)
-        
+
         # Check consistency
         unique_costs = set(costs)
         assert len(unique_costs) == 1  # All costs should be the same

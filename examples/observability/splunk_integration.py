@@ -26,10 +26,9 @@ Splunk is ideal for:
 • Long-term retention for regulated industries
 """
 
-import json
 import os
 import time
-from typing import Any, Dict, List, Optional
+from typing import Optional
 
 import genops
 
@@ -40,10 +39,13 @@ try:
     from opentelemetry.sdk.resources import Resource
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor
+
     HAS_OPENTELEMETRY = True
 except ImportError:
     HAS_OPENTELEMETRY = False
-    print("⚠️ OpenTelemetry not installed. Install with: pip install opentelemetry-api opentelemetry-sdk opentelemetry-exporter-otlp")
+    print(
+        "⚠️ OpenTelemetry not installed. Install with: pip install opentelemetry-api opentelemetry-sdk opentelemetry-exporter-otlp"
+    )
 
 
 class SplunkGenOpsIntegration:
@@ -68,7 +70,7 @@ class SplunkGenOpsIntegration:
         splunk_sourcetype: str = "genops:telemetry",
         service_name: str = "genops-ai",
         environment: str = "production",
-        **config
+        **config,
     ):
         """
         Initialize Splunk GenOps integration.
@@ -82,7 +84,9 @@ class SplunkGenOpsIntegration:
             environment: Deployment environment (production, staging, development)
             **config: Additional configuration options
         """
-        self.splunk_hec_endpoint = splunk_hec_endpoint or os.getenv("SPLUNK_HEC_ENDPOINT")
+        self.splunk_hec_endpoint = splunk_hec_endpoint or os.getenv(
+            "SPLUNK_HEC_ENDPOINT"
+        )
         self.splunk_hec_token = splunk_hec_token or os.getenv("SPLUNK_HEC_TOKEN")
         self.splunk_index = splunk_index or os.getenv("SPLUNK_INDEX", "genops_ai")
         self.splunk_sourcetype = splunk_sourcetype
@@ -106,14 +110,16 @@ class SplunkGenOpsIntegration:
             return
 
         # Create resource with service information and Splunk-specific attributes
-        resource = Resource.create({
-            "service.name": self.service_name,
-            "service.version": "1.0.0",
-            "deployment.environment": self.environment,
-            "genops.framework": "splunk-integration",
-            "splunk.index": self.splunk_index,
-            "splunk.sourcetype": self.splunk_sourcetype
-        })
+        resource = Resource.create(
+            {
+                "service.name": self.service_name,
+                "service.version": "1.0.0",
+                "deployment.environment": self.environment,
+                "genops.framework": "splunk-integration",
+                "splunk.index": self.splunk_index,
+                "splunk.sourcetype": self.splunk_sourcetype,
+            }
+        )
 
         # Set up tracing
         trace_provider = TracerProvider(resource=resource)
@@ -126,13 +132,12 @@ class SplunkGenOpsIntegration:
             # Splunk HEC authentication header
             headers = {
                 "Authorization": f"Splunk {self.splunk_hec_token}",
-                "X-Splunk-Request-Channel": os.getenv("SPLUNK_CHANNEL", "")
+                "X-Splunk-Request-Channel": os.getenv("SPLUNK_CHANNEL", ""),
             }
 
             # Set up OTLP span exporter for Splunk HEC
             span_exporter = OTLPSpanExporter(
-                endpoint=hec_otlp_endpoint,
-                headers=headers
+                endpoint=hec_otlp_endpoint, headers=headers
             )
 
             print("✅ Splunk HEC OTLP exporter configured")
@@ -142,18 +147,17 @@ class SplunkGenOpsIntegration:
         else:
             # Console export for demo
             from opentelemetry.sdk.trace.export import ConsoleSpanExporter
+
             span_exporter = ConsoleSpanExporter()
             print("✅ Console exporter configured (demo mode)")
 
         # Add span processor
-        trace_provider.add_span_processor(
-            BatchSpanProcessor(span_exporter)
-        )
+        trace_provider.add_span_processor(BatchSpanProcessor(span_exporter))
 
         # Set global tracer provider
         trace.set_tracer_provider(trace_provider)
 
-        print(f"✅ OpenTelemetry configured for Splunk export")
+        print("✅ OpenTelemetry configured for Splunk export")
         print(f"   Service: {self.service_name}")
         print(f"   Environment: {self.environment}")
 
@@ -171,60 +175,52 @@ class SplunkGenOpsIntegration:
         index = kwargs.get("index", self.splunk_index)
 
         queries = {
-            "cost_by_team": f'''index={index} genops.cost.total=*
+            "cost_by_team": f"""index={index} genops.cost.total=*
 | stats sum(genops.cost.total) as total_cost by genops.team
 | sort -total_cost
-| eval total_cost_formatted=printf("$%.4f", total_cost)''',
-
-            "cost_by_model": f'''index={index} genops.cost.model=*
+| eval total_cost_formatted=printf("$%.4f", total_cost)""",
+            "cost_by_model": f"""index={index} genops.cost.model=*
 | stats sum(genops.cost.total) as total_cost by genops.cost.model, genops.cost.provider
 | sort -total_cost
-| eval total_cost_formatted=printf("$%.4f", total_cost)''',
-
-            "cost_trends": f'''index={index} genops.cost.total=*
+| eval total_cost_formatted=printf("$%.4f", total_cost)""",
+            "cost_trends": f"""index={index} genops.cost.total=*
 | timechart span=1h sum(genops.cost.total) as total_cost by genops.project
-| fillnull value=0''',
-
-            "policy_violations": f'''index={index} genops.policy.result="blocked"
+| fillnull value=0""",
+            "policy_violations": f"""index={index} genops.policy.result="blocked"
 | table _time genops.policy.name genops.policy.reason genops.team genops.customer_id
-| sort -_time''',
-
-            "budget_alerts": f'''index={index} genops.budget.utilization=*
+| sort -_time""",
+            "budget_alerts": f"""index={index} genops.budget.utilization=*
 | where genops.budget.utilization > 80
 | table _time genops.budget.name genops.budget.limit genops.budget.used genops.budget.utilization genops.team
-| sort -genops.budget.utilization''',
-
-            "compliance_audit": f'''index={index} genops.policy.* OR genops.eval.*
+| sort -genops.budget.utilization""",
+            "compliance_audit": f"""index={index} genops.policy.* OR genops.eval.*
 | table _time genops.operation.name genops.customer_id genops.team genops.policy.result genops.eval.safety genops.data.classification
-| sort -_time''',
-
-            "customer_cost_attribution": f'''index={index} genops.cost.total=* genops.customer_id=*
+| sort -_time""",
+            "customer_cost_attribution": f"""index={index} genops.cost.total=* genops.customer_id=*
 | stats sum(genops.cost.total) as total_cost count as request_count by genops.customer_id
 | eval avg_cost_per_request=total_cost/request_count
 | eval total_cost_formatted=printf("$%.4f", total_cost)
 | eval avg_cost_formatted=printf("$%.4f", avg_cost_per_request)
-| sort -total_cost''',
-
-            "model_performance": f'''index={index} genops.eval.*
+| sort -total_cost""",
+            "model_performance": f"""index={index} genops.eval.*
 | stats avg(genops.eval.quality) as avg_quality avg(genops.eval.safety) as avg_safety count by genops.cost.model
 | eval avg_quality_pct=round(avg_quality*100, 2)
 | eval avg_safety_pct=round(avg_safety*100, 2)
-| sort -avg_quality''',
-
-            "realtime_cost_monitor": f'''index={index} genops.cost.total=*
+| sort -avg_quality""",
+            "realtime_cost_monitor": f"""index={index} genops.cost.total=*
 | bin _time span=5m
 | stats sum(genops.cost.total) as cost_5min by _time, genops.team
-| eval cost_formatted=printf("$%.4f", cost_5min)'''
+| eval cost_formatted=printf("$%.4f", cost_5min)""",
         }
 
         if use_case in queries:
             return queries[use_case]
         else:
             # Return a generic query template
-            return f'''index={index} genops.*
+            return f"""index={index} genops.*
 | table _time genops.*
 | sort -_time
-| head 100'''
+| head 100"""
 
     def create_cost_dashboard(self) -> str:
         """
@@ -233,7 +229,7 @@ class SplunkGenOpsIntegration:
         Returns:
             XML dashboard configuration string
         """
-        dashboard_xml = f'''<dashboard version="2">
+        dashboard_xml = f"""<dashboard version="2">
   <label>GenOps AI - Cost Governance</label>
   <description>AI cost attribution, trend analysis, and optimization insights</description>
 
@@ -344,7 +340,7 @@ class SplunkGenOpsIntegration:
       </table>
     </panel>
   </row>
-</dashboard>'''
+</dashboard>"""
         return dashboard_xml
 
     def create_compliance_dashboard(self) -> str:
@@ -354,7 +350,7 @@ class SplunkGenOpsIntegration:
         Returns:
             XML dashboard configuration string
         """
-        dashboard_xml = f'''<dashboard version="2">
+        dashboard_xml = f"""<dashboard version="2">
   <label>GenOps AI - Compliance Monitoring</label>
   <description>Policy violations, audit trails, and compliance metrics</description>
 
@@ -480,7 +476,7 @@ class SplunkGenOpsIntegration:
       </table>
     </panel>
   </row>
-</dashboard>'''
+</dashboard>"""
         return dashboard_xml
 
     def create_budget_dashboard(self) -> str:
@@ -490,7 +486,7 @@ class SplunkGenOpsIntegration:
         Returns:
             XML dashboard configuration string
         """
-        dashboard_xml = f'''<dashboard version="2">
+        dashboard_xml = f"""<dashboard version="2">
   <label>GenOps AI - Budget Monitoring</label>
   <description>Budget utilization, thresholds, and cost alerts</description>
 
@@ -591,7 +587,7 @@ class SplunkGenOpsIntegration:
       </chart>
     </panel>
   </row>
-</dashboard>'''
+</dashboard>"""
         return dashboard_xml
 
     def validate_configuration(self):
@@ -624,7 +620,7 @@ class SplunkGenOpsIntegration:
         return validate_setup(
             splunk_hec_endpoint=self.splunk_hec_endpoint,
             splunk_hec_token=self.splunk_hec_token,
-            splunk_index=self.splunk_index
+            splunk_index=self.splunk_index,
         )
 
     def print_validation(self) -> bool:
@@ -661,8 +657,7 @@ def demonstrate_splunk_telemetry():
 
     # Initialize Splunk integration
     splunk = SplunkGenOpsIntegration(
-        service_name="genops-demo",
-        environment="development"
+        service_name="genops-demo", environment="development"
     )
 
     # Validate configuration before proceeding
@@ -678,9 +673,7 @@ def demonstrate_splunk_telemetry():
 
     # Set up default attribution
     genops.set_default_attributes(
-        team="ai-platform",
-        project="splunk-integration-demo",
-        environment="development"
+        team="ai-platform", project="splunk-integration-demo", environment="development"
     )
 
     print("\n🤖 Generating sample AI operations with governance telemetry...")
@@ -690,7 +683,7 @@ def demonstrate_splunk_telemetry():
     with genops.track_enhanced(
         operation_name="ai.chat.completion",
         customer_id="enterprise-123",
-        feature="customer-support-chat"
+        feature="customer-support-chat",
     ) as span:
         # Simulate AI operation
         time.sleep(0.1)
@@ -702,7 +695,7 @@ def demonstrate_splunk_telemetry():
             model="gpt-4",
             input_tokens=1500,
             output_tokens=500,
-            total_cost=0.0325
+            total_cost=0.0325,
         )
         print("   ✅ Recorded: $0.0325 (GPT-4, 1500 in / 500 out tokens)")
 
@@ -711,7 +704,7 @@ def demonstrate_splunk_telemetry():
     with genops.track_enhanced(
         operation_name="ai.content.moderation",
         customer_id="startup-456",
-        feature="content-filter"
+        feature="content-filter",
     ) as span:
         time.sleep(0.1)
 
@@ -721,15 +714,14 @@ def demonstrate_splunk_telemetry():
             policy_name="content_safety",
             policy_result="blocked",
             policy_reason="Potentially harmful content detected",
-            metadata={"confidence": 0.95}
+            metadata={"confidence": 0.95},
         )
         print("   ⚠️  Blocked: Content safety policy violation (confidence: 95%)")
 
     # Example 3: Budget tracking
     print("\n3. Budget Monitoring Example:")
     with genops.track_enhanced(
-        operation_name="ai.budget.check",
-        team="ai-platform"
+        operation_name="ai.budget.check", team="ai-platform"
     ) as span:
         time.sleep(0.1)
 
@@ -740,7 +732,7 @@ def demonstrate_splunk_telemetry():
             budget_limit=100.0,
             budget_used=87.50,
             budget_remaining=12.50,
-            metadata={"utilization_percent": 87.5}
+            metadata={"utilization_percent": 87.5},
         )
         print("   💰 Budget: $87.50 / $100.00 (87.5% utilized)")
 
@@ -760,20 +752,26 @@ def show_splunk_queries():
         "Cost Analysis": [
             ("Total cost by team", splunk.create_spl_query("cost_by_team")),
             ("Cost by model", splunk.create_spl_query("cost_by_model")),
-            ("Cost trends over time", splunk.create_spl_query("cost_trends"))
+            ("Cost trends over time", splunk.create_spl_query("cost_trends")),
         ],
         "Policy Compliance": [
             ("Recent policy violations", splunk.create_spl_query("policy_violations")),
-            ("Compliance audit trail", splunk.create_spl_query("compliance_audit"))
+            ("Compliance audit trail", splunk.create_spl_query("compliance_audit")),
         ],
         "Budget Monitoring": [
             ("Budgets over 80% threshold", splunk.create_spl_query("budget_alerts")),
-            ("Real-time cost monitoring", splunk.create_spl_query("realtime_cost_monitor"))
+            (
+                "Real-time cost monitoring",
+                splunk.create_spl_query("realtime_cost_monitor"),
+            ),
         ],
         "Customer Analytics": [
-            ("Customer cost attribution", splunk.create_spl_query("customer_cost_attribution")),
-            ("Model performance metrics", splunk.create_spl_query("model_performance"))
-        ]
+            (
+                "Customer cost attribution",
+                splunk.create_spl_query("customer_cost_attribution"),
+            ),
+            ("Model performance metrics", splunk.create_spl_query("model_performance")),
+        ],
     }
 
     for category, queries in query_examples.items():
@@ -781,11 +779,11 @@ def show_splunk_queries():
         for title, query in queries:
             print(f"\n   {title}:")
             # Print first 2 lines of query
-            query_lines = query.strip().split('\n')
+            query_lines = query.strip().split("\n")
             for line in query_lines[:2]:
                 print(f"      {line}")
             if len(query_lines) > 2:
-                print(f"      ... ({len(query_lines)-2} more lines)")
+                print(f"      ... ({len(query_lines) - 2} more lines)")
 
     print("\n💡 SPL Query Tips:")
     print("• Use 'index=genops_ai' to search AI governance telemetry")
@@ -889,6 +887,7 @@ def main():
     except Exception as e:
         print(f"❌ Demo failed: {e}")
         import traceback
+
         traceback.print_exc()
 
 

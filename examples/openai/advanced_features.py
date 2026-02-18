@@ -43,18 +43,20 @@ def streaming_responses_example():
         stream = client.chat_completions_create(
             model="gpt-4",
             messages=[
-                {"role": "user", "content": "Write a short story about a robot learning to paint. Make it creative and engaging."}
+                {
+                    "role": "user",
+                    "content": "Write a short story about a robot learning to paint. Make it creative and engaging.",
+                }
             ],
             max_tokens=400,
             temperature=0.8,
             stream=True,  # Enable streaming
-
             # Governance attributes for streaming operations
             team="streaming-team",
             project="real-time-content",
             customer_id="streaming-demo",
             feature="creative-writing",
-            streaming_enabled=True
+            streaming_enabled=True,
         )
 
         # Process streaming response
@@ -79,16 +81,21 @@ def streaming_responses_example():
         print(f"   • Total chunks: {chunk_count}")
         print(f"   • Total time: {end_time - start_time:.2f} seconds")
         print(f"   • Response length: {len(full_response)} characters")
-        print(f"   • Average chunk size: {len(full_response) / chunk_count if chunk_count > 0 else 0:.1f} chars")
+        print(
+            f"   • Average chunk size: {len(full_response) / chunk_count if chunk_count > 0 else 0:.1f} chars"
+        )
 
         print("\n💰 Cost tracking: Automatically calculated for streaming operations")
-        print("🏷️  Governance: Attributed to 'streaming-team' for real-time applications")
+        print(
+            "🏷️  Governance: Attributed to 'streaming-team' for real-time applications"
+        )
 
         return True
 
     except Exception as e:
         print(f"❌ Streaming example error: {e}")
         return False
+
 
 def function_calling_example():
     """Demonstrate function calling with detailed cost and usage tracking."""
@@ -112,17 +119,17 @@ def function_calling_example():
                         "properties": {
                             "location": {
                                 "type": "string",
-                                "description": "City and country, e.g. 'San Francisco, CA'"
+                                "description": "City and country, e.g. 'San Francisco, CA'",
                             },
                             "unit": {
                                 "type": "string",
                                 "enum": ["celsius", "fahrenheit"],
-                                "description": "Temperature unit"
-                            }
+                                "description": "Temperature unit",
+                            },
                         },
-                        "required": ["location"]
-                    }
-                }
+                        "required": ["location"],
+                    },
+                },
             },
             {
                 "type": "function",
@@ -134,25 +141,25 @@ def function_calling_example():
                         "properties": {
                             "bill_amount": {
                                 "type": "number",
-                                "description": "The total bill amount"
+                                "description": "The total bill amount",
                             },
                             "tip_percentage": {
                                 "type": "number",
                                 "description": "Tip percentage (default 18%)",
-                                "default": 18
-                            }
+                                "default": 18,
+                            },
                         },
-                        "required": ["bill_amount"]
-                    }
-                }
-            }
+                        "required": ["bill_amount"],
+                    },
+                },
+            },
         ]
 
         # Test queries that should trigger function calls
         test_queries = [
             "What's the weather like in New York?",
             "Calculate a 20% tip on a $125 restaurant bill",
-            "I need weather for London, UK in celsius"
+            "I need weather for London, UK in celsius",
         ]
 
         print(f"🎯 Available functions: {len(tools)}")
@@ -169,14 +176,13 @@ def function_calling_example():
                 messages=[{"role": "user", "content": query}],
                 tools=tools,
                 tool_choice="auto",
-
                 # Function calling governance tracking
                 team="function-calling-team",
                 project="tool-usage-analysis",
                 customer_id=f"function-demo-{i}",
                 query_index=i,
                 available_functions=len(tools),
-                feature="function_calling"
+                feature="function_calling",
             )
 
             message = response.choices[0].message
@@ -215,13 +221,16 @@ def function_calling_example():
         print(f"   • Total queries: {len(test_queries)}")
         print(f"   • Total function calls: {total_function_calls}")
         print(f"   • Available functions: {len(tools)}")
-        print(f"   • Function call rate: {total_function_calls / len(test_queries):.1f} calls/query")
+        print(
+            f"   • Function call rate: {total_function_calls / len(test_queries):.1f} calls/query"
+        )
 
         return True
 
     except Exception as e:
         print(f"❌ Function calling example error: {e}")
         return False
+
 
 def embeddings_example():
     """Demonstrate embeddings generation with cost analysis."""
@@ -239,7 +248,7 @@ def embeddings_example():
             "Python is a popular programming language for data science.",
             "OpenAI develops large language models like GPT-4.",
             "Vector databases store and search high-dimensional data.",
-            "Natural language processing enables computers to understand text."
+            "Natural language processing enables computers to understand text.",
         ]
 
         print(f"📝 Generating embeddings for {len(sample_texts)} texts...")
@@ -248,14 +257,13 @@ def embeddings_example():
         embeddings_response = client.embeddings_create(
             model="text-embedding-3-small",  # Cost-effective embedding model
             input=sample_texts,
-
             # Embeddings governance tracking
             team="embeddings-team",
             project="vector-analysis",
             customer_id="embeddings-demo",
             operation_type="batch_embedding",
             text_count=len(sample_texts),
-            embedding_model="text-embedding-3-small"
+            embedding_model="text-embedding-3-small",
         )
 
         embeddings_data = embeddings_response.data
@@ -267,7 +275,9 @@ def embeddings_example():
         print(f"   • Total tokens: {embeddings_response.usage.total_tokens}")
 
         # Calculate embedding costs (text-embedding-3-small pricing)
-        embedding_cost = (embeddings_response.usage.total_tokens / 1000) * 0.00002  # $0.00002 per 1K tokens
+        embedding_cost = (
+            embeddings_response.usage.total_tokens / 1000
+        ) * 0.00002  # $0.00002 per 1K tokens
         print(f"   • Estimated cost: ${embedding_cost:.6f}")
 
         # Demonstrate simple similarity calculation
@@ -290,13 +300,16 @@ def embeddings_example():
         print("\n💰 Embedding Cost Analysis:")
         print(f"   • Cost per text: ${embedding_cost / len(sample_texts):.6f}")
         print(f"   • Cost per 1K tokens: ${0.00002:.6f}")
-        print(f"   • Projected cost for 10K texts: ${(embedding_cost / len(sample_texts)) * 10000:.3f}")
+        print(
+            f"   • Projected cost for 10K texts: ${(embedding_cost / len(sample_texts)) * 10000:.3f}"
+        )
 
         return True
 
     except Exception as e:
         print(f"❌ Embeddings example error: {e}")
         return False
+
 
 def vision_api_example():
     """Demonstrate GPT-4 Vision with image analysis cost tracking."""
@@ -324,27 +337,26 @@ def vision_api_example():
                     "content": [
                         {
                             "type": "text",
-                            "text": "What do you see in this image? Describe the scene, colors, and any notable features."
+                            "text": "What do you see in this image? Describe the scene, colors, and any notable features.",
                         },
                         {
                             "type": "image_url",
                             "image_url": {
                                 "url": sample_image_url,
-                                "detail": "auto"  # Can be "low", "high", or "auto"
-                            }
-                        }
-                    ]
+                                "detail": "auto",  # Can be "low", "high", or "auto"
+                            },
+                        },
+                    ],
                 }
             ],
             max_tokens=300,
-
             # Vision API governance tracking
             team="vision-team",
             project="image-analysis",
             customer_id="vision-demo",
             has_image=True,
             image_detail_level="auto",
-            feature="image_description"
+            feature="image_description",
         )
 
         print("✅ Vision analysis completed!")
@@ -358,7 +370,9 @@ def vision_api_example():
 
         # Vision API cost calculation (simplified)
         # GPT-4 Vision has different pricing for image processing
-        vision_cost = (response.usage.prompt_tokens / 1000) * 0.01 + (response.usage.completion_tokens / 1000) * 0.03
+        vision_cost = (response.usage.prompt_tokens / 1000) * 0.01 + (
+            response.usage.completion_tokens / 1000
+        ) * 0.03
         print(f"   • Estimated cost: ${vision_cost:.4f}")
 
         print("\n💡 Vision API Cost Factors:")
@@ -370,8 +384,11 @@ def vision_api_example():
 
     except Exception as e:
         print(f"❌ Vision API example error: {e}")
-        print("💡 Vision API requires specific model access and may have usage restrictions")
+        print(
+            "💡 Vision API requires specific model access and may have usage restrictions"
+        )
         return False
+
 
 def batch_operations_optimization():
     """Demonstrate optimized batch operations with cost efficiency."""
@@ -390,16 +407,17 @@ def batch_operations_optimization():
             "Translate to Spanish: The weather is beautiful today and perfect for a walk in the park.",
             "Generate keywords for: E-commerce website selling sustainable fashion and eco-friendly clothing.",
             "Classify sentiment: I absolutely love this new product, it exceeded all my expectations!",
-            "Extract entities: Apple Inc. announced new iPhone models at their event in Cupertino, California."
+            "Extract entities: Apple Inc. announced new iPhone models at their event in Cupertino, California.",
         ]
 
         print(f"🔄 Processing {len(batch_tasks)} tasks in optimized batch...")
 
-        with track("batch_optimization",
-                   team="batch-team",
-                   project="operation-efficiency",
-                   customer_id="batch-demo") as span:
-
+        with track(
+            "batch_optimization",
+            team="batch-team",
+            project="operation-efficiency",
+            customer_id="batch-demo",
+        ) as span:
             batch_results = []
             total_tokens = 0
             total_cost = 0
@@ -413,7 +431,6 @@ def batch_operations_optimization():
                     messages=[{"role": "user", "content": task}],
                     max_tokens=100,  # Shorter responses for efficiency
                     temperature=0.3,  # Lower temperature for consistency
-
                     # Batch operation tracking
                     team="batch-team",
                     project="operation-efficiency",
@@ -421,24 +438,28 @@ def batch_operations_optimization():
                     batch_id="optimization-demo-001",
                     task_index=i,
                     batch_size=len(batch_tasks),
-                    optimization_strategy="cost_effective"
+                    optimization_strategy="cost_effective",
                 )
 
                 result = response.choices[0].message.content
                 tokens = response.usage.total_tokens
-                cost = (response.usage.prompt_tokens / 1000) * 0.0015 + (response.usage.completion_tokens / 1000) * 0.002
+                cost = (response.usage.prompt_tokens / 1000) * 0.0015 + (
+                    response.usage.completion_tokens / 1000
+                ) * 0.002
 
-                batch_results.append({
-                    "task": task[:50] + "..." if len(task) > 50 else task,
-                    "result": result[:80] + "..." if len(result) > 80 else result,
-                    "tokens": tokens,
-                    "cost": cost
-                })
+                batch_results.append(
+                    {
+                        "task": task[:50] + "..." if len(task) > 50 else task,
+                        "result": result[:80] + "..." if len(result) > 80 else result,
+                        "tokens": tokens,
+                        "cost": cost,
+                    }
+                )
 
                 total_tokens += tokens
                 total_cost += cost
 
-                print(f"   ✅ Task {i+1}: {tokens} tokens, ${cost:.4f}")
+                print(f"   ✅ Task {i + 1}: {tokens} tokens, ${cost:.4f}")
 
                 # Brief pause to avoid rate limits
                 time.sleep(0.1)
@@ -457,7 +478,9 @@ def batch_operations_optimization():
             print(f"   • Total tokens: {total_tokens}")
             print(f"   • Total cost: ${total_cost:.4f}")
             print(f"   • Average cost per task: ${total_cost / len(batch_tasks):.4f}")
-            print(f"   • Average tokens per task: {total_tokens / len(batch_tasks):.0f}")
+            print(
+                f"   • Average tokens per task: {total_tokens / len(batch_tasks):.0f}"
+            )
 
             # Efficiency analysis
             print("\n💡 Optimization Benefits:")
@@ -471,6 +494,7 @@ def batch_operations_optimization():
     except Exception as e:
         print(f"❌ Batch optimization error: {e}")
         return False
+
 
 def main():
     """Run advanced OpenAI features demonstrations."""
@@ -511,7 +535,9 @@ def main():
         print("   ✅ Optimized batch operations for cost efficiency")
 
         print("\n💰 Cost Optimization Insights:")
-        print("   • Streaming enables real-time user experience with full cost tracking")
+        print(
+            "   • Streaming enables real-time user experience with full cost tracking"
+        )
         print("   • Function calling costs include both model inference and tool usage")
         print("   • Embeddings offer cost-effective semantic analysis capabilities")
         print("   • Batch operations achieve significant per-task cost savings")
@@ -527,6 +553,7 @@ def main():
         print("❌ Some advanced features encountered issues.")
         print("💡 Check API access and model availability for specialized features")
         return False
+
 
 if __name__ == "__main__":
     success = main()

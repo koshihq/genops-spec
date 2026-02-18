@@ -4,7 +4,8 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
+
 
 def test_genops_basic_functionality():
     """Test basic GenOps functionality that we know works."""
@@ -22,7 +23,7 @@ def test_genops_basic_functionality():
     policy = PolicyConfig(
         name="test_policy",
         description="A test policy",
-        enforcement_level=PolicyResult.BLOCKED
+        enforcement_level=PolicyResult.BLOCKED,
     )
     assert policy.name == "test_policy"
     assert policy.enforcement_level == PolicyResult.BLOCKED
@@ -32,17 +33,18 @@ def test_genops_basic_functionality():
     engine.register_policy(policy)
     assert "test_policy" in engine.policies
 
-    # Test policy evaluation returns tuple
-    result, reason = engine.evaluate_policy("test_policy", {})
-    assert isinstance(result, PolicyResult)
+    # Test policy evaluation returns PolicyEvaluationResult
+    eval_result = engine.evaluate_policy("test_policy", {})
+    assert isinstance(eval_result.result, PolicyResult)
 
     # Test auto-instrumentation status
     status_info = genops.status()
     assert isinstance(status_info, dict)
-    assert 'initialized' in status_info
+    assert "initialized" in status_info
 
     print("✅ All basic functionality tests passed!")
     return True
+
 
 if __name__ == "__main__":
     try:
@@ -52,5 +54,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"❌ Test failed: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

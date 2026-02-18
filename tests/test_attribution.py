@@ -12,9 +12,7 @@ def test_attribution_system():
     # Test 1: Global defaults
     print("\n1. Testing global defaults...")
     genops.set_default_attributes(
-        team="test-team",
-        project="test-project",
-        environment="testing"
+        team="test-team", project="test-project", environment="testing"
     )
 
     defaults = genops.get_default_attributes()
@@ -26,10 +24,7 @@ def test_attribution_system():
 
     # Test 2: Context attributes
     print("\n2. Testing context attributes...")
-    genops.set_context(
-        customer_id="test-customer",
-        user_id="test-user"
-    )
+    genops.set_context(customer_id="test-customer", user_id="test-user")
 
     context = genops.get_context()
     print(f"   Context: {context}")
@@ -41,7 +36,7 @@ def test_attribution_system():
     print("\n3. Testing effective attributes priority...")
     effective = genops.get_effective_attributes(
         team="override-team",  # Should override default
-        feature="test-feature"  # New attribute
+        feature="test-feature",  # New attribute
     )
     print(f"   Effective: {effective}")
 
@@ -57,13 +52,11 @@ def test_attribution_system():
     genops.set_team_defaults(
         team="convenience-team",
         project="convenience-project",
-        cost_center="engineering"
+        cost_center="engineering",
     )
 
     genops.set_customer_context(
-        customer_id="enterprise-123",
-        customer_name="Acme Corp",
-        tier="enterprise"
+        customer_id="enterprise-123", customer_name="Acme Corp", tier="enterprise"
     )
 
     final_effective = genops.get_effective_attributes(feature="final-test")
@@ -85,6 +78,7 @@ def test_attribution_system():
 
     print("\n🎉 ALL ATTRIBUTION TESTS PASSED!")
     print("The new attribution system is ready for use!")
+
 
 if __name__ == "__main__":
     test_attribution_system()

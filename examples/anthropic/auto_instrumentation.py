@@ -30,6 +30,7 @@ def setup_auto_instrumentation():
     try:
         # This single line enables automatic telemetry for ALL Anthropic operations
         from genops import auto_instrument
+
         auto_instrument()
 
         print("✅ GenOps auto-instrumentation enabled!")
@@ -43,6 +44,7 @@ def setup_auto_instrumentation():
         print(f"❌ Import error: {e}")
         print("💡 Fix: Run 'pip install genops-ai[anthropic]'")
         return False
+
 
 def existing_anthropic_code_unchanged():
     """Your existing Anthropic code works exactly as before, but with automatic telemetry."""
@@ -61,7 +63,7 @@ def existing_anthropic_code_unchanged():
         response1 = client.messages.create(
             model="claude-3-haiku-20240307",
             max_tokens=100,
-            messages=[{"role": "user", "content": "What is artificial intelligence?"}]
+            messages=[{"role": "user", "content": "What is artificial intelligence?"}],
         )
 
         print(f"✅ Response 1: {response1.content[0].text[:50]}...")
@@ -71,9 +73,12 @@ def existing_anthropic_code_unchanged():
             model="claude-3-5-sonnet-20241022",
             max_tokens=200,
             messages=[
-                {"role": "user", "content": "Explain the benefits and challenges of renewable energy adoption"}
+                {
+                    "role": "user",
+                    "content": "Explain the benefits and challenges of renewable energy adoption",
+                }
             ],
-            temperature=0.7
+            temperature=0.7,
         )
 
         print(f"✅ Response 2: {response2.content[0].text[:50]}...")
@@ -83,7 +88,12 @@ def existing_anthropic_code_unchanged():
             model="claude-3-5-haiku-20241022",
             max_tokens=150,
             system="You are a helpful coding assistant. Provide clear, concise explanations.",
-            messages=[{"role": "user", "content": "What is the difference between a list and a tuple in Python?"}]
+            messages=[
+                {
+                    "role": "user",
+                    "content": "What is the difference between a list and a tuple in Python?",
+                }
+            ],
         )
 
         print(f"✅ Response 3: {response3.content[0].text[:50]}...")
@@ -100,6 +110,7 @@ def existing_anthropic_code_unchanged():
         print("💡 Check your ANTHROPIC_API_KEY and network connectivity")
         return False
 
+
 def add_governance_context():
     """Add governance context to automatically apply to all operations."""
     print("\n\n🏷️  Adding Governance Context")
@@ -111,13 +122,15 @@ def add_governance_context():
         from genops.core.context import set_governance_context
 
         # Set governance context once - applies to ALL subsequent operations
-        set_governance_context({
-            "team": "auto-instrumentation-demo",
-            "project": "genops-anthropic-examples",
-            "customer_id": "demo-customer-auto",
-            "environment": "development",
-            "cost_center": "ai-research-dept"
-        })
+        set_governance_context(
+            {
+                "team": "auto-instrumentation-demo",
+                "project": "genops-anthropic-examples",
+                "customer_id": "demo-customer-auto",
+                "environment": "development",
+                "cost_center": "ai-research-dept",
+            }
+        )
 
         print("✅ Governance context set for all operations:")
         print("   • team: auto-instrumentation-demo")
@@ -134,14 +147,14 @@ def add_governance_context():
         tasks = [
             "Explain quantum computing in simple terms",
             "What are the advantages of using Claude for content generation?",
-            "How can AI help with document analysis?"
+            "How can AI help with document analysis?",
         ]
 
         for i, task in enumerate(tasks, 1):
             response = client.messages.create(
                 model="claude-3-5-haiku-20241022",
                 max_tokens=80,
-                messages=[{"role": "user", "content": task}]
+                messages=[{"role": "user", "content": task}],
             )
 
             print(f"   {i}. Task: {task}")
@@ -161,6 +174,7 @@ def add_governance_context():
         print(f"❌ Error setting governance context: {e}")
         return False
 
+
 def web_application_pattern():
     """Demonstrate auto-instrumentation in web application context."""
     print("\n\n🌐 Web Application Integration Pattern")
@@ -172,19 +186,23 @@ def web_application_pattern():
         from genops.core.context import set_governance_context
 
         # Simulate web application request handler
-        def handle_document_analysis(user_id: str, document_type: str, content: str, session_id: str):
+        def handle_document_analysis(
+            user_id: str, document_type: str, content: str, session_id: str
+        ):
             """Simulated web app document analysis handler with automatic telemetry."""
 
             # Set request-specific governance context
-            set_governance_context({
-                "team": "document-analysis-team",
-                "project": "ai-document-processor",
-                "customer_id": user_id,
-                "environment": "production",
-                "feature": "document-analysis-api",
-                "session_id": session_id,
-                "document_type": document_type
-            })
+            set_governance_context(
+                {
+                    "team": "document-analysis-team",
+                    "project": "ai-document-processor",
+                    "customer_id": user_id,
+                    "environment": "production",
+                    "feature": "document-analysis-api",
+                    "session_id": session_id,
+                    "document_type": document_type,
+                }
+            )
 
             # Your normal Anthropic code - completely unchanged
             client = Anthropic()
@@ -192,7 +210,12 @@ def web_application_pattern():
                 model="claude-3-5-sonnet-20241022",  # Good for analysis
                 max_tokens=200,
                 system="You are an expert document analyst. Provide clear, structured analysis.",
-                messages=[{"role": "user", "content": f"Analyze this {document_type}: {content}"}]
+                messages=[
+                    {
+                        "role": "user",
+                        "content": f"Analyze this {document_type}: {content}",
+                    }
+                ],
             )
 
             return response.content[0].text
@@ -201,9 +224,24 @@ def web_application_pattern():
         print("🔄 Simulating web application requests...")
 
         simulated_requests = [
-            ("user-001", "contract", "Software license agreement with standard terms", "session-abc-123"),
-            ("user-002", "email", "Customer complaint about delayed delivery and refund request", "session-def-456"),
-            ("user-003", "report", "Quarterly sales data showing 15% growth in renewable energy sector", "session-ghi-789")
+            (
+                "user-001",
+                "contract",
+                "Software license agreement with standard terms",
+                "session-abc-123",
+            ),
+            (
+                "user-002",
+                "email",
+                "Customer complaint about delayed delivery and refund request",
+                "session-def-456",
+            ),
+            (
+                "user-003",
+                "report",
+                "Quarterly sales data showing 15% growth in renewable energy sector",
+                "session-ghi-789",
+            ),
         ]
 
         for user_id, doc_type, content, session_id in simulated_requests:
@@ -225,6 +263,7 @@ def web_application_pattern():
         print(f"❌ Web application pattern error: {e}")
         return False
 
+
 def conversational_ai_pattern():
     """Demonstrate auto-instrumentation for conversational AI applications."""
     print("\n\n💬 Conversational AI Pattern")
@@ -237,18 +276,23 @@ def conversational_ai_pattern():
 
         # Simulate a multi-turn conversation
         conversation_history = [
-            {"role": "user", "content": "I'm planning a trip to Japan. What should I know?"},
+            {
+                "role": "user",
+                "content": "I'm planning a trip to Japan. What should I know?",
+            },
         ]
 
         # Set conversation-specific context
-        set_governance_context({
-            "team": "conversational-ai-team",
-            "project": "travel-assistant-bot",
-            "customer_id": "travel-user-001",
-            "environment": "production",
-            "feature": "travel-planning",
-            "conversation_type": "travel_assistance"
-        })
+        set_governance_context(
+            {
+                "team": "conversational-ai-team",
+                "project": "travel-assistant-bot",
+                "customer_id": "travel-user-001",
+                "environment": "production",
+                "feature": "travel-planning",
+                "conversation_type": "travel_assistance",
+            }
+        )
 
         client = Anthropic()
 
@@ -261,15 +305,19 @@ def conversational_ai_pattern():
             model="claude-3-5-sonnet-20241022",
             max_tokens=200,
             system="You are a helpful travel assistant. Provide useful, practical advice.",
-            messages=conversation_history
+            messages=conversation_history,
         )
 
         assistant_response1 = response1.content[0].text
         print(f"   Claude: {assistant_response1[:100]}...")
 
         # Add to conversation history
-        conversation_history.append({"role": "assistant", "content": assistant_response1})
-        conversation_history.append({"role": "user", "content": "What about the best time to visit?"})
+        conversation_history.append(
+            {"role": "assistant", "content": assistant_response1}
+        )
+        conversation_history.append(
+            {"role": "user", "content": "What about the best time to visit?"}
+        )
 
         # Turn 2: Follow-up response
         print("\n   User: What about the best time to visit?")
@@ -278,15 +326,19 @@ def conversational_ai_pattern():
             model="claude-3-5-sonnet-20241022",
             max_tokens=150,
             system="You are a helpful travel assistant. Provide useful, practical advice.",
-            messages=conversation_history
+            messages=conversation_history,
         )
 
         assistant_response2 = response2.content[0].text
         print(f"   Claude: {assistant_response2[:100]}...")
 
         # Add final exchange
-        conversation_history.append({"role": "assistant", "content": assistant_response2})
-        conversation_history.append({"role": "user", "content": "Thank you! Any cultural tips?"})
+        conversation_history.append(
+            {"role": "assistant", "content": assistant_response2}
+        )
+        conversation_history.append(
+            {"role": "user", "content": "Thank you! Any cultural tips?"}
+        )
 
         # Turn 3: Cultural advice
         print("\n   User: Thank you! Any cultural tips?")
@@ -295,7 +347,7 @@ def conversational_ai_pattern():
             model="claude-3-5-haiku-20241022",  # Faster for final response
             max_tokens=120,
             system="You are a helpful travel assistant. Provide useful, practical advice.",
-            messages=conversation_history
+            messages=conversation_history,
         )
 
         assistant_response3 = response3.content[0].text
@@ -312,6 +364,7 @@ def conversational_ai_pattern():
     except Exception as e:
         print(f"❌ Conversational AI pattern error: {e}")
         return False
+
 
 def main():
     """Run auto-instrumentation demonstration."""
@@ -354,7 +407,9 @@ def main():
 
         print("\n🚀 Next Steps:")
         print("   • Run 'python cost_optimization.py' for Claude model strategies")
-        print("   • Try 'python advanced_features.py' for streaming and document analysis")
+        print(
+            "   • Try 'python advanced_features.py' for streaming and document analysis"
+        )
         print("   • Explore 'python production_patterns.py' for enterprise patterns")
 
         return True
@@ -362,6 +417,7 @@ def main():
         print("❌ Auto-instrumentation demonstration failed.")
         print("💡 Check the error messages above and try setup_validation.py")
         return False
+
 
 if __name__ == "__main__":
     success = main()

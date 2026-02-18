@@ -1,14 +1,14 @@
 """Tests for Anyscale adapter functionality."""
 
-import pytest
 import time
-from unittest.mock import Mock, patch, MagicMock
-from dataclasses import asdict
+from unittest.mock import Mock, patch
+
+import pytest
 
 from genops.providers.anyscale.adapter import (
-    GenOpsAnyscaleAdapter,
-    AnyscaleOperation,
     AnyscaleCostSummary,
+    AnyscaleOperation,
+    GenOpsAnyscaleAdapter,
     instrument_anyscale,
 )
 
@@ -22,7 +22,7 @@ class TestAnyscaleOperation:
             operation_id="test-123",
             operation_type="completion",
             model="meta-llama/Llama-2-70b-chat-hf",
-            start_time=time.time()
+            start_time=time.time(),
         )
 
         assert operation.operation_id == "test-123"
@@ -37,10 +37,7 @@ class TestAnyscaleOperation:
             operation_type="completion",
             model="test-model",
             start_time=time.time(),
-            governance_attributes={
-                "team": "test-team",
-                "customer_id": "customer-123"
-            }
+            governance_attributes={"team": "test-team", "customer_id": "customer-123"},
         )
 
         assert operation.governance_attributes["team"] == "test-team"
@@ -53,7 +50,7 @@ class TestAnyscaleOperation:
             operation_id="test",
             operation_type="completion",
             model="test-model",
-            start_time=start
+            start_time=start,
         )
 
         # Test ongoing operation
@@ -73,7 +70,7 @@ class TestAnyscaleOperation:
             start_time=time.time(),
             input_tokens=100,
             output_tokens=50,
-            total_cost_usd=0.00015
+            total_cost_usd=0.00015,
         )
 
         assert operation.input_tokens == 100
@@ -87,9 +84,7 @@ class TestAnyscaleCostSummary:
     def test_cost_summary_creation(self):
         """Test basic cost summary creation."""
         summary = AnyscaleCostSummary(
-            total_cost=0.001,
-            operation_count=5,
-            total_tokens=1000
+            total_cost=0.001, operation_count=5, total_tokens=1000
         )
 
         assert summary.total_cost == 0.001
@@ -104,12 +99,9 @@ class TestAnyscaleCostSummary:
             total_tokens=2000,
             cost_by_model={
                 "meta-llama/Llama-2-70b-chat-hf": 0.0015,
-                "meta-llama/Llama-2-7b-chat-hf": 0.0005
+                "meta-llama/Llama-2-7b-chat-hf": 0.0005,
             },
-            cost_by_customer={
-                "customer-A": 0.0012,
-                "customer-B": 0.0008
-            }
+            cost_by_customer={"customer-A": 0.0012, "customer-B": 0.0008},
         )
 
         assert len(summary.cost_by_model) == 2
@@ -124,7 +116,7 @@ class TestGenOpsAnyscaleAdapter:
     @pytest.fixture
     def mock_openai_client(self):
         """Mock OpenAI client for Anyscale."""
-        with patch('genops.providers.anyscale.adapter.OpenAI') as mock_openai:
+        with patch("genops.providers.anyscale.adapter.OpenAI") as mock_openai:
             mock_client = Mock()
             mock_openai.return_value = mock_client
             yield mock_client
@@ -147,9 +139,7 @@ class TestGenOpsAnyscaleAdapter:
     def test_adapter_initialization_with_governance_defaults(self):
         """Test adapter initialization with governance defaults."""
         adapter = GenOpsAnyscaleAdapter(
-            team="test-team",
-            project="test-project",
-            environment="staging"
+            team="test-team", project="test-project", environment="staging"
         )
 
         assert adapter.governance_defaults["team"] == "test-team"
@@ -170,12 +160,12 @@ class TestGenOpsAnyscaleAdapter:
 
         assert adapter.debug is True
 
-    @patch.dict('os.environ', {'ANYSCALE_API_KEY': 'env-api-key'})
+    @patch.dict("os.environ", {"ANYSCALE_API_KEY": "env-api-key"})
     def test_adapter_uses_env_var_api_key(self):
         """Test adapter uses ANYSCALE_API_KEY from environment."""
         adapter = GenOpsAnyscaleAdapter()
 
-        assert adapter.anyscale_api_key == 'env-api-key'
+        assert adapter.anyscale_api_key == "env-api-key"
 
     def test_adapter_governance_context_manager(self):
         """Test adapter governance context manager."""
@@ -185,31 +175,27 @@ class TestGenOpsAnyscaleAdapter:
             # Context should merge with defaults
             assert "customer_id" in ctx
 
-    @patch('genops.providers.anyscale.adapter.requests')
+    @patch("genops.providers.anyscale.adapter.requests")
     def test_completion_create_basic(self, mock_requests):
         """Test basic completion request."""
         # Mock API response
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.json.return_value = {
-            'id': 'chatcmpl-123',
-            'object': 'chat.completion',
-            'model': 'meta-llama/Llama-2-70b-chat-hf',
-            'choices': [
+            "id": "chatcmpl-123",
+            "object": "chat.completion",
+            "model": "meta-llama/Llama-2-70b-chat-hf",
+            "choices": [
                 {
-                    'index': 0,
-                    'message': {
-                        'role': 'assistant',
-                        'content': 'Paris is the capital of France.'
+                    "index": 0,
+                    "message": {
+                        "role": "assistant",
+                        "content": "Paris is the capital of France.",
                     },
-                    'finish_reason': 'stop'
+                    "finish_reason": "stop",
                 }
             ],
-            'usage': {
-                'prompt_tokens': 15,
-                'completion_tokens': 10,
-                'total_tokens': 25
-            }
+            "usage": {"prompt_tokens": 15, "completion_tokens": 10, "total_tokens": 25},
         }
         mock_requests.post.return_value = mock_response
 
@@ -217,53 +203,60 @@ class TestGenOpsAnyscaleAdapter:
 
         response = adapter.completion_create(
             model="meta-llama/Llama-2-70b-chat-hf",
-            messages=[
-                {"role": "user", "content": "What is the capital of France?"}
-            ]
+            messages=[{"role": "user", "content": "What is the capital of France?"}],
         )
 
-        assert response['model'] == 'meta-llama/Llama-2-70b-chat-hf'
-        assert response['usage']['total_tokens'] == 25
+        assert response["model"] == "meta-llama/Llama-2-70b-chat-hf"
+        assert response["usage"]["total_tokens"] == 25
         mock_requests.post.assert_called_once()
 
-    @patch('genops.providers.anyscale.adapter.requests')
+    @patch("genops.providers.anyscale.adapter.requests")
     def test_completion_create_with_governance(self, mock_requests):
         """Test completion with governance attributes."""
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.json.return_value = {
-            'id': 'chatcmpl-123',
-            'object': 'chat.completion',
-            'model': 'meta-llama/Llama-2-70b-chat-hf',
-            'choices': [{'index': 0, 'message': {'role': 'assistant', 'content': 'test'}, 'finish_reason': 'stop'}],
-            'usage': {'prompt_tokens': 10, 'completion_tokens': 5, 'total_tokens': 15}
+            "id": "chatcmpl-123",
+            "object": "chat.completion",
+            "model": "meta-llama/Llama-2-70b-chat-hf",
+            "choices": [
+                {
+                    "index": 0,
+                    "message": {"role": "assistant", "content": "test"},
+                    "finish_reason": "stop",
+                }
+            ],
+            "usage": {"prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15},
         }
         mock_requests.post.return_value = mock_response
 
-        adapter = GenOpsAnyscaleAdapter(
-            anyscale_api_key="test-key",
-            team="test-team"
-        )
+        adapter = GenOpsAnyscaleAdapter(anyscale_api_key="test-key", team="test-team")
 
         response = adapter.completion_create(
             model="meta-llama/Llama-2-70b-chat-hf",
             messages=[{"role": "user", "content": "test"}],
-            customer_id="customer-123"
+            customer_id="customer-123",
         )
 
         assert response is not None
 
-    @patch('genops.providers.anyscale.adapter.requests')
+    @patch("genops.providers.anyscale.adapter.requests")
     def test_completion_create_with_parameters(self, mock_requests):
         """Test completion with various parameters."""
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.json.return_value = {
-            'id': 'chatcmpl-123',
-            'object': 'chat.completion',
-            'model': 'meta-llama/Llama-2-70b-chat-hf',
-            'choices': [{'index': 0, 'message': {'role': 'assistant', 'content': 'test'}, 'finish_reason': 'stop'}],
-            'usage': {'prompt_tokens': 10, 'completion_tokens': 5, 'total_tokens': 15}
+            "id": "chatcmpl-123",
+            "object": "chat.completion",
+            "model": "meta-llama/Llama-2-70b-chat-hf",
+            "choices": [
+                {
+                    "index": 0,
+                    "message": {"role": "assistant", "content": "test"},
+                    "finish_reason": "stop",
+                }
+            ],
+            "usage": {"prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15},
         }
         mock_requests.post.return_value = mock_response
 
@@ -274,71 +267,63 @@ class TestGenOpsAnyscaleAdapter:
             messages=[{"role": "user", "content": "test"}],
             temperature=0.7,
             max_tokens=500,
-            top_p=0.9
+            top_p=0.9,
         )
 
         assert response is not None
         # Verify parameters were passed in API call
-        call_kwargs = mock_requests.post.call_args[1]['json']
-        assert call_kwargs['temperature'] == 0.7
-        assert call_kwargs['max_tokens'] == 500
+        call_kwargs = mock_requests.post.call_args[1]["json"]
+        assert call_kwargs["temperature"] == 0.7
+        assert call_kwargs["max_tokens"] == 500
 
-    @patch('genops.providers.anyscale.adapter.requests')
+    @patch("genops.providers.anyscale.adapter.requests")
     def test_embeddings_create_basic(self, mock_requests):
         """Test basic embeddings request."""
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.json.return_value = {
-            'object': 'list',
-            'data': [
-                {
-                    'object': 'embedding',
-                    'embedding': [0.1] * 1024,
-                    'index': 0
-                }
-            ],
-            'model': 'thenlper/gte-large',
-            'usage': {'prompt_tokens': 10, 'total_tokens': 10}
+            "object": "list",
+            "data": [{"object": "embedding", "embedding": [0.1] * 1024, "index": 0}],
+            "model": "thenlper/gte-large",
+            "usage": {"prompt_tokens": 10, "total_tokens": 10},
         }
         mock_requests.post.return_value = mock_response
 
         adapter = GenOpsAnyscaleAdapter(anyscale_api_key="test-key")
 
         response = adapter.embeddings_create(
-            model="thenlper/gte-large",
-            input="Test text to embed"
+            model="thenlper/gte-large", input="Test text to embed"
         )
 
-        assert response['model'] == 'thenlper/gte-large'
-        assert len(response['data']) == 1
-        assert len(response['data'][0]['embedding']) == 1024
+        assert response["model"] == "thenlper/gte-large"
+        assert len(response["data"]) == 1
+        assert len(response["data"][0]["embedding"]) == 1024
 
-    @patch('genops.providers.anyscale.adapter.requests')
+    @patch("genops.providers.anyscale.adapter.requests")
     def test_embeddings_create_with_list_input(self, mock_requests):
         """Test embeddings with list of strings."""
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.json.return_value = {
-            'object': 'list',
-            'data': [
-                {'object': 'embedding', 'embedding': [0.1] * 1024, 'index': 0},
-                {'object': 'embedding', 'embedding': [0.2] * 1024, 'index': 1}
+            "object": "list",
+            "data": [
+                {"object": "embedding", "embedding": [0.1] * 1024, "index": 0},
+                {"object": "embedding", "embedding": [0.2] * 1024, "index": 1},
             ],
-            'model': 'thenlper/gte-large',
-            'usage': {'prompt_tokens': 20, 'total_tokens': 20}
+            "model": "thenlper/gte-large",
+            "usage": {"prompt_tokens": 20, "total_tokens": 20},
         }
         mock_requests.post.return_value = mock_response
 
         adapter = GenOpsAnyscaleAdapter(anyscale_api_key="test-key")
 
         response = adapter.embeddings_create(
-            model="thenlper/gte-large",
-            input=["Text 1", "Text 2"]
+            model="thenlper/gte-large", input=["Text 1", "Text 2"]
         )
 
-        assert len(response['data']) == 2
+        assert len(response["data"]) == 2
 
-    @patch('genops.providers.anyscale.adapter.requests')
+    @patch("genops.providers.anyscale.adapter.requests")
     def test_api_error_handling(self, mock_requests):
         """Test API error handling."""
         mock_response = Mock()
@@ -348,38 +333,47 @@ class TestGenOpsAnyscaleAdapter:
 
         adapter = GenOpsAnyscaleAdapter(anyscale_api_key="invalid-key")
 
-        with pytest.raises(Exception):
+        with pytest.raises(Exception):  # noqa: B017
             adapter.completion_create(
                 model="meta-llama/Llama-2-70b-chat-hf",
-                messages=[{"role": "user", "content": "test"}]
+                messages=[{"role": "user", "content": "test"}],
             )
 
-    @patch('genops.providers.anyscale.adapter.requests')
+    @patch("genops.providers.anyscale.adapter.requests")
     def test_cost_tracking_enabled(self, mock_requests):
         """Test cost tracking is performed when enabled."""
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.json.return_value = {
-            'id': 'chatcmpl-123',
-            'object': 'chat.completion',
-            'model': 'meta-llama/Llama-2-70b-chat-hf',
-            'choices': [{'index': 0, 'message': {'role': 'assistant', 'content': 'test'}, 'finish_reason': 'stop'}],
-            'usage': {'prompt_tokens': 100, 'completion_tokens': 50, 'total_tokens': 150}
+            "id": "chatcmpl-123",
+            "object": "chat.completion",
+            "model": "meta-llama/Llama-2-70b-chat-hf",
+            "choices": [
+                {
+                    "index": 0,
+                    "message": {"role": "assistant", "content": "test"},
+                    "finish_reason": "stop",
+                }
+            ],
+            "usage": {
+                "prompt_tokens": 100,
+                "completion_tokens": 50,
+                "total_tokens": 150,
+            },
         }
         mock_requests.post.return_value = mock_response
 
         adapter = GenOpsAnyscaleAdapter(
-            anyscale_api_key="test-key",
-            cost_tracking_enabled=True
+            anyscale_api_key="test-key", cost_tracking_enabled=True
         )
 
         response = adapter.completion_create(
             model="meta-llama/Llama-2-70b-chat-hf",
-            messages=[{"role": "user", "content": "test"}]
+            messages=[{"role": "user", "content": "test"}],
         )
 
         # Cost tracking should have been performed
-        assert response['usage']['total_tokens'] == 150
+        assert response["usage"]["total_tokens"] == 150
 
     def test_telemetry_disabled(self):
         """Test telemetry can be disabled."""
@@ -413,9 +407,7 @@ class TestInstrumentAnyscale:
     def test_instrument_anyscale_with_governance(self):
         """Test instrumentation with governance defaults."""
         adapter = instrument_anyscale(
-            team="test-team",
-            project="test-project",
-            environment="production"
+            team="test-team", project="test-project", environment="production"
         )
 
         assert adapter.governance_defaults["team"] == "test-team"
@@ -432,6 +424,6 @@ class TestInstrumentAnyscale:
         """Test instrument_anyscale returns adapter instance."""
         adapter = instrument_anyscale()
 
-        assert hasattr(adapter, 'completion_create')
-        assert hasattr(adapter, 'embeddings_create')
-        assert hasattr(adapter, 'governance_context')
+        assert hasattr(adapter, "completion_create")
+        assert hasattr(adapter, "embeddings_create")
+        assert hasattr(adapter, "governance_context")

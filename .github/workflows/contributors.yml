@@ -4,7 +4,7 @@ on:
   issues:
     types: [opened, closed]
   pull_request_target:
-    types: [opened, merged, closed]
+    types: [opened, closed]
   push:
     branches: [main]
   
@@ -33,7 +33,7 @@ jobs:
 
   # Add contributor on PR merge
   add-contributor-pr:
-    if: github.event_name == 'pull_request_target' && github.event.action == 'merged' && github.event.pull_request.author_association != 'OWNER'
+    if: github.event_name == 'pull_request_target' && github.event.action == 'closed' && github.event.pull_request.merged == true && github.event.pull_request.author_association != 'OWNER'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

@@ -16,15 +16,13 @@ Tempo Multi-Tenancy Config:
     multitenancy_tenant_header: X-Scope-OrgID
 """
 
-import time
 import random
-from typing import Dict, Any, Optional
-from opentelemetry import trace
+import time
+from typing import Any
+
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
-
-from genops import track_usage
 
 
 class TenantTracking:
@@ -42,7 +40,7 @@ class TenantTracking:
             tempo_endpoint: Tempo base endpoint
         """
         self.tempo_endpoint = tempo_endpoint
-        self.tenant_providers: Dict[str, TracerProvider] = {}
+        self.tenant_providers: dict[str, TracerProvider] = {}
 
     def configure_tenant(self, tenant_id: str) -> TracerProvider:
         """
@@ -61,8 +59,7 @@ class TenantTracking:
         otlp_endpoint = f"{self.tempo_endpoint}:4318/v1/traces"
 
         exporter = OTLPSpanExporter(
-            endpoint=otlp_endpoint,
-            headers={"X-Scope-OrgID": tenant_id}
+            endpoint=otlp_endpoint, headers={"X-Scope-OrgID": tenant_id}
         )
 
         # Create tenant-specific tracer provider
@@ -90,11 +87,8 @@ class TenantTracking:
 
 
 def simulate_tenant_operation(
-    tenant_tracking: TenantTracking,
-    tenant_id: str,
-    operation_name: str,
-    cost: float
-) -> Dict[str, Any]:
+    tenant_tracking: TenantTracking, tenant_id: str, operation_name: str, cost: float
+) -> dict[str, Any]:
     """
     Simulate an operation for a specific tenant.
 
@@ -122,7 +116,7 @@ def simulate_tenant_operation(
             "tenant_id": tenant_id,
             "operation": operation_name,
             "cost": cost,
-            "status": "success"
+            "status": "success",
         }
 
 
@@ -162,10 +156,7 @@ def main():
 
     for tenant_id in tenants:
         result = simulate_tenant_operation(
-            tenant_tracking,
-            tenant_id,
-            "ai_query",
-            cost=random.uniform(0.01, 0.10)
+            tenant_tracking, tenant_id, "ai_query", cost=random.uniform(0.01, 0.10)
         )
         print(f"  {tenant_id}: ${result['cost']:.4f}")
 
@@ -192,12 +183,14 @@ def main():
                 tenant_tracking,
                 tenant_id,
                 f"operation_{i}",
-                cost=random.uniform(0.01, 0.05)
+                cost=random.uniform(0.01, 0.05),
             )
             tenant_total += result["cost"]
 
         tenant_costs[tenant_id] = tenant_total
-        print(f"  {tenant_id}: {len(range(random.randint(3, 8)))} operations, ${tenant_total:.4f} total")
+        print(
+            f"  {tenant_id}: {len(range(random.randint(3, 8)))} operations, ${tenant_total:.4f} total"
+        )
 
     print()
 
@@ -214,7 +207,7 @@ def main():
     tenant_tiers = {
         "acme-corp": {"tier": "enterprise", "monthly_limit": 5000.0},
         "globex-inc": {"tier": "professional", "monthly_limit": 1000.0},
-        "initech-ltd": {"tier": "starter", "monthly_limit": 100.0}
+        "initech-ltd": {"tier": "starter", "monthly_limit": 100.0},
     }
 
     print("Applying tenant-specific policies...")
@@ -231,7 +224,10 @@ def main():
             remaining = policy["monthly_limit"] - current_spend
 
             span.set_attribute("genops.budget.remaining", remaining)
-            span.set_attribute("genops.budget.utilization_pct", (current_spend / policy["monthly_limit"]) * 100)
+            span.set_attribute(
+                "genops.budget.utilization_pct",
+                (current_spend / policy["monthly_limit"]) * 100,
+            )
 
             print(f"  {tenant_id} ({policy['tier']}): ${remaining:.2f} remaining")
 
@@ -256,7 +252,9 @@ def main():
         limit = tenant_tiers[tenant_id]["monthly_limit"]
         utilization = (cost / limit) * 100
 
-        print(f"  {tenant_id:15} ({tier:12}): ${cost:7.4f} ({utilization:5.2f}% of limit)")
+        print(
+            f"  {tenant_id:15} ({tier:12}): ${cost:7.4f} ({utilization:5.2f}% of limit)"
+        )
         total_cost += cost
 
     print("-" * 70)
@@ -281,14 +279,11 @@ def main():
 
     for i in range(20):
         simulate_tenant_operation(
-            tenant_tracking,
-            high_volume_tenant,
-            f"bulk_operation_{i}",
-            cost=0.001
+            tenant_tracking, high_volume_tenant, f"bulk_operation_{i}", cost=0.001
         )
 
     print(f"✅ Created 20 operations for {high_volume_tenant}")
-    print(f"   Other tenants' traces remain isolated in Tempo")
+    print("   Other tenants' traces remain isolated in Tempo")
     print()
 
     # Wait for export

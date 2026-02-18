@@ -25,13 +25,13 @@ Cost Categories:
 Example usage:
 
     from genops.providers.arize_cost_aggregator import ArizeCostAggregator
-    
+
     # Initialize cost aggregator
     cost_aggregator = ArizeCostAggregator(
         team="ml-platform",
         project="fraud-detection"
     )
-    
+
     # Track monitoring session costs
     session_cost = cost_aggregator.calculate_monitoring_session_cost(
         model_id="fraud-model-v2",
@@ -40,11 +40,11 @@ Example usage:
         active_alerts=3,
         session_duration_hours=24
     )
-    
+
     # Get cost summary and optimization recommendations
     monthly_summary = cost_aggregator.get_monthly_cost_summary()
     optimization_tips = cost_aggregator.get_cost_optimization_recommendations()
-    
+
     print(f"Session cost: ${session_cost.total_cost:.2f}")
     print(f"Monthly total: ${monthly_summary.total_cost:.2f}")
     print(f"Optimization potential: ${optimization_tips.potential_savings:.2f}")
@@ -55,13 +55,14 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Dict, List, Optional, Tuple
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
 
 class CostCategory(Enum):
     """Cost categories for Arize AI operations."""
+
     PREDICTION_LOGGING = "prediction_logging"
     DATA_QUALITY = "data_quality"
     ALERT_MANAGEMENT = "alert_management"
@@ -73,6 +74,7 @@ class CostCategory(Enum):
 
 class OptimizationRecommendationType(Enum):
     """Types of cost optimization recommendations."""
+
     REDUCE_LOGGING_FREQUENCY = "reduce_logging_frequency"
     OPTIMIZE_ALERT_CONFIGURATION = "optimize_alert_configuration"
     CONSOLIDATE_MODELS = "consolidate_models"
@@ -84,6 +86,7 @@ class OptimizationRecommendationType(Enum):
 @dataclass
 class MonitoringSessionCost:
     """Cost breakdown for a single monitoring session."""
+
     session_id: str
     model_id: str
     model_version: str
@@ -104,31 +107,33 @@ class MonitoringSessionCost:
 @dataclass
 class MonthlyCostSummary:
     """Comprehensive monthly cost summary for Arize operations."""
+
     month: str
     total_cost: float
-    cost_by_category: Dict[CostCategory, float]
-    cost_by_model: Dict[str, float]
-    cost_by_environment: Dict[str, float]
-    cost_by_team: Dict[str, float]
+    cost_by_category: dict[CostCategory, float]
+    cost_by_model: dict[str, float]
+    cost_by_environment: dict[str, float]
+    cost_by_team: dict[str, float]
     prediction_volume: int
     alert_count: int
     model_count: int
     average_cost_per_model: float
     cost_trend: float  # Percentage change from previous month
     budget_utilization: float
-    top_cost_drivers: List[Tuple[str, float]]
+    top_cost_drivers: list[tuple[str, float]]
 
 
 @dataclass
 class CostOptimizationRecommendation:
     """Cost optimization recommendation with actionable insights."""
+
     recommendation_type: OptimizationRecommendationType
     title: str
     description: str
     potential_savings: float
     effort_level: str  # "Low", "Medium", "High"
-    implementation_steps: List[str]
-    affected_models: List[str]
+    implementation_steps: list[str]
+    affected_models: list[str]
     risk_level: str  # "Low", "Medium", "High"
     priority_score: float  # 0-100
 
@@ -136,18 +141,19 @@ class CostOptimizationRecommendation:
 @dataclass
 class CostForecast:
     """Cost forecasting for budget planning."""
+
     forecast_period: str
     forecasted_cost: float
-    confidence_interval: Tuple[float, float]
-    key_assumptions: List[str]
-    risk_factors: List[str]
+    confidence_interval: tuple[float, float]
+    key_assumptions: list[str]
+    risk_factors: list[str]
     budget_recommendation: float
 
 
 class ArizeCostAggregator:
     """
     Comprehensive cost aggregation and analysis for Arize AI monitoring operations.
-    
+
     Provides detailed cost tracking, optimization recommendations, and budget
     management for model monitoring across multiple models and environments.
     """
@@ -158,11 +164,11 @@ class ArizeCostAggregator:
         project: str,
         cost_center: Optional[str] = None,
         budget_limit: float = 1000.0,
-        retention_days: int = 90
+        retention_days: int = 90,
     ):
         """
         Initialize Arize cost aggregator.
-        
+
         Args:
             team: Team name for cost attribution
             project: Project name for cost attribution
@@ -177,18 +183,18 @@ class ArizeCostAggregator:
         self.retention_days = retention_days
 
         # Cost tracking storage
-        self.session_costs: List[MonitoringSessionCost] = []
-        self.monthly_summaries: Dict[str, MonthlyCostSummary] = {}
+        self.session_costs: list[MonitoringSessionCost] = []
+        self.monthly_summaries: dict[str, MonthlyCostSummary] = {}
 
         # Pricing configuration
         self.pricing = {
-            CostCategory.PREDICTION_LOGGING: 0.001,     # $0.001 per prediction
-            CostCategory.DATA_QUALITY: 0.01,            # $0.01 per quality check
-            CostCategory.ALERT_MANAGEMENT: 0.05,        # $0.05 per active alert per day
-            CostCategory.DASHBOARD_ANALYTICS: 0.10,     # $0.10 per dashboard per day
-            CostCategory.MODEL_PERFORMANCE: 0.02,       # $0.02 per performance metric
-            CostCategory.STORAGE: 0.001,                # $0.001 per MB per month
-            CostCategory.API_CALLS: 0.0001              # $0.0001 per API call
+            CostCategory.PREDICTION_LOGGING: 0.001,  # $0.001 per prediction
+            CostCategory.DATA_QUALITY: 0.01,  # $0.01 per quality check
+            CostCategory.ALERT_MANAGEMENT: 0.05,  # $0.05 per active alert per day
+            CostCategory.DASHBOARD_ANALYTICS: 0.10,  # $0.10 per dashboard per day
+            CostCategory.MODEL_PERFORMANCE: 0.02,  # $0.02 per performance metric
+            CostCategory.STORAGE: 0.001,  # $0.001 per MB per month
+            CostCategory.API_CALLS: 0.0001,  # $0.0001 per API call
         }
 
         logger.info(f"Arize cost aggregator initialized for {team}/{project}")
@@ -205,11 +211,11 @@ class ArizeCostAggregator:
         dashboard_views: int = 1,
         api_calls: int = 0,
         storage_mb: float = 0.0,
-        session_id: Optional[str] = None
+        session_id: Optional[str] = None,
     ) -> MonitoringSessionCost:
         """
         Calculate comprehensive cost for a monitoring session.
-        
+
         Args:
             model_id: Model identifier
             model_version: Model version
@@ -222,28 +228,46 @@ class ArizeCostAggregator:
             api_calls: Number of API calls made
             storage_mb: Storage used in MB
             session_id: Optional session identifier
-            
+
         Returns:
             MonitoringSessionCost with detailed cost breakdown
         """
         session_id = session_id or f"{model_id}_{int(datetime.utcnow().timestamp())}"
 
         # Calculate costs by category
-        prediction_cost = prediction_count * self.pricing[CostCategory.PREDICTION_LOGGING]
-        data_quality_cost = data_quality_checks * self.pricing[CostCategory.DATA_QUALITY]
-        alert_cost = active_alerts * self.pricing[CostCategory.ALERT_MANAGEMENT] * (session_duration_hours / 24)
-        dashboard_cost = dashboard_views * self.pricing[CostCategory.DASHBOARD_ANALYTICS] * (session_duration_hours / 24)
+        prediction_cost = (
+            prediction_count * self.pricing[CostCategory.PREDICTION_LOGGING]
+        )
+        data_quality_cost = (
+            data_quality_checks * self.pricing[CostCategory.DATA_QUALITY]
+        )
+        alert_cost = (
+            active_alerts
+            * self.pricing[CostCategory.ALERT_MANAGEMENT]
+            * (session_duration_hours / 24)
+        )
+        dashboard_cost = (
+            dashboard_views
+            * self.pricing[CostCategory.DASHBOARD_ANALYTICS]
+            * (session_duration_hours / 24)
+        )
         storage_cost = storage_mb * self.pricing[CostCategory.STORAGE]
         api_cost = api_calls * self.pricing[CostCategory.API_CALLS]
 
         total_cost = (
-            prediction_cost + data_quality_cost + alert_cost +
-            dashboard_cost + storage_cost + api_cost
+            prediction_cost
+            + data_quality_cost
+            + alert_cost
+            + dashboard_cost
+            + storage_cost
+            + api_cost
         )
 
         # Calculate efficiency metrics
         cost_per_prediction = total_cost / max(prediction_count, 1)
-        efficiency_score = prediction_count / max(total_cost * 1000, 1)  # Predictions per $1
+        efficiency_score = prediction_count / max(
+            total_cost * 1000, 1
+        )  # Predictions per $1
 
         session_cost = MonitoringSessionCost(
             session_id=session_id,
@@ -259,7 +283,7 @@ class ArizeCostAggregator:
             duration_hours=session_duration_hours,
             prediction_count=prediction_count,
             efficiency_score=efficiency_score,
-            cost_per_prediction=cost_per_prediction
+            cost_per_prediction=cost_per_prediction,
         )
 
         # Store session cost
@@ -268,13 +292,15 @@ class ArizeCostAggregator:
 
         return session_cost
 
-    def get_monthly_cost_summary(self, month: Optional[str] = None) -> MonthlyCostSummary:
+    def get_monthly_cost_summary(
+        self, month: Optional[str] = None
+    ) -> MonthlyCostSummary:
         """
         Get comprehensive monthly cost summary.
-        
+
         Args:
             month: Month in YYYY-MM format (defaults to current month)
-            
+
         Returns:
             MonthlyCostSummary with detailed breakdown
         """
@@ -283,7 +309,8 @@ class ArizeCostAggregator:
 
         # Filter sessions for the specified month
         month_sessions = [
-            session for session in self.session_costs
+            session
+            for session in self.session_costs
             if session.timestamp.strftime("%Y-%m") == month
         ]
 
@@ -295,10 +322,16 @@ class ArizeCostAggregator:
 
         # Cost by category
         cost_by_category = {
-            CostCategory.PREDICTION_LOGGING: sum(s.prediction_logging_cost for s in month_sessions),
+            CostCategory.PREDICTION_LOGGING: sum(
+                s.prediction_logging_cost for s in month_sessions
+            ),
             CostCategory.DATA_QUALITY: sum(s.data_quality_cost for s in month_sessions),
-            CostCategory.ALERT_MANAGEMENT: sum(s.alert_management_cost for s in month_sessions),
-            CostCategory.DASHBOARD_ANALYTICS: sum(s.dashboard_cost for s in month_sessions),
+            CostCategory.ALERT_MANAGEMENT: sum(
+                s.alert_management_cost for s in month_sessions
+            ),
+            CostCategory.DASHBOARD_ANALYTICS: sum(
+                s.dashboard_cost for s in month_sessions
+            ),
             CostCategory.STORAGE: sum(s.storage_cost for s in month_sessions),
         }
 
@@ -306,7 +339,9 @@ class ArizeCostAggregator:
         cost_by_model = {}
         for session in month_sessions:
             model_key = f"{session.model_id}-{session.model_version}"
-            cost_by_model[model_key] = cost_by_model.get(model_key, 0) + session.total_cost
+            cost_by_model[model_key] = (
+                cost_by_model.get(model_key, 0) + session.total_cost
+            )
 
         # Cost by environment
         cost_by_environment = {}
@@ -317,12 +352,14 @@ class ArizeCostAggregator:
 
         # Additional metrics
         prediction_volume = sum(session.prediction_count for session in month_sessions)
-        model_count = len(set(f"{s.model_id}-{s.model_version}" for s in month_sessions))
+        model_count = len({f"{s.model_id}-{s.model_version}" for s in month_sessions})
         average_cost_per_model = total_cost / max(model_count, 1)
         budget_utilization = (total_cost / self.budget_limit) * 100
 
         # Top cost drivers
-        top_cost_drivers = sorted(cost_by_model.items(), key=lambda x: x[1], reverse=True)[:5]
+        top_cost_drivers = sorted(
+            cost_by_model.items(), key=lambda x: x[1], reverse=True
+        )[:5]
 
         # Calculate cost trend (placeholder - would need historical data)
         cost_trend = 0.0  # Would calculate based on previous month
@@ -340,16 +377,18 @@ class ArizeCostAggregator:
             average_cost_per_model=average_cost_per_model,
             cost_trend=cost_trend,
             budget_utilization=budget_utilization,
-            top_cost_drivers=top_cost_drivers
+            top_cost_drivers=top_cost_drivers,
         )
 
         self.monthly_summaries[month] = summary
         return summary
 
-    def get_cost_optimization_recommendations(self) -> List[CostOptimizationRecommendation]:
+    def get_cost_optimization_recommendations(
+        self,
+    ) -> list[CostOptimizationRecommendation]:
         """
         Generate cost optimization recommendations based on usage patterns.
-        
+
         Returns:
             List of actionable cost optimization recommendations
         """
@@ -360,7 +399,8 @@ class ArizeCostAggregator:
 
         # Analyze recent usage patterns
         recent_sessions = [
-            s for s in self.session_costs
+            s
+            for s in self.session_costs
             if s.timestamp >= datetime.utcnow() - timedelta(days=30)
         ]
 
@@ -368,64 +408,88 @@ class ArizeCostAggregator:
             return recommendations
 
         # Recommendation 1: High-frequency logging optimization
-        avg_predictions_per_session = sum(s.prediction_count for s in recent_sessions) / len(recent_sessions)
+        avg_predictions_per_session = sum(
+            s.prediction_count for s in recent_sessions
+        ) / len(recent_sessions)
         if avg_predictions_per_session > 50000:
-            recommendations.append(CostOptimizationRecommendation(
-                recommendation_type=OptimizationRecommendationType.REDUCE_LOGGING_FREQUENCY,
-                title="Optimize High-Frequency Prediction Logging",
-                description="Consider sampling prediction logs or implementing batch logging to reduce per-prediction costs.",
-                potential_savings=sum(s.prediction_logging_cost for s in recent_sessions) * 0.3,
-                effort_level="Medium",
-                implementation_steps=[
-                    "Implement prediction sampling (e.g., log every 10th prediction)",
-                    "Use batch logging API to reduce individual API calls",
-                    "Configure different logging rates for different environments"
-                ],
-                affected_models=list(set(s.model_id for s in recent_sessions)),
-                risk_level="Low",
-                priority_score=75.0
-            ))
+            recommendations.append(
+                CostOptimizationRecommendation(
+                    recommendation_type=OptimizationRecommendationType.REDUCE_LOGGING_FREQUENCY,
+                    title="Optimize High-Frequency Prediction Logging",
+                    description="Consider sampling prediction logs or implementing batch logging to reduce per-prediction costs.",
+                    potential_savings=sum(
+                        s.prediction_logging_cost for s in recent_sessions
+                    )
+                    * 0.3,
+                    effort_level="Medium",
+                    implementation_steps=[
+                        "Implement prediction sampling (e.g., log every 10th prediction)",
+                        "Use batch logging API to reduce individual API calls",
+                        "Configure different logging rates for different environments",
+                    ],
+                    affected_models=list({s.model_id for s in recent_sessions}),
+                    risk_level="Low",
+                    priority_score=75.0,
+                )
+            )
 
         # Recommendation 2: Alert optimization
-        high_alert_sessions = [s for s in recent_sessions if s.alert_management_cost > 5.0]
+        high_alert_sessions = [
+            s for s in recent_sessions if s.alert_management_cost > 5.0
+        ]
         if high_alert_sessions:
-            recommendations.append(CostOptimizationRecommendation(
-                recommendation_type=OptimizationRecommendationType.OPTIMIZE_ALERT_CONFIGURATION,
-                title="Optimize Alert Configuration",
-                description="Review and consolidate alerts to reduce management costs while maintaining monitoring coverage.",
-                potential_savings=sum(s.alert_management_cost for s in high_alert_sessions) * 0.25,
-                effort_level="Low",
-                implementation_steps=[
-                    "Review alert thresholds and eliminate false positives",
-                    "Consolidate similar alerts across models",
-                    "Use alert suppression during maintenance windows"
-                ],
-                affected_models=list(set(s.model_id for s in high_alert_sessions)),
-                risk_level="Medium",
-                priority_score=60.0
-            ))
+            recommendations.append(
+                CostOptimizationRecommendation(
+                    recommendation_type=OptimizationRecommendationType.OPTIMIZE_ALERT_CONFIGURATION,
+                    title="Optimize Alert Configuration",
+                    description="Review and consolidate alerts to reduce management costs while maintaining monitoring coverage.",
+                    potential_savings=sum(
+                        s.alert_management_cost for s in high_alert_sessions
+                    )
+                    * 0.25,
+                    effort_level="Low",
+                    implementation_steps=[
+                        "Review alert thresholds and eliminate false positives",
+                        "Consolidate similar alerts across models",
+                        "Use alert suppression during maintenance windows",
+                    ],
+                    affected_models=list({s.model_id for s in high_alert_sessions}),
+                    risk_level="Medium",
+                    priority_score=60.0,
+                )
+            )
 
         # Recommendation 3: Environment consolidation
         env_costs = {}
         for session in recent_sessions:
-            env_costs[session.environment] = env_costs.get(session.environment, 0) + session.total_cost
+            env_costs[session.environment] = (
+                env_costs.get(session.environment, 0) + session.total_cost
+            )
 
-        if len(env_costs) > 2 and env_costs.get('development', 0) > 100:
-            recommendations.append(CostOptimizationRecommendation(
-                recommendation_type=OptimizationRecommendationType.CONSOLIDATE_MODELS,
-                title="Consolidate Development Environment Monitoring",
-                description="Reduce monitoring scope in development environments to focus on production-critical metrics.",
-                potential_savings=env_costs.get('development', 0) * 0.5,
-                effort_level="Low",
-                implementation_steps=[
-                    "Disable detailed monitoring in development environments",
-                    "Use reduced sampling rates for non-production environments",
-                    "Focus monitoring on critical production models only"
-                ],
-                affected_models=list(set(s.model_id for s in recent_sessions if s.environment == 'development')),
-                risk_level="Low",
-                priority_score=45.0
-            ))
+        if len(env_costs) > 2 and env_costs.get("development", 0) > 100:
+            recommendations.append(
+                CostOptimizationRecommendation(
+                    recommendation_type=OptimizationRecommendationType.CONSOLIDATE_MODELS,
+                    title="Consolidate Development Environment Monitoring",
+                    description="Reduce monitoring scope in development environments to focus on production-critical metrics.",
+                    potential_savings=env_costs.get("development", 0) * 0.5,
+                    effort_level="Low",
+                    implementation_steps=[
+                        "Disable detailed monitoring in development environments",
+                        "Use reduced sampling rates for non-production environments",
+                        "Focus monitoring on critical production models only",
+                    ],
+                    affected_models=list(
+                        {
+                            s.model_id
+                            for s in recent_sessions
+                            if s.environment == "development"
+                        }
+                    ),
+                    risk_level="Low",
+                    priority_score=45.0,
+                )
+            )
 
         # Sort by priority score
         recommendations.sort(key=lambda r: r.priority_score, reverse=True)
@@ -435,10 +499,10 @@ class ArizeCostAggregator:
     def generate_cost_forecast(self, forecast_months: int = 3) -> CostForecast:
         """
         Generate cost forecast for budget planning.
-        
+
         Args:
             forecast_months: Number of months to forecast
-            
+
         Returns:
             CostForecast with predictions and recommendations
         """
@@ -449,7 +513,7 @@ class ArizeCostAggregator:
                 confidence_interval=(0.0, 0.0),
                 key_assumptions=["No historical data available"],
                 risk_factors=["Unable to predict without usage history"],
-                budget_recommendation=self.budget_limit
+                budget_recommendation=self.budget_limit,
             )
 
         # Simple trend-based forecasting (in production, would use more sophisticated methods)
@@ -458,10 +522,7 @@ class ArizeCostAggregator:
         total_forecasted_cost = forecasted_monthly_cost * forecast_months
 
         # Confidence interval (±20%)
-        confidence_interval = (
-            total_forecasted_cost * 0.8,
-            total_forecasted_cost * 1.2
-        )
+        confidence_interval = (total_forecasted_cost * 0.8, total_forecasted_cost * 1.2)
 
         return CostForecast(
             forecast_period=f"{forecast_months} months",
@@ -470,23 +531,23 @@ class ArizeCostAggregator:
             key_assumptions=[
                 "10% month-over-month growth in monitoring volume",
                 "Current pricing structure remains stable",
-                "No significant changes in monitoring scope"
+                "No significant changes in monitoring scope",
             ],
             risk_factors=[
                 "Increased model deployment could drive higher costs",
                 "Changes in Arize pricing structure",
-                "Expansion to additional environments"
+                "Expansion to additional environments",
             ],
-            budget_recommendation=total_forecasted_cost * 1.2  # 20% buffer
+            budget_recommendation=total_forecasted_cost * 1.2,  # 20% buffer
         )
 
     def export_cost_data(self, format: str = "json") -> str:
         """
         Export cost data for external analysis.
-        
+
         Args:
             format: Export format ("json", "csv")
-            
+
         Returns:
             Serialized cost data
         """
@@ -503,7 +564,7 @@ class ArizeCostAggregator:
                         "total_cost": s.total_cost,
                         "timestamp": s.timestamp.isoformat(),
                         "prediction_count": s.prediction_count,
-                        "efficiency_score": s.efficiency_score
+                        "efficiency_score": s.efficiency_score,
                     }
                     for s in self.session_costs
                 ],
@@ -511,10 +572,10 @@ class ArizeCostAggregator:
                     month: {
                         "total_cost": summary.total_cost,
                         "model_count": summary.model_count,
-                        "budget_utilization": summary.budget_utilization
+                        "budget_utilization": summary.budget_utilization,
                     }
                     for month, summary in self.monthly_summaries.items()
-                }
+                },
             }
             return json.dumps(data, indent=2)
         else:
@@ -535,7 +596,7 @@ class ArizeCostAggregator:
             average_cost_per_model=0.0,
             cost_trend=0.0,
             budget_utilization=0.0,
-            top_cost_drivers=[]
+            top_cost_drivers=[],
         )
 
     def _calculate_recent_monthly_average(self) -> float:
@@ -558,12 +619,14 @@ class ArizeCostAggregator:
         """Remove cost data older than retention period."""
         cutoff_date = datetime.utcnow() - timedelta(days=self.retention_days)
         self.session_costs = [
-            session for session in self.session_costs
+            session
+            for session in self.session_costs
             if session.timestamp >= cutoff_date
         ]
 
 
 # Convenience functions for common operations
+
 
 def calculate_prediction_logging_cost(prediction_count: int) -> float:
     """Calculate cost for prediction logging operations."""
@@ -584,17 +647,17 @@ def estimate_monthly_monitoring_cost(
     models: int,
     predictions_per_model_per_day: int,
     alerts_per_model: int = 3,
-    quality_checks_per_model_per_day: int = 10
+    quality_checks_per_model_per_day: int = 10,
 ) -> float:
     """
     Estimate monthly monitoring cost for multiple models.
-    
+
     Args:
         models: Number of models to monitor
         predictions_per_model_per_day: Average predictions per model per day
         alerts_per_model: Number of alerts per model
         quality_checks_per_model_per_day: Quality checks per model per day
-        
+
     Returns:
         Estimated monthly cost in USD
     """
@@ -603,21 +666,26 @@ def estimate_monthly_monitoring_cost(
     daily_alert_cost = models * alerts_per_model * 0.05
     daily_dashboard_cost = models * 0.10
 
-    daily_total = daily_prediction_cost + daily_quality_cost + daily_alert_cost + daily_dashboard_cost
+    daily_total = (
+        daily_prediction_cost
+        + daily_quality_cost
+        + daily_alert_cost
+        + daily_dashboard_cost
+    )
     return daily_total * 30  # Monthly estimate
 
 
 # Convenience exports
 __all__ = [
-    'ArizeCostAggregator',
-    'MonitoringSessionCost',
-    'MonthlyCostSummary',
-    'CostOptimizationRecommendation',
-    'CostForecast',
-    'CostCategory',
-    'OptimizationRecommendationType',
-    'calculate_prediction_logging_cost',
-    'calculate_data_quality_cost',
-    'calculate_alert_management_cost',
-    'estimate_monthly_monitoring_cost'
+    "ArizeCostAggregator",
+    "MonitoringSessionCost",
+    "MonthlyCostSummary",
+    "CostOptimizationRecommendation",
+    "CostForecast",
+    "CostCategory",
+    "OptimizationRecommendationType",
+    "calculate_prediction_logging_cost",
+    "calculate_data_quality_cost",
+    "calculate_alert_management_cost",
+    "estimate_monthly_monitoring_cost",
 ]

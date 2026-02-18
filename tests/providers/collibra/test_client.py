@@ -1,9 +1,11 @@
 """Unit tests for Collibra API client."""
 
-import pytest
 import time
-from unittest.mock import Mock, patch, MagicMock
-from requests.exceptions import Timeout, ConnectionError as RequestsConnectionError
+from unittest.mock import Mock, patch
+
+import pytest
+from requests.exceptions import ConnectionError as RequestsConnectionError
+from requests.exceptions import Timeout
 
 from genops.providers.collibra.client import (
     CollibraAPIClient,

@@ -406,7 +406,7 @@ class OpenRouterPricingEngine:
         else:
             # Generic fallback - medium cost tier
             # Sanitize model name for logging to prevent log injection
-            safe_model_name = model_name.replace('\n', '\\n').replace('\r', '\\r')[:100]
+            safe_model_name = model_name.replace("\n", "\\n").replace("\r", "\\r")[:100]
             logger.warning("Unknown model %s, using generic pricing", safe_model_name)
             return OpenRouterPricing(
                 0.005 / 1000, 0.01 / 1000, provider="unknown", model_family="unknown"

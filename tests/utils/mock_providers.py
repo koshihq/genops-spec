@@ -2,7 +2,7 @@
 
 import time
 from typing import Optional
-from unittest.mock import MagicMock
+from unittest.mock import DEFAULT, MagicMock
 
 
 class MockOpenAIResponse:
@@ -173,7 +173,9 @@ class MockOpenAIClient(MockProviderClient):
         self.chat.completions = MagicMock()
 
         # Set up chat completions create method with proper mock behavior
-        self.chat.completions.create = MagicMock(side_effect=self._chat_completions_create)
+        self.chat.completions.create = MagicMock(
+            side_effect=self._chat_completions_create
+        )
 
         # Add completions for legacy completions API
         self.completions = MagicMock()
@@ -227,7 +229,26 @@ class MockAnthropicClient(MockProviderClient):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.messages = MagicMock()
-        self.messages.create = self._messages_create
+
+        # Use MagicMock with side_effect so tests can override via return_value.
+        # The wrapper returns DEFAULT when return_value has been explicitly set,
+        # which tells MagicMock to use return_value instead.
+        self.messages.create = MagicMock(side_effect=self._messages_create_wrapper)
+        self._default_return_value = self.messages.create.return_value
+
+    def reset_mock(self):
+        """Reset all mock call counts and side effects."""
+        self.request_count = 0
+        self.messages.create.reset_mock(side_effect=self._messages_create_wrapper)
+        self._default_return_value = self.messages.create.return_value
+
+    def _messages_create_wrapper(self, **kwargs) -> MockAnthropicResponse:
+        """Wrapper that defers to return_value when it has been overridden."""
+        # If a test set messages.create.return_value, honour it.
+        # Skip side-effects (delay/failure) since the test controls the response.
+        if self.messages.create.return_value is not self._default_return_value:
+            return DEFAULT
+        return self._messages_create(**kwargs)
 
     def _messages_create(self, **kwargs) -> MockAnthropicResponse:
         """Mock messages create method."""

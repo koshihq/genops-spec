@@ -9,48 +9,51 @@ Tests the validation functionality including:
 - Error diagnosis and troubleshooting
 """
 
-import pytest
 from unittest.mock import Mock, patch
-from typing import Dict, Any
+
+import pytest
 
 # Import the modules under test
 try:
     from genops.providers.helicone_validation import (
+        print_validation_result,  # noqa: F401
+        quick_validate,  # noqa: F401
         validate_setup,
-        print_validation_result,
-        quick_validate
     )
+
     HELICONE_VALIDATION_AVAILABLE = True
 except ImportError:
     HELICONE_VALIDATION_AVAILABLE = False
 
 
-@pytest.mark.skipif(not HELICONE_VALIDATION_AVAILABLE, reason="Helicone validation not available")
+@pytest.mark.skipif(
+    not HELICONE_VALIDATION_AVAILABLE, reason="Helicone validation not available"
+)
 class TestHeliconeValidation:
     """Test suite for Helicone setup validation."""
 
-    @patch('requests.get')
+    @patch("requests.get")
     def test_validate_setup_success(self, mock_get):
         """Test successful setup validation."""
         # Mock successful API responses
         mock_response = Mock()
         mock_response.status_code = 200
-        mock_response.json.return_value = {'status': 'healthy'}
+        mock_response.json.return_value = {"status": "healthy"}
         mock_get.return_value = mock_response
 
         result = validate_setup()
-        
+
         assert result is not None
         # Add specific assertions based on ValidationResult structure
 
-    @patch('requests.get')
+    @patch("requests.get")
     def test_validate_setup_failure(self, mock_get):
         """Test validation with failing API calls."""
         # Mock failed API responses
         mock_get.side_effect = Exception("Connection failed")
 
         result = validate_setup()
-        
+
         assert result is not None
         # Add specific assertions for failure cases
 
@@ -71,7 +74,9 @@ class TestHeliconeValidation:
         pass
 
 
-@pytest.mark.skipif(not HELICONE_VALIDATION_AVAILABLE, reason="Helicone validation not available")
+@pytest.mark.skipif(
+    not HELICONE_VALIDATION_AVAILABLE, reason="Helicone validation not available"
+)
 class TestHeliconeSetupDiagnostics:
     """Test suite for setup diagnostics and troubleshooting."""
 

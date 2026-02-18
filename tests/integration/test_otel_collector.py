@@ -9,9 +9,7 @@ Prerequisites:
     - OTel Collector accessible at http://localhost:4318
 """
 
-import os
 import time
-from typing import Optional
 
 import pytest
 import requests
@@ -35,7 +33,7 @@ def check_collector_available() -> bool:
 
 pytestmark = pytest.mark.skipif(
     not check_collector_available(),
-    reason="OTel Collector not available at localhost:13133"
+    reason="OTel Collector not available at localhost:13133",
 )
 
 
@@ -46,9 +44,7 @@ def otel_setup():
     trace.set_tracer_provider(TracerProvider())
     tracer_provider = trace.get_tracer_provider()
 
-    otlp_exporter = OTLPSpanExporter(
-        endpoint="http://localhost:4318/v1/traces"
-    )
+    otlp_exporter = OTLPSpanExporter(endpoint="http://localhost:4318/v1/traces")
 
     tracer_provider.add_span_processor(BatchSpanProcessor(otlp_exporter))
 
@@ -115,14 +111,11 @@ class TestTelemetryExport:
             operation_name="test_simple_span",
             team="test-team",
             customer_id=test_customer,
-            project="test-project"
+            project="test-project",
         ) as span:
             # Record some telemetry
             genops_telemetry.record_cost(
-                span,
-                cost=0.01,
-                provider="openai",
-                model="gpt-4"
+                span, cost=0.01, provider="openai", model="gpt-4"
             )
 
         # Give collector time to process and export
@@ -141,23 +134,16 @@ class TestTelemetryExport:
             team="engineering",
             customer_id=test_customer,
             project="genops-test",
-            feature="integration-test"
+            feature="integration-test",
         ) as span:
             # Record cost
             genops_telemetry.record_cost(
-                span,
-                cost=0.05,
-                currency="USD",
-                provider="openai",
-                model="gpt-4"
+                span, cost=0.05, currency="USD", provider="openai", model="gpt-4"
             )
 
             # Record tokens
             genops_telemetry.record_tokens(
-                span,
-                prompt_tokens=100,
-                completion_tokens=50,
-                total_tokens=150
+                span, prompt_tokens=100, completion_tokens=50, total_tokens=150
             )
 
             # Record policy evaluation
@@ -165,16 +151,12 @@ class TestTelemetryExport:
                 span,
                 policy_name="cost_limit",
                 result="passed",
-                reason="Cost within limit"
+                reason="Cost within limit",
             )
 
             # Record evaluation
             genops_telemetry.record_evaluation(
-                span,
-                metric_name="quality",
-                score=0.95,
-                threshold=0.8,
-                passed=True
+                span, metric_name="quality", score=0.95, threshold=0.8, passed=True
             )
 
         # Allow time for export
@@ -190,13 +172,10 @@ class TestTelemetryExport:
             with genops_telemetry.trace_operation(
                 operation_name=f"test_operation_{i}",
                 team="test-team",
-                customer_id=test_customer
+                customer_id=test_customer,
             ) as span:
                 genops_telemetry.record_cost(
-                    span,
-                    cost=0.001 * (i + 1),
-                    provider="openai",
-                    model="gpt-3.5-turbo"
+                    span, cost=0.001 * (i + 1), provider="openai", model="gpt-3.5-turbo"
                 )
 
         # Allow time for batch processing and export
@@ -218,13 +197,10 @@ class TestEndToEndDataFlow:
             operation_name="e2e_test_operation",
             team="e2e-team",
             customer_id=test_customer,
-            project="e2e-test"
+            project="e2e-test",
         ) as span:
             genops_telemetry.record_cost(
-                span,
-                cost=0.10,
-                provider="openai",
-                model="gpt-4"
+                span, cost=0.10, provider="openai", model="gpt-4"
             )
 
         # Wait for telemetry to be processed and indexed
@@ -233,10 +209,7 @@ class TestEndToEndDataFlow:
 
         # Query Tempo for the trace
         tempo_url = "http://localhost:3200/api/search"
-        params = {
-            "tags": f"genops.customer_id={test_customer}",
-            "limit": 10
-        }
+        params = {"tags": f"genops.customer_id={test_customer}", "limit": 10}
 
         response = requests.get(tempo_url, params=params, timeout=10)
         assert response.status_code == 200
@@ -248,7 +221,9 @@ class TestEndToEndDataFlow:
         # Note: This might fail if Tempo hasn't indexed yet
         # In production, you'd implement retries with backoff
         if len(traces) == 0:
-            pytest.skip("Trace not yet indexed in Tempo (expected in high-load scenarios)")
+            pytest.skip(
+                "Trace not yet indexed in Tempo (expected in high-load scenarios)"
+            )
 
         # Verify trace has expected attributes
         trace = traces[0]
@@ -265,8 +240,10 @@ class TestEndToEndDataFlow:
         metrics = response.text
 
         # Check for receiver metrics
-        assert "otelcol_receiver_accepted_spans" in metrics or \
-               "otelcol_otlp_receiver" in metrics
+        assert (
+            "otelcol_receiver_accepted_spans" in metrics
+            or "otelcol_otlp_receiver" in metrics
+        )
 
 
 class TestCollectorPerformance:
@@ -283,13 +260,10 @@ class TestCollectorPerformance:
             with genops_telemetry.trace_operation(
                 operation_name=f"perf_test_{i}",
                 team="perf-team",
-                customer_id=test_customer
+                customer_id=test_customer,
             ) as span:
                 genops_telemetry.record_cost(
-                    span,
-                    cost=0.001,
-                    provider="openai",
-                    model="gpt-3.5-turbo"
+                    span, cost=0.001, provider="openai", model="gpt-3.5-turbo"
                 )
 
         duration = time.time() - start_time
@@ -319,9 +293,7 @@ class TestErrorHandling:
         tracer_provider = trace.get_tracer_provider()
 
         # Invalid endpoint
-        otlp_exporter = OTLPSpanExporter(
-            endpoint="http://localhost:9999/v1/traces"
-        )
+        otlp_exporter = OTLPSpanExporter(endpoint="http://localhost:9999/v1/traces")
 
         tracer_provider.add_span_processor(BatchSpanProcessor(otlp_exporter))
 
@@ -330,8 +302,7 @@ class TestErrorHandling:
         # Should not raise exception even though collector is unreachable
         try:
             with telemetry.trace_operation(
-                operation_name="test_resilience",
-                team="test-team"
+                operation_name="test_resilience", team="test-team"
             ) as span:
                 telemetry.record_cost(span, cost=0.01, provider="openai", model="gpt-4")
 
@@ -360,13 +331,10 @@ def manual_test_trace_visibility():
             operation_name=f"manual_test_{i}",
             team="manual-test-team",
             customer_id="manual-test-customer",
-            project="manual-testing"
+            project="manual-testing",
         ) as span:
             telemetry.record_cost(
-                span,
-                cost=0.01 * (i + 1),
-                provider="openai",
-                model="gpt-4"
+                span, cost=0.01 * (i + 1), provider="openai", model="gpt-4"
             )
 
             print(f"  Generated span {i + 1}/5")
@@ -377,7 +345,7 @@ def manual_test_trace_visibility():
     print("\nTraces should now be visible in Grafana:")
     print("1. Open http://localhost:3000")
     print("2. Navigate to Explore → Tempo")
-    print("3. Search for: {.genops.team=\"manual-test-team\"}")
+    print('3. Search for: {.genops.team="manual-test-team"}')
     print("4. You should see 5 traces")
 
 

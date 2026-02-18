@@ -9,8 +9,8 @@ Custom pricing can be provided for on-premise or negotiated cloud rates.
 """
 
 import logging
-from dataclasses import dataclass, field
-from typing import Dict, Optional
+from dataclasses import dataclass
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ class GPUInstancePricing:
 # GPU Pricing Database (January 2026 AWS EC2 baseline)
 # Prices are per-GPU per-hour in USD
 
-GPU_PRICING: Dict[str, GPUInstancePricing] = {
+GPU_PRICING: dict[str, GPUInstancePricing] = {
     # NVIDIA A100 (40GB) - Standard high-performance training
     "a100": GPUInstancePricing(
         instance_type="a100",
@@ -48,9 +48,8 @@ GPU_PRICING: Dict[str, GPUInstancePricing] = {
         gpu_memory_gb=40,
         num_gpus_per_instance=1,
         cloud_provider="aws",
-        notes="Standard A100 40GB - best for most training workloads"
+        notes="Standard A100 40GB - best for most training workloads",
     ),
-
     "a100-40gb": GPUInstancePricing(
         instance_type="a100-40gb",
         gpu_type="a100",
@@ -58,9 +57,8 @@ GPU_PRICING: Dict[str, GPUInstancePricing] = {
         gpu_memory_gb=40,
         num_gpus_per_instance=1,
         cloud_provider="aws",
-        notes="Explicit 40GB variant"
+        notes="Explicit 40GB variant",
     ),
-
     # NVIDIA A100 (80GB) - Large model training
     "a100-80gb": GPUInstancePricing(
         instance_type="a100-80gb",
@@ -69,9 +67,8 @@ GPU_PRICING: Dict[str, GPUInstancePricing] = {
         gpu_memory_gb=80,
         num_gpus_per_instance=1,
         cloud_provider="aws",
-        notes="High-memory A100 for large models (LLaMA 70B+)"
+        notes="High-memory A100 for large models (LLaMA 70B+)",
     ),
-
     # NVIDIA H100 (80GB) - Latest generation, highest performance
     "h100": GPUInstancePricing(
         instance_type="h100",
@@ -80,9 +77,8 @@ GPU_PRICING: Dict[str, GPUInstancePricing] = {
         gpu_memory_gb=80,
         num_gpus_per_instance=1,
         cloud_provider="aws",
-        notes="Latest H100 Hopper architecture - 3x A100 performance"
+        notes="Latest H100 Hopper architecture - 3x A100 performance",
     ),
-
     "h100-80gb": GPUInstancePricing(
         instance_type="h100-80gb",
         gpu_type="h100",
@@ -90,9 +86,8 @@ GPU_PRICING: Dict[str, GPUInstancePricing] = {
         gpu_memory_gb=80,
         num_gpus_per_instance=1,
         cloud_provider="aws",
-        notes="Explicit H100 80GB variant"
+        notes="Explicit H100 80GB variant",
     ),
-
     # NVIDIA V100 (16GB) - Older generation, cost-effective
     "v100": GPUInstancePricing(
         instance_type="v100",
@@ -101,9 +96,8 @@ GPU_PRICING: Dict[str, GPUInstancePricing] = {
         gpu_memory_gb=16,
         num_gpus_per_instance=1,
         cloud_provider="aws",
-        notes="Cost-effective older generation for smaller models"
+        notes="Cost-effective older generation for smaller models",
     ),
-
     "v100-16gb": GPUInstancePricing(
         instance_type="v100-16gb",
         gpu_type="v100",
@@ -111,9 +105,8 @@ GPU_PRICING: Dict[str, GPUInstancePricing] = {
         gpu_memory_gb=16,
         num_gpus_per_instance=1,
         cloud_provider="aws",
-        notes="Explicit V100 16GB variant"
+        notes="Explicit V100 16GB variant",
     ),
-
     # NVIDIA A10G (24GB) - Mid-tier for inference and small training
     "a10g": GPUInstancePricing(
         instance_type="a10g",
@@ -122,9 +115,8 @@ GPU_PRICING: Dict[str, GPUInstancePricing] = {
         gpu_memory_gb=24,
         num_gpus_per_instance=1,
         cloud_provider="aws",
-        notes="Mid-tier GPU for inference and small training jobs"
+        notes="Mid-tier GPU for inference and small training jobs",
     ),
-
     "a10g-24gb": GPUInstancePricing(
         instance_type="a10g-24gb",
         gpu_type="a10g",
@@ -132,9 +124,8 @@ GPU_PRICING: Dict[str, GPUInstancePricing] = {
         gpu_memory_gb=24,
         num_gpus_per_instance=1,
         cloud_provider="aws",
-        notes="Explicit A10G 24GB variant"
+        notes="Explicit A10G 24GB variant",
     ),
-
     # NVIDIA T4 (16GB) - Budget-friendly inference
     "t4": GPUInstancePricing(
         instance_type="t4",
@@ -143,9 +134,8 @@ GPU_PRICING: Dict[str, GPUInstancePricing] = {
         gpu_memory_gb=16,
         num_gpus_per_instance=1,
         cloud_provider="aws",
-        notes="Budget-friendly for inference workloads"
+        notes="Budget-friendly for inference workloads",
     ),
-
     "t4-16gb": GPUInstancePricing(
         instance_type="t4-16gb",
         gpu_type="t4",
@@ -153,12 +143,14 @@ GPU_PRICING: Dict[str, GPUInstancePricing] = {
         gpu_memory_gb=16,
         num_gpus_per_instance=1,
         cloud_provider="aws",
-        notes="Explicit T4 16GB variant"
+        notes="Explicit T4 16GB variant",
     ),
 }
 
 # Storage and Network Pricing
-STORAGE_COST_PER_GB_MONTH = 0.023  # AWS EBS gp3 pricing ($0.08/GB-month → $0.023/GB-week)
+STORAGE_COST_PER_GB_MONTH = (
+    0.023  # AWS EBS gp3 pricing ($0.08/GB-month → $0.023/GB-week)
+)
 NETWORK_COST_PER_GB = 0.09  # AWS data transfer out pricing
 
 
@@ -182,7 +174,7 @@ class KubetorchPricing:
         >>> print(f"Cost: ${cost:.2f}")  # Cost: $524.32
     """
 
-    def __init__(self, custom_pricing: Optional[Dict[str, GPUInstancePricing]] = None):
+    def __init__(self, custom_pricing: Optional[dict[str, GPUInstancePricing]] = None):
         """
         Initialize pricing calculator.
 
@@ -191,14 +183,16 @@ class KubetorchPricing:
                            Useful for on-premise or negotiated cloud rates.
         """
         self.pricing_db = {**GPU_PRICING, **(custom_pricing or {})}
-        logger.debug(f"Initialized KubetorchPricing with {len(self.pricing_db)} instance types")
+        logger.debug(
+            f"Initialized KubetorchPricing with {len(self.pricing_db)} instance types"
+        )
 
     def calculate_compute_cost(
         self,
         instance_type: str,
         num_devices: int,
         duration_seconds: float,
-        resource_type: str = "gpu"
+        resource_type: str = "gpu",
     ) -> float:
         """
         Calculate compute cost for GPU/CPU resources.
@@ -230,7 +224,9 @@ class KubetorchPricing:
         # GPU pricing
         pricing = self._get_instance_pricing(instance_type)
         if not pricing:
-            logger.warning(f"Unknown instance type: {instance_type}, using fallback pricing")
+            logger.warning(
+                f"Unknown instance type: {instance_type}, using fallback pricing"
+            )
             return self._fallback_cost_calculation(num_devices, duration_seconds)
 
         hours = duration_seconds / 3600
@@ -299,8 +295,8 @@ class KubetorchPricing:
         estimated_hours: float,
         checkpoint_size_gb: float = 0,
         checkpoint_frequency_hours: float = 1.0,
-        data_transfer_gb: float = 0
-    ) -> Dict[str, float]:
+        data_transfer_gb: float = 0,
+    ) -> dict[str, float]:
         """
         Estimate total training cost including compute, storage, and network.
 
@@ -336,7 +332,9 @@ class KubetorchPricing:
         if checkpoint_size_gb > 0:
             num_checkpoints = estimated_hours / checkpoint_frequency_hours
             # Accumulating storage (checkpoints persist throughout training)
-            avg_storage_gb = checkpoint_size_gb * num_checkpoints / 2  # Average over time
+            avg_storage_gb = (
+                checkpoint_size_gb * num_checkpoints / 2
+            )  # Average over time
             storage_gb_hours = avg_storage_gb * estimated_hours
             cost_storage = self.calculate_storage_cost(storage_gb_hours)
         else:
@@ -357,7 +355,7 @@ class KubetorchPricing:
             "instance_type": instance_type,
             "num_devices": num_devices,
             "estimated_hours": estimated_hours,
-            "gpu_hours": num_devices * estimated_hours
+            "gpu_hours": num_devices * estimated_hours,
         }
 
     def _get_instance_pricing(self, instance_type: str) -> Optional[GPUInstancePricing]:
@@ -392,7 +390,9 @@ class KubetorchPricing:
 
         return None
 
-    def _fallback_cost_calculation(self, num_devices: int, duration_seconds: float) -> float:
+    def _fallback_cost_calculation(
+        self, num_devices: int, duration_seconds: float
+    ) -> float:
         """
         Fallback cost estimation for unknown instance types.
 
@@ -439,9 +439,7 @@ class KubetorchPricing:
 
 
 def calculate_gpu_cost(
-    instance_type: str,
-    num_devices: int,
-    duration_seconds: float
+    instance_type: str, num_devices: int, duration_seconds: float
 ) -> float:
     """
     Convenience function for GPU cost calculation.
@@ -459,7 +457,9 @@ def calculate_gpu_cost(
         >>> print(f"${cost:.2f}")  # $262.16
     """
     pricing = KubetorchPricing()
-    return pricing.calculate_compute_cost(instance_type, num_devices, duration_seconds, "gpu")
+    return pricing.calculate_compute_cost(
+        instance_type, num_devices, duration_seconds, "gpu"
+    )
 
 
 def get_pricing_info(instance_type: str) -> Optional[GPUInstancePricing]:

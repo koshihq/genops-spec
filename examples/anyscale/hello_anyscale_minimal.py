@@ -11,6 +11,7 @@ Prerequisites:
 """
 
 import os
+
 from genops.providers.anyscale import instrument_anyscale
 
 # Check API key
@@ -29,7 +30,7 @@ adapter = instrument_anyscale(team="quickstart-team")
 response = adapter.completion_create(
     model="meta-llama/Llama-2-7b-chat-hf",  # Cheapest model for demo
     messages=[{"role": "user", "content": "Say hello in one sentence"}],
-    max_tokens=50
+    max_tokens=50,
 )
 
 # Print response
@@ -38,10 +39,10 @@ print(f"✅ Response: {response['choices'][0]['message']['content']}\n")
 # Show what GenOps tracked
 print("📊 What GenOps Tracked:")
 print(f"   • Tokens: {response['usage']['total_tokens']}")
-print(f"   • Team: quickstart-team")
-print(f"   • Model: meta-llama/Llama-2-7b-chat-hf")
-print(f"   • Cost: Automatically calculated")
-print(f"   • Telemetry: Exported to your observability platform\n")
+print("   • Team: quickstart-team")
+print("   • Model: meta-llama/Llama-2-7b-chat-hf")
+print("   • Cost: Automatically calculated")
+print("   • Telemetry: Exported to your observability platform\n")
 
 print("✅ SUCCESS! GenOps is tracking your Anyscale usage")
 print("📚 Next: Try multi_model_comparison.py to optimize costs")

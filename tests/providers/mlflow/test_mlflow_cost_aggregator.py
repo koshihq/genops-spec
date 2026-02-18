@@ -1,23 +1,22 @@
 """Tests for MLflow cost aggregator."""
 
-import pytest
 from datetime import datetime
 
+import pytest
 from src.genops.providers.mlflow.cost_aggregator import (
-    RunCost,
-    ExperimentCost,
-    MLflowCostSummary,
     MLflowCostAggregator,
     MLflowCostCalculator,
+    MLflowCostSummary,
+    RunCost,
     create_mlflow_cost_context,
-    get_cost_calculator,
     get_cost_aggregator,
+    get_cost_calculator,
 )
-
 
 # ============================================================================
 # RunCost Tests (4 tests)
 # ============================================================================
+
 
 def test_run_cost_creation():
     """Test RunCost dataclass creation."""
@@ -27,7 +26,7 @@ def test_run_cost_creation():
         experiment_id="exp-456",
         experiment_name="test-experiment",
         team="test-team",
-        project="test-project"
+        project="test-project",
     )
 
     assert run_cost.run_id == "run-123"
@@ -49,7 +48,7 @@ def test_run_cost_total_cost_calculation():
         tracking_cost=0.001,
         artifact_cost=0.050,
         model_cost=0.100,
-        compute_cost=5.000
+        compute_cost=5.000,
     )
 
     assert run_cost.total_cost == 5.151
@@ -67,7 +66,7 @@ def test_run_cost_with_metrics():
         model_count=2,
         model_size_mb=150.0,
         metric_count=100,
-        param_count=20
+        param_count=20,
     )
 
     assert run_cost.artifact_count == 5
@@ -90,7 +89,7 @@ def test_run_cost_with_timing():
         experiment_name="test-experiment",
         start_time=start_time,
         end_time=end_time,
-        duration_seconds=330.0
+        duration_seconds=330.0,
     )
 
     assert run_cost.start_time == start_time
@@ -101,6 +100,7 @@ def test_run_cost_with_timing():
 # ============================================================================
 # Cost Calculator Tests (8 tests)
 # ============================================================================
+
 
 def test_cost_calculator_singleton():
     """Test get_cost_calculator returns singleton instance."""
@@ -125,7 +125,7 @@ def test_calculate_artifact_cost_local():
     """Test calculate_artifact_cost for local storage."""
     calculator = MLflowCostCalculator()
 
-    cost = calculator.calculate_artifact_cost(10.0, 'local')
+    cost = calculator.calculate_artifact_cost(10.0, "local")
     assert cost == 0.0  # Local storage is free
 
 
@@ -134,7 +134,7 @@ def test_calculate_artifact_cost_s3():
     calculator = MLflowCostCalculator()
 
     # 10 MB = 10/1024 GB, $0.023/GB-month, daily = /30
-    cost = calculator.calculate_artifact_cost(10.0, 's3')
+    cost = calculator.calculate_artifact_cost(10.0, "s3")
     expected = (10.0 / 1024) * 0.023 / 30
     assert abs(cost - expected) < 0.000001
 
@@ -143,9 +143,9 @@ def test_calculate_artifact_cost_different_backends():
     """Test calculate_artifact_cost for different storage backends."""
     calculator = MLflowCostCalculator()
 
-    cost_s3 = calculator.calculate_artifact_cost(100.0, 's3')
-    cost_azure = calculator.calculate_artifact_cost(100.0, 'azure')
-    cost_gcs = calculator.calculate_artifact_cost(100.0, 'gcs')
+    cost_s3 = calculator.calculate_artifact_cost(100.0, "s3")
+    cost_azure = calculator.calculate_artifact_cost(100.0, "azure")
+    cost_gcs = calculator.calculate_artifact_cost(100.0, "gcs")
 
     # Azure and GCS should be cheaper than S3
     assert cost_s3 > cost_azure
@@ -157,8 +157,8 @@ def test_calculate_model_cost():
     """Test calculate_model_cost (same as artifact cost)."""
     calculator = MLflowCostCalculator()
 
-    artifact_cost = calculator.calculate_artifact_cost(50.0, 's3')
-    model_cost = calculator.calculate_model_cost(50.0, 's3')
+    artifact_cost = calculator.calculate_artifact_cost(50.0, "s3")
+    model_cost = calculator.calculate_model_cost(50.0, "s3")
 
     assert artifact_cost == model_cost
 
@@ -187,6 +187,7 @@ def test_calculate_run_cost():
 # Cost Aggregator Tests (5 tests)
 # ============================================================================
 
+
 def test_cost_aggregator_initialization():
     """Test MLflowCostAggregator initialization."""
     aggregator = MLflowCostAggregator(context_name="test-context")
@@ -208,7 +209,7 @@ def test_cost_aggregator_lifecycle():
         experiment_id="exp-456",
         experiment_name="test-exp",
         team="test-team",
-        project="test-project"
+        project="test-project",
     )
 
     assert run_cost.run_id == "run-123"
@@ -233,15 +234,15 @@ def test_cost_aggregator_add_costs():
         run_id="run-123",
         run_name="test-run",
         experiment_id="exp-456",
-        experiment_name="test-exp"
+        experiment_name="test-exp",
     )
 
     # Add artifact cost
-    artifact_cost = aggregator.add_artifact_cost("run-123", 10.0, 's3')
+    artifact_cost = aggregator.add_artifact_cost("run-123", 10.0, "s3")
     assert artifact_cost > 0
 
     # Add model cost
-    model_cost = aggregator.add_model_cost("run-123", 50.0, 's3')
+    model_cost = aggregator.add_model_cost("run-123", 50.0, "s3")
     assert model_cost > 0
 
     # Add tracking cost
@@ -267,10 +268,10 @@ def test_cost_aggregator_summary():
             run_name=f"test-run-{i}",
             experiment_id="exp-456",
             experiment_name="test-exp",
-            team=f"team-{i % 2}"  # Alternate teams
+            team=f"team-{i % 2}",  # Alternate teams
         )
 
-        aggregator.add_artifact_cost(f"run-{i}", 10.0, 's3')
+        aggregator.add_artifact_cost(f"run-{i}", 10.0, "s3")
         aggregator.add_tracking_cost(f"run-{i}", 5)
         aggregator.end_run_tracking(f"run-{i}")
 
@@ -288,7 +289,7 @@ def test_cost_aggregator_error_handling():
     aggregator = MLflowCostAggregator()
 
     # Try to add cost to non-existent run
-    cost = aggregator.add_artifact_cost("invalid-run", 10.0, 's3')
+    cost = aggregator.add_artifact_cost("invalid-run", 10.0, "s3")
     assert cost == 0.0
 
     # Try to end non-existent run
@@ -299,6 +300,7 @@ def test_cost_aggregator_error_handling():
 # ============================================================================
 # Context Manager Tests (5 tests)
 # ============================================================================
+
 
 def test_create_mlflow_cost_context():
     """Test create_mlflow_cost_context context manager."""
@@ -314,9 +316,9 @@ def test_cost_context_finalization():
             run_id="run-123",
             run_name="test-run",
             experiment_id="exp-456",
-            experiment_name="test-exp"
+            experiment_name="test-exp",
         )
-        aggregator.add_artifact_cost("run-123", 10.0, 's3')
+        aggregator.add_artifact_cost("run-123", 10.0, "s3")
         # Note: not ending run explicitly
 
     # Context manager should handle finalization gracefully
@@ -330,7 +332,7 @@ def test_cost_context_multiple_runs():
                 run_id=f"run-{i}",
                 run_name=f"run-{i}",
                 experiment_id="exp-456",
-                experiment_name="test-exp"
+                experiment_name="test-exp",
             )
             aggregator.add_tracking_cost(f"run-{i}", 10)
             aggregator.end_run_tracking(f"run-{i}")
@@ -347,7 +349,7 @@ def test_cost_context_error_handling():
                 run_id="run-123",
                 run_name="test-run",
                 experiment_id="exp-456",
-                experiment_name="test-exp"
+                experiment_name="test-exp",
             )
             raise ValueError("Test error")
     except ValueError:
@@ -363,7 +365,7 @@ def test_cost_context_nested():
             run_id="run-1",
             run_name="outer-run",
             experiment_id="exp-1",
-            experiment_name="exp-1"
+            experiment_name="exp-1",
         )
 
         with create_mlflow_cost_context("inner-context") as inner:
@@ -371,7 +373,7 @@ def test_cost_context_nested():
                 run_id="run-2",
                 run_name="inner-run",
                 experiment_id="exp-2",
-                experiment_name="exp-2"
+                experiment_name="exp-2",
             )
             inner.add_tracking_cost("run-2", 5)
             inner.end_run_tracking("run-2")
@@ -390,6 +392,7 @@ def test_cost_context_nested():
 # Summary Tests (2 tests)
 # ============================================================================
 
+
 def test_mlflow_cost_summary_add_run_cost():
     """Test MLflowCostSummary.add_run_cost method."""
     summary = MLflowCostSummary()
@@ -401,7 +404,7 @@ def test_mlflow_cost_summary_add_run_cost():
         experiment_name="test-exp",
         tracking_cost=0.001,
         artifact_cost=0.050,
-        team="test-team"
+        team="test-team",
     )
 
     summary.add_run_cost(run_cost)
@@ -427,7 +430,7 @@ def test_mlflow_cost_summary_aggregation():
             experiment_name=f"exp-{i % 3}",
             tracking_cost=0.001 * (i + 1),
             artifact_cost=0.010 * (i + 1),
-            team=f"team-{i % 2}"  # 2 teams
+            team=f"team-{i % 2}",  # 2 teams
         )
         summary.add_run_cost(run_cost)
 
@@ -442,6 +445,7 @@ def test_mlflow_cost_summary_aggregation():
 # ============================================================================
 # Global Aggregator Tests (1 test)
 # ============================================================================
+
 
 def test_get_cost_aggregator_singleton():
     """Test get_cost_aggregator returns singleton instance."""

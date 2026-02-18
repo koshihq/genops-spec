@@ -33,9 +33,7 @@ def basic_chat_completion():
         from genops.providers.openai import instrument_openai
 
         # Create instrumented OpenAI client
-        client = instrument_openai(
-            api_key=os.getenv("OPENAI_API_KEY")
-        )
+        client = instrument_openai(api_key=os.getenv("OPENAI_API_KEY"))
         print("✅ Created instrumented OpenAI client")
 
         # Make a basic completion with governance attributes
@@ -45,17 +43,19 @@ def basic_chat_completion():
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": "What is artificial intelligence in one sentence?"}
+                {
+                    "role": "user",
+                    "content": "What is artificial intelligence in one sentence?",
+                },
             ],
             max_tokens=100,
             temperature=0.7,
-
             # 🏷️ Governance attributes for cost attribution and tracking
             team="ai-examples",
             project="genops-demo",
             customer_id="demo-user-001",
             environment="development",
-            feature="basic-tracking"
+            feature="basic-tracking",
         )
 
         # Display results
@@ -82,6 +82,7 @@ def basic_chat_completion():
         print("💡 Fix: Check your OPENAI_API_KEY and network connectivity")
         return False
 
+
 def batch_processing_example():
     """Example of tracking costs across multiple OpenAI operations."""
     print("\n\n📦 Batch Processing with Cost Aggregation")
@@ -97,33 +98,33 @@ def batch_processing_example():
         tasks = [
             "Summarize: AI is transforming how we work and live.",
             "Translate to French: Hello, how are you today?",
-            "Generate a creative name for a coffee shop."
+            "Generate a creative name for a coffee shop.",
         ]
 
         # Use context manager to track batch operation costs
-        with track("batch_processing",
-                   team="batch-team",
-                   project="multi-task-demo",
-                   customer_id="batch-customer-001") as span:
-
+        with track(
+            "batch_processing",
+            team="batch-team",
+            project="multi-task-demo",
+            customer_id="batch-customer-001",
+        ) as span:
             results = []
             total_tokens = 0
 
             print("🔄 Processing tasks...")
             for i, task in enumerate(tasks):
-                print(f"   Task {i+1}: {task[:30]}...")
+                print(f"   Task {i + 1}: {task[:30]}...")
 
                 response = client.chat_completions_create(
                     model="gpt-3.5-turbo",
                     messages=[{"role": "user", "content": task}],
                     max_tokens=50,
-
                     # Individual task attribution
                     team="batch-team",
                     project="multi-task-demo",
                     customer_id="batch-customer-001",
                     task_index=i,
-                    batch_id="demo-batch-001"
+                    batch_id="demo-batch-001",
                 )
 
                 results.append(response.choices[0].message.content.strip())
@@ -150,6 +151,7 @@ def batch_processing_example():
         print(f"❌ Batch processing error: {e}")
         return False
 
+
 def governance_attributes_demo():
     """Demonstrate different governance attribute patterns."""
     print("\n\n🏷️  Governance Attributes Demo")
@@ -166,14 +168,13 @@ def governance_attributes_demo():
             model="gpt-3.5-turbo",
             messages=[{"role": "user", "content": "How do I reset my password?"}],
             max_tokens=100,
-
             # Customer support governance attributes
             team="customer-support",
             project="help-desk-automation",
             customer_id="customer-12345",
             environment="production",
             cost_center="support-operations",
-            feature="password-reset-help"
+            feature="password-reset-help",
         )
         print(f"   Response: {support_response.choices[0].message.content[:60]}...")
 
@@ -181,16 +182,20 @@ def governance_attributes_demo():
         print("\n🛠️  Product Development Scenario:")
         dev_response = client.chat_completions_create(
             model="gpt-4",  # Using more powerful model for complex tasks
-            messages=[{"role": "user", "content": "Review this code for security issues: function login(user, pass) { return user === 'admin' && pass === '123'; }"}],
+            messages=[
+                {
+                    "role": "user",
+                    "content": "Review this code for security issues: function login(user, pass) { return user === 'admin' && pass === '123'; }",
+                }
+            ],
             max_tokens=150,
-
             # Development team governance attributes
             team="engineering",
             project="security-review-automation",
             environment="development",
             cost_center="rd-department",
             feature="code-security-analysis",
-            user_id="developer-789"
+            user_id="developer-789",
         )
         print(f"   Response: {dev_response.choices[0].message.content[:60]}...")
 
@@ -202,6 +207,7 @@ def governance_attributes_demo():
     except Exception as e:
         print(f"❌ Governance demo error: {e}")
         return False
+
 
 def main():
     """Run all basic tracking examples."""
@@ -226,7 +232,9 @@ def main():
     if success:
         print("🎉 All basic tracking examples completed successfully!")
         print("\n📚 What happened:")
-        print("   • OpenAI requests were automatically instrumented with GenOps telemetry")
+        print(
+            "   • OpenAI requests were automatically instrumented with GenOps telemetry"
+        )
         print("   • Costs were calculated and attributed to teams/projects/customers")
         print("   • Governance attributes enable detailed cost allocation")
         print("   • All telemetry was exported to your observability platform")
@@ -234,12 +242,15 @@ def main():
         print("\n🚀 Next steps:")
         print("   • Run 'python auto_instrumentation.py' for zero-code setup")
         print("   • Try 'python cost_optimization.py' for multi-model cost analysis")
-        print("   • Explore 'python advanced_features.py' for streaming, functions, etc.")
+        print(
+            "   • Explore 'python advanced_features.py' for streaming, functions, etc."
+        )
 
         return True
     else:
         print("❌ Some examples failed. Check the error messages above.")
         return False
+
 
 if __name__ == "__main__":
     success = main()

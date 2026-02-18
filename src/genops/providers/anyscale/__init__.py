@@ -31,42 +31,42 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Core adapter
-from .adapter import (
-    GenOpsAnyscaleAdapter,
-    AnyscaleOperation,
+from .adapter import (  # noqa: E402
     AnyscaleCostSummary,
+    AnyscaleOperation,
+    GenOpsAnyscaleAdapter,
     instrument_anyscale,
 )
 
+# Budget management
+from .budget import (  # noqa: E402
+    BudgetExceededError,
+    BudgetManager,
+    create_budget_manager,
+)
+
 # Pricing utilities
-from .pricing import (
-    ModelPricing,
-    AnyscalePricing,
+from .pricing import (  # noqa: E402
     ANYSCALE_PRICING,
+    AnyscalePricing,
+    ModelPricing,
     calculate_completion_cost,
     calculate_embedding_cost,
     get_model_pricing,
 )
 
 # Auto-instrumentation
-from .registration import (
+from .registration import (  # noqa: E402
     auto_instrument,
     disable_auto_instrument,
 )
 
 # Validation utilities
-from .validation import (
-    validate_setup,
-    print_validation_result,
-    ValidationResult,
+from .validation import (  # noqa: E402
     ValidationIssue,
-)
-
-# Budget management
-from .budget import (
-    BudgetManager,
-    BudgetExceededError,
-    create_budget_manager,
+    ValidationResult,
+    print_validation_result,
+    validate_setup,
 )
 
 # Version info
@@ -75,28 +75,25 @@ __version__ = "0.1.0"
 # Export public API
 __all__ = [
     # Adapter
-    'GenOpsAnyscaleAdapter',
-    'AnyscaleOperation',
-    'AnyscaleCostSummary',
-    'instrument_anyscale',
-
+    "GenOpsAnyscaleAdapter",
+    "AnyscaleOperation",
+    "AnyscaleCostSummary",
+    "instrument_anyscale",
     # Pricing
-    'ModelPricing',
-    'AnyscalePricing',
-    'ANYSCALE_PRICING',
-    'calculate_completion_cost',
-    'calculate_embedding_cost',
-    'get_model_pricing',
-
+    "ModelPricing",
+    "AnyscalePricing",
+    "ANYSCALE_PRICING",
+    "calculate_completion_cost",
+    "calculate_embedding_cost",
+    "get_model_pricing",
     # Auto-instrumentation
-    'auto_instrument',
-    'disable_auto_instrument',
-
+    "auto_instrument",
+    "disable_auto_instrument",
     # Validation
-    'validate_setup',
-    'print_validation_result',
-    'ValidationResult',
-    'ValidationIssue',
+    "validate_setup",
+    "print_validation_result",
+    "ValidationResult",
+    "ValidationIssue",
 ]
 
 
@@ -105,6 +102,7 @@ def auto_register():
     """Automatically register Anyscale provider with GenOps instrumentation."""
     try:
         from genops.auto_instrumentation import _instrumentor
+
         from .registration import register_anyscale_provider
 
         register_anyscale_provider(_instrumentor)

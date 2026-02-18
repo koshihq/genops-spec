@@ -9,11 +9,11 @@ Or with custom credentials:
     python validate_splunk_setup.py --endpoint https://splunk.example.com:8088 --token YOUR_TOKEN
 """
 
-import sys
 import argparse
+import sys
 
 try:
-    from splunk_validation import validate_setup, print_validation_result
+    from splunk_validation import print_validation_result, validate_setup
 except ImportError:
     print("❌ Validation module not found.")
     print("   Ensure splunk_validation.py is in the same directory.")
@@ -38,30 +38,25 @@ Examples:
 
   # Skip connectivity check (validate config only)
   python validate_splunk_setup.py --no-connectivity
-        """
+        """,
     )
     parser.add_argument(
         "--endpoint",
-        help="Splunk HEC endpoint URL (e.g., https://splunk.example.com:8088)"
+        help="Splunk HEC endpoint URL (e.g., https://splunk.example.com:8088)",
     )
+    parser.add_argument("--token", help="Splunk HEC authentication token")
     parser.add_argument(
-        "--token",
-        help="Splunk HEC authentication token"
-    )
-    parser.add_argument(
-        "--index",
-        default="genops_ai",
-        help="Target Splunk index (default: genops_ai)"
+        "--index", default="genops_ai", help="Target Splunk index (default: genops_ai)"
     )
     parser.add_argument(
         "--no-connectivity",
         action="store_true",
-        help="Skip connectivity and authentication checks"
+        help="Skip connectivity and authentication checks",
     )
     parser.add_argument(
         "--no-ssl-verify",
         action="store_true",
-        help="Disable SSL certificate verification (insecure, use only with self-signed certificates)"
+        help="Disable SSL certificate verification (insecure, use only with self-signed certificates)",
     )
 
     args = parser.parse_args()
@@ -74,7 +69,7 @@ Examples:
         splunk_hec_token=args.token,
         splunk_index=args.index,
         check_connectivity=not args.no_connectivity,
-        verify_ssl=not args.no_ssl_verify
+        verify_ssl=not args.no_ssl_verify,
     )
 
     print_validation_result(result)

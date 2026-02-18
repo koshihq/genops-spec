@@ -24,12 +24,11 @@ Usage:
 
 import os
 import time
-from typing import Dict, Any
 
 from genops.providers.elastic import (
     auto_instrument,
-    validate_setup,
     print_validation_result,
+    validate_setup,
 )
 
 
@@ -92,12 +91,14 @@ class ElasticGenOpsIntegration:
             batch_interval_seconds=5,  # Fast flush for demo
         )
 
-        print(f"✅ Adapter initialized:")
+        print("✅ Adapter initialized:")
         print(f"   • Team: {team}")
         print(f"   • Project: {project}")
         print(f"   • Environment: {environment}")
-        print(f"   • Export Mode: batch")
-        print(f"   • Cluster: {validation_result.cluster_name} ({validation_result.cluster_version})")
+        print("   • Export Mode: batch")
+        print(
+            f"   • Cluster: {validation_result.cluster_name} ({validation_result.cluster_version})"
+        )
 
     def demonstrate_elastic_telemetry(self):
         """
@@ -117,9 +118,7 @@ class ElasticGenOpsIntegration:
         # Example 1: OpenAI GPT-4 with cost tracking
         print("\n[1/5] OpenAI GPT-4 Completion")
         with self.adapter.track_ai_operation(
-            "gpt4-completion",
-            customer_id="acme-corp",
-            feature="personalization"
+            "gpt4-completion", customer_id="acme-corp", feature="personalization"
         ) as span:
             # Simulate AI operation
             time.sleep(0.1)
@@ -133,7 +132,7 @@ class ElasticGenOpsIntegration:
                 tokens_input=50,
                 tokens_output=150,
                 cost_input=0.015,
-                cost_output=0.035
+                cost_output=0.035,
             )
 
             print("✅ Tracked GPT-4 completion:")
@@ -144,9 +143,7 @@ class ElasticGenOpsIntegration:
         # Example 2: Anthropic Claude with policy enforcement
         print("\n[2/5] Anthropic Claude with Policy Check")
         with self.adapter.track_ai_operation(
-            "claude-completion",
-            customer_id="techcorp",
-            feature="content-generation"
+            "claude-completion", customer_id="techcorp", feature="content-generation"
         ) as span:
             time.sleep(0.1)
 
@@ -157,7 +154,7 @@ class ElasticGenOpsIntegration:
                 provider="anthropic",
                 model="claude-3-sonnet",
                 tokens_input=100,
-                tokens_output=200
+                tokens_output=200,
             )
 
             # Record policy enforcement
@@ -165,7 +162,7 @@ class ElasticGenOpsIntegration:
                 span,
                 policy_name="budget-constraint",
                 result="allowed",
-                reason="Within monthly budget"
+                reason="Within monthly budget",
             )
 
             print("✅ Tracked Claude completion:")
@@ -176,9 +173,7 @@ class ElasticGenOpsIntegration:
         # Example 3: AWS Bedrock with policy violation
         print("\n[3/5] AWS Bedrock with Policy Violation")
         with self.adapter.track_ai_operation(
-            "bedrock-completion",
-            customer_id="startup-xyz",
-            feature="chatbot"
+            "bedrock-completion", customer_id="startup-xyz", feature="chatbot"
         ) as span:
             time.sleep(0.1)
 
@@ -189,7 +184,7 @@ class ElasticGenOpsIntegration:
                 provider="bedrock",
                 model="anthropic.claude-v2",
                 tokens_input=75,
-                tokens_output=125
+                tokens_output=125,
             )
 
             # Record policy violation
@@ -197,7 +192,7 @@ class ElasticGenOpsIntegration:
                 span,
                 policy_name="pii-detection",
                 result="warning",
-                reason="Potential PII detected in prompt"
+                reason="Potential PII detected in prompt",
             )
 
             print("✅ Tracked Bedrock completion:")
@@ -208,8 +203,7 @@ class ElasticGenOpsIntegration:
         # Example 4: Budget tracking
         print("\n[4/5] Budget Tracking")
         with self.adapter.track_ai_operation(
-            "gpt4-with-budget",
-            customer_id="enterprise-co"
+            "gpt4-with-budget", customer_id="enterprise-co"
         ) as span:
             time.sleep(0.1)
 
@@ -220,7 +214,7 @@ class ElasticGenOpsIntegration:
                 provider="openai",
                 model="gpt-4",
                 tokens_input=100,
-                tokens_output=300
+                tokens_output=300,
             )
 
             # Record budget tracking
@@ -229,7 +223,7 @@ class ElasticGenOpsIntegration:
                 budget_id="team-monthly",
                 limit=1000.0,
                 consumed=750.0,
-                remaining=250.0
+                remaining=250.0,
             )
 
             print("✅ Tracked GPT-4 with budget:")
@@ -240,9 +234,7 @@ class ElasticGenOpsIntegration:
         # Example 5: High-cost operation
         print("\n[5/5] High-Cost Operation")
         with self.adapter.track_ai_operation(
-            "gpt4-large-context",
-            customer_id="data-corp",
-            feature="document-analysis"
+            "gpt4-large-context", customer_id="data-corp", feature="document-analysis"
         ) as span:
             time.sleep(0.1)
 
@@ -253,7 +245,7 @@ class ElasticGenOpsIntegration:
                 provider="openai",
                 model="gpt-4",
                 tokens_input=5000,
-                tokens_output=2000
+                tokens_output=2000,
             )
 
             print("✅ Tracked high-cost operation:")
@@ -292,37 +284,37 @@ class ElasticGenOpsIntegration:
             {
                 "name": "All operations for your team",
                 "query": f'genops.team: "{self.team}"',
-                "description": "View all AI operations for your team"
+                "description": "View all AI operations for your team",
             },
             {
                 "name": "Cost attribution by customer",
-                "query": 'genops.cost.total > 0 | stats sum(genops.cost.total) by genops.customer_id',
-                "description": "Sum total costs grouped by customer"
+                "query": "genops.cost.total > 0 | stats sum(genops.cost.total) by genops.customer_id",
+                "description": "Sum total costs grouped by customer",
             },
             {
                 "name": "Policy violations",
                 "query": 'genops.policy.result: "blocked" OR genops.policy.result: "warning"',
-                "description": "Find all policy violations and warnings"
+                "description": "Find all policy violations and warnings",
             },
             {
                 "name": "High-cost operations (>$1)",
-                "query": 'genops.cost.total > 1.0 | sort genops.cost.total desc',
-                "description": "Find expensive operations"
+                "query": "genops.cost.total > 1.0 | sort genops.cost.total desc",
+                "description": "Find expensive operations",
             },
             {
                 "name": "Operations by model",
-                "query": 'genops.cost.model: * | stats count(), sum(genops.cost.total) by genops.cost.model',
-                "description": "Compare usage and costs across models"
+                "query": "genops.cost.model: * | stats count(), sum(genops.cost.total) by genops.cost.model",
+                "description": "Compare usage and costs across models",
             },
             {
                 "name": "Budget tracking",
-                "query": 'genops.budget.id: * | stats latest(genops.budget.consumed), latest(genops.budget.remaining) by genops.budget.id',
-                "description": "Monitor budget consumption"
+                "query": "genops.budget.id: * | stats latest(genops.budget.consumed), latest(genops.budget.remaining) by genops.budget.id",
+                "description": "Monitor budget consumption",
             },
             {
                 "name": "Provider comparison",
-                "query": 'genops.cost.provider: * | stats sum(genops.cost.total), avg(genops.cost.total), count() by genops.cost.provider',
-                "description": "Compare costs across OpenAI, Anthropic, Bedrock"
+                "query": "genops.cost.provider: * | stats sum(genops.cost.total), avg(genops.cost.total), count() by genops.cost.provider",
+                "description": "Compare costs across OpenAI, Anthropic, Bedrock",
             },
         ]
 
@@ -335,7 +327,9 @@ class ElasticGenOpsIntegration:
 
         print("💡 Tips:")
         print("   • Create index pattern: genops-ai-* (with timestamp field)")
-        print("   • Import pre-built dashboards from: observability/elastic/dashboards/")
+        print(
+            "   • Import pre-built dashboards from: observability/elastic/dashboards/"
+        )
         print("   • Set time range to 'Last 1 hour' in Kibana (top-right corner)")
 
     def create_dashboards(self):
@@ -411,7 +405,7 @@ def main():
             elastic_url=elastic_url,
             team="ml-platform",
             project="recommendations",
-            environment="development"
+            environment="development",
         )
 
         # Demonstrate telemetry export
@@ -434,7 +428,9 @@ def main():
         print("   1. Open Kibana: http://localhost:5601")
         print("   2. Create index pattern: genops-ai-*")
         print("   3. Navigate to Discover and explore your data")
-        print("   4. Import pre-built dashboards from: observability/elastic/dashboards/")
+        print(
+            "   4. Import pre-built dashboards from: observability/elastic/dashboards/"
+        )
         print("\n📚 Documentation:")
         print("   • Quickstart: docs/quickstarts/elastic-quickstart.md")
         print("   • Full guide: docs/integrations/elastic.md")

@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
-
+from typing import Any
 
 # GenOps → Collibra Asset Type Mapping
 GENOPS_TO_COLLIBRA_ASSET_TYPES = {
@@ -65,9 +64,7 @@ GENOPS_TO_COLLIBRA_ATTRIBUTES = {
 }
 
 # Collibra → GenOps Attribute Mapping (reverse)
-COLLIBRA_TO_GENOPS_ATTRIBUTES = {
-    v: k for k, v in GENOPS_TO_COLLIBRA_ATTRIBUTES.items()
-}
+COLLIBRA_TO_GENOPS_ATTRIBUTES = {v: k for k, v in GENOPS_TO_COLLIBRA_ATTRIBUTES.items()}
 
 
 def map_genops_to_collibra_asset_type(genops_category: str) -> str:
@@ -84,9 +81,7 @@ def map_genops_to_collibra_asset_type(genops_category: str) -> str:
         >>> map_genops_to_collibra_asset_type("cost")
         'AI Operation Cost'
     """
-    return GENOPS_TO_COLLIBRA_ASSET_TYPES.get(
-        genops_category, "AI Workflow Execution"
-    )
+    return GENOPS_TO_COLLIBRA_ASSET_TYPES.get(genops_category, "AI Workflow Execution")
 
 
 def map_collibra_to_genops_asset_type(collibra_asset_type: str) -> str:
@@ -107,8 +102,8 @@ def map_collibra_to_genops_asset_type(collibra_asset_type: str) -> str:
 
 
 def map_genops_attributes_to_collibra(
-    genops_attributes: Dict[str, Any]
-) -> Dict[str, Any]:
+    genops_attributes: dict[str, Any],
+) -> dict[str, Any]:
     """
     Map GenOps telemetry attributes to Collibra asset attributes.
 
@@ -144,8 +139,8 @@ def map_genops_attributes_to_collibra(
 
 
 def map_collibra_attributes_to_genops(
-    collibra_attributes: Dict[str, Any]
-) -> Dict[str, Any]:
+    collibra_attributes: dict[str, Any],
+) -> dict[str, Any]:
     """
     Map Collibra asset attributes to GenOps telemetry attributes.
 
@@ -179,7 +174,7 @@ def map_collibra_attributes_to_genops(
     return genops_attrs
 
 
-def infer_asset_type_from_attributes(attributes: Dict[str, Any]) -> str:
+def infer_asset_type_from_attributes(attributes: dict[str, Any]) -> str:
     """
     Infer Collibra asset type from GenOps attributes.
 
@@ -214,9 +209,7 @@ def infer_asset_type_from_attributes(attributes: Dict[str, Any]) -> str:
     return "AI Workflow Execution"
 
 
-def create_collibra_asset_name(
-    attributes: Dict[str, Any], asset_type: str
-) -> str:
+def create_collibra_asset_name(attributes: dict[str, Any], asset_type: str) -> str:
     """
     Create a descriptive asset name from GenOps attributes.
 
@@ -281,10 +274,10 @@ def create_collibra_asset_name(
 
 
 def create_collibra_asset_from_span(
-    span_attributes: Dict[str, Any],
+    span_attributes: dict[str, Any],
     domain_id: str,
-    asset_type: Optional[str] = None,
-) -> Dict[str, Any]:
+    asset_type: str | None = None,
+) -> dict[str, Any]:
     """
     Create a complete Collibra asset structure from GenOps span attributes.
 
@@ -338,7 +331,7 @@ def create_collibra_asset_from_span(
     return asset_payload
 
 
-def extract_governance_metadata(attributes: Dict[str, Any]) -> Dict[str, Any]:
+def extract_governance_metadata(attributes: dict[str, Any]) -> dict[str, Any]:
     """
     Extract governance metadata from GenOps attributes.
 

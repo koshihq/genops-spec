@@ -51,20 +51,20 @@ def advanced_features_demo():
                 "name": "Force Anthropic",
                 "model": "anthropic/claude-3-sonnet",
                 "provider": "anthropic",
-                "task": "Explain quantum entanglement in simple terms."
+                "task": "Explain quantum entanglement in simple terms.",
             },
             {
                 "name": "Prefer OpenAI",
                 "model": "openai/gpt-4o",
                 "provider": "openai",
-                "task": "Write a Python function to sort a list."
+                "task": "Write a Python function to sort a list.",
             },
             {
                 "name": "Any Provider (OpenRouter decides)",
                 "model": "meta-llama/llama-3.1-8b-instruct",
                 "provider": None,  # Let OpenRouter route automatically
-                "task": "What are the benefits of renewable energy?"
-            }
+                "task": "What are the benefits of renewable energy?",
+            },
         ]
 
         for pref in provider_preferences:
@@ -81,7 +81,7 @@ def advanced_features_demo():
                     # Governance attributes
                     "team": "advanced-features-team",
                     "project": "routing-experiments",
-                    "experiment_id": f"provider-{pref['name'].lower().replace(' ', '-')}"
+                    "experiment_id": f"provider-{pref['name'].lower().replace(' ', '-')}",
                 }
 
                 # Add provider preference if specified
@@ -93,7 +93,9 @@ def advanced_features_demo():
                 usage = response.usage
                 if usage:
                     print(f"      ✅ Success! Tokens: {usage.total_tokens}")
-                    print(f"         Response: {response.choices[0].message.content[:60]}...")
+                    print(
+                        f"         Response: {response.choices[0].message.content[:60]}..."
+                    )
                 else:
                     print("      ⚠️  No usage data")
 
@@ -108,18 +110,18 @@ def advanced_features_demo():
             {
                 "name": "Least Cost",
                 "route": "least-cost",
-                "description": "Route to cheapest available provider"
+                "description": "Route to cheapest available provider",
             },
             {
                 "name": "Fastest Response",
                 "route": "fastest",
-                "description": "Route to fastest provider based on latency"
+                "description": "Route to fastest provider based on latency",
             },
             {
                 "name": "Fallback Chain",
                 "route": "fallback",
-                "description": "Try multiple providers if first fails"
-            }
+                "description": "Try multiple providers if first fails",
+            },
         ]
 
         # Test same task with different routing strategies
@@ -140,7 +142,7 @@ def advanced_features_demo():
                     route=strategy["route"],  # OpenRouter routing strategy
                     team="routing-optimization",
                     project="strategy-comparison",
-                    routing_strategy=strategy["name"]  # Custom governance attribute
+                    routing_strategy=strategy["name"],  # Custom governance attribute
                 )
                 response_time = time.time() - start_time
 
@@ -163,14 +165,14 @@ def advanced_features_demo():
             {
                 "name": "High-demand model (might fallback)",
                 "model": "openai/gpt-4",  # Popular model, might be rate limited
-                "fallbacks": ["openai/gpt-4o", "anthropic/claude-3-sonnet"]
+                "fallbacks": ["openai/gpt-4o", "anthropic/claude-3-sonnet"],
             },
             {
                 "name": "Specific provider (with fallback)",
                 "model": "anthropic/claude-3-opus",
                 "provider": "anthropic",
-                "fallbacks": ["anthropic/claude-3-sonnet", "openai/gpt-4o"]
-            }
+                "fallbacks": ["anthropic/claude-3-sonnet", "openai/gpt-4o"],
+            },
         ]
 
         for test in fallback_tests:
@@ -181,14 +183,16 @@ def advanced_features_demo():
             try:
                 request_params = {
                     "model": test["model"],
-                    "messages": [{"role": "user", "content": "What is artificial intelligence?"}],
+                    "messages": [
+                        {"role": "user", "content": "What is artificial intelligence?"}
+                    ],
                     "max_tokens": 60,
                     # Add fallback models if specified
                     "fallbacks": test.get("fallbacks", []),
                     # Governance
                     "team": "reliability-team",
                     "project": "fallback-monitoring",
-                    "test_scenario": test["name"]
+                    "test_scenario": test["name"],
                 }
 
                 if "provider" in test:
@@ -217,8 +221,8 @@ def advanced_features_demo():
                     "customer_id": "enterprise-customer-001",
                     "tenant_id": "tenant-abc-123",
                     "cost_center": "customer-success",
-                    "billing_tier": "enterprise"
-                }
+                    "billing_tier": "enterprise",
+                },
             },
             {
                 "name": "Compliance-sensitive request",
@@ -229,8 +233,8 @@ def advanced_features_demo():
                     "compliance_level": "high",
                     "data_classification": "confidential",
                     "audit_required": "true",
-                    "region": "us-east"
-                }
+                    "region": "us-east",
+                },
             },
             {
                 "name": "Development experiment",
@@ -241,9 +245,9 @@ def advanced_features_demo():
                     "experiment_id": "exp-2024-001",
                     "researcher": "alice-smith",
                     "hypothesis": "cost-vs-quality",
-                    "environment": "development"
-                }
-            }
+                    "environment": "development",
+                },
+            },
         ]
 
         for scenario in governance_scenarios:
@@ -256,11 +260,13 @@ def advanced_features_demo():
                     model=scenario["model"],
                     messages=[{"role": "user", "content": "Hello, how are you?"}],
                     max_tokens=30,
-                    **scenario["governance"]  # All governance attributes
+                    **scenario["governance"],  # All governance attributes
                 )
 
                 print("      ✅ Request successful with full governance tracking")
-                print(f"         All {len(scenario['governance'])} attributes captured in telemetry")
+                print(
+                    f"         All {len(scenario['governance'])} attributes captured in telemetry"
+                )
 
             except Exception as e:
                 print(f"      ❌ Error: {str(e)}")

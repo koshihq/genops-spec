@@ -11,42 +11,41 @@ Demonstrates:
 
 import os
 import sys
-from pathlib import Path
 from datetime import datetime
-import json
+from pathlib import Path
 
 # Add src to path for local development
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 import mlflow
 import mlflow.sklearn
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.datasets import make_classification
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
-from genops.providers.mlflow import instrument_mlflow, create_mlflow_cost_context
+from genops.providers.mlflow import instrument_mlflow
 
 
 class ProductionMLflowWorkflow:
     """Production MLflow workflow with comprehensive governance."""
 
-    def __init__(self, environment='production'):
+    def __init__(self, environment="production"):
         """Initialize production workflow."""
         self.environment = environment
-        self.tracking_uri = os.getenv('MLFLOW_TRACKING_URI', 'file:///tmp/mlruns')
-        self.team = os.getenv('GENOPS_TEAM', 'ml-platform')
-        self.project = os.getenv('GENOPS_PROJECT', 'production-models')
+        self.tracking_uri = os.getenv("MLFLOW_TRACKING_URI", "file:///tmp/mlruns")
+        self.team = os.getenv("GENOPS_TEAM", "ml-platform")
+        self.project = os.getenv("GENOPS_PROJECT", "production-models")
 
         # Initialize adapter
         self.adapter = instrument_mlflow(
             tracking_uri=self.tracking_uri,
             team=self.team,
             project=self.project,
-            environment=environment
+            environment=environment,
         )
 
-        print(f"✓ Production workflow initialized")
+        print("✓ Production workflow initialized")
         print(f"  Environment: {environment}")
         print(f"  Team: {self.team}")
         print(f"  Project: {self.project}")
@@ -56,15 +55,14 @@ class ProductionMLflowWorkflow:
         """Validate governance configuration."""
         print("Validating governance configuration...")
 
-        required_env_vars = ['GENOPS_TEAM', 'GENOPS_PROJECT']
-        missing_vars = [var for var in required_env_vars
-                       if not os.getenv(var)]
+        required_env_vars = ["GENOPS_TEAM", "GENOPS_PROJECT"]
+        missing_vars = [var for var in required_env_vars if not os.getenv(var)]
 
         if missing_vars:
             print(f"  ⚠️  Warning: Missing environment variables: {missing_vars}")
-            print(f"  Using defaults, but production should set these explicitly")
+            print("  Using defaults, but production should set these explicitly")
         else:
-            print(f"  ✓ All required environment variables set")
+            print("  ✓ All required environment variables set")
 
         print()
 
@@ -74,10 +72,7 @@ class ProductionMLflowWorkflow:
 
         # Generate dataset
         X, y = make_classification(
-            n_samples=1000,
-            n_features=20,
-            n_informative=15,
-            random_state=42
+            n_samples=1000, n_features=20, n_informative=15, random_state=42
         )
         X_train, X_test, y_train, y_test = train_test_split(
             X, y, test_size=0.2, random_state=42
@@ -86,7 +81,7 @@ class ProductionMLflowWorkflow:
         with self.adapter.track_mlflow_run(
             experiment_name=f"production-{self.environment}",
             run_name=f"training-{datetime.now().strftime('%Y%m%d-%H%M%S')}",
-            customer_id=customer_id
+            customer_id=customer_id,
         ) as run:
             # Production tags
             mlflow.set_tag("environment", self.environment)
@@ -103,24 +98,23 @@ class ProductionMLflowWorkflow:
             # Comprehensive evaluation
             y_pred = model.predict(X_test)
             metrics = {
-                'accuracy': accuracy_score(y_test, y_pred),
-                'precision': precision_score(y_test, y_pred, average='weighted'),
-                'recall': recall_score(y_test, y_pred, average='weighted'),
-                'f1_score': f1_score(y_test, y_pred, average='weighted')
+                "accuracy": accuracy_score(y_test, y_pred),
+                "precision": precision_score(y_test, y_pred, average="weighted"),
+                "recall": recall_score(y_test, y_pred, average="weighted"),
+                "f1_score": f1_score(y_test, y_pred, average="weighted"),
             }
 
             # Production thresholds
             thresholds = {
-                'accuracy': 0.85,
-                'precision': 0.80,
-                'recall': 0.80,
-                'f1_score': 0.80
+                "accuracy": 0.85,
+                "precision": 0.80,
+                "recall": 0.80,
+                "f1_score": 0.80,
             }
 
             # Validate against thresholds
             passed_validation = all(
-                metrics[key] >= thresholds[key]
-                for key in thresholds.keys()
+                metrics[key] >= thresholds[key] for key in thresholds.keys()
             )
 
             # Log everything
@@ -139,9 +133,10 @@ class ProductionMLflowWorkflow:
                 print(f"  ✓ Model validated - Accuracy: {metrics['accuracy']:.4f}")
             else:
                 mlflow.set_tag("validation_status", "failed")
-                print(f"  ✗ Model failed validation")
-                failed_metrics = [k for k in thresholds.keys()
-                                 if metrics[k] < thresholds[k]]
+                print("  ✗ Model failed validation")
+                failed_metrics = [
+                    k for k in thresholds.keys() if metrics[k] < thresholds[k]
+                ]
                 print(f"    Failed metrics: {failed_metrics}")
 
             print()
@@ -152,8 +147,6 @@ class ProductionMLflowWorkflow:
         print("Monitoring customer usage...")
         print()
 
-        customer_costs = {}
-
         for customer_id in customer_ids:
             print(f"  Customer: {customer_id}")
 
@@ -161,8 +154,8 @@ class ProductionMLflowWorkflow:
             with self.adapter.track_mlflow_run(
                 experiment_name=f"inference-{self.environment}",
                 run_name=f"inference-{customer_id}",
-                customer_id=customer_id
-            ) as run:
+                customer_id=customer_id,
+            ):
                 # Log inference metrics
                 mlflow.log_metric("requests_count", 1000)
                 mlflow.log_metric("avg_latency_ms", 45.2)
@@ -173,7 +166,7 @@ class ProductionMLflowWorkflow:
                 mlflow.set_tag("workload_type", "inference")
                 mlflow.set_tag("customer_id", customer_id)
 
-            print(f"    ✓ Tracked 1000 inference requests")
+            print("    ✓ Tracked 1000 inference requests")
 
         # Get cost summary
         metrics = self.adapter.get_metrics()
@@ -182,11 +175,12 @@ class ProductionMLflowWorkflow:
         print(f"  Operations: {metrics['operation_count']}")
         print()
 
-    def deploy_with_governance(self, run_id, stage='Staging'):
+    def deploy_with_governance(self, run_id, stage="Staging"):
         """Deploy model with governance tracking."""
         print(f"Deploying model to {stage}...")
 
         from mlflow.tracking import MlflowClient
+
         client = MlflowClient(tracking_uri=self.tracking_uri)
 
         # Get run details
@@ -196,7 +190,7 @@ class ProductionMLflowWorkflow:
         validation_status = run.data.tags.get("validation_status", "unknown")
         if validation_status != "passed":
             print(f"  ✗ Cannot deploy: validation status is '{validation_status}'")
-            print(f"    Only models with 'passed' validation can be deployed")
+            print("    Only models with 'passed' validation can be deployed")
             print()
             return False
 
@@ -215,14 +209,14 @@ class ProductionMLflowWorkflow:
             name=model_name,
             version=latest_version.version,
             stage=stage,
-            archive_existing_versions=True
+            archive_existing_versions=True,
         )
 
         # Update metadata
         client.update_model_version(
             name=model_name,
             version=latest_version.version,
-            description=f"Deployed to {stage} on {datetime.now().isoformat()}"
+            description=f"Deployed to {stage} on {datetime.now().isoformat()}",
         )
 
         # Add governance tags
@@ -230,14 +224,14 @@ class ProductionMLflowWorkflow:
             name=model_name,
             version=latest_version.version,
             key="deployed_by",
-            value=self.team
+            value=self.team,
         )
 
         client.set_model_version_tag(
             name=model_name,
             version=latest_version.version,
             key="environment",
-            value=self.environment
+            value=self.environment,
         )
 
         print(f"  ✓ Model version {latest_version.version} deployed to {stage}")
@@ -258,17 +252,17 @@ class ProductionMLflowWorkflow:
         print(f"Project: {self.project}")
         print()
 
-        print(f"Cost Metrics:")
+        print("Cost Metrics:")
         print(f"  Daily Usage: ${metrics['daily_usage']:.6f}")
         print(f"  Operations: {metrics['operation_count']}")
         print()
 
-        print(f"Compliance:")
+        print("Compliance:")
         print(f"  ✓ All operations attributed to team '{self.team}'")
         print(f"  ✓ All operations attributed to project '{self.project}'")
         print(f"  ✓ Environment segregation: {self.environment}")
-        print(f"  ✓ Customer-level tracking enabled")
-        print(f"  ✓ Complete audit trail maintained")
+        print("  ✓ Customer-level tracking enabled")
+        print("  ✓ Complete audit trail maintained")
         print()
 
 
@@ -285,7 +279,7 @@ def main():
     print("Stage 1: Development Environment")
     print("-" * 70)
 
-    dev_workflow = ProductionMLflowWorkflow(environment='development')
+    dev_workflow = ProductionMLflowWorkflow(environment="development")
     dev_workflow.validate_governance()
 
     # Train and validate model
@@ -301,7 +295,7 @@ def main():
     print("Stage 2: Staging Environment")
     print("-" * 70)
 
-    staging_workflow = ProductionMLflowWorkflow(environment='staging')
+    staging_workflow = ProductionMLflowWorkflow(environment="staging")
 
     # Train and validate for staging
     run_id_staging, validated_staging = staging_workflow.train_model_with_validation()
@@ -309,8 +303,7 @@ def main():
     if validated_staging:
         # Deploy to staging
         deployed = staging_workflow.deploy_with_governance(
-            run_id_staging,
-            stage='Staging'
+            run_id_staging, stage="Staging"
         )
 
         if deployed:
@@ -323,17 +316,14 @@ def main():
     print("Stage 3: Production Environment")
     print("-" * 70)
 
-    prod_workflow = ProductionMLflowWorkflow(environment='production')
+    prod_workflow = ProductionMLflowWorkflow(environment="production")
 
     # Train production model
     run_id_prod, validated_prod = prod_workflow.train_model_with_validation()
 
     if validated_prod:
         # Deploy to production
-        deployed = prod_workflow.deploy_with_governance(
-            run_id_prod,
-            stage='Production'
-        )
+        deployed = prod_workflow.deploy_with_governance(run_id_prod, stage="Production")
 
         if deployed:
             print("✓ Model deployed to Production")
@@ -345,7 +335,7 @@ def main():
     print("Stage 4: Multi-Tenant Usage Monitoring")
     print("-" * 70)
 
-    customers = ['customer-001', 'customer-002', 'customer-003']
+    customers = ["customer-001", "customer-002", "customer-003"]
     prod_workflow.monitor_customer_usage(customers)
 
     # ========================================================================
@@ -356,9 +346,9 @@ def main():
     print()
 
     for env_name, workflow in [
-        ('Development', dev_workflow),
-        ('Staging', staging_workflow),
-        ('Production', prod_workflow)
+        ("Development", dev_workflow),
+        ("Staging", staging_workflow),
+        ("Production", prod_workflow),
     ]:
         print(f"{env_name} Environment:")
         workflow.generate_governance_report()
@@ -418,5 +408,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n\nError running example: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

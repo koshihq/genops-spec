@@ -9,11 +9,11 @@ Key Components:
 """
 
 from .validation import (
-    ValidationLevel,
     ValidationIssue,
+    ValidationLevel,
     ValidationResult,
+    print_validation_result,
     validate_setup,
-    print_validation_result
 )
 
 __all__ = [
@@ -21,5 +21,5 @@ __all__ = [
     "ValidationIssue",
     "ValidationResult",
     "validate_setup",
-    "print_validation_result"
+    "print_validation_result",
 ]

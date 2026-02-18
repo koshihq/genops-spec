@@ -10,7 +10,7 @@ from typing import Any
 import pytest
 from hypothesis import assume, given, settings
 from hypothesis import strategies as st
-from hypothesis.stateful import RuleBasedStateMachine, invariant, rule, Bundle
+from hypothesis.stateful import Bundle, RuleBasedStateMachine, invariant, rule
 
 from genops.core.policy import PolicyResult, _policy_engine, register_policy
 
@@ -18,14 +18,22 @@ from genops.core.policy import PolicyResult, _policy_engine, register_policy
 policy_name_strategy = st.text(
     min_size=1,
     max_size=50,
-    alphabet="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_"
+    alphabet="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_",
 )
-cost_limit_strategy = st.floats(min_value=0.01, max_value=1000.0, allow_nan=False, allow_infinity=False)
-enforcement_level_strategy = st.sampled_from([PolicyResult.ALLOWED, PolicyResult.WARNING, PolicyResult.BLOCKED])
+cost_limit_strategy = st.floats(
+    min_value=0.01, max_value=1000.0, allow_nan=False, allow_infinity=False
+)
+enforcement_level_strategy = st.sampled_from(
+    [PolicyResult.ALLOWED, PolicyResult.WARNING, PolicyResult.BLOCKED]
+)
 content_patterns_strategy = st.lists(
-    st.text(min_size=1, max_size=20, alphabet="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"),
+    st.text(
+        min_size=1,
+        max_size=20,
+        alphabet="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
+    ),
     min_size=0,
-    max_size=5
+    max_size=5,
 )
 
 
@@ -36,10 +44,12 @@ class TestPolicyEnforcementProperties:
         policy_name=policy_name_strategy,
         max_cost=cost_limit_strategy,
         enforcement_level=enforcement_level_strategy,
-        test_cost=cost_limit_strategy
+        test_cost=cost_limit_strategy,
     )
     @settings(max_examples=300, deadline=None)
-    def test_cost_policy_enforcement_properties(self, policy_name, max_cost, enforcement_level, test_cost):
+    def test_cost_policy_enforcement_properties(
+        self, policy_name, max_cost, enforcement_level, test_cost
+    ):
         """Test that cost policies always enforce correctly."""
         assume(len(policy_name.strip()) > 0)
         assume(max_cost > 0)
@@ -49,7 +59,7 @@ class TestPolicyEnforcementProperties:
         register_policy(
             name=policy_name.strip(),
             enforcement_level=enforcement_level,
-            conditions={"max_cost": max_cost}
+            conditions={"max_cost": max_cost},
         )
 
         # Test policy evaluation
@@ -76,15 +86,13 @@ class TestPolicyEnforcementProperties:
     @given(
         policies=st.lists(
             st.tuples(
-                policy_name_strategy,
-                cost_limit_strategy,
-                enforcement_level_strategy
+                policy_name_strategy, cost_limit_strategy, enforcement_level_strategy
             ),
             min_size=1,
             max_size=10,
-            unique_by=lambda x: x[0].strip()  # Unique policy names
+            unique_by=lambda x: x[0].strip(),  # Unique policy names
         ),
-        test_cost=cost_limit_strategy
+        test_cost=cost_limit_strategy,
     )
     @settings(max_examples=100, deadline=None)
     def test_multiple_policies_consistency(self, policies, test_cost):
@@ -101,7 +109,7 @@ class TestPolicyEnforcementProperties:
             register_policy(
                 name=name,
                 enforcement_level=enforcement_level,
-                conditions={"max_cost": max_cost}
+                conditions={"max_cost": max_cost},
             )
             registered_policies.append((name, max_cost, enforcement_level))
 
@@ -131,10 +139,12 @@ class TestPolicyEnforcementProperties:
     @given(
         policy_name=policy_name_strategy,
         blocked_patterns=content_patterns_strategy,
-        test_content=st.text(min_size=0, max_size=200)
+        test_content=st.text(min_size=0, max_size=200),
     )
     @settings(max_examples=200)
-    def test_content_filtering_properties(self, policy_name, blocked_patterns, test_content):
+    def test_content_filtering_properties(
+        self, policy_name, blocked_patterns, test_content
+    ):
         """Test that content filtering policies work correctly."""
         assume(len(policy_name.strip()) > 0)
 
@@ -144,7 +154,7 @@ class TestPolicyEnforcementProperties:
         register_policy(
             name=policy_name.strip(),
             enforcement_level=PolicyResult.BLOCKED,
-            conditions={"blocked_patterns": valid_patterns}
+            conditions={"blocked_patterns": valid_patterns},
         )
 
         context = {"content": test_content}
@@ -155,8 +165,7 @@ class TestPolicyEnforcementProperties:
 
         # Check if content should be blocked
         content_should_be_blocked = any(
-            pattern.lower() in test_content.lower()
-            for pattern in valid_patterns
+            pattern.lower() in test_content.lower() for pattern in valid_patterns
         )
 
         if content_should_be_blocked:
@@ -173,13 +182,13 @@ class TestPolicyEnforcementProperties:
                     keys=st.sampled_from(["max_cost", "max_tokens", "min_confidence"]),
                     values=st.floats(min_value=0.01, max_value=100.0),
                     min_size=1,
-                    max_size=3
+                    max_size=3,
                 ),
-                enforcement_level_strategy
+                enforcement_level_strategy,
             ),
             min_size=1,
             max_size=5,
-            unique_by=lambda x: x[0].strip()
+            unique_by=lambda x: x[0].strip(),
         )
     )
     @settings(max_examples=50, deadline=None)
@@ -193,9 +202,7 @@ class TestPolicyEnforcementProperties:
                 continue
 
             register_policy(
-                name=name,
-                enforcement_level=enforcement_level,
-                conditions=conditions
+                name=name, enforcement_level=enforcement_level, conditions=conditions
             )
             valid_policies.append((name, conditions, enforcement_level))
 
@@ -203,11 +210,11 @@ class TestPolicyEnforcementProperties:
         test_contexts = [
             {"cost": 5.0, "tokens": 100, "confidence": 0.8},
             {"cost": 50.0, "tokens": 1000, "confidence": 0.9},
-            {"cost": 0.5, "tokens": 10, "confidence": 0.5}
+            {"cost": 0.5, "tokens": 10, "confidence": 0.5},
         ]
 
         for context in test_contexts:
-            for name, conditions, enforcement_level in valid_policies:
+            for name, _conditions, _enforcement_level in valid_policies:
                 result = _policy_engine.evaluate_policy(name, context)
 
                 # Basic properties
@@ -234,7 +241,7 @@ class PolicyEnforcementStateMachine(RuleBasedStateMachine):
         target=policy_names,
         policy_name=policy_name_strategy,
         max_cost=cost_limit_strategy,
-        enforcement_level=enforcement_level_strategy
+        enforcement_level=enforcement_level_strategy,
     )
     def register_cost_policy(self, policy_name, max_cost, enforcement_level):
         """Rule: Register a cost-based policy."""
@@ -245,22 +252,19 @@ class PolicyEnforcementStateMachine(RuleBasedStateMachine):
         register_policy(
             name=name,
             enforcement_level=enforcement_level,
-            conditions={"max_cost": max_cost}
+            conditions={"max_cost": max_cost},
         )
 
         self.registered_policies[name] = {
             "max_cost": max_cost,
             "enforcement_level": enforcement_level,
-            "type": "cost"
+            "type": "cost",
         }
-        
+
         # Return the policy name to the Bundle
         return name
 
-    @rule(
-        policy_name=policy_names,
-        test_cost=cost_limit_strategy
-    )
+    @rule(policy_name=policy_names, test_cost=cost_limit_strategy)
     def evaluate_policy(self, policy_name, test_cost):
         """Rule: Evaluate a policy."""
         assume(policy_name in self.registered_policies)
@@ -270,7 +274,6 @@ class PolicyEnforcementStateMachine(RuleBasedStateMachine):
         result = _policy_engine.evaluate_policy(policy_name, context)
 
         self.policy_evaluations.append((policy_name, context, result))
-
 
     @invariant()
     def all_registered_policies_are_valid(self):
@@ -292,7 +295,7 @@ class PolicyEnforcementStateMachine(RuleBasedStateMachine):
             evaluation_groups[key].append(result)
 
         # Check consistency within each group
-        for key, results in evaluation_groups.items():
+        for _key, results in evaluation_groups.items():
             if len(results) > 1:
                 # All results for the same policy and context should be identical
                 first_result = results[0]
@@ -312,21 +315,15 @@ class TestPolicyEnforcementStateMachine:
 @given(
     policy_configs=st.dictionaries(
         keys=policy_name_strategy,
-        values=st.tuples(
-            cost_limit_strategy,
-            enforcement_level_strategy
-        ),
+        values=st.tuples(cost_limit_strategy, enforcement_level_strategy),
         min_size=1,
-        max_size=5
+        max_size=5,
     ),
     operations=st.lists(
-        st.tuples(
-            cost_limit_strategy,
-            st.text(min_size=0, max_size=100)
-        ),
+        st.tuples(cost_limit_strategy, st.text(min_size=0, max_size=100)),
         min_size=1,
-        max_size=20
-    )
+        max_size=20,
+    ),
 )
 @settings(max_examples=50, deadline=None)
 def test_policy_system_integration_properties(policy_configs, operations):
@@ -339,7 +336,7 @@ def test_policy_system_integration_properties(policy_configs, operations):
             register_policy(
                 name=clean_name,
                 enforcement_level=enforcement_level,
-                conditions={"max_cost": max_cost}
+                conditions={"max_cost": max_cost},
             )
             valid_policies[clean_name] = (max_cost, enforcement_level)
 

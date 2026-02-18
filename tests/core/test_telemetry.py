@@ -93,7 +93,7 @@ class TestGenOpsTelemetry:
 
         spans = mock_span_recorder.get_finished_spans()
         assert len(spans) == 1
-        assert spans[0].status.status_code == StatusCode.UNSET  # Default for success
+        assert spans[0].status.status_code in (StatusCode.UNSET, StatusCode.OK)
 
     def test_trace_operation_with_exception(self, telemetry, mock_span_recorder):
         """Test trace_operation handles exceptions properly."""

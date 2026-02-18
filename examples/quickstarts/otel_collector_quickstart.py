@@ -30,14 +30,14 @@ import random
 import time
 from typing import Any
 
-from genops.core.policy import PolicyResult, register_policy
-from genops.core.telemetry import GenOpsTelemetry
-
 # OpenTelemetry setup
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
+
+from genops.core.policy import PolicyResult, register_policy
+from genops.core.telemetry import GenOpsTelemetry
 
 print("=" * 70)
 print("GenOps AI + OpenTelemetry Collector Quickstart")
@@ -69,13 +69,13 @@ genops_telemetry = GenOpsTelemetry()
 register_policy(
     name="cost_limit_demo",
     enforcement_level=PolicyResult.WARNING,
-    conditions={"max_cost": 1.0}
+    conditions={"max_cost": 1.0},
 )
 
 register_policy(
     name="content_safety_demo",
     enforcement_level=PolicyResult.BLOCKED,
-    conditions={"blocked_patterns": ["violence", "hate", "explicit"]}
+    conditions={"blocked_patterns": ["violence", "hate", "explicit"]},
 )
 
 print("🛡️  Registered governance policies:")
@@ -91,16 +91,20 @@ class MockAIProvider:
         "gpt-3.5-turbo": {"cost_per_token": 0.0000015, "avg_latency": 0.8},
         "gpt-4": {"cost_per_token": 0.00003, "avg_latency": 2.1},
         "claude-3-sonnet": {"cost_per_token": 0.000003, "avg_latency": 1.2},
-        "claude-3-opus": {"cost_per_token": 0.000075, "avg_latency": 3.2}
+        "claude-3-opus": {"cost_per_token": 0.000075, "avg_latency": 3.2},
     }
 
     @classmethod
-    def simulate_ai_call(cls, model: str, prompt: str, max_tokens: int = 150) -> dict[str, Any]:
+    def simulate_ai_call(
+        cls, model: str, prompt: str, max_tokens: int = 150
+    ) -> dict[str, Any]:
         """Simulate an AI API call"""
         model_config = cls.MODELS.get(model, cls.MODELS["gpt-3.5-turbo"])
 
         # Simulate latency
-        latency = random.uniform(model_config["avg_latency"] * 0.5, model_config["avg_latency"] * 1.2)
+        latency = random.uniform(
+            model_config["avg_latency"] * 0.5, model_config["avg_latency"] * 1.2
+        )
         time.sleep(latency)
 
         # Calculate tokens and cost
@@ -117,7 +121,7 @@ class MockAIProvider:
             "completion_tokens": completion_tokens,
             "total_tokens": total_tokens,
             "cost": round(cost, 6),
-            "latency": round(latency, 2)
+            "latency": round(latency, 2),
         }
 
 
@@ -134,7 +138,7 @@ def run_quickstart_demo():
             "customer": "demo-customer-1",
             "model": "gpt-4",
             "prompt": "Explain the benefits of OpenTelemetry for AI governance",
-            "feature": "chat"
+            "feature": "chat",
         },
         {
             "name": "AI Analysis",
@@ -142,7 +146,7 @@ def run_quickstart_demo():
             "customer": "demo-customer-2",
             "model": "claude-3-sonnet",
             "prompt": "Analyze this dataset for cost optimization opportunities",
-            "feature": "analysis"
+            "feature": "analysis",
         },
         {
             "name": "Content Generation",
@@ -150,14 +154,16 @@ def run_quickstart_demo():
             "customer": "demo-customer-3",
             "model": "gpt-3.5-turbo",
             "prompt": "Generate marketing copy for a new AI product launch",
-            "feature": "content-gen"
-        }
+            "feature": "content-gen",
+        },
     ]
 
     total_cost = 0.0
 
     for i, op in enumerate(operations, 1):
-        print(f"Operation {i}: {op['name']} (team={op['team']}, customer={op['customer']})")
+        print(
+            f"Operation {i}: {op['name']} (team={op['team']}, customer={op['customer']})"
+        )
 
         # Create governance-tracked span
         with genops_telemetry.trace_operation(
@@ -165,9 +171,8 @@ def run_quickstart_demo():
             team=op["team"],
             project="quickstart-demo",
             customer_id=op["customer"],
-            feature=op["feature"]
+            feature=op["feature"],
         ) as span:
-
             # Simulate AI call
             ai_result = MockAIProvider.simulate_ai_call(op["model"], op["prompt"])
 
@@ -185,14 +190,14 @@ def run_quickstart_demo():
                 cost=ai_result["cost"],
                 currency="USD",
                 provider=provider,
-                model=op["model"]
+                model=op["model"],
             )
 
             genops_telemetry.record_tokens(
                 span=span,
                 prompt_tokens=ai_result["prompt_tokens"],
                 completion_tokens=ai_result["completion_tokens"],
-                total_tokens=ai_result["total_tokens"]
+                total_tokens=ai_result["total_tokens"],
             )
 
             # Simulate quality evaluation
@@ -202,7 +207,7 @@ def run_quickstart_demo():
                 metric_name="response_quality",
                 score=quality_score,
                 threshold=0.8,
-                passed=quality_score > 0.8
+                passed=quality_score > 0.8,
             )
 
             # Record policy evaluation
@@ -211,13 +216,15 @@ def run_quickstart_demo():
                 span=span,
                 policy_name="cost_limit_demo",
                 result=policy_result,
-                reason=f"Cost ${ai_result['cost']:.4f} {'within' if ai_result['cost'] < 1.0 else 'exceeds'} limit"
+                reason=f"Cost ${ai_result['cost']:.4f} {'within' if ai_result['cost'] < 1.0 else 'exceeds'} limit",
             )
 
             total_cost += ai_result["cost"]
 
             print(f"   Provider: {provider}, Model: {op['model']}")
-            print(f"   Cost: ${ai_result['cost']:.4f}, Tokens: {ai_result['total_tokens']}")
+            print(
+                f"   Cost: ${ai_result['cost']:.4f}, Tokens: {ai_result['total_tokens']}"
+            )
             print(f"   Quality Score: {quality_score:.2f}, Policy: {policy_result}")
             print()
 
@@ -248,7 +255,7 @@ def run_quickstart_demo():
     print("4. Explore traces:")
     print("   • Click 'Explore' in left sidebar")
     print("   • Select 'Tempo' data source")
-    print("   • Search for: {.genops.team=\"engineering\"}")
+    print('   • Search for: {.genops.team="engineering"}')
     print("   • Click any trace to see governance attributes")
     print()
     print("=" * 70)
@@ -272,7 +279,9 @@ if __name__ == "__main__":
         print("   curl http://localhost:4318/v1/traces")
         print()
         print("3. View collector logs:")
-        print("   docker-compose -f docker-compose.observability.yml logs otel-collector")
+        print(
+            "   docker-compose -f docker-compose.observability.yml logs otel-collector"
+        )
         print()
         print("4. Run validation script:")
         print("   python examples/observability/validate_otel_collector.py")

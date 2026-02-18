@@ -16,12 +16,12 @@ class BaseFrameworkProvider(ABC):
 
     # Framework types for categorization
     FRAMEWORK_TYPE_ORCHESTRATION = "orchestration"  # LangChain, Haystack
-    FRAMEWORK_TYPE_TRAINING = "training"            # PyTorch, TensorFlow
-    FRAMEWORK_TYPE_INFERENCE = "inference"          # HuggingFace Transformers
-    FRAMEWORK_TYPE_VECTOR = "vector"                # Chroma, Pinecone
-    FRAMEWORK_TYPE_MULTIMODAL = "multimodal"        # NeMo
-    FRAMEWORK_TYPE_AUTOML = "automl"                # NNI, Optuna
-    FRAMEWORK_TYPE_DISTRIBUTED = "distributed"     # Horovod, Ray
+    FRAMEWORK_TYPE_TRAINING = "training"  # PyTorch, TensorFlow
+    FRAMEWORK_TYPE_INFERENCE = "inference"  # HuggingFace Transformers
+    FRAMEWORK_TYPE_VECTOR = "vector"  # Chroma, Pinecone
+    FRAMEWORK_TYPE_MULTIMODAL = "multimodal"  # NeMo
+    FRAMEWORK_TYPE_AUTOML = "automl"  # NNI, Optuna
+    FRAMEWORK_TYPE_DISTRIBUTED = "distributed"  # Horovod, Ray
     FRAMEWORK_TYPE_DATA_PLATFORM = "data_platform"  # Databricks Unity Catalog, WandB
 
     def __init__(self, client: Any | None = None, **kwargs):
@@ -38,9 +38,18 @@ class BaseFrameworkProvider(ABC):
 
         # Standard governance attributes across all providers
         self.GOVERNANCE_ATTRIBUTES = {
-            'team', 'project', 'feature', 'customer_id', 'customer',
-            'environment', 'cost_center', 'user_id', 'experiment_id',
-            'model_version', 'dataset_id', 'training_job_id'
+            "team",
+            "project",
+            "feature",
+            "customer_id",
+            "customer",
+            "environment",
+            "cost_center",
+            "user_id",
+            "experiment_id",
+            "model_version",
+            "dataset_id",
+            "training_job_id",
         }
 
         # Framework-specific request attributes (to be defined by subclasses)
@@ -83,7 +92,7 @@ class BaseFrameworkProvider(ABC):
         operation_name: str,
         operation_type: str,
         governance_attrs: dict,
-        **additional_attrs
+        **additional_attrs,
     ) -> dict:
         """
         Build standardized trace attributes for telemetry.
@@ -110,11 +119,17 @@ class BaseFrameworkProvider(ABC):
         # Add effective governance attributes (defaults + context + governance)
         try:
             from genops.core.context import get_effective_attributes
+
             effective_attrs = get_effective_attributes(**governance_attrs)
             trace_attrs.update(effective_attrs)
-        except (ImportError, Exception) as e:
+        except ImportError as e:
             logger.debug(f"Context integration not available: {e}")
-            # Fallback to just governance attributes
+            trace_attrs.update(governance_attrs)
+        except Exception:
+            logger.warning(
+                "Failed to compute effective attributes, falling back to raw governance attrs",
+                exc_info=True,
+            )
             trace_attrs.update(governance_attrs)
 
         return trace_attrs
@@ -172,8 +187,10 @@ class BaseFrameworkProvider(ABC):
             Dictionary of operation_name -> description
         """
         mappings = self.get_operation_mappings()
-        return {op: f"Track {op} operations with governance telemetry"
-                for op in mappings.keys()}
+        return {
+            op: f"Track {op} operations with governance telemetry"
+            for op in mappings.keys()
+        }
 
     def validate_operation_context(self, context: dict) -> bool:
         """
@@ -189,11 +206,7 @@ class BaseFrameworkProvider(ABC):
         return isinstance(context, dict)
 
     def record_operation_telemetry(
-        self,
-        span: Any,
-        operation_type: str,
-        context: dict,
-        **metadata
+        self, span: Any, operation_type: str, context: dict, **metadata
     ) -> None:
         """
         Record framework-specific telemetry on a span.
@@ -214,7 +227,7 @@ class BaseFrameworkProvider(ABC):
                         cost=cost,
                         currency="USD",
                         provider=self.get_framework_name(),
-                        **metadata
+                        **metadata,
                     )
             except Exception as e:
                 logger.warning(f"Failed to calculate cost: {e}")
@@ -223,7 +236,9 @@ class BaseFrameworkProvider(ABC):
         self._record_framework_metrics(span, operation_type, context)
 
     @abstractmethod
-    def _record_framework_metrics(self, span: Any, operation_type: str, context: dict) -> None:
+    def _record_framework_metrics(
+        self, span: Any, operation_type: str, context: dict
+    ) -> None:
         """
         Record framework-specific metrics. Override in subclasses.
 

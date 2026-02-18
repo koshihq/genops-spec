@@ -1,8 +1,6 @@
 """Tests for genops.exporters.validation module."""
 
-import os
-from io import StringIO
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -213,7 +211,9 @@ class TestDatadogValidation:
         assert result.passed is False
         assert result.provider == "datadog"
 
-        api_key_check = next((c for c in result.checks if c["name"] == "DD_API_KEY"), None)
+        api_key_check = next(
+            (c for c in result.checks if c["name"] == "DD_API_KEY"), None
+        )
         assert api_key_check is not None
         assert api_key_check["passed"] is False
 
@@ -225,7 +225,9 @@ class TestDatadogValidation:
         result = validate_export_setup(provider="datadog")
 
         assert result.passed is True
-        api_key_check = next((c for c in result.checks if c["name"] == "DD_API_KEY"), None)
+        api_key_check = next(
+            (c for c in result.checks if c["name"] == "DD_API_KEY"), None
+        )
         assert api_key_check["passed"] is True
 
     def test_datadog_default_site(self, clean_env):
@@ -250,7 +252,9 @@ class TestDatadogValidation:
         """Test Datadog validation without service name."""
         result = validate_export_setup(provider="datadog")
 
-        service_check = next((c for c in result.checks if c["name"] == "DD_SERVICE"), None)
+        service_check = next(
+            (c for c in result.checks if c["name"] == "DD_SERVICE"), None
+        )
         assert service_check is not None
         assert service_check["passed"] is False
 
@@ -260,7 +264,9 @@ class TestDatadogValidation:
 
         result = validate_export_setup(provider="datadog")
 
-        service_check = next((c for c in result.checks if c["name"] == "DD_SERVICE"), None)
+        service_check = next(
+            (c for c in result.checks if c["name"] == "DD_SERVICE"), None
+        )
         assert service_check["passed"] is True
         assert service_check["message"] == "my-service"
 
@@ -270,7 +276,9 @@ class TestDatadogValidation:
 
         result = validate_export_setup(provider="datadog")
 
-        service_check = next((c for c in result.checks if c["name"] == "DD_SERVICE"), None)
+        service_check = next(
+            (c for c in result.checks if c["name"] == "DD_SERVICE"), None
+        )
         assert service_check["passed"] is True
         assert service_check["message"] == "otel-service"
 

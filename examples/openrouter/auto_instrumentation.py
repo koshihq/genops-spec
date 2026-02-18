@@ -37,11 +37,12 @@ def demonstrate_auto_instrumentation():
 
         # Initialize GenOps auto-instrumentation - this is the ONLY change needed
         import genops
+
         genops.init(
             service_name="openrouter-demo",
             default_team="ai-platform-team",
             default_project="multi-provider-experiment",
-            default_environment="development"
+            default_environment="development",
         )
         print("   ✅ Auto-instrumentation enabled!")
 
@@ -57,8 +58,8 @@ def demonstrate_auto_instrumentation():
             # Optional: Add OpenRouter-specific headers
             default_headers={
                 "HTTP-Referer": "https://genops-demo.com",
-                "X-Title": "GenOps Auto-Instrumentation Demo"
-            }
+                "X-Title": "GenOps Auto-Instrumentation Demo",
+            },
         )
 
         print("   ✅ OpenRouter client created (standard code)")
@@ -69,18 +70,18 @@ def demonstrate_auto_instrumentation():
             {
                 "name": "Fast & Cheap: Llama 3.2 3B",
                 "model": "meta-llama/llama-3.2-3b-instruct",
-                "prompt": "What is the capital of France?"
+                "prompt": "What is the capital of France?",
             },
             {
                 "name": "Balanced: GPT-4o",
                 "model": "openai/gpt-4o",
-                "prompt": "Explain quantum computing in simple terms."
+                "prompt": "Explain quantum computing in simple terms.",
             },
             {
                 "name": "Reasoning: Claude 3.5 Sonnet",
                 "model": "anthropic/claude-3-5-sonnet",
-                "prompt": "What are the ethical considerations of AI in healthcare?"
-            }
+                "prompt": "What are the ethical considerations of AI in healthcare?",
+            },
         ]
 
         total_tokens = 0
@@ -96,15 +97,19 @@ def demonstrate_auto_instrumentation():
                 response = client.chat.completions.create(
                     model=request["model"],
                     messages=[{"role": "user", "content": request["prompt"]}],
-                    max_tokens=80
+                    max_tokens=80,
                 )
 
                 # Extract response
                 content = response.choices[0].message.content
                 usage = response.usage
 
-                print(f"      ✅ Success! Tokens: {usage.total_tokens}, Cost tracked automatically")
-                print(f"      Response: {content[:60]}{'...' if len(content) > 60 else ''}")
+                print(
+                    f"      ✅ Success! Tokens: {usage.total_tokens}, Cost tracked automatically"
+                )
+                print(
+                    f"      Response: {content[:60]}{'...' if len(content) > 60 else ''}"
+                )
 
                 total_tokens += usage.total_tokens
                 successful_requests += 1
@@ -151,7 +156,9 @@ def demonstrate_auto_instrumentation():
         print("   • Multi-provider cost attribution and budgeting")
 
         print("\n🚀 Next Steps:")
-        print("   • Add per-request governance: client.chat.completions.create(..., team='new-team')")
+        print(
+            "   • Add per-request governance: client.chat.completions.create(..., team='new-team')"
+        )
         print("   • Set up budget alerts in your observability dashboard")
         print("   • Try production_patterns.py for deployment best practices")
 

@@ -38,17 +38,19 @@ class GenOpsInstrumentor:
         from genops.providers.anthropic import patch_anthropic, unpatch_anthropic
         from genops.providers.openai import patch_openai, unpatch_openai
         from genops.providers.openrouter import patch_openrouter, unpatch_openrouter
-        
+
         # Import Bedrock provider with error handling
         try:
             from genops.providers.bedrock import instrument_bedrock
+
             _bedrock_patch_available = True
         except ImportError:
             _bedrock_patch_available = False
-        
+
         # Import Arize AI provider with error handling
         try:
             from genops.providers.arize import auto_instrument as arize_auto_instrument
+
             _arize_patch_available = True
         except ImportError:
             _arize_patch_available = False
@@ -76,17 +78,19 @@ class GenOpsInstrumentor:
                 "framework_type": "inference",
             },
         }
-        
+
         # Add Bedrock to registry if available
         if _bedrock_patch_available:
             self.provider_patches["bedrock"] = {
                 "patch": instrument_bedrock,
-                "unpatch": lambda: None,  # Bedrock uses different instrumentation pattern
+                "unpatch": lambda: (
+                    None
+                ),  # Bedrock uses different instrumentation pattern
                 "module": "boto3",
                 "provider_type": "llm_api",
                 "framework_type": "inference",
             }
-        
+
         # Add Arize AI to registry if available
         if _arize_patch_available:
             self.provider_patches["arize"] = {
@@ -96,10 +100,11 @@ class GenOpsInstrumentor:
                 "provider_type": "ml_observability",
                 "framework_type": "monitoring",
             }
-        
+
         # Add Dust AI to registry
         try:
             from genops.providers.dust import auto_instrument as dust_auto_instrument
+
             self.provider_patches["dust"] = {
                 "patch": lambda **kwargs: dust_auto_instrument(**kwargs),
                 "unpatch": lambda: None,  # Dust uses different instrumentation pattern
@@ -112,8 +117,13 @@ class GenOpsInstrumentor:
 
         # Add Anyscale to registry
         try:
-            from genops.providers.anyscale.registration import auto_instrument as anyscale_auto_instrument
-            from genops.providers.anyscale.registration import disable_auto_instrument as anyscale_disable
+            from genops.providers.anyscale.registration import (
+                auto_instrument as anyscale_auto_instrument,
+            )
+            from genops.providers.anyscale.registration import (
+                disable_auto_instrument as anyscale_disable,
+            )
+
             self.provider_patches["anyscale"] = {
                 "patch": lambda **kwargs: anyscale_auto_instrument(**kwargs),
                 "unpatch": anyscale_disable,
@@ -144,6 +154,7 @@ class GenOpsInstrumentor:
         # Detect frameworks using the FrameworkDetector
         try:
             from genops.providers.base import detect_frameworks
+
             framework_info = detect_frameworks()
 
             for name, info in framework_info.items():
@@ -151,10 +162,14 @@ class GenOpsInstrumentor:
                     # Check if we have a provider implementation for this framework
                     if name in self.framework_registry:
                         available[name] = True
-                        logger.debug(f"✓ {name} framework available for instrumentation")
+                        logger.debug(
+                            f"✓ {name} framework available for instrumentation"
+                        )
                     else:
                         # Framework detected but no provider implementation yet
-                        logger.debug(f"? {name} framework available but no provider implementation")
+                        logger.debug(
+                            f"? {name} framework available but no provider implementation"
+                        )
 
         except Exception as e:
             logger.debug(f"Framework detection failed: {e}")
@@ -176,7 +191,7 @@ class GenOpsInstrumentor:
         current_tracer_provider = trace.get_tracer_provider()
         if hasattr(current_tracer_provider, "add_span_processor"):
             logger.debug("OpenTelemetry already configured, using existing provider")
-            return current_tracer_provider
+            return current_tracer_provider  # type: ignore[return-value]
 
         # Create resource with service information
         resource_attrs = {
@@ -196,7 +211,7 @@ class GenOpsInstrumentor:
         if exporter_type == "console":
             exporter = ConsoleSpanExporter()
         elif exporter_type == "otlp":
-            exporter = OTLPSpanExporter(
+            exporter = OTLPSpanExporter(  # type: ignore[assignment]
                 endpoint=otlp_endpoint or "http://localhost:4317",
                 headers=otlp_headers or {},
             )
@@ -406,7 +421,7 @@ class GenOpsInstrumentor:
         module: str,
         framework_type: str,
         provider_class: Any | None = None,
-        **metadata
+        **metadata,
     ) -> None:
         """
         Register a framework provider for auto-instrumentation.
@@ -427,12 +442,14 @@ class GenOpsInstrumentor:
             "framework_type": framework_type,
             "provider_type": "framework",
             "provider_class": provider_class,
-            **metadata
+            **metadata,
         }
 
         logger.debug(f"Registered framework provider: {name}")
 
-    def get_available_frameworks(self, framework_type: str | None = None) -> dict[str, dict]:
+    def get_available_frameworks(
+        self, framework_type: str | None = None
+    ) -> dict[str, dict]:
         """
         Get available frameworks, optionally filtered by type.
 
@@ -444,6 +461,7 @@ class GenOpsInstrumentor:
         """
         try:
             from genops.providers.base import detect_frameworks
+
             framework_info = detect_frameworks()
 
             available = {}
@@ -455,7 +473,7 @@ class GenOpsInstrumentor:
                             "version": info.version,
                             "framework_type": info.framework_type,
                             "instrumented": name in self.framework_registry,
-                            "patched": name in self.patched_providers
+                            "patched": name in self.patched_providers,
                         }
 
             return available
@@ -477,7 +495,7 @@ class GenOpsInstrumentor:
         status["frameworks"] = {
             "registered": list(self.framework_registry.keys()),
             "available": self.get_available_frameworks(),
-            "registry_count": len(self.framework_registry)
+            "registry_count": len(self.framework_registry),
         }
 
         # Categorize by type
@@ -494,11 +512,13 @@ class GenOpsInstrumentor:
             if framework_type not in status["providers_by_type"][provider_type]:
                 status["providers_by_type"][provider_type][framework_type] = []
 
-            status["providers_by_type"][provider_type][framework_type].append({
-                "name": name,
-                "available": self.available_providers.get(name, False),
-                "instrumented": name in self.patched_providers
-            })
+            status["providers_by_type"][provider_type][framework_type].append(
+                {
+                    "name": name,
+                    "available": self.available_providers.get(name, False),
+                    "instrumented": name in self.patched_providers,
+                }
+            )
 
         return status
 

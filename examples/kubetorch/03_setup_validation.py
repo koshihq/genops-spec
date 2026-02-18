@@ -8,9 +8,9 @@ Time to run: < 30 seconds
 """
 
 from genops.providers.kubetorch import (
-    validate_kubetorch_setup,
-    print_validation_result,
     get_module_status,
+    print_validation_result,
+    validate_kubetorch_setup,
 )
 
 print("=" * 60)
@@ -28,7 +28,9 @@ status = get_module_status()
 print("Module Availability:")
 for module, available in status.items():
     status_icon = "✅" if available else "❌"
-    print(f"  {status_icon} {module:20s}: {'Available' if available else 'Not Available'}")
+    print(
+        f"  {status_icon} {module:20s}: {'Available' if available else 'Not Available'}"
+    )
 
 # =============================================
 # Example 2: Comprehensive Validation
@@ -58,7 +60,7 @@ else:
             if issue.fix_suggestion:
                 print(f"    Fix: {issue.fix_suggestion}")
 
-print(f"\nValidation Summary:")
+print("\nValidation Summary:")
 print(f"  Total Checks: {result.total_checks}")
 print(f"  ✅ Successful: {result.successful_checks}")
 print(f"  ⚠️  Warnings: {result.warnings}")

@@ -1,24 +1,28 @@
 """Validation system for Anyscale integration setup and diagnostics."""
 
+from __future__ import annotations
+
 import logging
 import os
 import re
 import sys
-from typing import List, Dict, Any
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 # Try to import dependencies
 try:
     import requests
+
     HAS_REQUESTS = True
 except ImportError:
     HAS_REQUESTS = False
 
 try:
-    from openai import OpenAI
+    from openai import OpenAI  # noqa: F401
+
     HAS_OPENAI_SDK = True
 except ImportError:
     HAS_OPENAI_SDK = False
@@ -26,6 +30,7 @@ except ImportError:
 
 class ValidationLevel(Enum):
     """Validation severity levels."""
+
     INFO = "info"
     WARNING = "warning"
     ERROR = "error"
@@ -34,6 +39,7 @@ class ValidationLevel(Enum):
 
 class ValidationCategory(Enum):
     """Categories of validation checks."""
+
     DEPENDENCIES = "dependencies"
     CONFIGURATION = "configuration"
     CONNECTIVITY = "connectivity"
@@ -57,7 +63,7 @@ class ValidationIssue:
             ValidationLevel.INFO: "ℹ️",
             ValidationLevel.WARNING: "⚠️",
             ValidationLevel.ERROR: "❌",
-            ValidationLevel.CRITICAL: "🚨"
+            ValidationLevel.CRITICAL: "🚨",
         }
 
         return f"{level_symbol[self.level]} {self.title}: {self.description}"
@@ -70,9 +76,9 @@ class ValidationResult:
     success: bool
     total_checks: int = 0
     passed_checks: int = 0
-    issues: List[ValidationIssue] = field(default_factory=list)
-    system_info: Dict[str, Any] = field(default_factory=dict)
-    recommendations: List[str] = field(default_factory=list)
+    issues: list[ValidationIssue] = field(default_factory=list)
+    system_info: dict[str, Any] = field(default_factory=dict)
+    recommendations: list[str] = field(default_factory=list)
 
     @property
     def has_critical_issues(self) -> bool:
@@ -103,7 +109,9 @@ class ValidationResult:
 class AnyscaleValidator:
     """Comprehensive validator for Anyscale setup."""
 
-    def __init__(self, anyscale_api_key: str = None, anyscale_base_url: str = None):
+    def __init__(
+        self, anyscale_api_key: str | None = None, anyscale_base_url: str | None = None
+    ):
         """
         Initialize validator.
 
@@ -112,7 +120,9 @@ class AnyscaleValidator:
             anyscale_base_url: Base URL to validate (optional)
         """
         self.anyscale_api_key = anyscale_api_key or os.getenv("ANYSCALE_API_KEY")
-        self.anyscale_base_url = anyscale_base_url or "https://api.endpoints.anyscale.com/v1"
+        self.anyscale_base_url = (
+            anyscale_base_url or "https://api.endpoints.anyscale.com/v1"
+        )
 
     # Security methods for secret protection
 
@@ -121,7 +131,7 @@ class AnyscaleValidator:
         if not text:
             return "No response text"
         truncated = text[:max_length]
-        sanitized = re.sub(r'Bearer\s+\S+', 'Bearer [REDACTED]', truncated)
+        sanitized = re.sub(r"Bearer\s+\S+", "Bearer [REDACTED]", truncated)
         sanitized = re.sub(r'"token":\s*"\S+"', '"token": "[REDACTED]"', sanitized)
         return sanitized
 
@@ -166,88 +176,107 @@ class AnyscaleValidator:
         py_version = sys.version_info
         if py_version >= (3, 8):
             result.passed_checks += 1
-            result.add_issue(ValidationIssue(
-                category=ValidationCategory.DEPENDENCIES,
-                level=ValidationLevel.INFO,
-                title="Python Version",
-                description=f"Python {py_version.major}.{py_version.minor}.{py_version.micro} detected",
-                fix_suggestion="Compatible Python version"
-            ))
+            result.add_issue(
+                ValidationIssue(
+                    category=ValidationCategory.DEPENDENCIES,
+                    level=ValidationLevel.INFO,
+                    title="Python Version",
+                    description=f"Python {py_version.major}.{py_version.minor}.{py_version.micro} detected",
+                    fix_suggestion="Compatible Python version",
+                )
+            )
         else:
-            result.add_issue(ValidationIssue(
-                category=ValidationCategory.DEPENDENCIES,
-                level=ValidationLevel.CRITICAL,
-                title="Python Version",
-                description=f"Python {py_version.major}.{py_version.minor} is too old",
-                fix_suggestion="Upgrade to Python 3.8 or later",
-                technical_details="GenOps requires Python 3.8+ for type hints and async support"
-            ))
+            result.add_issue(
+                ValidationIssue(
+                    category=ValidationCategory.DEPENDENCIES,
+                    level=ValidationLevel.CRITICAL,
+                    title="Python Version",
+                    description=f"Python {py_version.major}.{py_version.minor} is too old",
+                    fix_suggestion="Upgrade to Python 3.8 or later",
+                    technical_details="GenOps requires Python 3.8+ for type hints and async support",
+                )
+            )
 
         # Requests library check
         result.total_checks += 1
         if HAS_REQUESTS:
             result.passed_checks += 1
             import requests
-            result.add_issue(ValidationIssue(
-                category=ValidationCategory.DEPENDENCIES,
-                level=ValidationLevel.INFO,
-                title="Requests Library",
-                description=f"requests {requests.__version__} installed",
-                fix_suggestion="HTTP client available"
-            ))
+
+            result.add_issue(
+                ValidationIssue(
+                    category=ValidationCategory.DEPENDENCIES,
+                    level=ValidationLevel.INFO,
+                    title="Requests Library",
+                    description=f"requests {requests.__version__} installed",
+                    fix_suggestion="HTTP client available",
+                )
+            )
         else:
-            result.add_issue(ValidationIssue(
-                category=ValidationCategory.DEPENDENCIES,
-                level=ValidationLevel.ERROR,
-                title="Requests Library Missing",
-                description="requests library not found",
-                fix_suggestion="Install with: pip install requests",
-                technical_details="Required for HTTP API calls to Anyscale"
-            ))
+            result.add_issue(
+                ValidationIssue(
+                    category=ValidationCategory.DEPENDENCIES,
+                    level=ValidationLevel.ERROR,
+                    title="Requests Library Missing",
+                    description="requests library not found",
+                    fix_suggestion="Install with: pip install requests",
+                    technical_details="Required for HTTP API calls to Anyscale",
+                )
+            )
 
         # OpenAI SDK check (optional but recommended)
         result.total_checks += 1
         if HAS_OPENAI_SDK:
             result.passed_checks += 1
             import openai
-            result.add_issue(ValidationIssue(
-                category=ValidationCategory.DEPENDENCIES,
-                level=ValidationLevel.INFO,
-                title="OpenAI SDK",
-                description=f"openai {openai.__version__} installed",
-                fix_suggestion="Enhanced compatibility available"
-            ))
+
+            result.add_issue(
+                ValidationIssue(
+                    category=ValidationCategory.DEPENDENCIES,
+                    level=ValidationLevel.INFO,
+                    title="OpenAI SDK",
+                    description=f"openai {openai.__version__} installed",
+                    fix_suggestion="Enhanced compatibility available",
+                )
+            )
         else:
-            result.add_issue(ValidationIssue(
-                category=ValidationCategory.DEPENDENCIES,
-                level=ValidationLevel.WARNING,
-                title="OpenAI SDK Not Installed",
-                description="OpenAI SDK provides enhanced compatibility",
-                fix_suggestion="Install with: pip install openai (optional but recommended)",
-                technical_details="Anyscale is OpenAI-compatible; SDK provides better error handling"
-            ))
+            result.add_issue(
+                ValidationIssue(
+                    category=ValidationCategory.DEPENDENCIES,
+                    level=ValidationLevel.WARNING,
+                    title="OpenAI SDK Not Installed",
+                    description="OpenAI SDK provides enhanced compatibility",
+                    fix_suggestion="Install with: pip install openai (optional but recommended)",
+                    technical_details="Anyscale is OpenAI-compatible; SDK provides better error handling",
+                )
+            )
 
         # OpenTelemetry check
         result.total_checks += 1
         try:
-            import opentelemetry
+            import opentelemetry  # noqa: F401
+
             result.passed_checks += 1
-            result.add_issue(ValidationIssue(
-                category=ValidationCategory.DEPENDENCIES,
-                level=ValidationLevel.INFO,
-                title="OpenTelemetry",
-                description="OpenTelemetry packages available",
-                fix_suggestion="Telemetry export enabled"
-            ))
+            result.add_issue(
+                ValidationIssue(
+                    category=ValidationCategory.DEPENDENCIES,
+                    level=ValidationLevel.INFO,
+                    title="OpenTelemetry",
+                    description="OpenTelemetry packages available",
+                    fix_suggestion="Telemetry export enabled",
+                )
+            )
         except ImportError:
-            result.add_issue(ValidationIssue(
-                category=ValidationCategory.DEPENDENCIES,
-                level=ValidationLevel.ERROR,
-                title="OpenTelemetry Missing",
-                description="OpenTelemetry packages not found",
-                fix_suggestion="Install with: pip install opentelemetry-api opentelemetry-sdk",
-                technical_details="Required for governance telemetry export"
-            ))
+            result.add_issue(
+                ValidationIssue(
+                    category=ValidationCategory.DEPENDENCIES,
+                    level=ValidationLevel.ERROR,
+                    title="OpenTelemetry Missing",
+                    description="OpenTelemetry packages not found",
+                    fix_suggestion="Install with: pip install opentelemetry-api opentelemetry-sdk",
+                    technical_details="Required for governance telemetry export",
+                )
+            )
 
     def _check_configuration(self, result: ValidationResult):
         """Check configuration and environment variables."""
@@ -258,53 +287,63 @@ class AnyscaleValidator:
             # Check key format (basic validation)
             if len(self.anyscale_api_key) > 10:  # Reasonable minimum length
                 result.passed_checks += 1
-                result.add_issue(ValidationIssue(
-                    category=ValidationCategory.CONFIGURATION,
-                    level=ValidationLevel.INFO,
-                    title="API Key Configuration",
-                    description="ANYSCALE_API_KEY is set",
-                    fix_suggestion="API key configured correctly"
-                ))
+                result.add_issue(
+                    ValidationIssue(
+                        category=ValidationCategory.CONFIGURATION,
+                        level=ValidationLevel.INFO,
+                        title="API Key Configuration",
+                        description="ANYSCALE_API_KEY is set",
+                        fix_suggestion="API key configured correctly",
+                    )
+                )
             else:
-                result.add_issue(ValidationIssue(
-                    category=ValidationCategory.CONFIGURATION,
-                    level=ValidationLevel.WARNING,
-                    title="API Key Format",
-                    description="API key seems too short",
-                    fix_suggestion="Verify your API key from Anyscale console Credentials page",
-                    technical_details="API keys should be longer than 10 characters"
-                ))
+                result.add_issue(
+                    ValidationIssue(
+                        category=ValidationCategory.CONFIGURATION,
+                        level=ValidationLevel.WARNING,
+                        title="API Key Format",
+                        description="API key seems too short",
+                        fix_suggestion="Verify your API key from Anyscale console Credentials page",
+                        technical_details="API keys should be longer than 10 characters",
+                    )
+                )
         else:
-            result.add_issue(ValidationIssue(
-                category=ValidationCategory.CONFIGURATION,
-                level=ValidationLevel.CRITICAL,
-                title="API Key Missing",
-                description="ANYSCALE_API_KEY environment variable not set",
-                fix_suggestion="Set with: export ANYSCALE_API_KEY='your-key-here'",
-                technical_details="API key required for authentication with Anyscale Endpoints"
-            ))
+            result.add_issue(
+                ValidationIssue(
+                    category=ValidationCategory.CONFIGURATION,
+                    level=ValidationLevel.CRITICAL,
+                    title="API Key Missing",
+                    description="ANYSCALE_API_KEY environment variable not set",
+                    fix_suggestion="Set with: export ANYSCALE_API_KEY='your-key-here'",
+                    technical_details="API key required for authentication with Anyscale Endpoints",
+                )
+            )
 
         # Base URL check
         result.total_checks += 1
         if self.anyscale_base_url:
             if self.anyscale_base_url.startswith("https://"):
                 result.passed_checks += 1
-                result.add_issue(ValidationIssue(
-                    category=ValidationCategory.CONFIGURATION,
-                    level=ValidationLevel.INFO,
-                    title="Base URL Configuration",
-                    description=f"Base URL: {self.anyscale_base_url}",
-                    fix_suggestion="Using secure HTTPS connection"
-                ))
+                result.add_issue(
+                    ValidationIssue(
+                        category=ValidationCategory.CONFIGURATION,
+                        level=ValidationLevel.INFO,
+                        title="Base URL Configuration",
+                        description=f"Base URL: {self.anyscale_base_url}",
+                        fix_suggestion="Using secure HTTPS connection",
+                    )
+                )
             else:
-                result.add_issue(ValidationIssue(
-                    category=ValidationCategory.CONFIGURATION,
-                    level=ValidationLevel.WARNING,
-                    title="Insecure Base URL",
-                    description="Base URL does not use HTTPS",
-                    fix_suggestion="Use HTTPS for production: https://api.endpoints.anyscale.com/v1",
-                    technical_details="HTTP connections are insecure and should only be used for testing"
-                ))
+                result.add_issue(
+                    ValidationIssue(
+                        category=ValidationCategory.CONFIGURATION,
+                        level=ValidationLevel.WARNING,
+                        title="Insecure Base URL",
+                        description="Base URL does not use HTTPS",
+                        fix_suggestion="Use HTTPS for production: https://api.endpoints.anyscale.com/v1",
+                        technical_details="HTTP connections are insecure and should only be used for testing",
+                    )
+                )
 
     def _check_connectivity(self, result: ValidationResult):
         """Check network connectivity to Anyscale API."""
@@ -324,65 +363,79 @@ class AnyscaleValidator:
                 response = requests.get(
                     f"{self.anyscale_base_url}/models",
                     headers=self._build_headers(),
-                    timeout=10
+                    timeout=10,
                 )
 
                 if response.status_code == 200:
                     result.passed_checks += 1
-                    models = response.json().get('data', [])
-                    result.add_issue(ValidationIssue(
-                        category=ValidationCategory.CONNECTIVITY,
-                        level=ValidationLevel.INFO,
-                        title="API Connectivity",
-                        description=f"Successfully connected to Anyscale API ({len(models)} models available)",
-                        fix_suggestion="API is reachable and responsive"
-                    ))
+                    models = response.json().get("data", [])
+                    result.add_issue(
+                        ValidationIssue(
+                            category=ValidationCategory.CONNECTIVITY,
+                            level=ValidationLevel.INFO,
+                            title="API Connectivity",
+                            description=f"Successfully connected to Anyscale API ({len(models)} models available)",
+                            fix_suggestion="API is reachable and responsive",
+                        )
+                    )
                 elif response.status_code == 401:
-                    result.add_issue(ValidationIssue(
-                        category=ValidationCategory.CONNECTIVITY,
-                        level=ValidationLevel.ERROR,
-                        title="Authentication Failed",
-                        description="API key rejected by Anyscale",
-                        fix_suggestion="Verify your API key from Anyscale console Credentials page",
-                        technical_details=f"HTTP {response.status_code}: {self._sanitize_response_text(response.text)}"
-                    ))
+                    result.add_issue(
+                        ValidationIssue(
+                            category=ValidationCategory.CONNECTIVITY,
+                            level=ValidationLevel.ERROR,
+                            title="Authentication Failed",
+                            description="API key rejected by Anyscale",
+                            fix_suggestion="Verify your API key from Anyscale console Credentials page",
+                            technical_details=f"HTTP {response.status_code}: {self._sanitize_response_text(response.text)}",
+                        )
+                    )
                 else:
-                    result.add_issue(ValidationIssue(
-                        category=ValidationCategory.CONNECTIVITY,
-                        level=ValidationLevel.WARNING,
-                        title="API Response Error",
-                        description=f"Unexpected response: HTTP {response.status_code}",
-                        fix_suggestion="Check Anyscale service status",
-                        technical_details=self._sanitize_response_text(response.text, 200)
-                    ))
+                    result.add_issue(
+                        ValidationIssue(
+                            category=ValidationCategory.CONNECTIVITY,
+                            level=ValidationLevel.WARNING,
+                            title="API Response Error",
+                            description=f"Unexpected response: HTTP {response.status_code}",
+                            fix_suggestion="Check Anyscale service status",
+                            technical_details=self._sanitize_response_text(
+                                response.text, 200
+                            ),
+                        )
+                    )
 
         except requests.exceptions.Timeout:
-            result.add_issue(ValidationIssue(
-                category=ValidationCategory.CONNECTIVITY,
-                level=ValidationLevel.WARNING,
-                title="Connection Timeout",
-                description="Request to Anyscale API timed out",
-                fix_suggestion="Check network connectivity and firewall settings",
-                technical_details="Connection timeout after 10 seconds"
-            ))
+            result.add_issue(
+                ValidationIssue(
+                    category=ValidationCategory.CONNECTIVITY,
+                    level=ValidationLevel.WARNING,
+                    title="Connection Timeout",
+                    description="Request to Anyscale API timed out",
+                    fix_suggestion="Check network connectivity and firewall settings",
+                    technical_details="Connection timeout after 10 seconds",
+                )
+            )
         except requests.exceptions.ConnectionError as e:
-            result.add_issue(ValidationIssue(
-                category=ValidationCategory.CONNECTIVITY,
-                level=ValidationLevel.ERROR,
-                title="Connection Failed",
-                description="Could not connect to Anyscale API",
-                fix_suggestion="Check internet connection and DNS resolution",
-                technical_details=str(e)
-            ))
+            result.add_issue(
+                ValidationIssue(
+                    category=ValidationCategory.CONNECTIVITY,
+                    level=ValidationLevel.ERROR,
+                    title="Connection Failed",
+                    description="Could not connect to Anyscale API",
+                    fix_suggestion="Check internet connection and DNS resolution",
+                    technical_details=str(e),
+                )
+            )
         except Exception as e:
-            result.add_issue(ValidationIssue(
-                category=ValidationCategory.CONNECTIVITY,
-                level=ValidationLevel.WARNING,
-                title="Connectivity Check Failed",
-                description=f"Unexpected error: {type(e).__name__}",
-                fix_suggestion="Check error details for more information",
-                technical_details=str(e)
-            ))
+            result.add_issue(
+                ValidationIssue(
+                    category=ValidationCategory.CONNECTIVITY,
+                    level=ValidationLevel.WARNING,
+                    title="Connectivity Check Failed",
+                    description=f"Unexpected error: {type(e).__name__}",
+                    fix_suggestion="Check error details for more information",
+                    technical_details=str(e),
+                )
+            )
 
     def _check_models(self, result: ValidationResult):
         """Check available models and their accessibility."""
@@ -395,24 +448,36 @@ class AnyscaleValidator:
             response = requests.get(
                 f"{self.anyscale_base_url}/models",
                 headers=self._build_headers(),
-                timeout=10
+                timeout=10,
             )
 
             if response.status_code == 200:
                 result.passed_checks += 1
-                models_data = response.json().get('data', [])
+                models_data = response.json().get("data", [])
 
                 # Categorize models
-                chat_models = [m for m in models_data if 'chat' in m.get('id', '').lower() or 'llama' in m.get('id', '').lower()]
-                embedding_models = [m for m in models_data if 'embed' in m.get('id', '').lower() or 'gte' in m.get('id', '').lower()]
+                chat_models = [
+                    m
+                    for m in models_data
+                    if "chat" in m.get("id", "").lower()
+                    or "llama" in m.get("id", "").lower()
+                ]
+                embedding_models = [
+                    m
+                    for m in models_data
+                    if "embed" in m.get("id", "").lower()
+                    or "gte" in m.get("id", "").lower()
+                ]
 
-                result.add_issue(ValidationIssue(
-                    category=ValidationCategory.MODELS,
-                    level=ValidationLevel.INFO,
-                    title="Model Availability",
-                    description=f"Found {len(chat_models)} chat models and {len(embedding_models)} embedding models",
-                    fix_suggestion=f"Models accessible: {', '.join([m['id'] for m in models_data[:3]])}..."
-                ))
+                result.add_issue(
+                    ValidationIssue(
+                        category=ValidationCategory.MODELS,
+                        level=ValidationLevel.INFO,
+                        title="Model Availability",
+                        description=f"Found {len(chat_models)} chat models and {len(embedding_models)} embedding models",
+                        fix_suggestion=f"Models accessible: {', '.join([m['id'] for m in models_data[:3]])}...",
+                    )
+                )
 
         except Exception as e:
             logger.debug(f"Model check failed: {e}")
@@ -425,27 +490,31 @@ class AnyscaleValidator:
         try:
             from .pricing import ANYSCALE_PRICING, AnyscalePricing
 
-            pricing = AnyscalePricing()
+            AnyscalePricing()
             num_models = len(ANYSCALE_PRICING)
 
             result.passed_checks += 1
-            result.add_issue(ValidationIssue(
-                category=ValidationCategory.PRICING,
-                level=ValidationLevel.INFO,
-                title="Pricing Database",
-                description=f"Pricing data available for {num_models} models",
-                fix_suggestion="Cost calculation ready"
-            ))
+            result.add_issue(
+                ValidationIssue(
+                    category=ValidationCategory.PRICING,
+                    level=ValidationLevel.INFO,
+                    title="Pricing Database",
+                    description=f"Pricing data available for {num_models} models",
+                    fix_suggestion="Cost calculation ready",
+                )
+            )
 
         except Exception as e:
-            result.add_issue(ValidationIssue(
-                category=ValidationCategory.PRICING,
-                level=ValidationLevel.WARNING,
-                title="Pricing Database Error",
-                description="Could not load pricing database",
-                fix_suggestion="Verify pricing.py module is intact",
-                technical_details=str(e)
-            ))
+            result.add_issue(
+                ValidationIssue(
+                    category=ValidationCategory.PRICING,
+                    level=ValidationLevel.WARNING,
+                    title="Pricing Database Error",
+                    description="Could not load pricing database",
+                    fix_suggestion="Verify pricing.py module is intact",
+                    technical_details=str(e),
+                )
+            )
 
     def _generate_recommendations(self, result: ValidationResult):
         """Generate setup recommendations based on validation results."""
@@ -475,8 +544,8 @@ class AnyscaleValidator:
 
 
 def validate_setup(
-    anyscale_api_key: str = None,
-    anyscale_base_url: str = None
+    anyscale_api_key: str | None = None,
+    anyscale_base_url: str | None = None,
 ) -> ValidationResult:
     """
     Validate Anyscale setup and configuration.
@@ -505,9 +574,9 @@ def print_validation_result(result: ValidationResult):
     Args:
         result: ValidationResult to display
     """
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("🔍 GenOps Anyscale Setup Validation")
-    print("="*70 + "\n")
+    print("=" * 70 + "\n")
 
     # Overall status
     if result.success:
@@ -544,18 +613,18 @@ def print_validation_result(result: ValidationResult):
         for rec in result.recommendations:
             print(f"{rec}")
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print(f"Validation completed: {result.total_checks} checks performed")
-    print("="*70 + "\n")
+    print("=" * 70 + "\n")
 
 
 # Export public API
 __all__ = [
-    'ValidationLevel',
-    'ValidationCategory',
-    'ValidationIssue',
-    'ValidationResult',
-    'AnyscaleValidator',
-    'validate_setup',
-    'print_validation_result',
+    "ValidationLevel",
+    "ValidationCategory",
+    "ValidationIssue",
+    "ValidationResult",
+    "AnyscaleValidator",
+    "validate_setup",
+    "print_validation_result",
 ]

@@ -10,17 +10,15 @@ Tests cover:
 - Thread safety
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
 import time
-import threading
+from unittest.mock import patch
 
+from genops.providers.elastic.client import ElasticAPIClient
 from genops.providers.elastic.event_exporter import (
     EventExporter,
     ExportMode,
     ExportStats,
 )
-from genops.providers.elastic.client import ElasticAPIClient
 
 
 class TestEventExporterInitialization:
@@ -28,10 +26,12 @@ class TestEventExporterInitialization:
 
     def test_exporter_initialization_batch_mode(self, mock_elasticsearch_client):
         """Test exporter initialization in BATCH mode."""
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             client = ElasticAPIClient(
-                elastic_url="https://localhost:9200",
-                api_key="test-api-key"
+                elastic_url="https://localhost:9200", api_key="test-api-key"
             )
 
             exporter = EventExporter(
@@ -39,7 +39,7 @@ class TestEventExporterInitialization:
                 export_mode=ExportMode.BATCH,
                 batch_size=100,
                 batch_interval_seconds=60,
-                enable_background_flush=False  # Disable for testing
+                enable_background_flush=False,  # Disable for testing
             )
 
             assert exporter.export_mode == ExportMode.BATCH
@@ -48,32 +48,36 @@ class TestEventExporterInitialization:
 
     def test_exporter_initialization_realtime_mode(self, mock_elasticsearch_client):
         """Test exporter initialization in REALTIME mode."""
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             client = ElasticAPIClient(
-                elastic_url="https://localhost:9200",
-                api_key="test-api-key"
+                elastic_url="https://localhost:9200", api_key="test-api-key"
             )
 
             exporter = EventExporter(
                 client=client,
                 export_mode=ExportMode.REALTIME,
-                enable_background_flush=False
+                enable_background_flush=False,
             )
 
             assert exporter.export_mode == ExportMode.REALTIME
 
     def test_exporter_initialization_hybrid_mode(self, mock_elasticsearch_client):
         """Test exporter initialization in HYBRID mode."""
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             client = ElasticAPIClient(
-                elastic_url="https://localhost:9200",
-                api_key="test-api-key"
+                elastic_url="https://localhost:9200", api_key="test-api-key"
             )
 
             exporter = EventExporter(
                 client=client,
                 export_mode=ExportMode.HYBRID,
-                enable_background_flush=False
+                enable_background_flush=False,
             )
 
             assert exporter.export_mode == ExportMode.HYBRID
@@ -82,68 +86,80 @@ class TestEventExporterInitialization:
 class TestEventExporterBatchMode:
     """Test batch mode export functionality."""
 
-    def test_batch_mode_buffers_events(self, mock_elasticsearch_client, sample_telemetry_event):
+    def test_batch_mode_buffers_events(
+        self, mock_elasticsearch_client, sample_telemetry_event
+    ):
         """Test that batch mode buffers events before flushing."""
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             client = ElasticAPIClient(
-                elastic_url="https://localhost:9200",
-                api_key="test-api-key"
+                elastic_url="https://localhost:9200", api_key="test-api-key"
             )
 
             exporter = EventExporter(
                 client=client,
                 export_mode=ExportMode.BATCH,
                 batch_size=10,
-                enable_background_flush=False
+                enable_background_flush=False,
             )
 
             # Add events without reaching batch_size
-            for i in range(5):
+            for _i in range(5):
                 exporter.export_span(sample_telemetry_event, is_critical=False)
 
             # Should be buffered, not exported yet
             assert len(exporter.event_buffer) == 5
             mock_elasticsearch_client.bulk.assert_not_called()
 
-    def test_batch_mode_flushes_when_full(self, mock_elasticsearch_client, sample_telemetry_event):
+    def test_batch_mode_flushes_when_full(
+        self, mock_elasticsearch_client, sample_telemetry_event
+    ):
         """Test that batch mode flushes when batch_size is reached."""
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             client = ElasticAPIClient(
-                elastic_url="https://localhost:9200",
-                api_key="test-api-key"
+                elastic_url="https://localhost:9200", api_key="test-api-key"
             )
 
             exporter = EventExporter(
                 client=client,
                 export_mode=ExportMode.BATCH,
                 batch_size=5,
-                enable_background_flush=False
+                enable_background_flush=False,
             )
 
             # Add exactly batch_size events
-            for i in range(5):
+            for _i in range(5):
                 exporter.export_span(sample_telemetry_event, is_critical=False)
 
             # Should have flushed
             mock_elasticsearch_client.bulk.assert_called()
 
-    def test_batch_mode_manual_flush(self, mock_elasticsearch_client, sample_telemetry_event):
+    def test_batch_mode_manual_flush(
+        self, mock_elasticsearch_client, sample_telemetry_event
+    ):
         """Test manual flush in batch mode."""
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             client = ElasticAPIClient(
-                elastic_url="https://localhost:9200",
-                api_key="test-api-key"
+                elastic_url="https://localhost:9200", api_key="test-api-key"
             )
 
             exporter = EventExporter(
                 client=client,
                 export_mode=ExportMode.BATCH,
                 batch_size=100,
-                enable_background_flush=False
+                enable_background_flush=False,
             )
 
             # Add a few events
-            for i in range(3):
+            for _i in range(3):
                 exporter.export_span(sample_telemetry_event, is_critical=False)
 
             # Manually flush
@@ -157,18 +173,22 @@ class TestEventExporterBatchMode:
 class TestEventExporterRealtimeMode:
     """Test realtime mode export functionality."""
 
-    def test_realtime_mode_exports_immediately(self, mock_elasticsearch_client, sample_telemetry_event):
+    def test_realtime_mode_exports_immediately(
+        self, mock_elasticsearch_client, sample_telemetry_event
+    ):
         """Test that realtime mode exports each event immediately."""
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             client = ElasticAPIClient(
-                elastic_url="https://localhost:9200",
-                api_key="test-api-key"
+                elastic_url="https://localhost:9200", api_key="test-api-key"
             )
 
             exporter = EventExporter(
                 client=client,
                 export_mode=ExportMode.REALTIME,
-                enable_background_flush=False
+                enable_background_flush=False,
             )
 
             # Export single event
@@ -177,18 +197,22 @@ class TestEventExporterRealtimeMode:
             # Should export immediately
             mock_elasticsearch_client.index.assert_called_once()
 
-    def test_realtime_mode_multiple_events(self, mock_elasticsearch_client, sample_batch_events):
+    def test_realtime_mode_multiple_events(
+        self, mock_elasticsearch_client, sample_batch_events
+    ):
         """Test realtime mode with multiple events."""
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             client = ElasticAPIClient(
-                elastic_url="https://localhost:9200",
-                api_key="test-api-key"
+                elastic_url="https://localhost:9200", api_key="test-api-key"
             )
 
             exporter = EventExporter(
                 client=client,
                 export_mode=ExportMode.REALTIME,
-                enable_background_flush=False
+                enable_background_flush=False,
             )
 
             # Export multiple events
@@ -196,25 +220,31 @@ class TestEventExporterRealtimeMode:
                 exporter.export_span(event, is_critical=False)
 
             # Each should be exported immediately
-            assert mock_elasticsearch_client.index.call_count == len(sample_batch_events)
+            assert mock_elasticsearch_client.index.call_count == len(
+                sample_batch_events
+            )
 
 
 class TestEventExporterHybridMode:
     """Test hybrid mode export functionality."""
 
-    def test_hybrid_mode_critical_events_immediate(self, mock_elasticsearch_client, sample_telemetry_event):
+    def test_hybrid_mode_critical_events_immediate(
+        self, mock_elasticsearch_client, sample_telemetry_event
+    ):
         """Test that hybrid mode exports critical events immediately."""
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             client = ElasticAPIClient(
-                elastic_url="https://localhost:9200",
-                api_key="test-api-key"
+                elastic_url="https://localhost:9200", api_key="test-api-key"
             )
 
             exporter = EventExporter(
                 client=client,
                 export_mode=ExportMode.HYBRID,
                 batch_size=10,
-                enable_background_flush=False
+                enable_background_flush=False,
             )
 
             # Export critical event
@@ -223,23 +253,27 @@ class TestEventExporterHybridMode:
             # Should export immediately
             mock_elasticsearch_client.index.assert_called_once()
 
-    def test_hybrid_mode_normal_events_batched(self, mock_elasticsearch_client, sample_telemetry_event):
+    def test_hybrid_mode_normal_events_batched(
+        self, mock_elasticsearch_client, sample_telemetry_event
+    ):
         """Test that hybrid mode batches normal events."""
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             client = ElasticAPIClient(
-                elastic_url="https://localhost:9200",
-                api_key="test-api-key"
+                elastic_url="https://localhost:9200", api_key="test-api-key"
             )
 
             exporter = EventExporter(
                 client=client,
                 export_mode=ExportMode.HYBRID,
                 batch_size=10,
-                enable_background_flush=False
+                enable_background_flush=False,
             )
 
             # Export normal events
-            for i in range(3):
+            for _i in range(3):
                 exporter.export_span(sample_telemetry_event, is_critical=False)
 
             # Should be buffered
@@ -297,17 +331,19 @@ class TestEventExporterBackgroundFlush:
 
     def test_background_flush_thread_starts(self, mock_elasticsearch_client):
         """Test that background flush thread starts in batch mode."""
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             client = ElasticAPIClient(
-                elastic_url="https://localhost:9200",
-                api_key="test-api-key"
+                elastic_url="https://localhost:9200", api_key="test-api-key"
             )
 
             exporter = EventExporter(
                 client=client,
                 export_mode=ExportMode.BATCH,
                 batch_interval_seconds=1,
-                enable_background_flush=True
+                enable_background_flush=True,
             )
 
             # Verify flush thread is running
@@ -319,16 +355,18 @@ class TestEventExporterBackgroundFlush:
 
     def test_background_flush_shutdown(self, mock_elasticsearch_client):
         """Test graceful shutdown of background flush thread."""
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             client = ElasticAPIClient(
-                elastic_url="https://localhost:9200",
-                api_key="test-api-key"
+                elastic_url="https://localhost:9200", api_key="test-api-key"
             )
 
             exporter = EventExporter(
                 client=client,
                 export_mode=ExportMode.BATCH,
-                enable_background_flush=True
+                enable_background_flush=True,
             )
 
             # Shutdown and verify thread stops
@@ -341,20 +379,24 @@ class TestEventExporterBackgroundFlush:
 class TestEventExporterErrorHandling:
     """Test error handling and resilience."""
 
-    def test_export_handles_connection_errors(self, mock_elasticsearch_client, sample_telemetry_event):
+    def test_export_handles_connection_errors(
+        self, mock_elasticsearch_client, sample_telemetry_event
+    ):
         """Test that export handles connection errors gracefully."""
         mock_elasticsearch_client.index.side_effect = Exception("Connection lost")
 
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             client = ElasticAPIClient(
-                elastic_url="https://localhost:9200",
-                api_key="test-api-key"
+                elastic_url="https://localhost:9200", api_key="test-api-key"
             )
 
             exporter = EventExporter(
                 client=client,
                 export_mode=ExportMode.REALTIME,
-                enable_background_flush=False
+                enable_background_flush=False,
             )
 
             # Should not raise, but record error

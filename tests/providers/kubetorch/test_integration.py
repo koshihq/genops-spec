@@ -4,20 +4,21 @@ Integration tests for Kubetorch provider.
 Tests cover end-to-end workflows and cross-module functionality.
 """
 
-import pytest
 import time
+
+import pytest
 from src.genops.providers.kubetorch import (
-    instrument_kubetorch,
+    auto_instrument_kubetorch,
     calculate_gpu_cost,
-    get_pricing_info,
     create_compute_cost_context,
     get_cost_aggregator,
-    reset_cost_aggregator,
-    auto_instrument_kubetorch,
-    uninstrument_kubetorch,
-    is_kubetorch_instrumented,
-    validate_kubetorch_setup,
     get_module_status,
+    get_pricing_info,
+    instrument_kubetorch,
+    is_kubetorch_instrumented,
+    reset_cost_aggregator,
+    uninstrument_kubetorch,
+    validate_kubetorch_setup,
 )
 
 
@@ -85,10 +86,10 @@ class TestEndToEndWorkflows:
         )
 
         assert result is not None
-        assert 'operation_id' in result
-        assert 'cost_total' in result
-        assert result['cost_total'] > 0
-        assert result['gpu_hours'] == 8.0
+        assert "operation_id" in result
+        assert "cost_total" in result
+        assert result["cost_total"] > 0
+        assert result["gpu_hours"] == 8.0
 
 
 class TestPricingIntegration:
@@ -136,8 +137,14 @@ class TestPricingIntegration:
         assert "network" in ctx.summary.cost_by_resource_type
 
         # GPU should be the largest cost component
-        assert ctx.summary.cost_by_resource_type["gpu"] > ctx.summary.cost_by_resource_type["storage"]
-        assert ctx.summary.cost_by_resource_type["gpu"] > ctx.summary.cost_by_resource_type["network"]
+        assert (
+            ctx.summary.cost_by_resource_type["gpu"]
+            > ctx.summary.cost_by_resource_type["storage"]
+        )
+        assert (
+            ctx.summary.cost_by_resource_type["gpu"]
+            > ctx.summary.cost_by_resource_type["network"]
+        )
 
 
 class TestAutoInstrumentation:
@@ -154,7 +161,7 @@ class TestAutoInstrumentation:
         assert not is_kubetorch_instrumented()
 
         # Enable instrumentation
-        result = auto_instrument_kubetorch(
+        auto_instrument_kubetorch(
             team="ml-research",
             project="test-project",
         )
@@ -172,7 +179,7 @@ class TestAutoInstrumentation:
     def test_auto_instrumentation_idempotent(self):
         """Test that auto-instrumentation is idempotent."""
         # First call should succeed
-        result1 = auto_instrument_kubetorch(team="test")
+        auto_instrument_kubetorch(team="test")
         assert is_kubetorch_instrumented()
 
         # Second call should be no-op
@@ -199,8 +206,7 @@ class TestValidation:
 
         # Should check all major modules
         module_checks = [
-            issue for issue in result.issues
-            if issue.component.startswith("Module:")
+            issue for issue in result.issues if issue.component.startswith("Module:")
         ]
 
         # Should have checks for all 6 modules

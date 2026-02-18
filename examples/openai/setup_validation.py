@@ -28,6 +28,7 @@ def main():
             print_validation_result,
             validate_setup,
         )
+
         print("✅ GenOps OpenAI validation utilities loaded successfully")
     except ImportError as e:
         print(f"❌ Failed to import GenOps OpenAI validation utilities: {e}")
@@ -64,6 +65,7 @@ def main():
         print(f"   • Current working directory: {os.getcwd()}")
         return False
 
+
 def manual_check():
     """Perform manual validation checks as fallback."""
     print("\n🔧 Manual Validation Checks")
@@ -77,7 +79,9 @@ def manual_check():
         print("❌ OPENAI_API_KEY environment variable not set")
         issues.append("Set OPENAI_API_KEY environment variable")
     elif not api_key.startswith("sk-"):
-        print("⚠️  OPENAI_API_KEY doesn't look like a valid OpenAI key (should start with 'sk-')")
+        print(
+            "⚠️  OPENAI_API_KEY doesn't look like a valid OpenAI key (should start with 'sk-')"
+        )
         issues.append("Verify OPENAI_API_KEY format")
     else:
         # Security: Never log API key content, even partially
@@ -86,7 +90,10 @@ def manual_check():
     # Check GenOps installation
     try:
         import genops
-        print(f"✅ GenOps package imported successfully (version: {getattr(genops, '__version__', 'unknown')})")
+
+        print(
+            f"✅ GenOps package imported successfully (version: {getattr(genops, '__version__', 'unknown')})"
+        )
     except ImportError as e:
         print(f"❌ Failed to import genops: {e}")
         issues.append("Install genops with: pip install genops-ai[openai]")
@@ -94,7 +101,10 @@ def manual_check():
     # Check OpenAI installation
     try:
         import openai
-        print(f"✅ OpenAI package imported successfully (version: {getattr(openai, '__version__', 'unknown')})")
+
+        print(
+            f"✅ OpenAI package imported successfully (version: {getattr(openai, '__version__', 'unknown')})"
+        )
     except ImportError as e:
         print(f"❌ Failed to import openai: {e}")
         issues.append("Install openai with: pip install openai")
@@ -102,7 +112,8 @@ def manual_check():
     # Check OpenTelemetry (optional)
     try:
         import opentelemetry
-        opentelemetry.__name__  # Reference to avoid unused import warning
+
+        opentelemetry.__name__  # Reference to avoid unused import warning  # noqa: B018
         print("✅ OpenTelemetry is available")
 
         # Check if OTLP endpoint is configured
@@ -119,6 +130,7 @@ def manual_check():
     if api_key and api_key.startswith("sk-"):
         try:
             from openai import OpenAI
+
             client = OpenAI()
 
             # Simple test call
@@ -143,6 +155,7 @@ def manual_check():
         for i, issue in enumerate(issues, 1):
             print(f"   {i}. {issue}")
         return False
+
 
 if __name__ == "__main__":
     success = main()

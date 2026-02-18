@@ -5,7 +5,8 @@ import os
 import sys
 
 # Add src to path for testing
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
+
 
 def test_auto_instrumentation():
     """Test the auto-instrumentation system."""
@@ -14,6 +15,7 @@ def test_auto_instrumentation():
 
     # Test import
     import genops
+
     print("✅ GenOps imported successfully")
 
     # Test status before initialization
@@ -28,7 +30,7 @@ def test_auto_instrumentation():
         environment="testing",
         default_team="test-team",
         default_project="auto-init-test",
-        exporter_type="console"
+        exporter_type="console",
     )
     print("✅ genops.init() completed")
 
@@ -46,10 +48,7 @@ def test_auto_instrumentation():
     # Test manual instrumentation with defaults
     print("\n🔧 Testing manual instrumentation with defaults...")
 
-    @genops.track_usage(
-        operation_name="test_operation",
-        feature="auto-init-testing"
-    )
+    @genops.track_usage(operation_name="test_operation", feature="auto-init-testing")
     def test_function():
         return "Test completed successfully"
 
@@ -74,5 +73,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"❌ Test failed: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

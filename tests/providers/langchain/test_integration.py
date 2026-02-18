@@ -17,7 +17,7 @@ from genops.providers.langchain import (
 @pytest.fixture
 def mock_opentelemetry():
     """Mock OpenTelemetry components."""
-    with patch('genops.core.telemetry.trace') as mock_trace:
+    with patch("genops.core.telemetry.trace") as mock_trace:
         mock_span = Mock()
         mock_span.set_attribute = Mock()
         mock_span.set_status = Mock()
@@ -25,16 +25,16 @@ def mock_opentelemetry():
 
         mock_tracer = Mock()
         mock_tracer.start_as_current_span = Mock()
-        mock_tracer.start_as_current_span.return_value.__enter__ = Mock(return_value=mock_span)
-        mock_tracer.start_as_current_span.return_value.__exit__ = Mock(return_value=None)
+        mock_tracer.start_as_current_span.return_value.__enter__ = Mock(
+            return_value=mock_span
+        )
+        mock_tracer.start_as_current_span.return_value.__exit__ = Mock(
+            return_value=None
+        )
 
         mock_trace.get_tracer.return_value = mock_tracer
 
-        yield {
-            'trace': mock_trace,
-            'tracer': mock_tracer,
-            'span': mock_span
-        }
+        yield {"trace": mock_trace, "tracer": mock_tracer, "span": mock_span}
 
 
 @pytest.fixture
@@ -65,10 +65,12 @@ def mock_langchain_components():
     # Mock Embeddings
     mock_embeddings = Mock()
     mock_embeddings.__class__.__name__ = "OpenAIEmbeddings"
-    mock_embeddings.embed_documents = Mock(return_value=[
-        [0.1, 0.2, 0.3] * 512,  # Mock 1536-dim embedding
-        [0.4, 0.5, 0.6] * 512
-    ])
+    mock_embeddings.embed_documents = Mock(
+        return_value=[
+            [0.1, 0.2, 0.3] * 512,  # Mock 1536-dim embedding
+            [0.4, 0.5, 0.6] * 512,
+        ]
+    )
     mock_embeddings.embed_query = Mock(return_value=[0.7, 0.8, 0.9] * 512)
 
     # Mock Vector Store
@@ -77,18 +79,18 @@ def mock_langchain_components():
     mock_vector_store.similarity_search = Mock(return_value=[mock_doc1, mock_doc2])
 
     return {
-        'documents': [mock_doc1, mock_doc2],
-        'chain': mock_chain,
-        'retriever': mock_retriever,
-        'embeddings': mock_embeddings,
-        'vector_store': mock_vector_store
+        "documents": [mock_doc1, mock_doc2],
+        "chain": mock_chain,
+        "retriever": mock_retriever,
+        "embeddings": mock_embeddings,
+        "vector_store": mock_vector_store,
     }
 
 
 class TestLangChainIntegration:
     """Test complete LangChain integration workflows."""
 
-    @patch('genops.providers.langchain.adapter.HAS_LANGCHAIN', True)
+    @patch("genops.providers.langchain.adapter.HAS_LANGCHAIN", True)
     def test_basic_adapter_creation(self, mock_opentelemetry):
         """Test creating a LangChain adapter."""
         adapter = instrument_langchain()
@@ -97,11 +99,13 @@ class TestLangChainIntegration:
         assert adapter.get_framework_name() == "langchain"
         assert adapter.get_framework_type() == "orchestration"
 
-    @patch('genops.providers.langchain.adapter.HAS_LANGCHAIN', True)
-    def test_chain_execution_tracking(self, mock_opentelemetry, mock_langchain_components):
+    @patch("genops.providers.langchain.adapter.HAS_LANGCHAIN", True)
+    def test_chain_execution_tracking(
+        self, mock_opentelemetry, mock_langchain_components
+    ):
         """Test end-to-end chain execution tracking."""
         adapter = instrument_langchain()
-        chain = mock_langchain_components['chain']
+        chain = mock_langchain_components["chain"]
 
         # Execute instrumented chain
         result = adapter.instrument_chain_run(
@@ -109,7 +113,7 @@ class TestLangChainIntegration:
             input="What is artificial intelligence?",
             team="ai-research",
             project="qa-system",
-            temperature=0.7
+            temperature=0.7,
         )
 
         assert result == "AI is a field of computer science..."
@@ -117,33 +121,44 @@ class TestLangChainIntegration:
         # Verify chain was called with correct parameters
         chain.run.assert_called_once()
         call_args = chain.run.call_args[1]
-        assert call_args['input'] == "What is artificial intelligence?"
-        assert call_args['temperature'] == 0.7
-        assert 'callbacks' in call_args
-        assert len(call_args['callbacks']) == 1
+        assert call_args["input"] == "What is artificial intelligence?"
+        assert call_args["temperature"] == 0.7
+        assert "callbacks" in call_args
+        assert len(call_args["callbacks"]) == 1
 
         # Verify telemetry was captured
-        span = mock_opentelemetry['span']
+        span = mock_opentelemetry["span"]
         span.set_attribute.assert_called()
 
-    @patch('genops.providers.langchain.adapter.HAS_LANGCHAIN', True)
-    def test_cost_aggregation_workflow(self, mock_opentelemetry, mock_langchain_components):
+    @patch("genops.providers.langchain.adapter.HAS_LANGCHAIN", True)
+    def test_cost_aggregation_workflow(
+        self, mock_opentelemetry, mock_langchain_components
+    ):
         """Test multi-provider cost aggregation."""
         instrument_langchain()
 
         # Mock cost calculators on the aggregator
         from genops.providers.langchain.cost_aggregator import get_cost_aggregator
+
         aggregator = get_cost_aggregator()
-        with patch.object(aggregator, '_calculate_provider_cost') as mock_calc:
-            mock_calc.side_effect = [0.015, 0.008, 0.003]  # Different costs for different calls
+        with patch.object(aggregator, "_calculate_provider_cost") as mock_calc:
+            mock_calc.side_effect = [
+                0.015,
+                0.008,
+                0.003,
+            ]  # Different costs for different calls
 
             chain_id = str(uuid.uuid4())
 
             with create_chain_cost_context(chain_id) as cost_context:
                 # Simulate multiple LLM calls within a chain
                 cost_context.add_llm_call("openai", "gpt-4", 500, 250, "completion_1")
-                cost_context.add_llm_call("anthropic", "claude-3", 300, 150, "completion_2")
-                cost_context.add_llm_call("openai", "gpt-3.5-turbo", 200, 100, "completion_3")
+                cost_context.add_llm_call(
+                    "anthropic", "claude-3", 300, 150, "completion_2"
+                )
+                cost_context.add_llm_call(
+                    "openai", "gpt-3.5-turbo", 200, 100, "completion_3"
+                )
 
                 # Record generation cost
                 cost_context.record_generation_cost(0.005)
@@ -158,73 +173,83 @@ class TestLangChainIntegration:
             assert summary.total_tokens_input == 1000
             assert summary.total_tokens_output == 500
 
-    @patch('genops.providers.langchain.adapter.HAS_LANGCHAIN', True)
-    def test_rag_operation_monitoring(self, mock_opentelemetry, mock_langchain_components):
+    @patch("genops.providers.langchain.adapter.HAS_LANGCHAIN", True)
+    def test_rag_operation_monitoring(
+        self, mock_opentelemetry, mock_langchain_components
+    ):
         """Test RAG operation monitoring."""
         adapter = instrument_langchain()
-        retriever = mock_langchain_components['retriever']
+        retriever = mock_langchain_components["retriever"]
 
         # Test RAG query instrumentation
         documents = adapter.instrument_rag_query(
-            "What is machine learning?",
-            retriever=retriever,
-            team="ml-research",
-            k=5
+            "What is machine learning?", retriever=retriever, team="ml-research", k=5
         )
 
         assert len(documents) == 2
-        retriever.get_relevant_documents.assert_called_once_with("What is machine learning?")
+        retriever.get_relevant_documents.assert_called_once_with(
+            "What is machine learning?"
+        )
 
         # Verify telemetry attributes were set
-        span = mock_opentelemetry['span']
+        span = mock_opentelemetry["span"]
         span.set_attribute.assert_called()
 
-    @patch('genops.providers.langchain.adapter.HAS_LANGCHAIN', True)
-    def test_retriever_instrumentation(self, mock_opentelemetry, mock_langchain_components):
+    @patch("genops.providers.langchain.adapter.HAS_LANGCHAIN", True)
+    def test_retriever_instrumentation(
+        self, mock_opentelemetry, mock_langchain_components
+    ):
         """Test retriever instrumentation."""
         adapter = instrument_langchain()
-        retriever = mock_langchain_components['retriever']
+        retriever = mock_langchain_components["retriever"]
 
         # Instrument the retriever
         instrumented_retriever = adapter.instrument_retriever(
-            retriever,
-            team="research-team"
+            retriever, team="research-team"
         )
 
         assert instrumented_retriever is not None
         # The original retriever should have been modified
-        assert hasattr(instrumented_retriever, 'get_relevant_documents')
+        assert hasattr(instrumented_retriever, "get_relevant_documents")
 
-    @patch('genops.providers.langchain.adapter.HAS_LANGCHAIN', True)
-    def test_embeddings_instrumentation(self, mock_opentelemetry, mock_langchain_components):
+    @patch("genops.providers.langchain.adapter.HAS_LANGCHAIN", True)
+    def test_embeddings_instrumentation(
+        self, mock_opentelemetry, mock_langchain_components
+    ):
         """Test embeddings instrumentation."""
         adapter = instrument_langchain()
-        embeddings = mock_langchain_components['embeddings']
+        embeddings = mock_langchain_components["embeddings"]
 
         # Instrument the embeddings
         instrumented_embeddings = adapter.instrument_embeddings(
-            embeddings,
-            team="embedding-team"
+            embeddings, team="embedding-team"
         )
 
         assert instrumented_embeddings is not None
-        assert hasattr(instrumented_embeddings, 'embed_documents')
-        assert hasattr(instrumented_embeddings, 'embed_query')
+        assert hasattr(instrumented_embeddings, "embed_documents")
+        assert hasattr(instrumented_embeddings, "embed_query")
 
-    @patch('genops.providers.langchain.adapter.HAS_LANGCHAIN', True)
-    def test_vector_store_instrumentation(self, mock_opentelemetry, mock_langchain_components):
+    @patch("genops.providers.langchain.adapter.HAS_LANGCHAIN", True)
+    def test_vector_store_instrumentation(
+        self, mock_opentelemetry, mock_langchain_components
+    ):
         """Test vector store search instrumentation."""
         adapter = instrument_langchain()
-        vector_store = mock_langchain_components['vector_store']
+        vector_store = mock_langchain_components["vector_store"]
 
         # Use a mock that returns incremental values to avoid running out
-        time_values = [1000.0, 1001.2, 1001.2, 1001.2, 1001.2]  # Extra values for logging calls
-        with patch('genops.providers.langchain.adapter.time.time', side_effect=time_values):
+        time_values = [
+            1000.0,
+            1001.2,
+            1001.2,
+            1001.2,
+            1001.2,
+        ]  # Extra values for logging calls
+        with patch(
+            "genops.providers.langchain.adapter.time.time", side_effect=time_values
+        ):
             results = adapter.instrument_vector_search(
-                vector_store,
-                "test query",
-                k=4,
-                team="vector-team"
+                vector_store, "test query", k=4, team="vector-team"
             )
 
         assert len(results) == 2
@@ -232,16 +257,19 @@ class TestLangChainIntegration:
         vector_store.similarity_search.assert_called_once_with("test query", k=4)
 
         # Verify timing and metrics were captured
-        span = mock_opentelemetry['span']
+        span = mock_opentelemetry["span"]
         span.set_attribute.assert_called()
 
-    @patch('genops.providers.langchain.adapter.HAS_LANGCHAIN', True)
-    def test_callback_handler_integration(self, mock_opentelemetry, mock_langchain_components):
+    @patch("genops.providers.langchain.adapter.HAS_LANGCHAIN", True)
+    def test_callback_handler_integration(
+        self, mock_opentelemetry, mock_langchain_components
+    ):
         """Test callback handler captures operations."""
         adapter = instrument_langchain()
 
         # Create callback handler
         from genops.providers.langchain.adapter import GenOpsLangChainCallbackHandler
+
         handler = GenOpsLangChainCallbackHandler(adapter, "test_chain_123")
 
         # Simulate chain execution
@@ -253,23 +281,25 @@ class TestLangChainIntegration:
         # Mock LLM response with token usage
         mock_response = Mock()
         mock_response.llm_output = {
-            'token_usage': {
-                'prompt_tokens': 50,
-                'completion_tokens': 25,
-                'total_tokens': 75
+            "token_usage": {
+                "prompt_tokens": 50,
+                "completion_tokens": 25,
+                "total_tokens": 75,
             },
-            'model_name': 'gpt-4'
+            "model_name": "gpt-4",
         }
 
-        with patch.object(handler.cost_aggregator, 'add_llm_call_cost') as mock_add_cost:
+        with patch.object(
+            handler.cost_aggregator, "add_llm_call_cost"
+        ) as mock_add_cost:
             handler.on_llm_end(mock_response)
 
             # Verify cost was recorded
             mock_add_cost.assert_called_once()
             args = mock_add_cost.call_args[1]
-            assert args['provider'] == 'openai'
-            assert args['tokens_input'] == 50
-            assert args['tokens_output'] == 25
+            assert args["provider"] == "openai"
+            assert args["tokens_input"] == 50
+            assert args["tokens_output"] == 25
 
         # Finish chain
         handler.on_chain_end({"result": "Chain completed"})
@@ -277,25 +307,25 @@ class TestLangChainIntegration:
         # Verify operations were tracked
         assert len(handler.operation_stack) == 0  # Should be cleared after completion
 
-    @patch('genops.providers.langchain.adapter.HAS_LANGCHAIN', True)
-    def test_governance_attributes_propagation(self, mock_opentelemetry, mock_langchain_components):
+    @patch("genops.providers.langchain.adapter.HAS_LANGCHAIN", True)
+    def test_governance_attributes_propagation(
+        self, mock_opentelemetry, mock_langchain_components
+    ):
         """Test that governance attributes are properly propagated."""
         adapter = instrument_langchain()
-        chain = mock_langchain_components['chain']
+        chain = mock_langchain_components["chain"]
 
         governance_attrs = {
-            'team': 'ai-engineering',
-            'project': 'customer-support',
-            'environment': 'production',
-            'customer_id': 'customer_123',
-            'feature': 'smart-responses'
+            "team": "ai-engineering",
+            "project": "customer-support",
+            "environment": "production",
+            "customer_id": "customer_123",
+            "feature": "smart-responses",
         }
 
         # Execute chain with governance attributes
         result = adapter.instrument_chain_run(
-            chain,
-            input="Help me with my order",
-            **governance_attrs
+            chain, input="Help me with my order", **governance_attrs
         )
 
         assert result is not None
@@ -306,7 +336,7 @@ class TestLangChainIntegration:
             assert attr not in call_args
 
         # Verify telemetry captured the governance attributes
-        span = mock_opentelemetry['span']
+        span = mock_opentelemetry["span"]
         span.set_attribute.assert_called()
 
     def test_cost_aggregator_singleton(self):
@@ -316,28 +346,28 @@ class TestLangChainIntegration:
 
         assert aggregator1 is aggregator2
 
-    @patch('genops.providers.langchain.adapter.HAS_LANGCHAIN', True)
-    def test_error_handling_in_chain_execution(self, mock_opentelemetry, mock_langchain_components):
+    @patch("genops.providers.langchain.adapter.HAS_LANGCHAIN", True)
+    def test_error_handling_in_chain_execution(
+        self, mock_opentelemetry, mock_langchain_components
+    ):
         """Test error handling during chain execution."""
         adapter = instrument_langchain()
-        chain = mock_langchain_components['chain']
+        chain = mock_langchain_components["chain"]
 
         # Make chain raise an exception
         chain.run.side_effect = ValueError("Chain execution failed")
 
         with pytest.raises(ValueError, match="Chain execution failed"):
-            adapter.instrument_chain_run(
-                chain,
-                input="test query",
-                team="test-team"
-            )
+            adapter.instrument_chain_run(chain, input="test query", team="test-team")
 
         # Verify error was recorded in telemetry
-        span = mock_opentelemetry['span']
+        span = mock_opentelemetry["span"]
         span.set_status.assert_called()
 
-    @patch('genops.providers.langchain.adapter.HAS_LANGCHAIN', True)
-    def test_nested_operations_cost_tracking(self, mock_opentelemetry, mock_langchain_components):
+    @patch("genops.providers.langchain.adapter.HAS_LANGCHAIN", True)
+    def test_nested_operations_cost_tracking(
+        self, mock_opentelemetry, mock_langchain_components
+    ):
         """Test cost tracking for nested operations."""
         instrument_langchain()
 
@@ -369,7 +399,7 @@ class TestLangChainIntegration:
         assert summary.total_tokens_output == 900
         assert summary.total_cost > 0
 
-    @patch('genops.providers.langchain.adapter.HAS_LANGCHAIN', True)
+    @patch("genops.providers.langchain.adapter.HAS_LANGCHAIN", True)
     def test_framework_registration_integration(self, mock_opentelemetry):
         """Test that LangChain provider registers with auto-instrumentation."""
         from genops.auto_instrumentation import GenOpsInstrumentor
@@ -386,23 +416,24 @@ class TestLangChainIntegration:
         assert config["provider_type"] == "framework"
         assert "capabilities" in config
 
-    @patch('genops.providers.langchain.adapter.HAS_LANGCHAIN', True)
-    def test_performance_measurement(self, mock_opentelemetry, mock_langchain_components):
+    @patch("genops.providers.langchain.adapter.HAS_LANGCHAIN", True)
+    def test_performance_measurement(
+        self, mock_opentelemetry, mock_langchain_components
+    ):
         """Test that performance metrics are captured."""
         adapter = instrument_langchain()
-        retriever = mock_langchain_components['retriever']
+        retriever = mock_langchain_components["retriever"]
 
         # Simulate slow retrieval
         def slow_retrieval(query):
             time.sleep(0.1)  # Simulate 100ms retrieval time
-            return mock_langchain_components['documents']
+            return mock_langchain_components["documents"]
 
         retriever.get_relevant_documents = slow_retrieval
 
         start_time = time.time()
         documents = adapter.instrument_rag_query(
-            "performance test query",
-            retriever=retriever
+            "performance test query", retriever=retriever
         )
         end_time = time.time()
 
@@ -410,7 +441,7 @@ class TestLangChainIntegration:
         assert (end_time - start_time) >= 0.1  # Should take at least 100ms
 
         # Verify timing metrics were captured
-        span = mock_opentelemetry['span']
+        span = mock_opentelemetry["span"]
         span.set_attribute.assert_called()
 
 
@@ -456,7 +487,7 @@ class TestRealLangChainIntegration:
 
     @pytest.mark.skipif(
         not pytest.importorskip("langchain", minversion=None),
-        reason="LangChain not available"
+        reason="LangChain not available",
     )
     def test_with_real_langchain_imports(self):
         """Test with real LangChain imports."""

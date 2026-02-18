@@ -4,7 +4,7 @@ GenOps Arize AI Integration
 
 This module provides comprehensive Arize AI integration for GenOps governance,
 cost intelligence, and policy enforcement. Arize AI is a leading ML observability
-platform that helps teams monitor, troubleshoot, and improve model performance 
+platform that helps teams monitor, troubleshoot, and improve model performance
 in production.
 
 Features:
@@ -25,10 +25,10 @@ Example usage:
         team="ml-ops-team",
         project="model-monitoring"
     )
-    
+
     # Your existing Arize code now includes GenOps governance
     from arize.pandas.logger import Client
-    
+
     arize_client = Client(api_key="your-api-key", space_key="your-space-key")
     response = arize_client.log(
         prediction_id="pred-123",
@@ -38,10 +38,10 @@ Example usage:
         model_version="2.1"
     )
     # Automatically tracked with cost attribution and governance
-    
+
     # Manual adapter usage for advanced governance
     from genops.providers.arize import GenOpsArizeAdapter
-    
+
     adapter = GenOpsArizeAdapter(
         arize_api_key="your-arize-api-key",
         arize_space_key="your-space-key",
@@ -50,15 +50,15 @@ Example usage:
         enable_cost_alerts=True,
         daily_budget_limit=50.0
     )
-    
+
     # Enhanced model monitoring with governance
     with adapter.track_model_monitoring_session("fraud-detection-v3") as session:
         # Log predictions with cost tracking
         session.log_prediction_batch(predictions_df, cost_per_prediction=0.001)
-        
+
         # Monitor data quality with governance
         session.log_data_quality_metrics(quality_metrics, cost_estimate=0.05)
-        
+
         # Create governed alerts
         session.create_performance_alert(
             metric="accuracy",
@@ -86,7 +86,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 # OpenTelemetry imports
 from opentelemetry import trace
@@ -97,6 +97,7 @@ try:
     import arize
     from arize.pandas.logger import Client as ArizeClient
     from arize.utils.types import Environments, ModelTypes
+
     ARIZE_AVAILABLE = True
 except ImportError:
     ARIZE_AVAILABLE = False
@@ -110,6 +111,7 @@ logger = logging.getLogger(__name__)
 
 class MonitoringScope(Enum):
     """Model monitoring scope levels."""
+
     PREDICTIONS = "predictions"
     DATA_QUALITY = "data_quality"
     MODEL_DRIFT = "model_drift"
@@ -120,13 +122,14 @@ class MonitoringScope(Enum):
 @dataclass
 class ModelMonitoringCostSummary:
     """Cost summary for Arize AI model monitoring operations."""
+
     total_cost: float
     prediction_logging_cost: float
     data_quality_cost: float
     alert_management_cost: float
     dashboard_cost: float
-    cost_by_model: Dict[str, float]
-    cost_by_environment: Dict[str, float]
+    cost_by_model: dict[str, float]
+    cost_by_environment: dict[str, float]
     monitoring_duration: float
     efficiency_score: float
 
@@ -134,6 +137,7 @@ class ModelMonitoringCostSummary:
 @dataclass
 class ArizeMonitoringContext:
     """Context for tracking Arize AI monitoring governance."""
+
     session_id: str
     session_name: str
     model_id: str
@@ -146,7 +150,7 @@ class ArizeMonitoringContext:
     prediction_count: int = 0
     data_quality_checks: int = 0
     active_alerts: int = 0
-    policy_violations: List[str] = None
+    policy_violations: list[str] = None  # type: ignore
 
     def __post_init__(self):
         if self.policy_violations is None:
@@ -156,7 +160,7 @@ class ArizeMonitoringContext:
 class GenOpsArizeAdapter:
     """
     GenOps governance adapter for Arize AI model monitoring and observability.
-    
+
     Provides comprehensive cost intelligence, policy enforcement, and team attribution
     for Arize AI monitoring operations with enterprise-grade governance features.
     """
@@ -174,15 +178,15 @@ class GenOpsArizeAdapter:
         enable_cost_alerts: bool = True,
         enable_governance: bool = True,
         cost_center: Optional[str] = None,
-        tags: Optional[Dict[str, str]] = None
+        tags: Optional[dict[str, str]] = None,
     ):
         """
         Initialize the GenOps Arize AI adapter.
-        
+
         Args:
             arize_api_key: Arize AI API key (or set ARIZE_API_KEY env var)
             arize_space_key: Arize AI space key (or set ARIZE_SPACE_KEY env var)
-            team: Team name for cost attribution 
+            team: Team name for cost attribution
             project: Project name for cost attribution
             customer_id: Customer identifier for multi-tenant scenarios
             environment: Environment (development/staging/production)
@@ -200,11 +204,11 @@ class GenOpsArizeAdapter:
             )
 
         # Configuration
-        self.arize_api_key = arize_api_key or os.getenv('ARIZE_API_KEY')
-        self.arize_space_key = arize_space_key or os.getenv('ARIZE_SPACE_KEY')
-        self.team = team or os.getenv('GENOPS_TEAM', 'default-team')
-        self.project = project or os.getenv('GENOPS_PROJECT', 'default-project')
-        self.customer_id = customer_id or os.getenv('GENOPS_CUSTOMER_ID')
+        self.arize_api_key = arize_api_key or os.getenv("ARIZE_API_KEY")
+        self.arize_space_key = arize_space_key or os.getenv("ARIZE_SPACE_KEY")
+        self.team = team or os.getenv("GENOPS_TEAM", "default-team")
+        self.project = project or os.getenv("GENOPS_PROJECT", "default-project")
+        self.customer_id = customer_id or os.getenv("GENOPS_CUSTOMER_ID")
         self.environment = environment
         self.cost_center = cost_center
 
@@ -218,7 +222,7 @@ class GenOpsArizeAdapter:
         self.tags = tags or {}
 
         # Runtime tracking
-        self.active_sessions: Dict[str, ArizeMonitoringContext] = {}
+        self.active_sessions: dict[str, ArizeMonitoringContext] = {}
         self.daily_usage = 0.0
         self.operation_count = 0
 
@@ -229,11 +233,12 @@ class GenOpsArizeAdapter:
         self.arize_client = None
         if self.arize_api_key and self.arize_space_key:
             self.arize_client = ArizeClient(
-                api_key=self.arize_api_key,
-                space_key=self.arize_space_key
+                api_key=self.arize_api_key, space_key=self.arize_space_key
             )
 
-        logger.info(f"GenOps Arize adapter initialized for team={self.team}, project={self.project}")
+        logger.info(
+            f"GenOps Arize adapter initialized for team={self.team}, project={self.project}"
+        )
 
     @contextmanager
     def track_model_monitoring_session(
@@ -242,18 +247,18 @@ class GenOpsArizeAdapter:
         model_version: str = "latest",
         environment: str = "production",
         max_cost: Optional[float] = None,
-        **kwargs
+        **kwargs,
     ):
         """
         Context manager for tracking complete model monitoring session with governance.
-        
+
         Args:
             model_id: Unique identifier for the model being monitored
             model_version: Version of the model being monitored
             environment: Environment where monitoring occurs
             max_cost: Maximum cost limit for this monitoring session
             **kwargs: Additional attributes for telemetry
-            
+
         Yields:
             ArizeMonitoringContext: Monitoring session context for cost tracking and governance
         """
@@ -267,9 +272,9 @@ class GenOpsArizeAdapter:
             model_id=model_id,
             model_version=model_version,
             environment=environment,
-            team=self.team,
+            team=self.team,  # type: ignore
             customer_id=self.customer_id,
-            start_time=datetime.utcnow()
+            start_time=datetime.utcnow(),
         )
 
         # Start OpenTelemetry span
@@ -286,10 +291,9 @@ class GenOpsArizeAdapter:
                 "genops.model.environment": environment,
                 "genops.monitoring.session_id": session_id,
                 "genops.cost.budget_limit": max_cost,
-                **kwargs
-            }
+                **kwargs,
+            },
         ) as span:
-
             try:
                 # Register active session
                 self.active_sessions[session_id] = monitoring_context
@@ -298,30 +302,52 @@ class GenOpsArizeAdapter:
                 if self.enable_governance:
                     self._validate_monitoring_budget(max_cost)
 
-                logger.info(f"Starting model monitoring session: {model_id}-{model_version}")
+                logger.info(
+                    f"Starting model monitoring session: {model_id}-{model_version}"
+                )
 
                 # Enhance context with governance methods
-                monitoring_context.log_prediction_batch = lambda df, cost_per_prediction=0.001: self._log_prediction_batch(session_id, df, cost_per_prediction)
-                monitoring_context.log_data_quality_metrics = lambda metrics, cost_estimate=0.01: self._log_data_quality(session_id, metrics, cost_estimate)
-                monitoring_context.create_performance_alert = lambda metric, threshold, cost_per_alert=0.05: self._create_alert(session_id, metric, threshold, cost_per_alert)
-                monitoring_context.update_monitoring_cost = lambda cost: self._update_session_cost(session_id, cost)
+                monitoring_context.log_prediction_batch = (
+                    lambda df, cost_per_prediction=0.001: self._log_prediction_batch(
+                        session_id, df, cost_per_prediction
+                    )
+                )
+                monitoring_context.log_data_quality_metrics = (
+                    lambda metrics, cost_estimate=0.01: self._log_data_quality(
+                        session_id, metrics, cost_estimate
+                    )
+                )
+                monitoring_context.create_performance_alert = (
+                    lambda metric, threshold, cost_per_alert=0.05: self._create_alert(
+                        session_id, metric, threshold, cost_per_alert
+                    )
+                )
+                monitoring_context.update_monitoring_cost = lambda cost: (
+                    self._update_session_cost(session_id, cost)
+                )
 
                 yield monitoring_context
 
                 # Calculate final costs and metrics
                 total_cost = monitoring_context.estimated_cost
-                duration = (datetime.utcnow() - monitoring_context.start_time).total_seconds()
+                duration = (
+                    datetime.utcnow() - monitoring_context.start_time
+                ).total_seconds()
 
                 # Update span with final metrics
-                span.set_attributes({
-                    "genops.cost.total": total_cost,
-                    "genops.cost.currency": "USD",
-                    "genops.monitoring.duration_seconds": duration,
-                    "genops.monitoring.prediction_count": monitoring_context.prediction_count,
-                    "genops.monitoring.data_quality_checks": monitoring_context.data_quality_checks,
-                    "genops.monitoring.active_alerts": monitoring_context.active_alerts,
-                    "genops.governance.violations": len(monitoring_context.policy_violations)
-                })
+                span.set_attributes(
+                    {
+                        "genops.cost.total": total_cost,
+                        "genops.cost.currency": "USD",
+                        "genops.monitoring.duration_seconds": duration,
+                        "genops.monitoring.prediction_count": monitoring_context.prediction_count,
+                        "genops.monitoring.data_quality_checks": monitoring_context.data_quality_checks,
+                        "genops.monitoring.active_alerts": monitoring_context.active_alerts,
+                        "genops.governance.violations": len(
+                            monitoring_context.policy_violations
+                        ),
+                    }
+                )
 
                 # Update daily usage
                 self.daily_usage += total_cost
@@ -329,10 +355,13 @@ class GenOpsArizeAdapter:
 
                 # Log governance violations
                 if monitoring_context.policy_violations:
-                    span.add_event("governance_violations", {
-                        "violations": monitoring_context.policy_violations,
-                        "session_id": session_id
-                    })
+                    span.add_event(
+                        "governance_violations",
+                        {
+                            "violations": monitoring_context.policy_violations,
+                            "session_id": session_id,
+                        },
+                    )
 
                 # Cost alerts
                 if self.enable_cost_alerts and total_cost > max_cost * 0.8:
@@ -342,7 +371,9 @@ class GenOpsArizeAdapter:
                     )
 
                 span.set_status(Status(StatusCode.OK))
-                logger.info(f"Monitoring session completed: {model_id}, cost: ${total_cost:.4f}")
+                logger.info(
+                    f"Monitoring session completed: {model_id}, cost: ${total_cost:.4f}"
+                )
 
             except Exception as e:
                 span.record_exception(e)
@@ -356,18 +387,19 @@ class GenOpsArizeAdapter:
     def instrument_arize_log(self, original_log):
         """
         Instrument Arize client log method with governance tracking.
-        
+
         Args:
             original_log: Original Arize client log method
-            
+
         Returns:
             Enhanced log method with governance
         """
+
         def enhanced_log(*args, **kwargs):
             # Extract logging parameters
-            prediction_id = kwargs.get('prediction_id', 'unknown')
-            model_id = kwargs.get('model_id', 'unknown')
-            model_version = kwargs.get('model_version', 'latest')
+            prediction_id = kwargs.get("prediction_id", "unknown")
+            model_id = kwargs.get("model_id", "unknown")
+            model_version = kwargs.get("model_version", "latest")
 
             # Track logging operation
             with self.tracer.start_as_current_span(
@@ -378,22 +410,23 @@ class GenOpsArizeAdapter:
                     "genops.model.id": model_id,
                     "genops.model.version": model_version,
                     "genops.operation": "log_prediction",
-                    "genops.prediction.id": prediction_id
-                }
+                    "genops.prediction.id": prediction_id,
+                },
             ) as span:
-
                 try:
                     # Add governance metadata
                     enhanced_kwargs = kwargs.copy()
 
                     # Add governance tags if supported
-                    tags = enhanced_kwargs.get('tags', {})
-                    tags.update({
-                        'genops_team': self.team,
-                        'genops_project': self.project,
-                        'genops_environment': self.environment
-                    })
-                    enhanced_kwargs['tags'] = tags
+                    tags = enhanced_kwargs.get("tags", {})
+                    tags.update(
+                        {
+                            "genops_team": self.team,
+                            "genops_project": self.project,
+                            "genops_environment": self.environment,
+                        }
+                    )
+                    enhanced_kwargs["tags"] = tags
 
                     # Call original log function
                     result = original_log(*args, **enhanced_kwargs)
@@ -405,10 +438,12 @@ class GenOpsArizeAdapter:
                     self.daily_usage += estimated_cost
                     self.operation_count += 1
 
-                    span.set_attributes({
-                        "genops.cost.estimated": estimated_cost,
-                        "genops.cost.currency": "USD"
-                    })
+                    span.set_attributes(
+                        {
+                            "genops.cost.estimated": estimated_cost,
+                            "genops.cost.currency": "USD",
+                        }
+                    )
 
                     span.set_status(Status(StatusCode.OK))
                     return result
@@ -427,11 +462,11 @@ class GenOpsArizeAdapter:
         metric: str,
         threshold: float,
         alert_type: str = "drift",
-        cost_estimate: float = 0.05
+        cost_estimate: float = 0.05,
     ) -> None:
         """
         Create a model monitoring alert with governance metadata.
-        
+
         Args:
             model_id: Model identifier for the alert
             alert_name: Name of the alert
@@ -450,14 +485,15 @@ class GenOpsArizeAdapter:
                 "genops.alert.metric": metric,
                 "genops.alert.threshold": threshold,
                 "genops.alert.type": alert_type,
-                "genops.cost.estimated": cost_estimate
-            }
+                "genops.cost.estimated": cost_estimate,
+            },
         ) as span:
-
             try:
                 # Note: Arize API for alert creation would go here
                 # This is a placeholder for the actual Arize alert creation
-                logger.info(f"Creating governed alert: {alert_name} for model {model_id}")
+                logger.info(
+                    f"Creating governed alert: {alert_name} for model {model_id}"
+                )
 
                 # Update cost tracking
                 self.daily_usage += cost_estimate / 30  # Daily portion of monthly cost
@@ -469,7 +505,9 @@ class GenOpsArizeAdapter:
                 span.set_status(Status(StatusCode.ERROR, str(e)))
                 raise
 
-    def get_monitoring_cost_summary(self, session_id: str) -> Optional[ModelMonitoringCostSummary]:
+    def get_monitoring_cost_summary(
+        self, session_id: str
+    ) -> Optional[ModelMonitoringCostSummary]:
         """Get comprehensive cost summary for a monitoring session."""
         session_context = self.active_sessions.get(session_id)
         if not session_context:
@@ -484,24 +522,27 @@ class GenOpsArizeAdapter:
             alert_management_cost=session_context.active_alerts * 0.05,
             dashboard_cost=0.10,  # Estimated daily dashboard cost
             cost_by_model={session_context.model_id: session_context.estimated_cost},
-            cost_by_environment={session_context.environment: session_context.estimated_cost},
+            cost_by_environment={
+                session_context.environment: session_context.estimated_cost
+            },
             monitoring_duration=duration,
-            efficiency_score=session_context.prediction_count / max(duration / 3600, 0.01)  # Predictions per hour
+            efficiency_score=session_context.prediction_count
+            / max(duration / 3600, 0.01),  # Predictions per hour
         )
 
-    def get_metrics(self) -> Dict[str, Any]:
+    def get_metrics(self) -> dict[str, Any]:
         """Get current governance metrics and status."""
         return {
-            'team': self.team,
-            'project': self.project,
-            'customer_id': self.customer_id,
-            'daily_usage': self.daily_usage,
-            'daily_budget_limit': self.daily_budget_limit,
-            'budget_remaining': max(0, self.daily_budget_limit - self.daily_usage),
-            'operation_count': self.operation_count,
-            'active_monitoring_sessions': len(self.active_sessions),
-            'cost_alerts_enabled': self.enable_cost_alerts,
-            'governance_enabled': self.enable_governance
+            "team": self.team,
+            "project": self.project,
+            "customer_id": self.customer_id,
+            "daily_usage": self.daily_usage,
+            "daily_budget_limit": self.daily_budget_limit,
+            "budget_remaining": max(0, self.daily_budget_limit - self.daily_usage),
+            "operation_count": self.operation_count,
+            "active_monitoring_sessions": len(self.active_sessions),
+            "cost_alerts_enabled": self.enable_cost_alerts,
+            "governance_enabled": self.enable_governance,
         }
 
     def _validate_monitoring_budget(self, monitoring_cost: float) -> None:
@@ -510,13 +551,15 @@ class GenOpsArizeAdapter:
             violation = f"Monitoring session would exceed daily budget: ${self.daily_usage + monitoring_cost:.2f} > ${self.daily_budget_limit:.2f}"
             logger.warning(f"Budget violation: {violation}")
 
-    def _log_prediction_batch(self, session_id: str, predictions_df: Any, cost_per_prediction: float) -> None:
+    def _log_prediction_batch(
+        self, session_id: str, predictions_df: Any, cost_per_prediction: float
+    ) -> None:
         """Log prediction batch with cost tracking."""
         if session_id not in self.active_sessions:
             return
 
         # Estimate cost based on batch size
-        if hasattr(predictions_df, '__len__'):
+        if hasattr(predictions_df, "__len__"):
             batch_size = len(predictions_df)
         else:
             batch_size = 1  # Fallback for non-sized objects
@@ -527,9 +570,13 @@ class GenOpsArizeAdapter:
         self.active_sessions[session_id].prediction_count += batch_size
         self.active_sessions[session_id].estimated_cost += batch_cost
 
-        logger.info(f"Logged prediction batch: {batch_size} predictions, cost: ${batch_cost:.4f}")
+        logger.info(
+            f"Logged prediction batch: {batch_size} predictions, cost: ${batch_cost:.4f}"
+        )
 
-    def _log_data_quality(self, session_id: str, metrics: Dict[str, Any], cost_estimate: float) -> None:
+    def _log_data_quality(
+        self, session_id: str, metrics: dict[str, Any], cost_estimate: float
+    ) -> None:
         """Log data quality metrics with cost tracking."""
         if session_id not in self.active_sessions:
             return
@@ -540,7 +587,9 @@ class GenOpsArizeAdapter:
 
         logger.info(f"Logged data quality metrics, cost: ${cost_estimate:.4f}")
 
-    def _create_alert(self, session_id: str, metric: str, threshold: float, cost_per_alert: float) -> None:
+    def _create_alert(
+        self, session_id: str, metric: str, threshold: float, cost_per_alert: float
+    ) -> None:
         """Create alert with cost tracking."""
         if session_id not in self.active_sessions:
             return
@@ -549,7 +598,9 @@ class GenOpsArizeAdapter:
         self.active_sessions[session_id].active_alerts += 1
         self.active_sessions[session_id].estimated_cost += cost_per_alert
 
-        logger.info(f"Created alert for {metric} with threshold {threshold}, cost: ${cost_per_alert:.4f}")
+        logger.info(
+            f"Created alert for {metric} with threshold {threshold}, cost: ${cost_per_alert:.4f}"
+        )
 
     def _update_session_cost(self, session_id: str, cost: float) -> None:
         """Update cost for a specific monitoring session."""
@@ -567,18 +618,18 @@ def instrument_arize(
     arize_space_key: Optional[str] = None,
     team: Optional[str] = None,
     project: Optional[str] = None,
-    **kwargs
+    **kwargs,
 ) -> GenOpsArizeAdapter:
     """
     Create and configure a GenOps Arize adapter for model monitoring governance.
-    
+
     Args:
         arize_api_key: Arize AI API key
         arize_space_key: Arize AI space key
         team: Team name for cost attribution
         project: Project name for cost attribution
         **kwargs: Additional configuration options
-        
+
     Returns:
         Configured GenOpsArizeAdapter instance
     """
@@ -587,7 +638,7 @@ def instrument_arize(
         arize_space_key=arize_space_key,
         team=team,
         project=project,
-        **kwargs
+        **kwargs,
     )
 
 
@@ -596,21 +647,21 @@ def auto_instrument(
     arize_space_key: Optional[str] = None,
     team: Optional[str] = None,
     project: Optional[str] = None,
-    **kwargs
+    **kwargs,
 ) -> GenOpsArizeAdapter:
     """
     Enable zero-code auto-instrumentation for Arize AI with GenOps governance.
-    
+
     This function patches Arize client methods to automatically include
     governance tracking without requiring code changes to existing Arize usage.
-    
+
     Args:
         arize_api_key: Arize AI API key
         arize_space_key: Arize AI space key
         team: Team name for cost attribution
         project: Project name for cost attribution
         **kwargs: Additional configuration options
-        
+
     Returns:
         Configured GenOpsArizeAdapter instance
     """
@@ -626,11 +677,11 @@ def auto_instrument(
         arize_space_key=arize_space_key,
         team=team,
         project=project,
-        **kwargs
+        **kwargs,
     )
 
     # Patch Arize client methods
-    if hasattr(ArizeClient, 'log'):
+    if hasattr(ArizeClient, "log"):
         original_log = ArizeClient.log
         ArizeClient.log = adapter.instrument_arize_log(original_log)
 
@@ -656,13 +707,13 @@ def set_global_adapter(adapter: GenOpsArizeAdapter) -> None:
 
 # Convenience exports
 __all__ = [
-    'GenOpsArizeAdapter',
-    'ArizeMonitoringContext',
-    'ModelMonitoringCostSummary',
-    'MonitoringScope',
-    'instrument_arize',
-    'auto_instrument',
-    'get_current_adapter',
-    'set_global_adapter',
-    'ARIZE_AVAILABLE'
+    "GenOpsArizeAdapter",
+    "ArizeMonitoringContext",
+    "ModelMonitoringCostSummary",
+    "MonitoringScope",
+    "instrument_arize",
+    "auto_instrument",
+    "get_current_adapter",
+    "set_global_adapter",
+    "ARIZE_AVAILABLE",
 ]

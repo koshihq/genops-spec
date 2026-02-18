@@ -12,21 +12,19 @@ Prerequisites:
     - OpenAI API key (for cost simulation)
 """
 
-import time
 import random
-from typing import Dict, Any
+import time
+from typing import Any
+
+from genops.integrations.tempo import configure_tempo
 from opentelemetry import trace
 
 from genops import track_usage
-from genops.integrations.tempo import configure_tempo
 
 
 def simulate_ai_operation(
-    provider: str,
-    model: str,
-    tokens: int,
-    cost_per_1k_tokens: float
-) -> Dict[str, Any]:
+    provider: str, model: str, tokens: int, cost_per_1k_tokens: float
+) -> dict[str, Any]:
     """
     Simulate an AI operation with cost tracking.
 
@@ -66,7 +64,7 @@ def simulate_ai_operation(
             "model": model,
             "tokens": tokens,
             "cost": total_cost,
-            "status": "success"
+            "status": "success",
         }
 
 
@@ -84,7 +82,7 @@ def main():
     configure_tempo(
         endpoint="http://localhost:3200",
         service_name="cost-attribution-example",
-        environment="development"
+        environment="development",
     )
     print("✅ Tempo configured\n")
 
@@ -98,23 +96,18 @@ def main():
     print()
 
     @track_usage(
-        team="customer-support",
-        project="ai-chatbot",
-        feature="customer-query"
+        team="customer-support", project="ai-chatbot", feature="customer-query"
     )
     def customer_support_query():
         """Customer support AI query."""
         return simulate_ai_operation(
-            provider="openai",
-            model="gpt-4",
-            tokens=1500,
-            cost_per_1k_tokens=0.03
+            provider="openai", model="gpt-4", tokens=1500, cost_per_1k_tokens=0.03
         )
 
     print("Executing customer support queries...")
     for i in range(3):
         result = customer_support_query()
-        print(f"  Query {i+1}: {result['tokens']} tokens, ${result['cost']:.4f}")
+        print(f"  Query {i + 1}: {result['tokens']} tokens, ${result['cost']:.4f}")
 
     print()
 
@@ -129,10 +122,7 @@ def main():
 
     customers = ["acme-corp", "globex-inc", "initech-ltd"]
 
-    @track_usage(
-        team="sales",
-        project="ai-sales-assistant"
-    )
+    @track_usage(team="sales", project="ai-sales-assistant")
     def sales_assistant_query(customer_id: str):
         """Sales assistant query with customer attribution."""
         tracer = trace.get_tracer(__name__)
@@ -144,7 +134,7 @@ def main():
                 provider="anthropic",
                 model="claude-3-sonnet",
                 tokens=random.randint(800, 2000),
-                cost_per_1k_tokens=0.015
+                cost_per_1k_tokens=0.015,
             )
 
     print("Executing sales queries for multiple customers...")
@@ -163,11 +153,7 @@ def main():
     print("=" * 70)
     print()
 
-    @track_usage(
-        team="ml-research",
-        project="model-evaluation",
-        feature="benchmark"
-    )
+    @track_usage(team="ml-research", project="model-evaluation", feature="benchmark")
     def run_multi_provider_benchmark():
         """Run same query across multiple providers."""
         providers = [
@@ -183,7 +169,7 @@ def main():
                 provider=provider,
                 model=model,
                 tokens=1200,  # Same tokens for comparison
-                cost_per_1k_tokens=cost_per_1k
+                cost_per_1k_tokens=cost_per_1k,
             )
             results.append(result)
 
@@ -193,7 +179,9 @@ def main():
     benchmark_results = run_multi_provider_benchmark()
 
     for result in benchmark_results:
-        print(f"  {result['provider']:12} ({result['model']:20}): ${result['cost']:.4f}")
+        print(
+            f"  {result['provider']:12} ({result['model']:20}): ${result['cost']:.4f}"
+        )
 
     print()
 
@@ -207,12 +195,9 @@ def main():
     print()
 
     MONTHLY_BUDGET = 1000.0  # $1000/month
-    current_spend = 0.0
 
     @track_usage(
-        team="content-generation",
-        project="blog-writer",
-        feature="article-generation"
+        team="content-generation", project="blog-writer", feature="article-generation"
     )
     def generate_content(budget_remaining: float):
         """Generate content within budget constraints."""
@@ -227,7 +212,12 @@ def main():
             if budget_remaining > 100:
                 provider, model, tokens, cost_rate = "openai", "gpt-4", 2000, 0.03
             else:
-                provider, model, tokens, cost_rate = "google", "gemini-pro", 2000, 0.00125
+                provider, model, tokens, cost_rate = (
+                    "google",
+                    "gemini-pro",
+                    2000,
+                    0.00125,
+                )
 
             span.set_attribute("genops.budget.model_selection", model)
 
@@ -242,7 +232,9 @@ def main():
         result = generate_content(budget_remaining)
         budget_remaining -= result["cost"]
 
-        print(f"  Article {i+1}: {result['model']:20} ${result['cost']:.4f} (remaining: ${budget_remaining:.2f})")
+        print(
+            f"  Article {i + 1}: {result['model']:20} ${result['cost']:.4f} (remaining: ${budget_remaining:.2f})"
+        )
 
     print()
 
@@ -259,22 +251,19 @@ def main():
         team="engineering",
         project="code-assistant",
         cost_center="R&D",
-        feature="code-generation"
+        feature="code-generation",
     )
     def engineering_code_assistant():
         """Engineering team code generation."""
         return simulate_ai_operation(
-            provider="openai",
-            model="gpt-4",
-            tokens=1800,
-            cost_per_1k_tokens=0.03
+            provider="openai", model="gpt-4", tokens=1800, cost_per_1k_tokens=0.03
         )
 
     @track_usage(
         team="marketing",
         project="content-assistant",
         cost_center="Marketing",
-        feature="content-generation"
+        feature="content-generation",
     )
     def marketing_content_assistant():
         """Marketing team content generation."""
@@ -282,7 +271,7 @@ def main():
             provider="anthropic",
             model="claude-3-sonnet",
             tokens=1500,
-            cost_per_1k_tokens=0.015
+            cost_per_1k_tokens=0.015,
         )
 
     print("Executing operations for different cost centers...")

@@ -5,7 +5,8 @@ import os
 import sys
 
 # Add src to path for testing
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
+
 
 def test_basic_imports():
     """Test that basic imports work."""
@@ -13,14 +14,15 @@ def test_basic_imports():
 
     try:
         import genops
+
         print(f"✅ genops imported - version {genops.__version__}")
 
         # Test core functions are available
-        assert hasattr(genops, 'track_usage')
-        assert hasattr(genops, 'track')
-        assert hasattr(genops, 'enforce_policy')
-        assert hasattr(genops, 'init')
-        assert hasattr(genops, 'status')
+        assert hasattr(genops, "track_usage")
+        assert hasattr(genops, "track")
+        assert hasattr(genops, "enforce_policy")
+        assert hasattr(genops, "init")
+        assert hasattr(genops, "status")
         print("✅ All core functions available")
 
         return True
@@ -39,20 +41,21 @@ def test_basic_functionality():
         # Test status function
         status = genops.status()
         assert isinstance(status, dict)
-        assert 'initialized' in status
+        assert "initialized" in status
         print("✅ Status function works")
 
         # Test telemetry creation
         from genops.core.telemetry import GenOpsTelemetry
+
         telemetry = GenOpsTelemetry()
         assert telemetry is not None
         print("✅ Telemetry engine works")
 
         # Test policy configuration
         from genops.core.policy import PolicyConfig, PolicyResult
+
         policy = PolicyConfig(
-            name="test_policy",
-            enforcement_level=PolicyResult.BLOCKED
+            name="test_policy", enforcement_level=PolicyResult.BLOCKED
         )
         assert policy.name == "test_policy"
         print("✅ Policy engine works")
@@ -61,6 +64,7 @@ def test_basic_functionality():
     except Exception as e:
         print(f"❌ Functionality test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -72,10 +76,12 @@ def test_provider_adapters():
     try:
         # Test OpenAI adapter import (should work even without openai package)
         from genops.providers.openai import GenOpsOpenAIAdapter
+
         print("✅ OpenAI adapter imports")
 
         # Test Anthropic adapter import
         from genops.providers.anthropic import GenOpsAnthropicAdapter
+
         print("✅ Anthropic adapter imports")
 
         # Creating adapters without dependencies should fail gracefully

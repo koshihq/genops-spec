@@ -3,7 +3,7 @@
 Helicone AI Gateway Setup Validation Example
 
 This script validates your Helicone + GenOps setup across multiple AI providers
-and provides detailed diagnostics for any configuration issues. Run this first 
+and provides detailed diagnostics for any configuration issues. Run this first
 before other examples.
 
 Usage:
@@ -30,6 +30,7 @@ def main():
             print_validation_result,
             validate_setup,
         )
+
         print("✅ GenOps Helicone validation utilities loaded successfully")
     except ImportError as e:
         print(f"❌ Failed to import GenOps Helicone validation utilities: {e}")
@@ -39,42 +40,44 @@ def main():
     # Quick environment check
     print("\n🌍 Environment Check:")
     print("-" * 30)
-    
-    helicone_key = os.getenv('HELICONE_API_KEY')
+
+    helicone_key = os.getenv("HELICONE_API_KEY")
     if helicone_key:
         print(f"✅ HELICONE_API_KEY: Found (ends with: ...{helicone_key[-6:]})")
     else:
         print("❌ HELICONE_API_KEY: Not found")
         print("   Get your key at: https://app.helicone.ai/")
-    
+
     # Check provider keys
     providers_found = []
     provider_keys = {
-        'OpenAI': 'OPENAI_API_KEY',
-        'Anthropic': 'ANTHROPIC_API_KEY', 
-        'Groq': 'GROQ_API_KEY',
-        'Vertex AI': 'VERTEX_AI_CREDENTIALS'
+        "OpenAI": "OPENAI_API_KEY",
+        "Anthropic": "ANTHROPIC_API_KEY",
+        "Groq": "GROQ_API_KEY",
+        "Vertex AI": "VERTEX_AI_CREDENTIALS",
     }
-    
+
     for provider, env_var in provider_keys.items():
         if os.getenv(env_var):
             providers_found.append(provider)
             key_val = os.getenv(env_var)
-            if env_var == 'VERTEX_AI_CREDENTIALS':
+            if env_var == "VERTEX_AI_CREDENTIALS":
                 print(f"✅ {provider}: Found ({key_val})")
             else:
                 print(f"✅ {provider}: Found (ends with: ...{key_val[-6:]})")
         else:
             print(f"⚠️  {provider}: Not configured ({env_var})")
-    
+
     if not providers_found:
         print("\n❌ No provider API keys found! You need at least one.")
         print("   • OpenAI: https://platform.openai.com/api-keys")
         print("   • Anthropic: https://console.anthropic.com/")
         print("   • Groq: https://console.groq.com/ (free tier available)")
         return False
-    
-    print(f"\n✅ Found {len(providers_found)} configured providers: {', '.join(providers_found)}")
+
+    print(
+        f"\n✅ Found {len(providers_found)} configured providers: {', '.join(providers_found)}"
+    )
 
     # Run comprehensive validation
     print("\n🧪 Running comprehensive validation...")
@@ -86,26 +89,30 @@ def main():
 
         # Summary
         print("\n" + "=" * 60)
-        if validation_result and hasattr(validation_result, 'overall_status'):
+        if validation_result and hasattr(validation_result, "overall_status"):
             if validation_result.overall_status == "PASSED":
                 print("🎉 Success! Your Helicone AI Gateway + GenOps setup is ready!")
                 print("\n🚀 Multi-Provider Gateway Active:")
                 for provider in providers_found:
                     print(f"   • {provider} ✅ Ready for intelligent routing")
-                
+
                 print("\n📚 Next steps:")
                 print("   • Run 'python basic_tracking.py' for multi-provider tracking")
                 print("   • Run 'python multi_provider_costs.py' for cost comparison")
                 print("   • Run 'python cost_optimization.py' for intelligent routing")
-                
+
                 print("\n💡 Quick Test:")
                 print("   Try this command to test your gateway:")
-                print("   python -c \"from genops.providers.helicone import instrument_helicone; print('Gateway ready!')\"")
-                
+                print(
+                    "   python -c \"from genops.providers.helicone import instrument_helicone; print('Gateway ready!')\""
+                )
+
             else:
                 print("⚠️  Setup validation completed with warnings.")
                 print("   Review the detailed output above for specific issues.")
-                print("   You can still proceed, but some features may not work optimally.")
+                print(
+                    "   You can still proceed, but some features may not work optimally."
+                )
         else:
             print("❌ Setup validation failed. Please review the errors above.")
             print("\n🔧 Common fixes:")
@@ -128,7 +135,7 @@ def main():
 if __name__ == "__main__":
     """Main entry point."""
     success = main()
-    
+
     if success:
         print("\n" + "🌟" * 20)
         print("Your Helicone AI Gateway setup is ready!")

@@ -30,6 +30,7 @@ def setup_auto_instrumentation():
     try:
         # This single line enables automatic telemetry for ALL OpenAI operations
         from genops import auto_instrument
+
         auto_instrument()
 
         print("✅ GenOps auto-instrumentation enabled!")
@@ -43,6 +44,7 @@ def setup_auto_instrumentation():
         print(f"❌ Import error: {e}")
         print("💡 Fix: Run 'pip install genops-ai[openai]'")
         return False
+
 
 def existing_openai_code_unchanged():
     """Your existing OpenAI code works exactly as before, but with automatic telemetry."""
@@ -60,10 +62,8 @@ def existing_openai_code_unchanged():
         # Example 1: Simple chat completion (your existing code)
         response1 = client.chat.completions.create(
             model="gpt-3.5-turbo",
-            messages=[
-                {"role": "user", "content": "What is machine learning?"}
-            ],
-            max_tokens=100
+            messages=[{"role": "user", "content": "What is machine learning?"}],
+            max_tokens=100,
         )
 
         print(f"✅ Response 1: {response1.choices[0].message.content[:50]}...")
@@ -73,10 +73,10 @@ def existing_openai_code_unchanged():
             model="gpt-4",
             messages=[
                 {"role": "system", "content": "You are a helpful data scientist."},
-                {"role": "user", "content": "Explain the bias-variance tradeoff"}
+                {"role": "user", "content": "Explain the bias-variance tradeoff"},
             ],
             temperature=0.7,
-            max_tokens=200
+            max_tokens=200,
         )
 
         print(f"✅ Response 2: {response2.choices[0].message.content[:50]}...")
@@ -86,7 +86,7 @@ def existing_openai_code_unchanged():
             response3 = client.completions.create(
                 model="gpt-3.5-turbo-instruct",
                 prompt="Write a haiku about programming:",
-                max_tokens=50
+                max_tokens=50,
             )
             print(f"✅ Response 3: {response3.choices[0].text.strip()[:50]}...")
         except Exception as e:
@@ -104,6 +104,7 @@ def existing_openai_code_unchanged():
         print("💡 Check your OPENAI_API_KEY and network connectivity")
         return False
 
+
 def add_governance_context():
     """Add governance context to automatically apply to all operations."""
     print("\n\n🏷️  Adding Governance Context")
@@ -115,13 +116,15 @@ def add_governance_context():
         from genops.core.context import set_governance_context
 
         # Set governance context once - applies to ALL subsequent operations
-        set_governance_context({
-            "team": "auto-instrumentation-demo",
-            "project": "genops-examples",
-            "customer_id": "demo-customer-auto",
-            "environment": "development",
-            "cost_center": "engineering-dept"
-        })
+        set_governance_context(
+            {
+                "team": "auto-instrumentation-demo",
+                "project": "genops-examples",
+                "customer_id": "demo-customer-auto",
+                "environment": "development",
+                "cost_center": "engineering-dept",
+            }
+        )
 
         print("✅ Governance context set for all operations:")
         print("   • team: auto-instrumentation-demo")
@@ -138,14 +141,14 @@ def add_governance_context():
         tasks = [
             "Explain quantum computing briefly",
             "What are the benefits of renewable energy?",
-            "How do neural networks learn?"
+            "How do neural networks learn?",
         ]
 
         for i, task in enumerate(tasks, 1):
             response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[{"role": "user", "content": task}],
-                max_tokens=50
+                max_tokens=50,
             )
 
             print(f"   {i}. Task: {task}")
@@ -165,6 +168,7 @@ def add_governance_context():
         print(f"❌ Error setting governance context: {e}")
         return False
 
+
 def web_application_pattern():
     """Demonstrate auto-instrumentation in web application context."""
     print("\n\n🌐 Web Application Integration Pattern")
@@ -180,24 +184,29 @@ def web_application_pattern():
             """Simulated web app request handler with automatic telemetry."""
 
             # Set request-specific governance context
-            set_governance_context({
-                "team": "web-app-team",
-                "project": "customer-chat-api",
-                "customer_id": user_id,
-                "environment": "production",
-                "feature": "chat-endpoint",
-                "session_id": session_id
-            })
+            set_governance_context(
+                {
+                    "team": "web-app-team",
+                    "project": "customer-chat-api",
+                    "customer_id": user_id,
+                    "environment": "production",
+                    "feature": "chat-endpoint",
+                    "session_id": session_id,
+                }
+            )
 
             # Your normal OpenAI code - completely unchanged
             client = OpenAI()
             response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
-                    {"role": "system", "content": "You are a helpful customer service assistant."},
-                    {"role": "user", "content": message}
+                    {
+                        "role": "system",
+                        "content": "You are a helpful customer service assistant.",
+                    },
+                    {"role": "user", "content": message},
                 ],
-                max_tokens=150
+                max_tokens=150,
             )
 
             return response.choices[0].message.content
@@ -208,7 +217,7 @@ def web_application_pattern():
         simulated_requests = [
             ("user-001", "How do I reset my password?", "session-abc-123"),
             ("user-002", "What are your business hours?", "session-def-456"),
-            ("user-003", "I need help with billing", "session-ghi-789")
+            ("user-003", "I need help with billing", "session-ghi-789"),
         ]
 
         for user_id, message, session_id in simulated_requests:
@@ -229,6 +238,7 @@ def web_application_pattern():
     except Exception as e:
         print(f"❌ Web application pattern error: {e}")
         return False
+
 
 def main():
     """Run auto-instrumentation demonstration."""
@@ -277,6 +287,7 @@ def main():
         print("❌ Auto-instrumentation demonstration failed.")
         print("💡 Check the error messages above and try setup_validation.py")
         return False
+
 
 if __name__ == "__main__":
     success = main()

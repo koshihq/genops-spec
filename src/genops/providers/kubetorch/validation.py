@@ -16,14 +16,15 @@ import os
 import shutil
 import sys
 from dataclasses import dataclass, field
-from typing import List, Optional, Dict, Any
 from enum import Enum
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
 
 class ValidationLevel(Enum):
     """Validation issue severity level."""
+
     ERROR = "error"
     WARNING = "warning"
     INFO = "info"
@@ -38,7 +39,7 @@ class ValidationIssue:
     component: str  # Component being validated
     message: str  # Description of the issue
     fix_suggestion: Optional[str] = None  # How to fix the issue
-    details: Dict[str, Any] = field(default_factory=dict)
+    details: dict[str, Any] = field(default_factory=dict)
 
     def __str__(self) -> str:
         """String representation of validation issue."""
@@ -62,7 +63,7 @@ class ValidationIssue:
 class ValidationResult:
     """Complete validation result with all checks."""
 
-    issues: List[ValidationIssue] = field(default_factory=list)
+    issues: list[ValidationIssue] = field(default_factory=list)
     total_checks: int = 0
     successful_checks: int = 0
     warnings: int = 0
@@ -171,18 +172,22 @@ def _check_python_version(result: ValidationResult) -> None:
     py_version = sys.version_info
 
     if py_version >= (3, 8):
-        result.add_issue(ValidationIssue(
-            level=ValidationLevel.SUCCESS,
-            component="Python",
-            message=f"Python {py_version.major}.{py_version.minor}.{py_version.micro} (compatible)",
-        ))
+        result.add_issue(
+            ValidationIssue(
+                level=ValidationLevel.SUCCESS,
+                component="Python",
+                message=f"Python {py_version.major}.{py_version.minor}.{py_version.micro} (compatible)",
+            )
+        )
     else:
-        result.add_issue(ValidationIssue(
-            level=ValidationLevel.ERROR,
-            component="Python",
-            message=f"Python {py_version.major}.{py_version.minor} is not supported",
-            fix_suggestion="Upgrade to Python 3.8 or higher",
-        ))
+        result.add_issue(
+            ValidationIssue(
+                level=ValidationLevel.ERROR,
+                component="Python",
+                message=f"Python {py_version.major}.{py_version.minor} is not supported",
+                fix_suggestion="Upgrade to Python 3.8 or higher",
+            )
+        )
 
 
 def _check_kubetorch_installation(result: ValidationResult) -> None:
@@ -190,23 +195,29 @@ def _check_kubetorch_installation(result: ValidationResult) -> None:
     try:
         import runhouse as rh
 
-        version = getattr(rh, '__version__', 'unknown')
+        version = getattr(rh, "__version__", "unknown")
 
-        result.add_issue(ValidationIssue(
-            level=ValidationLevel.SUCCESS,
-            component="Kubetorch",
-            message=f"Runhouse {version} installed",
-            details={'version': version},
-        ))
+        result.add_issue(
+            ValidationIssue(
+                level=ValidationLevel.SUCCESS,
+                component="Kubetorch",
+                message=f"Runhouse {version} installed",
+                details={"version": version},
+            )
+        )
 
     except ImportError:
-        result.add_issue(ValidationIssue(
-            level=ValidationLevel.WARNING,
-            component="Kubetorch",
-            message="Runhouse (Kubetorch) not installed",
-            fix_suggestion="Install with: pip install runhouse",
-            details={'note': 'GenOps will work without Kubetorch for cost estimation only'},
-        ))
+        result.add_issue(
+            ValidationIssue(
+                level=ValidationLevel.WARNING,
+                component="Kubetorch",
+                message="Runhouse (Kubetorch) not installed",
+                fix_suggestion="Install with: pip install runhouse",
+                details={
+                    "note": "GenOps will work without Kubetorch for cost estimation only"
+                },
+            )
+        )
 
 
 def _check_kubernetes_environment(result: ValidationResult) -> None:
@@ -214,66 +225,78 @@ def _check_kubernetes_environment(result: ValidationResult) -> None:
     try:
         # Check for Kubernetes environment variables
         k8s_indicators = {
-            'KUBERNETES_SERVICE_HOST': os.getenv('KUBERNETES_SERVICE_HOST'),
-            'KUBERNETES_PORT': os.getenv('KUBERNETES_PORT'),
+            "KUBERNETES_SERVICE_HOST": os.getenv("KUBERNETES_SERVICE_HOST"),
+            "KUBERNETES_PORT": os.getenv("KUBERNETES_PORT"),
         }
 
         if any(k8s_indicators.values()):
-            result.add_issue(ValidationIssue(
-                level=ValidationLevel.SUCCESS,
-                component="Kubernetes",
-                message="Running in Kubernetes environment",
-                details=k8s_indicators,
-            ))
+            result.add_issue(
+                ValidationIssue(
+                    level=ValidationLevel.SUCCESS,
+                    component="Kubernetes",
+                    message="Running in Kubernetes environment",
+                    details=k8s_indicators,
+                )
+            )
         else:
-            result.add_issue(ValidationIssue(
-                level=ValidationLevel.INFO,
-                component="Kubernetes",
-                message="Not running in Kubernetes environment (local development)",
-                details={'note': 'This is normal for local development'},
-            ))
+            result.add_issue(
+                ValidationIssue(
+                    level=ValidationLevel.INFO,
+                    component="Kubernetes",
+                    message="Not running in Kubernetes environment (local development)",
+                    details={"note": "This is normal for local development"},
+                )
+            )
 
         # Check for kubectl
         import subprocess  # nosec B404 - subprocess required for CLI tool validation
 
         # Find absolute path to kubectl for security
-        kubectl_path = shutil.which('kubectl')
+        kubectl_path = shutil.which("kubectl")
         if not kubectl_path:
-            result.add_issue(ValidationIssue(
-                level=ValidationLevel.INFO,
-                component="kubectl",
-                message="kubectl not available",
-                fix_suggestion="Install kubectl for Kubernetes cluster management",
-            ))
+            result.add_issue(
+                ValidationIssue(
+                    level=ValidationLevel.INFO,
+                    component="kubectl",
+                    message="kubectl not available",
+                    fix_suggestion="Install kubectl for Kubernetes cluster management",
+                )
+            )
         else:
             try:
                 subprocess.run(
-                    [kubectl_path, 'version', '--client'],  # nosec B607 - validated absolute path
+                    [kubectl_path, "version", "--client"],  # nosec B607 - validated absolute path
                     capture_output=True,
                     check=True,
                     timeout=5,
-                    shell=False  # Explicit shell=False for security
+                    shell=False,  # Explicit shell=False for security
                 )
-                result.add_issue(ValidationIssue(
-                    level=ValidationLevel.SUCCESS,
-                    component="kubectl",
-                    message="kubectl available",
-                ))
+                result.add_issue(
+                    ValidationIssue(
+                        level=ValidationLevel.SUCCESS,
+                        component="kubectl",
+                        message="kubectl available",
+                    )
+                )
             except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
-                result.add_issue(ValidationIssue(
-                    level=ValidationLevel.INFO,
-                    component="kubectl",
-                    message=f"kubectl found but not working: {e}",
-                    fix_suggestion="Ensure kubectl is properly configured",
-                ))
+                result.add_issue(
+                    ValidationIssue(
+                        level=ValidationLevel.INFO,
+                        component="kubectl",
+                        message=f"kubectl found but not working: {e}",
+                        fix_suggestion="Ensure kubectl is properly configured",
+                    )
+                )
 
     except Exception as e:
         logger.debug(f"Kubernetes check failed: {e}")
-        result.add_issue(ValidationIssue(
-            level=ValidationLevel.WARNING,
-            component="Kubernetes",
-            message=f"Kubernetes check failed: {e}",
-        ))
+        result.add_issue(
+            ValidationIssue(
+                level=ValidationLevel.WARNING,
+                component="Kubernetes",
+                message=f"Kubernetes check failed: {e}",
+            )
+        )
 
 
 def _check_gpu_availability(result: ValidationResult) -> None:
@@ -285,31 +308,37 @@ def _check_gpu_availability(result: ValidationResult) -> None:
             gpu_count = torch.cuda.device_count()
             gpu_names = [torch.cuda.get_device_name(i) for i in range(gpu_count)]
 
-            result.add_issue(ValidationIssue(
-                level=ValidationLevel.SUCCESS,
-                component="GPU",
-                message=f"{gpu_count} GPU(s) available: {', '.join(gpu_names)}",
-                details={
-                    'gpu_count': gpu_count,
-                    'gpu_names': gpu_names,
-                    'cuda_version': torch.version.cuda,
-                },
-            ))
+            result.add_issue(
+                ValidationIssue(
+                    level=ValidationLevel.SUCCESS,
+                    component="GPU",
+                    message=f"{gpu_count} GPU(s) available: {', '.join(gpu_names)}",
+                    details={
+                        "gpu_count": gpu_count,
+                        "gpu_names": gpu_names,
+                        "cuda_version": torch.version.cuda,
+                    },
+                )
+            )
         else:
-            result.add_issue(ValidationIssue(
-                level=ValidationLevel.INFO,
-                component="GPU",
-                message="No GPUs detected",
-                details={'note': 'CPU-only mode - cost tracking still available'},
-            ))
+            result.add_issue(
+                ValidationIssue(
+                    level=ValidationLevel.INFO,
+                    component="GPU",
+                    message="No GPUs detected",
+                    details={"note": "CPU-only mode - cost tracking still available"},
+                )
+            )
 
     except ImportError:
-        result.add_issue(ValidationIssue(
-            level=ValidationLevel.INFO,
-            component="GPU",
-            message="PyTorch not installed (GPU detection unavailable)",
-            fix_suggestion="Install PyTorch to enable GPU detection: pip install torch",
-        ))
+        result.add_issue(
+            ValidationIssue(
+                level=ValidationLevel.INFO,
+                component="GPU",
+                message="PyTorch not installed (GPU detection unavailable)",
+                fix_suggestion="Install PyTorch to enable GPU detection: pip install torch",
+            )
+        )
 
 
 def _check_opentelemetry_setup(result: ValidationResult) -> None:
@@ -319,46 +348,56 @@ def _check_opentelemetry_setup(result: ValidationResult) -> None:
         from opentelemetry.sdk.trace import TracerProvider
 
         # Check if tracer provider is set
-        tracer = trace.get_tracer(__name__)
+        trace.get_tracer(__name__)
 
         if isinstance(trace.get_tracer_provider(), TracerProvider):
-            result.add_issue(ValidationIssue(
-                level=ValidationLevel.SUCCESS,
-                component="OpenTelemetry",
-                message="OpenTelemetry TracerProvider configured",
-            ))
+            result.add_issue(
+                ValidationIssue(
+                    level=ValidationLevel.SUCCESS,
+                    component="OpenTelemetry",
+                    message="OpenTelemetry TracerProvider configured",
+                )
+            )
         else:
-            result.add_issue(ValidationIssue(
-                level=ValidationLevel.WARNING,
-                component="OpenTelemetry",
-                message="OpenTelemetry TracerProvider not configured",
-                fix_suggestion="Configure OTLP exporter or use auto-instrumentation",
-            ))
+            result.add_issue(
+                ValidationIssue(
+                    level=ValidationLevel.WARNING,
+                    component="OpenTelemetry",
+                    message="OpenTelemetry TracerProvider not configured",
+                    fix_suggestion="Configure OTLP exporter or use auto-instrumentation",
+                )
+            )
 
         # Check for OTLP endpoint configuration
-        otlp_endpoint = os.getenv('OTEL_EXPORTER_OTLP_ENDPOINT')
+        otlp_endpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
         if otlp_endpoint:
-            result.add_issue(ValidationIssue(
-                level=ValidationLevel.SUCCESS,
-                component="OTLP Endpoint",
-                message=f"OTLP endpoint configured: {otlp_endpoint}",
-                details={'endpoint': otlp_endpoint},
-            ))
+            result.add_issue(
+                ValidationIssue(
+                    level=ValidationLevel.SUCCESS,
+                    component="OTLP Endpoint",
+                    message=f"OTLP endpoint configured: {otlp_endpoint}",
+                    details={"endpoint": otlp_endpoint},
+                )
+            )
         else:
-            result.add_issue(ValidationIssue(
-                level=ValidationLevel.WARNING,
-                component="OTLP Endpoint",
-                message="OTEL_EXPORTER_OTLP_ENDPOINT not set",
-                fix_suggestion="Set OTEL_EXPORTER_OTLP_ENDPOINT environment variable",
-            ))
+            result.add_issue(
+                ValidationIssue(
+                    level=ValidationLevel.WARNING,
+                    component="OTLP Endpoint",
+                    message="OTEL_EXPORTER_OTLP_ENDPOINT not set",
+                    fix_suggestion="Set OTEL_EXPORTER_OTLP_ENDPOINT environment variable",
+                )
+            )
 
     except ImportError:
-        result.add_issue(ValidationIssue(
-            level=ValidationLevel.ERROR,
-            component="OpenTelemetry",
-            message="OpenTelemetry not installed",
-            fix_suggestion="Install with: pip install opentelemetry-api opentelemetry-sdk",
-        ))
+        result.add_issue(
+            ValidationIssue(
+                level=ValidationLevel.ERROR,
+                component="OpenTelemetry",
+                message="OpenTelemetry not installed",
+                fix_suggestion="Install with: pip install opentelemetry-api opentelemetry-sdk",
+            )
+        )
 
 
 def _check_genops_configuration(result: ValidationResult) -> None:
@@ -366,27 +405,33 @@ def _check_genops_configuration(result: ValidationResult) -> None:
     try:
         # Check GenOps environment variables
         genops_vars = {
-            'GENOPS_TEAM': os.getenv('GENOPS_TEAM'),
-            'GENOPS_PROJECT': os.getenv('GENOPS_PROJECT'),
-            'GENOPS_ENVIRONMENT': os.getenv('GENOPS_ENVIRONMENT'),
+            "GENOPS_TEAM": os.getenv("GENOPS_TEAM"),
+            "GENOPS_PROJECT": os.getenv("GENOPS_PROJECT"),
+            "GENOPS_ENVIRONMENT": os.getenv("GENOPS_ENVIRONMENT"),
         }
 
         configured_vars = {k: v for k, v in genops_vars.items() if v}
 
         if configured_vars:
-            result.add_issue(ValidationIssue(
-                level=ValidationLevel.SUCCESS,
-                component="GenOps Config",
-                message=f"GenOps environment variables configured: {', '.join(configured_vars.keys())}",
-                details=configured_vars,
-            ))
+            result.add_issue(
+                ValidationIssue(
+                    level=ValidationLevel.SUCCESS,
+                    component="GenOps Config",
+                    message=f"GenOps environment variables configured: {', '.join(configured_vars.keys())}",
+                    details=configured_vars,
+                )
+            )
         else:
-            result.add_issue(ValidationIssue(
-                level=ValidationLevel.INFO,
-                component="GenOps Config",
-                message="No GenOps environment variables set",
-                details={'note': 'You can pass governance attributes directly to instrumentation functions'},
-            ))
+            result.add_issue(
+                ValidationIssue(
+                    level=ValidationLevel.INFO,
+                    component="GenOps Config",
+                    message="No GenOps environment variables set",
+                    details={
+                        "note": "You can pass governance attributes directly to instrumentation functions"
+                    },
+                )
+            )
 
     except Exception as e:
         logger.debug(f"GenOps config check failed: {e}")
@@ -401,31 +446,35 @@ def _check_genops_kubetorch_modules(result: ValidationResult) -> None:
 
         for module, available in status.items():
             if available:
-                result.add_issue(ValidationIssue(
-                    level=ValidationLevel.SUCCESS,
-                    component=f"Module:{module}",
-                    message=f"{module.capitalize()} module available",
-                ))
+                result.add_issue(
+                    ValidationIssue(
+                        level=ValidationLevel.SUCCESS,
+                        component=f"Module:{module}",
+                        message=f"{module.capitalize()} module available",
+                    )
+                )
             else:
-                result.add_issue(ValidationIssue(
-                    level=ValidationLevel.WARNING,
-                    component=f"Module:{module}",
-                    message=f"{module.capitalize()} module not available",
-                ))
+                result.add_issue(
+                    ValidationIssue(
+                        level=ValidationLevel.WARNING,
+                        component=f"Module:{module}",
+                        message=f"{module.capitalize()} module not available",
+                    )
+                )
 
     except Exception as e:
         logger.debug(f"Module status check failed: {e}")
-        result.add_issue(ValidationIssue(
-            level=ValidationLevel.ERROR,
-            component="GenOps Kubetorch",
-            message=f"Failed to check module status: {e}",
-        ))
+        result.add_issue(
+            ValidationIssue(
+                level=ValidationLevel.ERROR,
+                component="GenOps Kubetorch",
+                message=f"Failed to check module status: {e}",
+            )
+        )
 
 
 def print_validation_result(
-    result: ValidationResult,
-    show_all: bool = False,
-    show_details: bool = False
+    result: ValidationResult, show_all: bool = False, show_details: bool = False
 ) -> None:
     """
     Print validation result in a user-friendly format.

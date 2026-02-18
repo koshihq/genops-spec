@@ -27,8 +27,11 @@ from genops.core.telemetry import GenOpsTelemetry
 from genops.providers.openai import instrument_openai
 
 # Setup logging to see what's happening
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
+
 
 def setup_budget_policies():
     """
@@ -46,8 +49,8 @@ def setup_budget_policies():
         enforcement_level=PolicyResult.BLOCKED,
         conditions={
             "max_cost": 100.0,  # $100/month team budget
-            "time_period": "monthly"
-        }
+            "time_period": "monthly",
+        },
     )
     print("✅ Monthly team budget: $100.00")
 
@@ -58,7 +61,7 @@ def setup_budget_policies():
         enforcement_level=PolicyResult.BLOCKED,
         conditions={
             "max_cost": 5.0  # $5 per operation max
-        }
+        },
     )
     print("✅ Per-operation limit: $5.00")
 
@@ -69,10 +72,11 @@ def setup_budget_policies():
         enforcement_level=PolicyResult.WARNING,
         conditions={
             "max_cost": 25.0,  # $25/day per customer
-            "time_period": "daily"
-        }
+            "time_period": "daily",
+        },
     )
     print("✅ Customer daily warning: $25.00")
+
 
 def demonstrate_budget_enforcement():
     """
@@ -92,18 +96,19 @@ def demonstrate_budget_enforcement():
             operation_type="ai.inference",
             team="support-team",
             project="ticket-classifier",
-            customer_id="enterprise-123"
+            customer_id="enterprise-123",
         ) as span:
             # Simulate a normal AI operation cost
             estimated_cost = 0.15  # $0.15 - well within limits
 
             # Check budget policies before operation
             from genops.core.policy import _policy_engine
+
             context = {
                 "cost": estimated_cost,
                 "team": "support-team",
                 "customer": "enterprise-123",
-                "operation": "customer_support_classification"
+                "operation": "customer_support_classification",
             }
 
             # Check operation cost policy
@@ -112,7 +117,9 @@ def demonstrate_budget_enforcement():
             print(f"   🛡️ Policy check: {result.result.value}")
 
             if result.result == PolicyResult.BLOCKED:
-                raise PolicyViolationError("operation_cost_limit", result.reason, result.metadata)
+                raise PolicyViolationError(
+                    "operation_cost_limit", result.reason, result.metadata
+                )
 
             # Record the operation telemetry
             telemetry.record_cost(
@@ -122,7 +129,7 @@ def demonstrate_budget_enforcement():
                 provider="openai",
                 model="gpt-3.5-turbo",
                 input_tokens=120,
-                output_tokens=45
+                output_tokens=45,
             )
 
             print("   ✅ Operation completed successfully!")
@@ -137,7 +144,7 @@ def demonstrate_budget_enforcement():
             operation_name="document_analysis_batch",
             operation_type="ai.inference",
             team="content-team",
-            project="document-processor"
+            project="document-processor",
         ) as span:
             # Simulate expensive batch operation
             estimated_cost = 7.50  # $7.50 - exceeds $5 limit!
@@ -145,7 +152,7 @@ def demonstrate_budget_enforcement():
             context = {
                 "cost": estimated_cost,
                 "team": "content-team",
-                "operation": "document_analysis_batch"
+                "operation": "document_analysis_batch",
             }
 
             result = _policy_engine.evaluate_policy("operation_cost_limit", context)
@@ -159,13 +166,17 @@ def demonstrate_budget_enforcement():
                     policy_name="operation_cost_limit",
                     result="blocked",
                     reason=result.reason,
-                    metadata=result.metadata
+                    metadata=result.metadata,
                 )
-                raise PolicyViolationError("operation_cost_limit", result.reason, result.metadata)
+                raise PolicyViolationError(
+                    "operation_cost_limit", result.reason, result.metadata
+                )
 
     except PolicyViolationError as e:
         print(f"   🚫 BLOCKED: {e}")
-        print("   💡 Suggestion: Break this into smaller operations or request budget increase")
+        print(
+            "   💡 Suggestion: Break this into smaller operations or request budget increase"
+        )
 
     # Scenario 3: Customer approaching daily budget (warning)
     print("\n⚠️  Scenario 3: Customer approaching daily budget (warning level)")
@@ -175,7 +186,7 @@ def demonstrate_budget_enforcement():
             operation_type="ai.inference",
             team="ml-team",
             project="recommendation-engine",
-            customer_id="premium-456"
+            customer_id="premium-456",
         ) as span:
             # Simulate customer close to daily budget
             estimated_cost = 22.0  # $22 - approaching $25 limit
@@ -183,7 +194,7 @@ def demonstrate_budget_enforcement():
             context = {
                 "cost": estimated_cost,
                 "customer": "premium-456",
-                "operation": "product_recommendations"
+                "operation": "product_recommendations",
             }
 
             result = _policy_engine.evaluate_policy("customer_daily_budget", context)
@@ -192,7 +203,9 @@ def demonstrate_budget_enforcement():
 
             if result.result == PolicyResult.WARNING:
                 print(f"   ⚠️  WARNING: {result.reason}")
-                print("   📧 Alert would be sent to: finance@company.com, ml-team@company.com")
+                print(
+                    "   📧 Alert would be sent to: finance@company.com, ml-team@company.com"
+                )
 
                 # Record warning in telemetry
                 telemetry.record_policy(
@@ -200,7 +213,7 @@ def demonstrate_budget_enforcement():
                     policy_name="customer_daily_budget",
                     result="warning",
                     reason=result.reason,
-                    metadata=result.metadata
+                    metadata=result.metadata,
                 )
 
             # Operation proceeds with warning
@@ -211,13 +224,14 @@ def demonstrate_budget_enforcement():
                 provider="openai",
                 model="gpt-4",
                 input_tokens=850,
-                output_tokens=320
+                output_tokens=320,
             )
 
             print("   ✅ Operation completed with warning logged")
 
     except PolicyViolationError as e:
         print(f"   🚫 BLOCKED: {e}")
+
 
 def demonstrate_real_openai_integration():
     """
@@ -251,7 +265,7 @@ def demonstrate_real_openai_integration():
             # Governance attributes
             team="demo-team",
             project="governance-demo",
-            customer_id="demo-customer"
+            customer_id="demo-customer",
         )
 
         print("📝 Response:", response.choices[0].message.content.strip())
@@ -259,6 +273,7 @@ def demonstrate_real_openai_integration():
 
     except Exception as e:
         print(f"❌ Error with OpenAI integration: {e}")
+
 
 def show_telemetry_data():
     """
@@ -282,7 +297,7 @@ def show_telemetry_data():
         "genops.tokens.total": 165,
         "genops.policy.name": "operation_cost_limit",
         "genops.policy.result": "allowed",
-        "genops.policy.reason": "Under cost threshold"
+        "genops.policy.reason": "Under cost threshold",
     }
 
     print("📈 Sample telemetry attributes sent to your observability platform:")
@@ -296,6 +311,7 @@ def show_telemetry_data():
     print("   • Predictive budget forecasting")
     print("   • Chargeback and cost attribution")
 
+
 def main():
     """
     Run the complete budget enforcement demonstration.
@@ -303,7 +319,9 @@ def main():
     print("🚨 GenOps AI: Prevent AI Budget Overruns Demo")
     print("=" * 80)
     print("\nThis demo shows how GenOps AI prevents runaway AI costs through")
-    print("automatic budget enforcement, real-time monitoring, and governance policies.")
+    print(
+        "automatic budget enforcement, real-time monitoring, and governance policies."
+    )
 
     # Setup
     setup_budget_policies()
@@ -334,6 +352,7 @@ def main():
     print("5. Scale across your organization's AI operations")
 
     print("\n🔗 Learn more: https://github.com/KoshiHQ/GenOps-AI/tree/main/docs")
+
 
 if __name__ == "__main__":
     main()

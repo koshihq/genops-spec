@@ -7,7 +7,7 @@ import threading
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from genops.providers.collibra.client import CollibraAPIClient, CollibraAPIError
 from genops.providers.collibra.mapping import create_collibra_asset_from_span
@@ -31,8 +31,8 @@ class ExportStats:
     assets_failed: int = 0
     batches_sent: int = 0
     total_export_time_ms: float = 0
-    last_export_time: Optional[float] = None
-    errors: List[str] = field(default_factory=list)
+    last_export_time: float | None = None
+    errors: list[str] = field(default_factory=list)
 
     def record_success(self, count: int = 1, duration_ms: float = 0):
         """Record successful export."""
@@ -40,7 +40,7 @@ class ExportStats:
         self.total_export_time_ms += duration_ms
         self.last_export_time = time.time()
 
-    def record_failure(self, count: int = 1, error: Optional[str] = None):
+    def record_failure(self, count: int = 1, error: str | None = None):
         """Record failed export."""
         self.assets_failed += count
         if error:
@@ -88,7 +88,7 @@ class AssetExporter:
         self.batch_interval_seconds = batch_interval_seconds
 
         # Batch buffer
-        self.buffer: List[Dict[str, Any]] = []
+        self.buffer: list[dict[str, Any]] = []
         self.buffer_lock = threading.Lock()
 
         # Statistics
@@ -96,15 +96,15 @@ class AssetExporter:
 
         # Background flush thread
         self.background_flush_enabled = enable_background_flush
-        self.background_thread: Optional[threading.Thread] = None
+        self.background_thread: threading.Thread | None = None
         self.shutdown_event = threading.Event()
 
         if self.background_flush_enabled and export_mode == ExportMode.BATCH:
             self._start_background_flush()
 
     def export_span(
-        self, span_attributes: Dict[str, Any], asset_type: Optional[str] = None
-    ) -> Optional[Dict]:
+        self, span_attributes: dict[str, Any], asset_type: str | None = None
+    ) -> dict | None:
         """
         Export GenOps span as Collibra asset.
 
@@ -129,8 +129,8 @@ class AssetExporter:
                 return None
 
     def _export_realtime(
-        self, span_attributes: Dict[str, Any], asset_type: Optional[str] = None
-    ) -> Optional[Dict]:
+        self, span_attributes: dict[str, Any], asset_type: str | None = None
+    ) -> dict | None:
         """
         Export span immediately to Collibra.
 
@@ -174,7 +174,7 @@ class AssetExporter:
             return None
 
     def _export_batch(
-        self, span_attributes: Dict[str, Any], asset_type: Optional[str] = None
+        self, span_attributes: dict[str, Any], asset_type: str | None = None
     ):
         """
         Add span to batch buffer for later export.
@@ -199,7 +199,7 @@ class AssetExporter:
                 )
                 self._flush_buffer_locked()
 
-    def _is_critical_event(self, span_attributes: Dict[str, Any]) -> bool:
+    def _is_critical_event(self, span_attributes: dict[str, Any]) -> bool:
         """
         Check if span represents a critical event that should be exported immediately.
 
@@ -256,7 +256,7 @@ class AssetExporter:
 
         return self._send_batch(buffer_copy)
 
-    def _send_batch(self, assets: List[Dict[str, Any]]) -> int:
+    def _send_batch(self, assets: list[dict[str, Any]]) -> int:
         """
         Send batch of assets to Collibra.
 

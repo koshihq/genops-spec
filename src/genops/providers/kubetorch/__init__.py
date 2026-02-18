@@ -32,24 +32,25 @@ logger = logging.getLogger(__name__)
 __version__ = "0.1.0"
 
 # Pricing module is always available (no dependencies)
-from .pricing import (
+from .pricing import (  # noqa: E402
+    GPU_PRICING,
+    NETWORK_COST_PER_GB,
+    STORAGE_COST_PER_GB_MONTH,
     GPUInstancePricing,
     KubetorchPricing,
-    GPU_PRICING,
     calculate_gpu_cost,
     get_pricing_info,
-    STORAGE_COST_PER_GB_MONTH,
-    NETWORK_COST_PER_GB,
 )
 
 # Adapter module
 try:
     from .adapter import (
         GenOpsKubetorchAdapter,
-        instrument_kubetorch,
-        create_compute_context,
         KubetorchOperation,
+        create_compute_context,
+        instrument_kubetorch,
     )
+
     _ADAPTER_AVAILABLE = True
 except ImportError as e:
     logger.debug(f"Kubetorch adapter import failed: {e}")
@@ -58,15 +59,11 @@ except ImportError as e:
     # Provide stub functions
     def instrument_kubetorch(**kwargs):
         """Stub: Adapter module not available."""
-        raise ImportError(
-            "Kubetorch adapter import failed. Check dependencies."
-        )
+        raise ImportError("Kubetorch adapter import failed. Check dependencies.")
 
     def create_compute_context(**kwargs):
         """Stub: Adapter module not available."""
-        raise ImportError(
-            "Kubetorch adapter import failed. Check dependencies."
-        )
+        raise ImportError("Kubetorch adapter import failed. Check dependencies.")
 
     GenOpsKubetorchAdapter = None  # type: ignore
     KubetorchOperation = None  # type: ignore
@@ -74,13 +71,14 @@ except ImportError as e:
 
 try:
     from .cost_aggregator import (
-        ComputeResourceCost,
         ComputeCostSummary,
+        ComputeResourceCost,
         KubetorchCostAggregator,
         create_compute_cost_context,
         get_cost_aggregator,
         reset_cost_aggregator,
     )
+
     _COST_AGGREGATOR_AVAILABLE = True
 except ImportError as e:
     logger.debug(f"Cost aggregator import failed: {e}")
@@ -122,6 +120,7 @@ try:
         KubetorchComputeMonitor,
         create_compute_monitor,
     )
+
     _COMPUTE_MONITOR_AVAILABLE = True
 except ImportError as e:
     logger.debug(f"Compute monitor import failed: {e}")
@@ -137,11 +136,12 @@ except ImportError as e:
 
 try:
     from .validation import (
-        validate_kubetorch_setup,
-        print_validation_result,
-        ValidationResult,
         ValidationIssue,
+        ValidationResult,
+        print_validation_result,
+        validate_kubetorch_setup,
     )
+
     _VALIDATION_AVAILABLE = True
 except ImportError as e:
     logger.debug(f"Validation module not yet available: {e}")
@@ -163,9 +163,10 @@ except ImportError as e:
 try:
     from .registration import (
         auto_instrument_kubetorch,
-        uninstrument_kubetorch,
         is_kubetorch_instrumented,
+        uninstrument_kubetorch,
     )
+
     _REGISTRATION_AVAILABLE = True
 except ImportError as e:
     logger.debug(f"Registration module not yet available: {e}")
@@ -189,7 +190,6 @@ except ImportError as e:
 __all__ = [
     # Version
     "__version__",
-
     # Pricing (always available)
     "GPUInstancePricing",
     "KubetorchPricing",
@@ -198,13 +198,11 @@ __all__ = [
     "get_pricing_info",
     "STORAGE_COST_PER_GB_MONTH",
     "NETWORK_COST_PER_GB",
-
     # Adapter (available when implemented)
     "GenOpsKubetorchAdapter",
     "KubetorchOperation",
     "instrument_kubetorch",
     "create_compute_context",
-
     # Cost Aggregator (available when implemented)
     "ComputeResourceCost",
     "ComputeCostSummary",
@@ -212,17 +210,14 @@ __all__ = [
     "create_compute_cost_context",
     "get_cost_aggregator",
     "reset_cost_aggregator",
-
     # Compute Monitor (available when implemented)
     "KubetorchComputeMonitor",
     "create_compute_monitor",
-
     # Validation (available when implemented)
     "validate_kubetorch_setup",
     "print_validation_result",
     "ValidationResult",
     "ValidationIssue",
-
     # Registration (available when implemented)
     "auto_instrument_kubetorch",
     "uninstrument_kubetorch",

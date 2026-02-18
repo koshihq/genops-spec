@@ -10,7 +10,6 @@ import logging
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Dict, List, Optional, Set
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +17,7 @@ logger = logging.getLogger(__name__)
 # ============================================================================
 # Dataclasses
 # ============================================================================
+
 
 @dataclass
 class RunCost:
@@ -29,10 +29,10 @@ class RunCost:
     experiment_name: str
 
     # Cost breakdown
-    tracking_cost: float = 0.0      # API calls
-    artifact_cost: float = 0.0      # Artifact storage
-    model_cost: float = 0.0         # Model storage
-    compute_cost: float = 0.0       # Training compute (if tracked)
+    tracking_cost: float = 0.0  # API calls
+    artifact_cost: float = 0.0  # Artifact storage
+    model_cost: float = 0.0  # Model storage
+    compute_cost: float = 0.0  # Training compute (if tracked)
 
     # Resource metrics
     artifact_count: int = 0
@@ -43,23 +43,23 @@ class RunCost:
     param_count: int = 0
 
     # Timing
-    start_time: Optional[datetime] = None
-    end_time: Optional[datetime] = None
-    duration_seconds: Optional[float] = None
+    start_time: datetime | None = None
+    end_time: datetime | None = None
+    duration_seconds: float | None = None
 
     # Governance
-    team: Optional[str] = None
-    project: Optional[str] = None
-    cost_center: Optional[str] = None
+    team: str | None = None
+    project: str | None = None
+    cost_center: str | None = None
 
     @property
     def total_cost(self) -> float:
         """Calculate total cost for the run."""
         return (
-            self.tracking_cost +
-            self.artifact_cost +
-            self.model_cost +
-            self.compute_cost
+            self.tracking_cost
+            + self.artifact_cost
+            + self.model_cost
+            + self.compute_cost
         )
 
 
@@ -72,8 +72,8 @@ class ExperimentCost:
 
     # Cost aggregations
     total_cost: float = 0.0
-    cost_by_run: Dict[str, float] = field(default_factory=dict)
-    cost_by_team: Dict[str, float] = field(default_factory=dict)
+    cost_by_run: dict[str, float] = field(default_factory=dict)
+    cost_by_team: dict[str, float] = field(default_factory=dict)
 
     # Run statistics
     run_count: int = 0
@@ -92,10 +92,10 @@ class MLflowCostSummary:
     """Comprehensive cost summary for MLflow operations."""
 
     # Cost breakdowns
-    cost_by_experiment: Dict[str, float] = field(default_factory=dict)
-    cost_by_operation_type: Dict[str, float] = field(default_factory=dict)
-    cost_by_team: Dict[str, float] = field(default_factory=dict)
-    cost_by_storage_backend: Dict[str, float] = field(default_factory=dict)
+    cost_by_experiment: dict[str, float] = field(default_factory=dict)
+    cost_by_operation_type: dict[str, float] = field(default_factory=dict)
+    cost_by_team: dict[str, float] = field(default_factory=dict)
+    cost_by_storage_backend: dict[str, float] = field(default_factory=dict)
 
     # Totals
     total_cost: float = 0.0
@@ -106,21 +106,20 @@ class MLflowCostSummary:
     total_api_calls: int = 0
 
     # Unique identifiers
-    unique_experiments: Set[str] = field(default_factory=set)
-    unique_runs: Set[str] = field(default_factory=set)
+    unique_experiments: set[str] = field(default_factory=set)
+    unique_runs: set[str] = field(default_factory=set)
 
     def add_run_cost(self, run_cost: RunCost) -> None:
         """Add a run cost to the summary."""
         # Update cost breakdowns
         self.cost_by_experiment[run_cost.experiment_name] = (
-            self.cost_by_experiment.get(run_cost.experiment_name, 0.0) +
-            run_cost.total_cost
+            self.cost_by_experiment.get(run_cost.experiment_name, 0.0)
+            + run_cost.total_cost
         )
 
         if run_cost.team:
             self.cost_by_team[run_cost.team] = (
-                self.cost_by_team.get(run_cost.team, 0.0) +
-                run_cost.total_cost
+                self.cost_by_team.get(run_cost.team, 0.0) + run_cost.total_cost
             )
 
         # Update totals
@@ -137,6 +136,7 @@ class MLflowCostSummary:
 # Cost Calculator
 # ============================================================================
 
+
 class MLflowCostCalculator:
     """
     Cost calculator for MLflow operations.
@@ -149,34 +149,32 @@ class MLflowCostCalculator:
         """Initialize cost calculator with default pricing."""
         # Pricing configuration (USD)
         self.pricing = {
-            'tracking_api_call': 0.0001,  # $0.0001 per API call
-            'storage': {
-                'local': 0.0,              # Free for local storage
-                's3': 0.023,               # $0.023 per GB-month (S3 standard)
-                'azure': 0.020,            # $0.020 per GB-month
-                'gcs': 0.020,              # $0.020 per GB-month
+            "tracking_api_call": 0.0001,  # $0.0001 per API call
+            "storage": {
+                "local": 0.0,  # Free for local storage
+                "s3": 0.023,  # $0.023 per GB-month (S3 standard)
+                "azure": 0.020,  # $0.020 per GB-month
+                "gcs": 0.020,  # $0.020 per GB-month
             },
-            'registry_operation': 0.0005,  # $0.0005 per registry operation
+            "registry_operation": 0.0005,  # $0.0005 per registry operation
         }
 
     def calculate_tracking_cost(self, operation_count: int = 1) -> float:
         """Calculate cost for tracking API calls."""
-        return self.pricing['tracking_api_call'] * operation_count
+        return self.pricing["tracking_api_call"] * operation_count
 
     def calculate_artifact_cost(
-        self,
-        artifact_size_mb: float,
-        storage_backend: str = 'local'
+        self, artifact_size_mb: float, storage_backend: str = "local"
     ) -> float:
         """Calculate cost for artifact storage."""
-        if storage_backend == 'local':
+        if storage_backend == "local":
             return 0.0
 
         # Convert MB to GB
         size_gb = artifact_size_mb / 1024
 
         # Get storage rate per GB-month
-        storage_rate = self.pricing['storage'].get(storage_backend, 0.023)
+        storage_rate = self.pricing["storage"].get(storage_backend, 0.023)
 
         # Prorate to daily cost (assume 30 days per month)
         daily_cost = (size_gb * storage_rate) / 30
@@ -184,24 +182,22 @@ class MLflowCostCalculator:
         return daily_cost
 
     def calculate_model_cost(
-        self,
-        model_size_mb: float,
-        storage_backend: str = 'local'
+        self, model_size_mb: float, storage_backend: str = "local"
     ) -> float:
         """Calculate cost for model storage (same as artifact cost)."""
         return self.calculate_artifact_cost(model_size_mb, storage_backend)
 
     def calculate_registry_cost(self, model_size_mb: float = 0.0) -> float:
         """Calculate cost for model registry operation."""
-        return self.pricing['registry_operation']
+        return self.pricing["registry_operation"]
 
     def calculate_run_cost(self) -> float:
         """Calculate cost for run creation (minimal)."""
-        return self.pricing['tracking_api_call']
+        return self.pricing["tracking_api_call"]
 
 
 # Singleton instance for reuse
-_cost_calculator: Optional[MLflowCostCalculator] = None
+_cost_calculator: MLflowCostCalculator | None = None
 
 
 def get_cost_calculator() -> MLflowCostCalculator:
@@ -215,6 +211,7 @@ def get_cost_calculator() -> MLflowCostCalculator:
 # ============================================================================
 # Main Cost Aggregator
 # ============================================================================
+
 
 class MLflowCostAggregator:
     """
@@ -233,8 +230,8 @@ class MLflowCostAggregator:
             **kwargs: Additional configuration options
         """
         self.context_name = context_name
-        self.run_costs: List[RunCost] = []
-        self.active_runs: Dict[str, RunCost] = {}
+        self.run_costs: list[RunCost] = []
+        self.active_runs: dict[str, RunCost] = {}
 
         # Cost calculator
         self.calculator = get_cost_calculator()
@@ -247,7 +244,7 @@ class MLflowCostAggregator:
         run_name: str,
         experiment_id: str,
         experiment_name: str,
-        **governance_attrs
+        **governance_attrs,
     ) -> RunCost:
         """
         Start tracking costs for a new run.
@@ -268,9 +265,9 @@ class MLflowCostAggregator:
             experiment_id=experiment_id,
             experiment_name=experiment_name,
             start_time=datetime.now(),
-            team=governance_attrs.get('team'),
-            project=governance_attrs.get('project'),
-            cost_center=governance_attrs.get('cost_center')
+            team=governance_attrs.get("team"),
+            project=governance_attrs.get("project"),
+            cost_center=governance_attrs.get("cost_center"),
         )
 
         self.active_runs[run_id] = run_cost
@@ -278,10 +275,7 @@ class MLflowCostAggregator:
         return run_cost
 
     def add_artifact_cost(
-        self,
-        run_id: str,
-        artifact_size_mb: float,
-        storage_backend: str = 'local'
+        self, run_id: str, artifact_size_mb: float, storage_backend: str = "local"
     ) -> float:
         """
         Add artifact storage cost to a run.
@@ -299,7 +293,9 @@ class MLflowCostAggregator:
             return 0.0
 
         # Calculate storage cost
-        cost = self.calculator.calculate_artifact_cost(artifact_size_mb, storage_backend)
+        cost = self.calculator.calculate_artifact_cost(
+            artifact_size_mb, storage_backend
+        )
 
         run_cost = self.active_runs[run_id]
         run_cost.artifact_cost += cost
@@ -314,10 +310,7 @@ class MLflowCostAggregator:
         return cost
 
     def add_model_cost(
-        self,
-        run_id: str,
-        model_size_mb: float,
-        storage_backend: str = 'local'
+        self, run_id: str, model_size_mb: float, storage_backend: str = "local"
     ) -> float:
         """
         Add model storage cost to a run.
@@ -441,11 +434,9 @@ class MLflowCostAggregator:
 # Context Manager
 # ============================================================================
 
+
 @contextmanager
-def create_mlflow_cost_context(
-    context_name: str = "mlflow_operation",
-    **kwargs
-):
+def create_mlflow_cost_context(context_name: str = "mlflow_operation", **kwargs):
     """
     Create a cost tracking context for MLflow operations.
 
@@ -488,7 +479,7 @@ def create_mlflow_cost_context(
 # Singleton Aggregator
 # ============================================================================
 
-_global_aggregator: Optional[MLflowCostAggregator] = None
+_global_aggregator: MLflowCostAggregator | None = None
 
 
 def get_cost_aggregator() -> MLflowCostAggregator:

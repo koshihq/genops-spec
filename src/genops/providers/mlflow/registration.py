@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Any, Dict, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +18,7 @@ def register_mlflow_provider() -> bool:
     """
     try:
         from genops.auto_instrumentation import register_provider
+
         from .adapter import GenOpsMLflowAdapter
 
         # Register the provider
@@ -26,7 +27,7 @@ def register_mlflow_provider() -> bool:
             provider_class=GenOpsMLflowAdapter,
             framework_type="data_platform",
             auto_detect_modules=["mlflow", "mlflow.tracking"],
-            description="MLflow experiment tracking and model registry governance"
+            description="MLflow experiment tracking and model registry governance",
         )
 
         logger.info("MLflow provider registered successfully")
@@ -48,7 +49,7 @@ def auto_register() -> None:
     """
     try:
         # Check if MLflow is available
-        import mlflow
+        import mlflow  # noqa: F401
 
         # Attempt registration
         success = register_mlflow_provider()
@@ -66,7 +67,7 @@ def auto_register() -> None:
         logger.warning(f"MLflow auto-registration error: {e}")
 
 
-def auto_instrument_mlflow() -> Optional[Any]:
+def auto_instrument_mlflow() -> Any | None:
     """
     Automatically instrument existing MLflow operations with zero-code setup.
 
@@ -97,7 +98,7 @@ def auto_instrument_mlflow() -> Optional[Any]:
     try:
         # Import mlflow if available
         try:
-            import mlflow
+            import mlflow  # noqa: F401
         except ImportError:
             logger.debug("MLflow not available for auto-instrumentation")
             return None
@@ -110,13 +111,13 @@ def auto_instrument_mlflow() -> Optional[Any]:
 
         # Create adapter with auto-detected configuration
         adapter = instrument_mlflow(
-            tracking_uri=auto_config['tracking_uri'],
-            registry_uri=auto_config.get('registry_uri'),
-            **auto_config.get('governance_attrs', {})
+            tracking_uri=auto_config["tracking_uri"],
+            registry_uri=auto_config.get("registry_uri"),
+            **auto_config.get("governance_attrs", {}),
         )
 
         # Enable auto-patching
-        if auto_config.get('enable_auto_patching', True):
+        if auto_config.get("enable_auto_patching", True):
             adapter.instrument_framework()
 
         logger.info(
@@ -130,7 +131,7 @@ def auto_instrument_mlflow() -> Optional[Any]:
         return None
 
 
-def _detect_mlflow_configuration() -> Dict[str, Any]:
+def _detect_mlflow_configuration() -> dict[str, Any]:
     """
     Auto-detect MLflow configuration from environment.
 
@@ -141,62 +142,61 @@ def _detect_mlflow_configuration() -> Dict[str, Any]:
 
     # Tracking URI detection
     tracking_uri = (
-        os.getenv('MLFLOW_TRACKING_URI') or
-        'file:///mlruns'  # Default local storage
+        os.getenv("MLFLOW_TRACKING_URI") or "file:///mlruns"  # Default local storage
     )
-    config['tracking_uri'] = tracking_uri
+    config["tracking_uri"] = tracking_uri
 
     # Registry URI (optional)
-    registry_uri = os.getenv('MLFLOW_REGISTRY_URI')
+    registry_uri = os.getenv("MLFLOW_REGISTRY_URI")
     if registry_uri:
-        config['registry_uri'] = registry_uri
+        config["registry_uri"] = registry_uri
 
     # Governance attributes with intelligent defaults
     governance_attrs = {}
 
     # Team attribution
     team = (
-        os.getenv('GENOPS_TEAM') or
-        os.getenv('MLFLOW_TEAM') or
-        os.getenv('TEAM_NAME') or
-        os.getenv('USER', 'unknown-team')
+        os.getenv("GENOPS_TEAM")
+        or os.getenv("MLFLOW_TEAM")
+        or os.getenv("TEAM_NAME")
+        or os.getenv("USER", "unknown-team")
     )
-    if team and team != 'unknown-team':
-        governance_attrs['team'] = team
+    if team and team != "unknown-team":
+        governance_attrs["team"] = team
 
     # Project attribution
     project = (
-        os.getenv('GENOPS_PROJECT') or
-        os.getenv('MLFLOW_PROJECT') or
-        os.getenv('PROJECT_NAME') or
-        'auto-detected'
+        os.getenv("GENOPS_PROJECT")
+        or os.getenv("MLFLOW_PROJECT")
+        or os.getenv("PROJECT_NAME")
+        or "auto-detected"
     )
-    governance_attrs['project'] = project
+    governance_attrs["project"] = project
 
     # Environment detection
     environment = (
-        os.getenv('GENOPS_ENVIRONMENT') or
-        os.getenv('MLFLOW_ENV') or
-        os.getenv('ENVIRONMENT') or
-        'development'
+        os.getenv("GENOPS_ENVIRONMENT")
+        or os.getenv("MLFLOW_ENV")
+        or os.getenv("ENVIRONMENT")
+        or "development"
     )
-    governance_attrs['environment'] = environment
+    governance_attrs["environment"] = environment
 
     # Customer ID (optional)
-    customer_id = os.getenv('GENOPS_CUSTOMER_ID')
+    customer_id = os.getenv("GENOPS_CUSTOMER_ID")
     if customer_id:
-        governance_attrs['customer_id'] = customer_id
+        governance_attrs["customer_id"] = customer_id
 
     # Cost center (optional)
-    cost_center = os.getenv('GENOPS_COST_CENTER')
+    cost_center = os.getenv("GENOPS_COST_CENTER")
     if cost_center:
-        governance_attrs['cost_center'] = cost_center
+        governance_attrs["cost_center"] = cost_center
 
-    config['governance_attrs'] = governance_attrs
+    config["governance_attrs"] = governance_attrs  # type: ignore[assignment]
 
     # Feature toggles
-    config['enable_auto_patching'] = _str_to_bool(
-        os.getenv('GENOPS_ENABLE_AUTO_PATCHING', 'true')
+    config["enable_auto_patching"] = _str_to_bool(  # type: ignore[assignment]
+        os.getenv("GENOPS_ENABLE_AUTO_PATCHING", "true")
     )
 
     logger.debug(f"Auto-detected MLflow configuration: {config}")
@@ -206,7 +206,7 @@ def _detect_mlflow_configuration() -> Dict[str, Any]:
 
 def _str_to_bool(value: str) -> bool:
     """Convert string environment variable to boolean."""
-    return value.lower() in ('true', '1', 'yes', 'on', 'enabled')
+    return value.lower() in ("true", "1", "yes", "on", "enabled")
 
 
 def patch_mlflow_operations(adapter: Any) -> None:

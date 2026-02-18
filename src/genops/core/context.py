@@ -12,7 +12,10 @@ _default_attributes: dict[str, Any] = {}
 _context_lock = threading.Lock()
 
 # Context variables for async support
-_context_attributes: ContextVar[dict[str, Any]] = ContextVar('genops_context', default=None)
+_context_attributes: ContextVar[dict[str, Any]] = ContextVar(
+    "genops_context",
+    default=None,  # type: ignore[arg-type]
+)
 
 
 def set_default_attributes(**attributes: Any) -> None:
@@ -168,6 +171,7 @@ def get_effective_attributes(**overrides: Any) -> dict[str, Any]:
     # Validate attributes if validation is enabled
     try:
         from genops.core.validation import validate_tags
+
         validation_result = validate_tags(effective)
 
         # Log validation warnings and errors
@@ -177,14 +181,15 @@ def get_effective_attributes(**overrides: Any) -> dict[str, Any]:
 
         if validation_result.violations:
             for violation in validation_result.violations:
-                if violation.get('severity') == 'error':
+                if violation.get("severity") == "error":
                     logger.error(f"Tag validation error: {violation['message']}")
-                elif violation.get('severity') == 'block':
+                elif violation.get("severity") == "block":
                     from genops.core.validation import TagValidationError
+
                     raise TagValidationError(
                         f"Tag validation blocked operation: {violation['message']}",
                         violations=[violation],
-                        warnings=validation_result.warnings
+                        warnings=validation_result.warnings,
                     )
 
         return validation_result.cleaned_attributes
@@ -198,8 +203,12 @@ def get_effective_attributes(**overrides: Any) -> dict[str, Any]:
 
 
 # Convenience functions for common attribution patterns
-def set_team_defaults(team: str, project: Optional[str] = None,
-                      cost_center: Optional[str] = None, **kwargs: Any) -> None:
+def set_team_defaults(
+    team: str,
+    project: Optional[str] = None,
+    cost_center: Optional[str] = None,
+    **kwargs: Any,
+) -> None:
     """
     Set default attributes for a team.
 
@@ -218,8 +227,12 @@ def set_team_defaults(team: str, project: Optional[str] = None,
     set_default_attributes(**attrs)
 
 
-def set_customer_context(customer_id: str, customer_name: Optional[str] = None,
-                        tier: Optional[str] = None, **kwargs: Any) -> None:
+def set_customer_context(
+    customer_id: str,
+    customer_name: Optional[str] = None,
+    tier: Optional[str] = None,
+    **kwargs: Any,
+) -> None:
     """
     Set customer context for the current operation scope.
 
