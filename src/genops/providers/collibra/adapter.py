@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import os
 from contextlib import contextmanager
-from typing import Any, Dict, Optional
+from typing import Any
 
 from opentelemetry import trace
 
@@ -30,13 +30,13 @@ class GenOpsCollibraAdapter:
 
     def __init__(
         self,
-        collibra_url: Optional[str] = None,
-        username: Optional[str] = None,
-        password: Optional[str] = None,
-        api_token: Optional[str] = None,
-        domain_id: Optional[str] = None,
-        team: Optional[str] = None,
-        project: Optional[str] = None,
+        collibra_url: str | None = None,
+        username: str | None = None,
+        password: str | None = None,
+        api_token: str | None = None,
+        domain_id: str | None = None,
+        team: str | None = None,
+        project: str | None = None,
         environment: str = "development",
         export_mode: str = "batch",
         batch_size: int = 100,
@@ -44,7 +44,7 @@ class GenOpsCollibraAdapter:
         enable_policy_sync: bool = False,
         policy_sync_interval_minutes: int = 5,
         enable_cost_tracking: bool = True,
-        daily_budget_limit: Optional[float] = None,
+        daily_budget_limit: float | None = None,
         enable_cost_alerts: bool = False,
         auto_validate: bool = True,
     ):
@@ -102,7 +102,7 @@ class GenOpsCollibraAdapter:
 
         # Initialize Collibra client
         self.client = CollibraAPIClient(
-            base_url=self.collibra_url,
+            base_url=self.collibra_url,  # type: ignore
             username=self.username,
             password=self.password,
             api_token=self.api_token,
@@ -134,7 +134,7 @@ class GenOpsCollibraAdapter:
         export_mode_enum = ExportMode(export_mode.lower())
         self.exporter = AssetExporter(
             client=self.client,
-            domain_id=self.domain_id,
+            domain_id=self.domain_id,  # type: ignore[arg-type]
             export_mode=export_mode_enum,
             batch_size=batch_size,
             batch_interval_seconds=batch_interval_seconds,
@@ -240,8 +240,8 @@ class GenOpsCollibraAdapter:
         cost: float,
         provider: str = "",
         model: str = "",
-        tokens_input: Optional[int] = None,
-        tokens_output: Optional[int] = None,
+        tokens_input: int | None = None,
+        tokens_output: int | None = None,
         **metadata,
     ):
         """
@@ -271,7 +271,7 @@ class GenOpsCollibraAdapter:
         span: trace.Span,
         policy_name: str,
         policy_result: str,
-        policy_reason: Optional[str] = None,
+        policy_reason: str | None = None,
     ):
         """
         Record policy enforcement telemetry on a span.
@@ -289,7 +289,7 @@ class GenOpsCollibraAdapter:
             policy_reason=policy_reason,
         )
 
-    def sync_policies(self) -> Dict[str, Any]:
+    def sync_policies(self) -> dict[str, Any]:
         """
         Sync policies from Collibra to GenOps PolicyEngine.
 
@@ -325,7 +325,7 @@ class GenOpsCollibraAdapter:
         if self.policy_importer:
             self.policy_importer.shutdown(timeout=timeout)
 
-    def get_metrics(self) -> Dict[str, Any]:
+    def get_metrics(self) -> dict[str, Any]:
         """
         Get adapter metrics.
 
@@ -349,7 +349,7 @@ class GenOpsCollibraAdapter:
             "buffer_size": self.exporter.get_buffer_size(),
         }
 
-    def get_export_summary(self) -> Dict[str, Any]:
+    def get_export_summary(self) -> dict[str, Any]:
         """
         Get export summary statistics.
 
@@ -371,7 +371,7 @@ class GenOpsCollibraAdapter:
             "last_export_time": stats.last_export_time,
         }
 
-    def _extract_span_attributes(self, span: trace.Span) -> Dict[str, Any]:
+    def _extract_span_attributes(self, span: trace.Span) -> dict[str, Any]:
         """
         Extract all attributes from a span.
 

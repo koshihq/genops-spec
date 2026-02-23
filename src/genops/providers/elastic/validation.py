@@ -5,17 +5,17 @@ Provides comprehensive setup validation with actionable error messages
 and recommendations to ensure smooth developer onboarding.
 """
 
-import os
 import logging
+import os
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import Optional
 from urllib.parse import urlparse
 
 from .client import (
+    ELASTICSEARCH_AVAILABLE,
     ElasticAPIClient,
     ElasticAuthenticationError,
     ElasticConnectionError,
-    ELASTICSEARCH_AVAILABLE,
 )
 
 logger = logging.getLogger(__name__)
@@ -29,10 +29,11 @@ class ElasticValidationResult:
     Provides structured feedback with errors, warnings, and recommendations
     to help developers quickly resolve configuration issues.
     """
+
     valid: bool
-    errors: List[str] = field(default_factory=list)
-    warnings: List[str] = field(default_factory=list)
-    recommendations: List[str] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+    recommendations: list[str] = field(default_factory=list)
 
     # Connection details
     connectivity: bool = False
@@ -171,9 +172,7 @@ def validate_setup(
             result.connectivity = client.health_check()
             if not result.connectivity:
                 result.add_error("Elasticsearch cluster is unhealthy (status: red)")
-                result.add_recommendation(
-                    "Check cluster health: GET /_cluster/health"
-                )
+                result.add_recommendation("Check cluster health: GET /_cluster/health")
         except ElasticAuthenticationError as e:
             result.add_error(f"Authentication failed: {e}")
             result.add_recommendation(
@@ -182,9 +181,7 @@ def validate_setup(
             return result
         except ElasticConnectionError as e:
             result.add_error(f"Connection failed: {e}")
-            result.add_recommendation(
-                "Verify Elasticsearch is running and accessible"
-            )
+            result.add_recommendation("Verify Elasticsearch is running and accessible")
             return result
 
         # Get cluster info
@@ -259,31 +256,22 @@ def _validate_url(url: str) -> dict:
         if not parsed.scheme:
             return {
                 "valid": False,
-                "error": "URL must include scheme (http:// or https://)"
+                "error": "URL must include scheme (http:// or https://)",
             }
 
         if parsed.scheme not in ["http", "https"]:
             return {
                 "valid": False,
-                "error": f"Invalid scheme '{parsed.scheme}'. Use 'http' or 'https'"
+                "error": f"Invalid scheme '{parsed.scheme}'. Use 'http' or 'https'",
             }
 
         if not parsed.netloc:
-            return {
-                "valid": False,
-                "error": "URL must include hostname"
-            }
+            return {"valid": False, "error": "URL must include hostname"}
 
-        return {
-            "valid": True,
-            "insecure": (parsed.scheme == "http")
-        }
+        return {"valid": True, "insecure": (parsed.scheme == "http")}
 
     except Exception as e:
-        return {
-            "valid": False,
-            "error": str(e)
-        }
+        return {"valid": False, "error": str(e)}
 
 
 def _validate_authentication(
@@ -306,8 +294,8 @@ def _validate_authentication(
                 "error": "Elastic Cloud requires authentication (API key or basic auth)",
                 "recommendations": [
                     "Set ELASTIC_API_KEY for API key authentication (recommended)",
-                    "Or set ELASTIC_USERNAME and ELASTIC_PASSWORD for basic auth"
-                ]
+                    "Or set ELASTIC_USERNAME and ELASTIC_PASSWORD for basic auth",
+                ],
             }
         else:
             # Local development - authentication optional
@@ -318,7 +306,7 @@ def _validate_authentication(
                 ],
                 "recommendations": [
                     "Use API key authentication in production: export ELASTIC_API_KEY=<your-key>"
-                ]
+                ],
             }
 
     # Validate basic auth
@@ -326,12 +314,12 @@ def _validate_authentication(
         if not username:
             return {
                 "valid": False,
-                "error": "ELASTIC_PASSWORD provided but ELASTIC_USERNAME is missing"
+                "error": "ELASTIC_PASSWORD provided but ELASTIC_USERNAME is missing",
             }
         if not password:
             return {
                 "valid": False,
-                "error": "ELASTIC_USERNAME provided but ELASTIC_PASSWORD is missing"
+                "error": "ELASTIC_USERNAME provided but ELASTIC_PASSWORD is missing",
             }
 
         return {
@@ -341,16 +329,14 @@ def _validate_authentication(
             ],
             "recommendations": [
                 "API keys provide better security and granular permissions"
-            ]
+            ],
         }
 
     # API key authentication
     if has_api_key:
         return {
             "valid": True,
-            "recommendations": [
-                "✓ Using API key authentication (recommended)"
-            ]
+            "recommendations": ["✓ Using API key authentication (recommended)"],
         }
 
     return {"valid": True}
@@ -382,7 +368,9 @@ def print_validation_result(result: ElasticValidationResult):
             print(f"   • Version: {result.cluster_version}")
 
     # Connectivity
-    print(f"\n🔌 Connectivity: {'✅ Connected' if result.connectivity else '❌ Failed'}")
+    print(
+        f"\n🔌 Connectivity: {'✅ Connected' if result.connectivity else '❌ Failed'}"
+    )
 
     # Permissions
     if result.index_write_permission:

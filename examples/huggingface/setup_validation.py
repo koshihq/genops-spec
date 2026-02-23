@@ -10,54 +10,59 @@ Example usage:
 
 Features demonstrated:
 - Environment variable validation
-- Dependency checking with fix suggestions  
+- Dependency checking with fix suggestions
 - Hugging Face connectivity testing
 - GenOps integration verification
 - Cost calculation testing
 """
 
-import sys
 import os
+import sys
 
 # Add src to path for development
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
+
 
 def main():
     """Run comprehensive Hugging Face GenOps setup validation."""
-    
+
     print("🤗 Starting Hugging Face GenOps Setup Validation...")
     print("This will check your environment, dependencies, and integration setup.\n")
-    
+
     try:
         # Import validation utilities
         from genops.providers.huggingface_validation import (
+            print_huggingface_validation_result,
             validate_huggingface_setup,
-            print_huggingface_validation_result
         )
-        
+
         # Run comprehensive validation
         result = validate_huggingface_setup()
-        
+
         # Display results in user-friendly format
         print_huggingface_validation_result(result)
-        
+
         # Exit with appropriate code
         if result.is_valid:
-            print("✅ Validation passed! Your Hugging Face GenOps setup is ready to use.")
+            print(
+                "✅ Validation passed! Your Hugging Face GenOps setup is ready to use."
+            )
             return 0
         else:
             error_count = len([i for i in result.issues if i.level == "error"])
             print(f"❌ Validation found {error_count} error(s) that need to be fixed.")
             return 1
-            
+
     except ImportError as e:
         print(f"❌ Could not import GenOps Hugging Face validation utilities: {e}")
         print("\n💡 Fix suggestions:")
         print("   1. Install GenOps AI: pip install genops-ai")
-        print("   2. Install with Hugging Face support: pip install genops-ai[huggingface]") 
+        print(
+            "   2. Install with Hugging Face support: pip install genops-ai[huggingface]"
+        )
         print("   3. Check your Python path and virtual environment")
         return 1
-        
+
     except Exception as e:
         print(f"❌ Unexpected error during validation: {e}")
         print("\n💡 Troubleshooting:")
@@ -71,6 +76,7 @@ def quick_check():
     """Quick validation check for CI/automation use."""
     try:
         from genops.providers.huggingface_validation import quick_validate
+
         return quick_validate()
     except ImportError:
         print("❌ GenOps Hugging Face not available")

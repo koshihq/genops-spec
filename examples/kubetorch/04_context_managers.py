@@ -7,12 +7,13 @@ adapters and context managers for fine-grained control.
 Time to run: < 1 minute
 """
 
+import time
+
 from genops.providers.kubetorch import (
-    instrument_kubetorch,
     create_compute_cost_context,
+    instrument_kubetorch,
     reset_cost_aggregator,
 )
-import time
 
 print("=" * 60)
 print("GenOps Kubetorch - Context Manager Patterns")
@@ -48,33 +49,26 @@ with create_compute_cost_context("multi-step-training") as ctx:
         resource_type="cpu",
         instance_type="cpu",
         quantity=16.0,  # 16 CPU-hours
-        operation_name="preprocessing"
+        operation_name="preprocessing",
     )
 
     # Step 2: Model training on GPU
     print("  Step 2: Model training...")
-    ctx.add_gpu_cost(
-        instance_type="a100",
-        gpu_hours=8.0,
-        operation_name="training"
-    )
+    ctx.add_gpu_cost(instance_type="a100", gpu_hours=8.0, operation_name="training")
 
     # Step 3: Checkpoint storage
     print("  Step 3: Saving checkpoints...")
     ctx.add_storage_cost(
         storage_gb_hours=50 * 24,  # 50GB for 24 hours
-        operation_name="checkpoints"
+        operation_name="checkpoints",
     )
 
     # Step 4: Model export and upload
     print("  Step 4: Exporting model...")
-    ctx.add_network_cost(
-        data_transfer_gb=25,
-        operation_name="model_export"
-    )
+    ctx.add_network_cost(data_transfer_gb=25, operation_name="model_export")
 
 print(f"\nTotal Training Pipeline Cost: ${ctx.summary.total_cost:.2f}")
-print(f"\nCost Breakdown by Step:")
+print("\nCost Breakdown by Step:")
 for operation, cost in ctx.summary.cost_by_operation.items():
     print(f"  {operation:20s}: ${cost:7.2f}")
 
@@ -103,7 +97,7 @@ result = adapter.track_compute_deployment(
         "dataset": "wikipedia",
         "batch_size": 64,
         "epochs": 3,
-    }
+    },
 )
 
 print(f"Operation ID: {result['operation_id']}")
@@ -146,11 +140,13 @@ with create_compute_cost_context("full-training-run") as outer_ctx:
 
     # Aggregate all phases in outer context
     total_gpu_hours = (
-        phase1_ctx.summary.total_gpu_hours +
-        phase2_ctx.summary.total_gpu_hours +
-        phase3_ctx.summary.total_gpu_hours
+        phase1_ctx.summary.total_gpu_hours
+        + phase2_ctx.summary.total_gpu_hours
+        + phase3_ctx.summary.total_gpu_hours
     )
-    outer_ctx.add_gpu_cost("a100", gpu_hours=total_gpu_hours, operation_name="aggregate")
+    outer_ctx.add_gpu_cost(
+        "a100", gpu_hours=total_gpu_hours, operation_name="aggregate"
+    )
 
 print(f"\n  Total Training Cost (All Phases): ${outer_ctx.summary.total_cost:.2f}")
 print(f"  Total GPU Hours: {outer_ctx.summary.total_gpu_hours}")

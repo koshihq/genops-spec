@@ -7,14 +7,14 @@ including structure-level tracking, multi-provider cost aggregation, and enterpr
 
 Quick Start:
     from genops.providers.griptape import auto_instrument
-    
+
     # Enable governance for all Griptape operations
     auto_instrument(team="ai-team", project="agent-workflows")
-    
+
     # Your existing Griptape code works unchanged
     from griptape.structures import Agent
     from griptape.tasks import PromptTask
-    
+
     agent = Agent(tasks=[PromptTask("Summarize this text")])
     result = agent.run("Long text to summarize...")
     # ✅ Now includes full GenOps governance tracking
@@ -22,23 +22,23 @@ Quick Start:
 Usage Patterns:
     # Manual adapter approach
     from genops.providers.griptape import GenOpsGriptapeAdapter
-    
+
     adapter = GenOpsGriptapeAdapter(
         team="ai-research",
         project="multi-agent-system",
         daily_budget_limit=100.0
     )
-    
+
     # Track agent execution
     with adapter.track_agent("research-agent") as context:
         result = agent.run("Research question")
         print(f"Total cost: ${context.total_cost:.6f}")
-    
+
     # Track pipeline workflow
     with adapter.track_pipeline("analysis-pipeline") as context:
         result = pipeline.run({"data": input_data})
         print(f"Pipeline cost: ${context.total_cost:.6f}")
-    
+
     # Track parallel workflow
     with adapter.track_workflow("parallel-workflow") as context:
         result = workflow.run({"tasks": task_list})
@@ -58,48 +58,51 @@ Features:
 
 from .adapter import GenOpsGriptapeAdapter, GriptapeRequest
 from .cost_aggregator import GriptapeCostAggregator, GriptapeCostSummary
-from .workflow_monitor import GriptapeWorkflowMonitor, GriptapeStructureMetrics
 from .registration import auto_instrument, instrument_griptape
+from .workflow_monitor import GriptapeStructureMetrics, GriptapeWorkflowMonitor
+
 
 # Convenience functions for common patterns
 def track_agent(agent_id: str, **kwargs):
     """Convenience function for tracking Agent execution."""
     from .adapter import GenOpsGriptapeAdapter
+
     adapter = GenOpsGriptapeAdapter(**kwargs)
     return adapter.track_agent(agent_id)
+
 
 def track_pipeline(pipeline_id: str, **kwargs):
     """Convenience function for tracking Pipeline execution."""
     from .adapter import GenOpsGriptapeAdapter
+
     adapter = GenOpsGriptapeAdapter(**kwargs)
     return adapter.track_pipeline(pipeline_id)
+
 
 def track_workflow(workflow_id: str, **kwargs):
     """Convenience function for tracking Workflow execution."""
     from .adapter import GenOpsGriptapeAdapter
+
     adapter = GenOpsGriptapeAdapter(**kwargs)
     return adapter.track_workflow(workflow_id)
+
 
 __all__ = [
     # Main adapter and request classes
     "GenOpsGriptapeAdapter",
     "GriptapeRequest",
-    
     # Cost aggregation
-    "GriptapeCostAggregator", 
+    "GriptapeCostAggregator",
     "GriptapeCostSummary",
-    
     # Performance monitoring
     "GriptapeWorkflowMonitor",
     "GriptapeStructureMetrics",
-    
     # Auto-instrumentation
     "auto_instrument",
     "instrument_griptape",
-    
     # Convenience functions
     "track_agent",
-    "track_pipeline", 
+    "track_pipeline",
     "track_workflow",
 ]
 

@@ -5,14 +5,15 @@ from __future__ import annotations
 import logging
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from typing import Optional, Dict, Callable
+from datetime import datetime
+from typing import Callable
 
 logger = logging.getLogger(__name__)
 
 
 class BudgetExceededError(Exception):
     """Raised when a budget limit would be exceeded."""
+
     pass
 
 
@@ -31,13 +32,13 @@ class BudgetPeriod:
         now = time.time()
         elapsed_seconds = now - self.period_start
 
-        if self.period_type == 'hourly':
+        if self.period_type == "hourly":
             return elapsed_seconds > 3600
-        elif self.period_type == 'daily':
+        elif self.period_type == "daily":
             return elapsed_seconds > 86400
-        elif self.period_type == 'weekly':
+        elif self.period_type == "weekly":
             return elapsed_seconds > 604800
-        elif self.period_type == 'monthly':
+        elif self.period_type == "monthly":
             return elapsed_seconds > 2592000  # 30 days
         return False
 
@@ -68,12 +69,12 @@ class BudgetManager:
 
     def __init__(
         self,
-        hourly_limit_usd: Optional[float] = None,
-        daily_limit_usd: Optional[float] = None,
-        weekly_limit_usd: Optional[float] = None,
-        monthly_limit_usd: Optional[float] = None,
-        alert_thresholds: Optional[list[float]] = None,
-        alert_callback: Optional[Callable[[str, float, float], None]] = None
+        hourly_limit_usd: float | None = None,
+        daily_limit_usd: float | None = None,
+        weekly_limit_usd: float | None = None,
+        monthly_limit_usd: float | None = None,
+        alert_thresholds: list[float] | None = None,
+        alert_callback: Callable[[str, float, float], None] | None = None,
     ):
         """
         Initialize budget manager.
@@ -87,21 +88,21 @@ class BudgetManager:
             alert_callback: Function to call when alert threshold reached
                             Signature: callback(period_type: str, usage_pct: float, limit: float)
         """
-        self.periods: Dict[str, BudgetPeriod] = {}
+        self.periods: dict[str, BudgetPeriod] = {}
 
         if hourly_limit_usd:
-            self.periods['hourly'] = BudgetPeriod('hourly', hourly_limit_usd)
+            self.periods["hourly"] = BudgetPeriod("hourly", hourly_limit_usd)
         if daily_limit_usd:
-            self.periods['daily'] = BudgetPeriod('daily', daily_limit_usd)
+            self.periods["daily"] = BudgetPeriod("daily", daily_limit_usd)
         if weekly_limit_usd:
-            self.periods['weekly'] = BudgetPeriod('weekly', weekly_limit_usd)
+            self.periods["weekly"] = BudgetPeriod("weekly", weekly_limit_usd)
         if monthly_limit_usd:
-            self.periods['monthly'] = BudgetPeriod('monthly', monthly_limit_usd)
+            self.periods["monthly"] = BudgetPeriod("monthly", monthly_limit_usd)
 
         # Alert configuration
         self.alert_thresholds = alert_thresholds or [0.5, 0.75, 0.9, 1.0]
         self.alert_callback = alert_callback
-        self._alerts_sent: Dict[str, set[float]] = {
+        self._alerts_sent: dict[str, set[float]] = {
             period: set() for period in self.periods.keys()
         }
 
@@ -109,7 +110,9 @@ class BudgetManager:
         self.total_lifetime_cost = 0.0
         self.total_lifetime_requests = 0
 
-        logger.info(f"Budget manager initialized with periods: {list(self.periods.keys())}")
+        logger.info(
+            f"Budget manager initialized with periods: {list(self.periods.keys())}"
+        )
 
     def _check_and_reset_expired_periods(self) -> None:
         """Check and reset any expired budget periods."""
@@ -122,7 +125,9 @@ class BudgetManager:
                 period.reset()
                 self._alerts_sent[period_type].clear()
 
-    def check_budget_availability(self, estimated_cost: float) -> tuple[bool, Optional[str]]:
+    def check_budget_availability(
+        self, estimated_cost: float
+    ) -> tuple[bool, str | None]:
         """
         Check if estimated cost would exceed any budget limits.
 
@@ -166,7 +171,10 @@ class BudgetManager:
                 threshold_pct = threshold * 100
 
                 # Check if we've crossed this threshold and haven't sent alert yet
-                if usage_pct >= threshold_pct and threshold not in self._alerts_sent[period_type]:
+                if (
+                    usage_pct >= threshold_pct
+                    and threshold not in self._alerts_sent[period_type]
+                ):
                     self._send_alert(period_type, usage_pct, period.limit_usd)
                     self._alerts_sent[period_type].add(threshold)
 
@@ -191,7 +199,7 @@ class BudgetManager:
             except Exception as e:
                 logger.error(f"Alert callback failed: {e}")
 
-    def get_budget_status(self) -> Dict:
+    def get_budget_status(self) -> dict:
         """
         Get current budget status for all periods.
 
@@ -201,25 +209,26 @@ class BudgetManager:
         self._check_and_reset_expired_periods()
 
         status = {
-            'periods': {},
-            'lifetime': {
-                'total_cost': self.total_lifetime_cost,
-                'total_requests': self.total_lifetime_requests,
-                'avg_cost_per_request': (
+            "periods": {},
+            "lifetime": {
+                "total_cost": self.total_lifetime_cost,
+                "total_requests": self.total_lifetime_requests,
+                "avg_cost_per_request": (
                     self.total_lifetime_cost / self.total_lifetime_requests
-                    if self.total_lifetime_requests > 0 else 0.0
-                )
-            }
+                    if self.total_lifetime_requests > 0
+                    else 0.0
+                ),
+            },
         }
 
         for period_type, period in self.periods.items():
-            status['periods'][period_type] = {
-                'limit': period.limit_usd,
-                'current_usage': period.current_usage,
-                'remaining': period.get_remaining(),
-                'usage_percentage': period.get_usage_percentage(),
-                'request_count': period.request_count,
-                'period_start': datetime.fromtimestamp(period.period_start).isoformat()
+            status["periods"][period_type] = {  # type: ignore[assignment]
+                "limit": period.limit_usd,
+                "current_usage": period.current_usage,
+                "remaining": period.get_remaining(),
+                "usage_percentage": period.get_usage_percentage(),
+                "request_count": period.request_count,
+                "period_start": datetime.fromtimestamp(period.period_start).isoformat(),
             }
 
         return status
@@ -233,7 +242,7 @@ class BudgetManager:
         print("=" * 70)
 
         # Period budgets
-        for period_type, period_status in status['periods'].items():
+        for period_type, period_status in status["periods"].items():
             print(f"\n{period_type.upper()} BUDGET:")
             print(f"   Limit:      ${period_status['limit']:.2f}")
             print(f"   Used:       ${period_status['current_usage']:.6f}")
@@ -242,7 +251,7 @@ class BudgetManager:
             print(f"   Requests:   {period_status['request_count']}")
 
             # Visual progress bar
-            usage_pct = period_status['usage_percentage']
+            usage_pct = period_status["usage_percentage"]
             bar_length = 40
             filled = int(bar_length * usage_pct / 100)
             bar = "█" * filled + "░" * (bar_length - filled)
@@ -258,7 +267,7 @@ class BudgetManager:
             print(f"   {indicator} [{bar}] {usage_pct:.1f}%")
 
         # Lifetime stats
-        print(f"\nLIFETIME STATS:")
+        print("\nLIFETIME STATS:")
         print(f"   Total Cost:  ${status['lifetime']['total_cost']:.6f}")
         print(f"   Requests:    {status['lifetime']['total_requests']}")
         print(f"   Avg/Request: ${status['lifetime']['avg_cost_per_request']:.8f}")
@@ -291,11 +300,11 @@ class BudgetManager:
 
 
 def create_budget_manager(
-    hourly_limit: Optional[float] = None,
-    daily_limit: Optional[float] = None,
-    weekly_limit: Optional[float] = None,
-    monthly_limit: Optional[float] = None,
-    **kwargs
+    hourly_limit: float | None = None,
+    daily_limit: float | None = None,
+    weekly_limit: float | None = None,
+    monthly_limit: float | None = None,
+    **kwargs,
 ) -> BudgetManager:
     """
     Factory function to create a budget manager.
@@ -315,14 +324,14 @@ def create_budget_manager(
         daily_limit_usd=daily_limit,
         weekly_limit_usd=weekly_limit,
         monthly_limit_usd=monthly_limit,
-        **kwargs
+        **kwargs,
     )
 
 
 # Export public API
 __all__ = [
-    'BudgetManager',
-    'BudgetPeriod',
-    'BudgetExceededError',
-    'create_budget_manager',
+    "BudgetManager",
+    "BudgetPeriod",
+    "BudgetExceededError",
+    "create_budget_manager",
 ]

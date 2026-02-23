@@ -11,20 +11,19 @@ Tests the core adapter functionality including:
 - Performance monitoring
 """
 
+from unittest.mock import Mock, patch
+
 import pytest
-import json
-from unittest.mock import Mock, patch, MagicMock
-from datetime import datetime
-from typing import Dict, Any
 
 # Import the modules under test
 try:
     from genops.providers.helicone import (
-        GenOpsHeliconeAdapter, 
-        HeliconeResponse, 
-        MultiProviderResponse,
-        instrument_helicone
+        GenOpsHeliconeAdapter,
+        HeliconeResponse,  # noqa: F401
+        MultiProviderResponse,  # noqa: F401
+        instrument_helicone,
     )
+
     HELICONE_AVAILABLE = True
 except ImportError:
     HELICONE_AVAILABLE = False
@@ -37,34 +36,34 @@ class TestGenOpsHeliconeAdapter:
     def setup_method(self):
         """Set up test fixtures."""
         self.adapter = GenOpsHeliconeAdapter(
-            helicone_api_key='test-helicone-key',
+            helicone_api_key="test-helicone-key",
             provider_keys={
-                'openai': 'test-openai-key',
-                'anthropic': 'test-anthropic-key'
-            }
+                "openai": "test-openai-key",
+                "anthropic": "test-anthropic-key",
+            },
         )
         self.sample_governance_attrs = {
-            'team': 'test-team',
-            'project': 'test-project',
-            'customer_id': 'test-customer',
-            'environment': 'test'
+            "team": "test-team",
+            "project": "test-project",
+            "customer_id": "test-customer",
+            "environment": "test",
         }
 
     def test_adapter_initialization(self):
         """Test adapter initializes correctly."""
-        assert self.adapter.helicone_api_key == 'test-helicone-key'
-        assert 'openai' in self.adapter.provider_keys
-        assert 'anthropic' in self.adapter.provider_keys
+        assert self.adapter.helicone_api_key == "test-helicone-key"
+        assert "openai" in self.adapter.provider_keys
+        assert "anthropic" in self.adapter.provider_keys
 
-    @patch('requests.post')
+    @patch("requests.post")
     def test_single_provider_chat(self, mock_post):
         """Test single provider chat completion."""
         # Mock response
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.json.return_value = {
-            'choices': [{'message': {'content': 'Test response'}}],
-            'usage': {'prompt_tokens': 10, 'completion_tokens': 5, 'total_tokens': 15}
+            "choices": [{"message": {"content": "Test response"}}],
+            "usage": {"prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15},
         }
         mock_post.return_value = mock_response
 
@@ -72,29 +71,33 @@ class TestGenOpsHeliconeAdapter:
             message="Test message",
             provider="openai",
             model="gpt-3.5-turbo",
-            **self.sample_governance_attrs
+            **self.sample_governance_attrs,
         )
 
         assert response is not None
         assert mock_post.called
 
-    @patch('requests.post')
+    @patch("requests.post")
     def test_multi_provider_chat(self, mock_post):
         """Test multi-provider chat with routing."""
         # Mock response
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.json.return_value = {
-            'choices': [{'message': {'content': 'Test response'}}],
-            'usage': {'prompt_tokens': 10, 'completion_tokens': 5, 'total_tokens': 15}
+            "choices": [{"message": {"content": "Test response"}}],
+            "usage": {"prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15},
         }
         mock_post.return_value = mock_response
 
         response = self.adapter.multi_provider_chat(
             message="Test message",
             providers=["openai", "anthropic"],
-            routing_strategy="cost_optimized",
-            **self.sample_governance_attrs
+            model_preferences={
+                "openai": "gpt-3.5-turbo",
+                "anthropic": "claude-3-sonnet",
+            },
+            routing_strategy=None,
+            **self.sample_governance_attrs,
         )
 
         assert response is not None
@@ -135,8 +138,7 @@ class TestHeliconeInstrumentation:
     def test_instrument_helicone(self):
         """Test the instrument_helicone function."""
         adapter = instrument_helicone(
-            helicone_api_key="test-key",
-            provider_keys={"openai": "test-openai-key"}
+            helicone_api_key="test-key", provider_keys={"openai": "test-openai-key"}
         )
         assert adapter is not None
         assert isinstance(adapter, GenOpsHeliconeAdapter)
@@ -146,7 +148,7 @@ class TestHeliconeInstrumentation:
         pass
 
 
-@pytest.mark.skipif(not HELICONE_AVAILABLE, reason="Helicone provider not available") 
+@pytest.mark.skipif(not HELICONE_AVAILABLE, reason="Helicone provider not available")
 class TestHeliconeIntegration:
     """Integration tests for Helicone provider."""
 

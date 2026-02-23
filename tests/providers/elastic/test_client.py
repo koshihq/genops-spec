@@ -10,20 +10,23 @@ Tests cover:
 - Connection resilience
 """
 
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import Mock, patch, MagicMock
+
+pytest.importorskip("elasticsearch")
+from elasticsearch.exceptions import (
+    AuthenticationException,
+)
 from elasticsearch.exceptions import (
     ConnectionError as ESConnectionError,
-    AuthenticationException,
-    TransportError,
 )
 
 from genops.providers.elastic.client import (
     ElasticAPIClient,
-    ElasticDocument,
     ElasticAuthenticationError,
     ElasticConnectionError,
-    ElasticIndexError,
+    ElasticDocument,
 )
 
 
@@ -32,31 +35,39 @@ class TestElasticClientInitialization:
 
     def test_client_initialization_with_api_key(self, mock_elasticsearch_client):
         """Test client initialization with API key authentication."""
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             client = ElasticAPIClient(
-                elastic_url="https://localhost:9200",
-                api_key="test-api-key"
+                elastic_url="https://localhost:9200", api_key="test-api-key"
             )
 
             assert client.client is not None
 
     def test_client_initialization_with_basic_auth(self, mock_elasticsearch_client):
         """Test client initialization with basic authentication."""
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             client = ElasticAPIClient(
                 elastic_url="https://localhost:9200",
                 username="elastic",
-                password="changeme"
+                password="changeme",
             )
 
             assert client.client is not None
 
     def test_client_initialization_with_cloud_id(self, mock_elasticsearch_client):
         """Test client initialization with Elastic Cloud ID."""
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             client = ElasticAPIClient(
                 cloud_id="my-deployment:dXMtZWFzdC0xLmF3cy5mb3VuZC5pbyQ=",
-                api_key="test-api-key"
+                api_key="test-api-key",
             )
 
             assert client.client is not None
@@ -68,11 +79,12 @@ class TestElasticClientInitialization:
 
     def test_client_initialization_with_custom_timeout(self, mock_elasticsearch_client):
         """Test client initialization with custom timeout."""
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             client = ElasticAPIClient(
-                elastic_url="https://localhost:9200",
-                api_key="test-api-key",
-                timeout=60
+                elastic_url="https://localhost:9200", api_key="test-api-key", timeout=60
             )
 
             assert client.timeout == 60
@@ -83,10 +95,12 @@ class TestElasticClientHealthCheck:
 
     def test_health_check_success(self, mock_elasticsearch_client):
         """Test successful health check."""
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             client = ElasticAPIClient(
-                elastic_url="https://localhost:9200",
-                api_key="test-api-key"
+                elastic_url="https://localhost:9200", api_key="test-api-key"
             )
 
             result = client.health_check()
@@ -95,12 +109,16 @@ class TestElasticClientHealthCheck:
 
     def test_health_check_connection_failure(self, mock_elasticsearch_client):
         """Test health check with connection failure."""
-        mock_elasticsearch_client.info.side_effect = ESConnectionError("Connection failed")
+        mock_elasticsearch_client.info.side_effect = ESConnectionError(
+            "Connection failed"
+        )
 
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             client = ElasticAPIClient(
-                elastic_url="https://localhost:9200",
-                api_key="test-api-key"
+                elastic_url="https://localhost:9200", api_key="test-api-key"
             )
 
             result = client.health_check()
@@ -108,12 +126,16 @@ class TestElasticClientHealthCheck:
 
     def test_health_check_authentication_failure(self, mock_elasticsearch_client):
         """Test health check with authentication failure."""
-        mock_elasticsearch_client.info.side_effect = AuthenticationException("Auth failed")
+        mock_elasticsearch_client.info.side_effect = AuthenticationException(
+            "Auth failed"
+        )
 
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             client = ElasticAPIClient(
-                elastic_url="https://localhost:9200",
-                api_key="invalid-key"
+                elastic_url="https://localhost:9200", api_key="invalid-key"
             )
 
             with pytest.raises(ElasticAuthenticationError):
@@ -125,10 +147,12 @@ class TestElasticClientBulkIndexing:
 
     def test_bulk_index_single_document(self, mock_elasticsearch_client):
         """Test bulk indexing with single document."""
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             client = ElasticAPIClient(
-                elastic_url="https://localhost:9200",
-                api_key="test-api-key"
+                elastic_url="https://localhost:9200", api_key="test-api-key"
             )
 
             doc = ElasticDocument(
@@ -138,28 +162,30 @@ class TestElasticClientBulkIndexing:
                 operation_name="test-op",
                 operation_type="ai_operation",
                 team="test-team",
-                cost_total=0.05
+                cost_total=0.05,
             )
 
             result = client.bulk_index(
-                index_name="genops-ai-operations",
-                documents=[doc.to_dict()]
+                index_name="genops-ai-operations", documents=[doc.to_dict()]
             )
 
             assert result["success"] is True
             mock_elasticsearch_client.bulk.assert_called_once()
 
-    def test_bulk_index_multiple_documents(self, mock_elasticsearch_client, sample_batch_events):
+    def test_bulk_index_multiple_documents(
+        self, mock_elasticsearch_client, sample_batch_events
+    ):
         """Test bulk indexing with multiple documents."""
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             client = ElasticAPIClient(
-                elastic_url="https://localhost:9200",
-                api_key="test-api-key"
+                elastic_url="https://localhost:9200", api_key="test-api-key"
             )
 
             result = client.bulk_index(
-                index_name="genops-ai-operations",
-                documents=sample_batch_events
+                index_name="genops-ai-operations", documents=sample_batch_events
             )
 
             assert result["success"] is True
@@ -172,14 +198,21 @@ class TestElasticClientBulkIndexing:
             "errors": True,
             "items": [
                 {"index": {"status": 201}},
-                {"index": {"status": 400, "error": {"type": "mapper_parsing_exception"}}}
-            ]
+                {
+                    "index": {
+                        "status": 400,
+                        "error": {"type": "mapper_parsing_exception"},
+                    }
+                },
+            ],
         }
 
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             client = ElasticAPIClient(
-                elastic_url="https://localhost:9200",
-                api_key="test-api-key"
+                elastic_url="https://localhost:9200", api_key="test-api-key"
             )
 
             doc = ElasticDocument(
@@ -187,12 +220,12 @@ class TestElasticClientBulkIndexing:
                 trace_id="abc123",
                 span_id="def456",
                 operation_name="test-op",
-                operation_type="ai_operation"
+                operation_type="ai_operation",
             )
 
             result = client.bulk_index(
                 index_name="genops-ai-operations",
-                documents=[doc.to_dict(), doc.to_dict()]
+                documents=[doc.to_dict(), doc.to_dict()],
             )
 
             assert result["success"] is False
@@ -200,12 +233,16 @@ class TestElasticClientBulkIndexing:
 
     def test_bulk_index_connection_error(self, mock_elasticsearch_client):
         """Test bulk indexing with connection error."""
-        mock_elasticsearch_client.bulk.side_effect = ESConnectionError("Connection lost")
+        mock_elasticsearch_client.bulk.side_effect = ESConnectionError(
+            "Connection lost"
+        )
 
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             client = ElasticAPIClient(
-                elastic_url="https://localhost:9200",
-                api_key="test-api-key"
+                elastic_url="https://localhost:9200", api_key="test-api-key"
             )
 
             doc = ElasticDocument(
@@ -213,13 +250,12 @@ class TestElasticClientBulkIndexing:
                 trace_id="abc123",
                 span_id="def456",
                 operation_name="test-op",
-                operation_type="ai_operation"
+                operation_type="ai_operation",
             )
 
             with pytest.raises(ElasticConnectionError):
                 client.bulk_index(
-                    index_name="genops-ai-operations",
-                    documents=[doc.to_dict()]
+                    index_name="genops-ai-operations", documents=[doc.to_dict()]
                 )
 
 
@@ -228,29 +264,35 @@ class TestElasticClientIndexManagement:
 
     def test_create_index_template(self, mock_elasticsearch_client):
         """Test creating an index template."""
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             client = ElasticAPIClient(
-                elastic_url="https://localhost:9200",
-                api_key="test-api-key"
+                elastic_url="https://localhost:9200", api_key="test-api-key"
             )
 
             client.create_index_template(
                 template_name="genops-ai-operations",
-                index_patterns=["genops-ai-operations-*"]
+                index_patterns=["genops-ai-operations-*"],
             )
 
             # Verify template creation was attempted
-            assert mock_elasticsearch_client.indices.put_template.called or \
-                   mock_elasticsearch_client.indices.put_index_template.called
+            assert (
+                mock_elasticsearch_client.indices.put_template.called
+                or mock_elasticsearch_client.indices.put_index_template.called
+            )
 
     def test_index_exists_check(self, mock_elasticsearch_client):
         """Test checking if an index exists."""
         mock_elasticsearch_client.indices.exists.return_value = True
 
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             client = ElasticAPIClient(
-                elastic_url="https://localhost:9200",
-                api_key="test-api-key"
+                elastic_url="https://localhost:9200", api_key="test-api-key"
             )
 
             exists = client.index_exists("genops-ai-operations-2024-01")
@@ -261,15 +303,17 @@ class TestElasticClientIndexManagement:
         mock_elasticsearch_client.indices.exists.return_value = False
         mock_elasticsearch_client.indices.create.return_value = {"acknowledged": True}
 
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             client = ElasticAPIClient(
-                elastic_url="https://localhost:9200",
-                api_key="test-api-key"
+                elastic_url="https://localhost:9200", api_key="test-api-key"
             )
 
             result = client.create_index(
                 index_name="genops-ai-operations-2024-01",
-                mappings={"properties": {"timestamp": {"type": "date"}}}
+                mappings={"properties": {"timestamp": {"type": "date"}}},
             )
 
             assert result["acknowledged"] is True
@@ -281,15 +325,16 @@ class TestElasticClientILMManagement:
 
     def test_create_ilm_policy(self, mock_elasticsearch_client):
         """Test creating an ILM policy."""
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             client = ElasticAPIClient(
-                elastic_url="https://localhost:9200",
-                api_key="test-api-key"
+                elastic_url="https://localhost:9200", api_key="test-api-key"
             )
 
             client.create_ilm_policy(
-                policy_name="genops-ai-ilm-policy",
-                retention_days=90
+                policy_name="genops-ai-ilm-policy", retention_days=90
             )
 
             # Verify ILM policy creation was attempted
@@ -306,7 +351,7 @@ class TestElasticDocument:
             trace_id="abc123",
             span_id="def456",
             operation_name="test-op",
-            operation_type="ai_operation"
+            operation_type="ai_operation",
         )
 
         assert doc.timestamp == "2024-01-18T12:00:00Z"
@@ -324,7 +369,7 @@ class TestElasticDocument:
             team="test-team",
             project="test-project",
             customer_id="customer-123",
-            cost_center="engineering"
+            cost_center="engineering",
         )
 
         assert doc.team == "test-team"
@@ -342,7 +387,7 @@ class TestElasticDocument:
             operation_type="ai_operation",
             team="test-team",
             project=None,  # None value
-            cost_total=0.05
+            cost_total=0.05,
         )
 
         doc_dict = doc.to_dict()
@@ -358,7 +403,7 @@ class TestElasticDocument:
             span_id="def456",
             operation_name="test-op",
             operation_type="ai_operation",
-            attributes={"model_version": "v1.0", "user_segment": "premium"}
+            attributes={"model_version": "v1.0", "user_segment": "premium"},
         )
 
         doc_dict = doc.to_dict()

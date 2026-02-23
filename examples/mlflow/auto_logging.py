@@ -17,11 +17,11 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 import mlflow
 import mlflow.sklearn
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-from sklearn.linear_model import LogisticRegression
 from sklearn.datasets import make_classification
-from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
+from sklearn.model_selection import cross_val_score, train_test_split
 
 from genops.providers.mlflow import instrument_mlflow
 
@@ -34,11 +34,11 @@ def main():
     print()
 
     # Configuration
-    tracking_uri = os.getenv('MLFLOW_TRACKING_URI', 'file:///tmp/mlruns')
-    team = os.getenv('GENOPS_TEAM', 'ml-team')
-    project = os.getenv('GENOPS_PROJECT', 'auto-logging-demo')
+    tracking_uri = os.getenv("MLFLOW_TRACKING_URI", "file:///tmp/mlruns")
+    team = os.getenv("GENOPS_TEAM", "ml-team")
+    project = os.getenv("GENOPS_PROJECT", "auto-logging-demo")
 
-    print(f"Configuration:")
+    print("Configuration:")
     print(f"  Tracking URI: {tracking_uri}")
     print(f"  Team: {team}")
     print(f"  Project: {project}")
@@ -46,10 +46,7 @@ def main():
 
     # Create adapter
     adapter = instrument_mlflow(
-        tracking_uri=tracking_uri,
-        team=team,
-        project=project,
-        environment="development"
+        tracking_uri=tracking_uri, team=team, project=project, environment="development"
     )
 
     print("✓ MLflow adapter created")
@@ -63,7 +60,7 @@ def main():
         n_informative=15,
         n_redundant=5,
         n_classes=2,
-        random_state=42
+        random_state=42,
     )
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42
@@ -84,17 +81,13 @@ def main():
     print()
 
     with adapter.track_mlflow_run(
-        experiment_name="auto-logging-demo",
-        run_name="random-forest-auto"
-    ) as run:
+        experiment_name="auto-logging-demo", run_name="random-forest-auto"
+    ):
         print("Training Random Forest...")
 
         # Train model - parameters and metrics automatically logged
         model = RandomForestClassifier(
-            n_estimators=100,
-            max_depth=10,
-            min_samples_split=5,
-            random_state=42
+            n_estimators=100, max_depth=10, min_samples_split=5, random_state=42
         )
         model.fit(X_train, y_train)
 
@@ -103,11 +96,11 @@ def main():
 
         # Calculate additional metrics (auto-logged)
         accuracy = accuracy_score(y_test, y_pred)
-        f1 = f1_score(y_test, y_pred, average='weighted')
-        precision = precision_score(y_test, y_pred, average='weighted')
-        recall = recall_score(y_test, y_pred, average='weighted')
+        f1 = f1_score(y_test, y_pred, average="weighted")
+        precision = precision_score(y_test, y_pred, average="weighted")
+        recall = recall_score(y_test, y_pred, average="weighted")
 
-        print(f"  ✓ Model trained")
+        print("  ✓ Model trained")
         print(f"  Accuracy: {accuracy:.4f}")
         print(f"  F1 Score: {f1:.4f}")
         print(f"  Precision: {precision:.4f}")
@@ -129,17 +122,13 @@ def main():
     print("-" * 70)
 
     with adapter.track_mlflow_run(
-        experiment_name="auto-logging-demo",
-        run_name="gradient-boosting-auto"
-    ) as run:
+        experiment_name="auto-logging-demo", run_name="gradient-boosting-auto"
+    ):
         print("Training Gradient Boosting...")
 
         # Train model - everything automatically logged
         model = GradientBoostingClassifier(
-            n_estimators=50,
-            learning_rate=0.1,
-            max_depth=5,
-            random_state=42
+            n_estimators=50, learning_rate=0.1, max_depth=5, random_state=42
         )
         model.fit(X_train, y_train)
 
@@ -147,7 +136,7 @@ def main():
         y_pred = model.predict(X_test)
         accuracy = accuracy_score(y_test, y_pred)
 
-        print(f"  ✓ Model trained")
+        print("  ✓ Model trained")
         print(f"  Accuracy: {accuracy:.4f}")
         print()
 
@@ -165,24 +154,19 @@ def main():
     print("-" * 70)
 
     with adapter.track_mlflow_run(
-        experiment_name="auto-logging-demo",
-        run_name="logistic-regression-auto"
-    ) as run:
+        experiment_name="auto-logging-demo", run_name="logistic-regression-auto"
+    ):
         print("Training Logistic Regression...")
 
         # Train model
-        model = LogisticRegression(
-            max_iter=1000,
-            solver='lbfgs',
-            random_state=42
-        )
+        model = LogisticRegression(max_iter=1000, solver="lbfgs", random_state=42)
         model.fit(X_train, y_train)
 
         # Predictions
         y_pred = model.predict(X_test)
         accuracy = accuracy_score(y_test, y_pred)
 
-        print(f"  ✓ Model trained")
+        print("  ✓ Model trained")
         print(f"  Accuracy: {accuracy:.4f}")
         print()
 
@@ -200,9 +184,8 @@ def main():
     print("-" * 70)
 
     with adapter.track_mlflow_run(
-        experiment_name="auto-logging-demo",
-        run_name="cross-validation-auto"
-    ) as run:
+        experiment_name="auto-logging-demo", run_name="cross-validation-auto"
+    ):
         print("Running 5-fold cross-validation...")
 
         model = RandomForestClassifier(n_estimators=50, random_state=42)
@@ -210,9 +193,11 @@ def main():
         # Cross-validation - automatically logged
         cv_scores = cross_val_score(model, X_train, y_train, cv=5)
 
-        print(f"  ✓ Cross-validation complete")
+        print("  ✓ Cross-validation complete")
         print(f"  CV Scores: {cv_scores}")
-        print(f"  Mean CV Score: {cv_scores.mean():.4f} (+/- {cv_scores.std() * 2:.4f})")
+        print(
+            f"  Mean CV Score: {cv_scores.mean():.4f} (+/- {cv_scores.std() * 2:.4f})"
+        )
         print()
 
         # Train final model on full training set
@@ -242,9 +227,8 @@ def main():
     print()
 
     with adapter.track_mlflow_run(
-        experiment_name="auto-logging-demo",
-        run_name="manual-logging"
-    ) as run:
+        experiment_name="auto-logging-demo", run_name="manual-logging"
+    ):
         print("Training with manual logging...")
 
         model = RandomForestClassifier(n_estimators=50, random_state=42)
@@ -258,7 +242,7 @@ def main():
         mlflow.sklearn.log_model(model, "model")
 
         print(f"  ✓ Model trained - Accuracy: {accuracy:.4f}")
-        print(f"  ✓ Parameters and metrics manually logged")
+        print("  ✓ Parameters and metrics manually logged")
         print()
 
     # Re-enable auto-logging
@@ -274,7 +258,7 @@ def main():
     print("=" * 70)
 
     metrics = adapter.get_metrics()
-    print(f"\nGovernance Metrics:")
+    print("\nGovernance Metrics:")
     print(f"  Daily Usage: ${metrics['daily_usage']:.6f}")
     print(f"  Operations Tracked: {metrics['operation_count']}")
     print(f"  Runs: {metrics.get('run_count', 'N/A')}")
@@ -305,9 +289,9 @@ def main():
     print()
     print("View your results:")
     print(f"  1. Start MLflow UI: mlflow ui --backend-store-uri {tracking_uri}")
-    print(f"  2. Open browser: http://localhost:5000")
-    print(f"  3. Navigate to experiment 'auto-logging-demo'")
-    print(f"  4. Compare auto-logged vs manual-logged runs")
+    print("  2. Open browser: http://localhost:5000")
+    print("  3. Navigate to experiment 'auto-logging-demo'")
+    print("  4. Compare auto-logged vs manual-logged runs")
     print()
     print("Governance features enabled:")
     print(f"  ✓ All auto-logged operations attributed to team '{team}'")
@@ -336,5 +320,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n\nError running example: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

@@ -7,11 +7,9 @@ and exporting to Elasticsearch with configurable modes (BATCH/REALTIME/HYBRID).
 
 import logging
 import os
-import time
+from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import Any, Dict, Optional, Iterator
-from datetime import datetime
-import uuid
+from typing import Any, Optional
 
 from opentelemetry import trace
 from opentelemetry.trace import Span, Status, StatusCode
@@ -170,7 +168,9 @@ class GenOpsElasticAdapter:
                 policy_name=policy_name,
                 retention_days=self.ilm_retention_days,
             )
-            logger.info(f"ILM policy created: {policy_name} (retention: {self.ilm_retention_days} days)")
+            logger.info(
+                f"ILM policy created: {policy_name} (retention: {self.ilm_retention_days} days)"
+            )
         except Exception as e:
             logger.warning(f"ILM setup failed (may not be supported): {e}")
 
@@ -263,7 +263,9 @@ class GenOpsElasticAdapter:
                 "start_time": span.start_time,
                 "end_time": span.end_time,
                 "status": {
-                    "status_code": span.status.status_code.name if span.status else "UNSET"
+                    "status_code": span.status.status_code.name
+                    if span.status
+                    else "UNSET"
                 },
                 "attributes": span.attributes if hasattr(span, "attributes") else {},
             }
@@ -392,7 +394,7 @@ class GenOpsElasticAdapter:
         self.exporter.shutdown()
         self.client.close()
 
-    def get_metrics(self) -> Dict[str, Any]:
+    def get_metrics(self) -> dict[str, Any]:
         """
         Get adapter metrics and statistics.
 
@@ -414,7 +416,7 @@ class GenOpsElasticAdapter:
             },
         }
 
-    def get_export_summary(self) -> Dict[str, Any]:
+    def get_export_summary(self) -> dict[str, Any]:
         """
         Get export performance summary.
 

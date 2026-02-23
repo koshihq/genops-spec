@@ -34,12 +34,24 @@ class GenOpsOpenAIAdapter:
 
         # Define governance and request attributes
         self.GOVERNANCE_ATTRIBUTES = {
-            'team', 'project', 'feature', 'customer_id', 'customer',
-            'environment', 'cost_center', 'user_id'
+            "team",
+            "project",
+            "feature",
+            "customer_id",
+            "customer",
+            "environment",
+            "cost_center",
+            "user_id",
         }
         self.REQUEST_ATTRIBUTES = {
-            'temperature', 'max_tokens', 'top_p', 'frequency_penalty',
-            'presence_penalty', 'stop', 'seed', 'stream'
+            "temperature",
+            "max_tokens",
+            "top_p",
+            "frequency_penalty",
+            "presence_penalty",
+            "stop",
+            "seed",
+            "stream",
         }
 
     def _extract_attributes(self, kwargs: dict) -> tuple[dict, dict, dict]:
@@ -89,10 +101,17 @@ class GenOpsOpenAIAdapter:
         # Add effective attributes (defaults + context + governance)
         try:
             from genops.core.context import get_effective_attributes
+
             effective_attrs = get_effective_attributes(**governance_attrs)
             trace_attrs.update(effective_attrs)
-        except (ImportError, Exception):
-            # Fallback to just governance attributes
+        except ImportError:
+            # Context module not available, use raw governance attributes
+            trace_attrs.update(governance_attrs)
+        except Exception:
+            logger.warning(
+                "Failed to compute effective attributes, falling back to raw governance attrs",
+                exc_info=True,
+            )
             trace_attrs.update(governance_attrs)
 
         with self.telemetry.trace_operation(**trace_attrs) as span:
@@ -157,10 +176,17 @@ class GenOpsOpenAIAdapter:
         # Add effective attributes (defaults + context + governance)
         try:
             from genops.core.context import get_effective_attributes
+
             effective_attrs = get_effective_attributes(**governance_attrs)
             trace_attrs.update(effective_attrs)
-        except (ImportError, Exception):
-            # Fallback to just governance attributes
+        except ImportError:
+            # Context module not available, use raw governance attributes
+            trace_attrs.update(governance_attrs)
+        except Exception:
+            logger.warning(
+                "Failed to compute effective attributes, falling back to raw governance attrs",
+                exc_info=True,
+            )
             trace_attrs.update(governance_attrs)
 
         with self.telemetry.trace_operation(**trace_attrs) as span:
@@ -323,6 +349,7 @@ def validate_setup():
     """Validate OpenAI provider setup."""
     try:
         from .openai_validation import validate_openai_setup
+
         return validate_openai_setup()
     except ImportError:
         logger.warning("OpenAI validation utilities not available")
@@ -333,6 +360,7 @@ def print_validation_result(result):
     """Print validation result in user-friendly format."""
     try:
         from .openai_validation import print_openai_validation_result
+
         print_openai_validation_result(result)
     except ImportError:
         logger.warning("OpenAI validation utilities not available")

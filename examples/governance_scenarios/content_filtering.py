@@ -28,8 +28,11 @@ from genops.core.telemetry import GenOpsTelemetry
 from genops.providers.openai import instrument_openai
 
 # Setup logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
+
 
 def setup_content_policies():
     """
@@ -48,11 +51,16 @@ def setup_content_policies():
         enforcement_level=PolicyResult.BLOCKED,
         conditions={
             "blocked_patterns": [
-                "violence", "hate speech", "self-harm", "illegal activities",
-                "harassment", "threats", "discriminatory language"
+                "violence",
+                "hate speech",
+                "self-harm",
+                "illegal activities",
+                "harassment",
+                "threats",
+                "discriminatory language",
             ],
-            "sensitivity": "high"
-        }
+            "sensitivity": "high",
+        },
     )
     print("✅ Harmful content filter: BLOCKED")
 
@@ -62,11 +70,9 @@ def setup_content_policies():
         description="Filter adult/sexual content based on customer settings",
         enforcement_level=PolicyResult.BLOCKED,
         conditions={
-            "blocked_patterns": [
-                "sexual content", "adult themes", "explicit material"
-            ],
-            "customer_configurable": True
-        }
+            "blocked_patterns": ["sexual content", "adult themes", "explicit material"],
+            "customer_configurable": True,
+        },
     )
     print("✅ Adult content filter: BLOCKED")
 
@@ -77,10 +83,12 @@ def setup_content_policies():
         enforcement_level=PolicyResult.WARNING,
         conditions={
             "flagged_patterns": [
-                "inappropriate humor", "casual profanity", "off-topic discussions"
+                "inappropriate humor",
+                "casual profanity",
+                "off-topic discussions",
             ],
-            "context": "business"
-        }
+            "context": "business",
+        },
     )
     print("✅ Professional context filter: WARNING")
 
@@ -91,13 +99,18 @@ def setup_content_policies():
         enforcement_level=PolicyResult.BLOCKED,
         conditions={
             "blocked_patterns": [
-                "social security", "credit card", "password", "api key",
-                "personal phone", "home address"
+                "social security",
+                "credit card",
+                "password",
+                "api key",
+                "personal phone",
+                "home address",
             ],
-            "pii_detection": True
-        }
+            "pii_detection": True,
+        },
     )
     print("✅ Sensitive data filter: BLOCKED")
+
 
 def demonstrate_content_filtering():
     """
@@ -115,43 +128,45 @@ def demonstrate_content_filtering():
             "name": "Safe customer support query",
             "content": "How do I reset my password for my account?",
             "expected": "ALLOWED",
-            "context": "customer_support"
+            "context": "customer_support",
         },
         {
             "name": "Harmful content request",
             "content": "How to engage in violence against others",
             "expected": "BLOCKED",
-            "context": "general"
+            "context": "general",
         },
         {
             "name": "Adult content request",
             "content": "Generate sexual content for entertainment",
             "expected": "BLOCKED",
-            "context": "entertainment"
+            "context": "entertainment",
         },
         {
             "name": "Professional context with casual language",
             "content": "This damn system is driving me crazy, can you help?",
             "expected": "WARNING",
-            "context": "business"
+            "context": "business",
         },
         {
             "name": "Sensitive data exposure",
             "content": "My credit card number is 4532-1234-5678-9012, can you help with billing?",
             "expected": "BLOCKED",
-            "context": "billing"
+            "context": "billing",
         },
         {
             "name": "Safe educational content",
             "content": "Explain the process of photosynthesis in plants",
             "expected": "ALLOWED",
-            "context": "education"
-        }
+            "context": "education",
+        },
     ]
 
     for i, test_case in enumerate(test_cases, 1):
         print(f"\n📝 Test Case {i}: {test_case['name']}")
-        print(f"   Content: \"{test_case['content'][:60]}{'...' if len(test_case['content']) > 60 else ''}\"")
+        print(
+            f'   Content: "{test_case["content"][:60]}{"..." if len(test_case["content"]) > 60 else ""}"'
+        )
         print(f"   Context: {test_case['context']}")
 
         try:
@@ -159,54 +174,59 @@ def demonstrate_content_filtering():
                 operation_name=f"content_check_{test_case['context']}",
                 operation_type="ai.content_filter",
                 team="safety-team",
-                project="content-moderation"
+                project="content-moderation",
             ) as span:
-
                 # Evaluate content against policies
-                content_result = evaluate_content_policies(test_case['content'], test_case['context'])
+                content_result = evaluate_content_policies(
+                    test_case["content"], test_case["context"]
+                )
 
                 print(f"   🛡️ Policy result: {content_result['result']}")
 
-                if content_result['blocked_policies']:
-                    print(f"   🚫 Blocked by: {', '.join(content_result['blocked_policies'])}")
-                if content_result['warning_policies']:
-                    print(f"   ⚠️ Warnings: {', '.join(content_result['warning_policies'])}")
-                if content_result['reason']:
+                if content_result["blocked_policies"]:
+                    print(
+                        f"   🚫 Blocked by: {', '.join(content_result['blocked_policies'])}"
+                    )
+                if content_result["warning_policies"]:
+                    print(
+                        f"   ⚠️ Warnings: {', '.join(content_result['warning_policies'])}"
+                    )
+                if content_result["reason"]:
                     print(f"   📝 Reason: {content_result['reason']}")
 
                 # Record policy enforcement in telemetry
-                for policy_name in content_result['blocked_policies']:
+                for policy_name in content_result["blocked_policies"]:
                     telemetry.record_policy(
                         span=span,
                         policy_name=policy_name,
                         result="blocked",
-                        reason=content_result['reason'],
+                        reason=content_result["reason"],
                         metadata={
-                            "content_sample": test_case['content'][:100],
-                            "context": test_case['context'],
-                            "severity": "high"
-                        }
+                            "content_sample": test_case["content"][:100],
+                            "context": test_case["context"],
+                            "severity": "high",
+                        },
                     )
 
-                for policy_name in content_result['warning_policies']:
+                for policy_name in content_result["warning_policies"]:
                     telemetry.record_policy(
                         span=span,
                         policy_name=policy_name,
                         result="warning",
-                        reason=content_result['reason'],
+                        reason=content_result["reason"],
                         metadata={
-                            "content_sample": test_case['content'][:100],
-                            "context": test_case['context'],
-                            "severity": "medium"
-                        }
+                            "content_sample": test_case["content"][:100],
+                            "context": test_case["context"],
+                            "severity": "medium",
+                        },
                     )
 
                 # If blocked, raise violation error
-                if content_result['result'] == 'BLOCKED':
+                if content_result["result"] == "BLOCKED":
                     raise PolicyViolationError(
-                        content_result['blocked_policies'][0],
-                        content_result['reason'],
-                        {"content_type": "user_input", "context": test_case['context']}
+                        content_result["blocked_policies"][0],
+                        content_result["reason"],
+                        {"content_type": "user_input", "context": test_case["context"]},
                     )
 
                 print("   ✅ Content approved for AI processing")
@@ -214,6 +234,7 @@ def demonstrate_content_filtering():
         except PolicyViolationError as e:
             print(f"   🚫 CONTENT BLOCKED: {e}")
             print("   💡 Suggestion: Review content guidelines or contact support")
+
 
 def evaluate_content_policies(content: str, context: str) -> dict[str, Any]:
     """
@@ -230,15 +251,20 @@ def evaluate_content_policies(content: str, context: str) -> dict[str, Any]:
         "result": "ALLOWED",
         "blocked_policies": [],
         "warning_policies": [],
-        "reason": None
+        "reason": None,
     }
 
     content_lower = content.lower()
 
     # Check harmful content filter
     harmful_patterns = [
-        "violence", "hate speech", "self-harm", "illegal activities",
-        "harassment", "threats", "discriminatory language"
+        "violence",
+        "hate speech",
+        "self-harm",
+        "illegal activities",
+        "harassment",
+        "threats",
+        "discriminatory language",
     ]
     for pattern in harmful_patterns:
         if pattern in content_lower:
@@ -263,22 +289,32 @@ def evaluate_content_policies(content: str, context: str) -> dict[str, Any]:
             if pattern in content_lower:
                 result["warning_policies"].append("professional_context_filter")
                 if not result["reason"]:
-                    result["reason"] = f"Potentially unprofessional language detected: {pattern}"
+                    result["reason"] = (
+                        f"Potentially unprofessional language detected: {pattern}"
+                    )
                 break
 
     # Check sensitive data filter
     sensitive_patterns = [
-        "credit card", "social security", "password", "api key",
-        "4532-1234-5678-9012", "ssn:", "passwd:"
+        "credit card",
+        "social security",
+        "password",
+        "api key",
+        "4532-1234-5678-9012",
+        "ssn:",
+        "passwd:",
     ]
     for pattern in sensitive_patterns:
         if pattern in content_lower:
             result["result"] = "BLOCKED"
             result["blocked_policies"].append("sensitive_data_filter")
-            result["reason"] = f"Content contains sensitive data: {pattern.replace('4532-1234-5678-9012', 'credit card number')}"
+            result["reason"] = (
+                f"Content contains sensitive data: {pattern.replace('4532-1234-5678-9012', 'credit card number')}"
+            )
             break
 
     return result
+
 
 def demonstrate_real_openai_with_filtering():
     """
@@ -319,7 +355,7 @@ def demonstrate_real_openai_with_filtering():
             # Governance attributes
             team="education-team",
             project="learning-assistant",
-            customer_id="edu-customer"
+            customer_id="edu-customer",
         )
 
         print("📝 Response received and processed safely")
@@ -327,6 +363,7 @@ def demonstrate_real_openai_with_filtering():
 
     except Exception as e:
         print(f"❌ Error: {e}")
+
 
 def show_content_governance_telemetry():
     """
@@ -348,7 +385,7 @@ def show_content_governance_telemetry():
         "genops.policy.metadata.severity": "high",
         "genops.content.filtered": True,
         "genops.content.category": "harmful",
-        "genops.content.confidence": 0.95
+        "genops.content.confidence": 0.95,
     }
 
     print("📈 Sample content governance attributes:")
@@ -361,6 +398,7 @@ def show_content_governance_telemetry():
     print("   • Compliance audit trails")
     print("   • Content safety metrics and trends")
     print("   • Integration with safety review workflows")
+
 
 def main():
     """
@@ -393,13 +431,18 @@ def main():
 
     print("\n📚 NEXT STEPS")
     print("=" * 60)
-    print("1. Customize content policies for your specific use case and brand guidelines")
-    print("2. Integrate with content safety services (OpenAI Moderation, Azure Content Safety)")
+    print(
+        "1. Customize content policies for your specific use case and brand guidelines"
+    )
+    print(
+        "2. Integrate with content safety services (OpenAI Moderation, Azure Content Safety)"
+    )
     print("3. Set up alerting for content policy violations")
     print("4. Train your team on content governance workflows")
     print("5. Monitor content safety metrics in your observability dashboard")
 
     print("\n🔗 Learn more: https://github.com/KoshiHQ/GenOps-AI/tree/main/docs")
+
 
 if __name__ == "__main__":
     main()

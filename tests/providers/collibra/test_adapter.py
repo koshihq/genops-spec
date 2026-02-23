@@ -1,6 +1,5 @@
 """Unit tests for Collibra adapter."""
 
-import os
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
@@ -29,7 +28,9 @@ def test_adapter_initialization_from_env(
 
     # Mock client
     mock_client = MagicMock()
-    mock_client.list_domains.return_value = [{"id": "domain-123", "name": "AI Governance"}]
+    mock_client.list_domains.return_value = [
+        {"id": "domain-123", "name": "AI Governance"}
+    ]
     mock_client_class.return_value = mock_client
 
     adapter = GenOpsCollibraAdapter()
@@ -49,7 +50,9 @@ def test_adapter_initialization_with_explicit_params(mock_validate, mock_client_
     mock_validate.return_value = Mock(valid=True)
 
     mock_client = MagicMock()
-    mock_client.list_domains.return_value = [{"id": "domain-456", "name": "Test Domain"}]
+    mock_client.list_domains.return_value = [
+        {"id": "domain-456", "name": "Test Domain"}
+    ]
     mock_client_class.return_value = mock_client
 
     adapter = GenOpsCollibraAdapter(
@@ -273,7 +276,7 @@ def test_adapter_flush(mock_validate, mock_client_class):
 
     # Track operations
     for i in range(3):
-        with adapter.track_ai_operation(f"op-{i}") as span:
+        with adapter.track_ai_operation(f"op-{i}"):
             pass
 
     # Manual flush
@@ -305,7 +308,7 @@ def test_adapter_shutdown(mock_validate, mock_client_class):
 
     # Track operations
     for i in range(2):
-        with adapter.track_ai_operation(f"op-{i}") as span:
+        with adapter.track_ai_operation(f"op-{i}"):
             pass
 
     # Shutdown

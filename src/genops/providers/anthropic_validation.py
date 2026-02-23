@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ValidationIssue:
     """Represents a validation issue found during setup check."""
+
     level: str  # "error", "warning", "info"
     component: str  # "environment", "dependencies", "configuration", etc.
     message: str
@@ -22,6 +23,7 @@ class ValidationIssue:
 
 class ValidationResult(NamedTuple):
     """Result of setup validation."""
+
     is_valid: bool
     issues: list[ValidationIssue]
     summary: dict[str, Any]
@@ -38,56 +40,68 @@ def check_environment_variables() -> list[ValidationIssue]:
 
     for var, description in required_vars.items():
         if not os.getenv(var):
-            issues.append(ValidationIssue(
-                level="error",
-                component="environment",
-                message=f"Missing required environment variable: {var} ({description})",
-                fix_suggestion=f"Set {var} with: export {var}=your_key_here"
-            ))
+            issues.append(
+                ValidationIssue(
+                    level="error",
+                    component="environment",
+                    message=f"Missing required environment variable: {var} ({description})",
+                    fix_suggestion=f"Set {var} with: export {var}=your_key_here",
+                )
+            )
 
     # Optional but recommended variables
     optional_vars = {
         "OTEL_SERVICE_NAME": "OpenTelemetry service name for telemetry identification",
-        "OTEL_EXPORTER_OTLP_ENDPOINT": "OTLP endpoint for telemetry export"
+        "OTEL_EXPORTER_OTLP_ENDPOINT": "OTLP endpoint for telemetry export",
     }
 
     for var, description in optional_vars.items():
         if not os.getenv(var):
-            issues.append(ValidationIssue(
-                level="warning",
-                component="environment",
-                message=f"Optional environment variable not set: {var}",
-                fix_suggestion=f"For {description}, set: export {var}=your_value"
-            ))
+            issues.append(
+                ValidationIssue(
+                    level="warning",
+                    component="environment",
+                    message=f"Optional environment variable not set: {var}",
+                    fix_suggestion=f"For {description}, set: export {var}=your_value",
+                )
+            )
 
     # Check API key format
     api_key = os.getenv("ANTHROPIC_API_KEY")
     if api_key:
         if not api_key.startswith("sk-ant-"):
-            issues.append(ValidationIssue(
-                level="warning",
-                component="environment",
-                message="ANTHROPIC_API_KEY doesn't start with 'sk-ant-' - may be invalid format",
-                fix_suggestion="Verify your Anthropic API key format from https://console.anthropic.com/"
-            ))
+            issues.append(
+                ValidationIssue(
+                    level="warning",
+                    component="environment",
+                    message="ANTHROPIC_API_KEY doesn't start with 'sk-ant-' - may be invalid format",
+                    fix_suggestion="Verify your Anthropic API key format from https://console.anthropic.com/",
+                )
+            )
         elif len(api_key) < 50:
-            issues.append(ValidationIssue(
-                level="warning",
-                component="environment",
-                message="ANTHROPIC_API_KEY appears too short - may be incomplete",
-                fix_suggestion="Verify complete API key was copied from Anthropic console"
-            ))
+            issues.append(
+                ValidationIssue(
+                    level="warning",
+                    component="environment",
+                    message="ANTHROPIC_API_KEY appears too short - may be incomplete",
+                    fix_suggestion="Verify complete API key was copied from Anthropic console",
+                )
+            )
 
     # Check OTLP configuration
     otlp_endpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
     if otlp_endpoint:
-        if not (otlp_endpoint.startswith("http://") or otlp_endpoint.startswith("https://")):
-            issues.append(ValidationIssue(
-                level="warning",
-                component="configuration",
-                message=f"OTLP endpoint should start with http:// or https://: {otlp_endpoint}",
-                fix_suggestion="Use format: http://localhost:4317 or https://api.provider.com"
-            ))
+        if not (
+            otlp_endpoint.startswith("http://") or otlp_endpoint.startswith("https://")
+        ):
+            issues.append(
+                ValidationIssue(
+                    level="warning",
+                    component="configuration",
+                    message=f"OTLP endpoint should start with http:// or https://: {otlp_endpoint}",
+                    fix_suggestion="Use format: http://localhost:4317 or https://api.provider.com",
+                )
+            )
 
     return issues
 
@@ -99,50 +113,59 @@ def check_dependencies() -> list[ValidationIssue]:
     # Core dependencies
     core_deps = {
         "opentelemetry": "OpenTelemetry SDK",
-        "anthropic": "Anthropic Python client"
+        "anthropic": "Anthropic Python client",
     }
 
     for module, description in core_deps.items():
         try:
             __import__(module)
         except ImportError:
-            issues.append(ValidationIssue(
-                level="error",
-                component="dependencies",
-                message=f"Required dependency not found: {module}",
-                fix_suggestion=f"Install {description} with: pip install {module}"
-            ))
+            issues.append(
+                ValidationIssue(
+                    level="error",
+                    component="dependencies",
+                    message=f"Required dependency not found: {module}",
+                    fix_suggestion=f"Install {description} with: pip install {module}",
+                )
+            )
 
     # Check Anthropic version compatibility
     try:
         import anthropic
-        version = getattr(anthropic, '__version__', None)
+
+        version = getattr(anthropic, "__version__", None)
         if version:
             # Parse version and check compatibility
-            major_version = int(version.split('.')[0])
+            major_version = int(version.split(".")[0])
             if major_version < 1:
-                issues.append(ValidationIssue(
-                    level="warning",
-                    component="dependencies",
-                    message=f"Anthropic client version {version} may have compatibility issues",
-                    fix_suggestion="Update Anthropic client: pip install --upgrade anthropic>=0.25.0"
-                ))
+                issues.append(
+                    ValidationIssue(
+                        level="warning",
+                        component="dependencies",
+                        message=f"Anthropic client version {version} may have compatibility issues",
+                        fix_suggestion="Update Anthropic client: pip install --upgrade anthropic>=0.25.0",
+                    )
+                )
             else:
-                issues.append(ValidationIssue(
-                    level="info",
-                    component="dependencies",
-                    message=f"Anthropic client version {version} is compatible",
-                    fix_suggestion=None
-                ))
+                issues.append(
+                    ValidationIssue(
+                        level="info",
+                        component="dependencies",
+                        message=f"Anthropic client version {version} is compatible",
+                        fix_suggestion=None,
+                    )
+                )
     except ImportError:
         pass  # Already handled above
     except Exception as e:
-        issues.append(ValidationIssue(
-            level="warning",
-            component="dependencies",
-            message=f"Could not verify Anthropic version: {e}",
-            fix_suggestion="Ensure Anthropic client is properly installed"
-        ))
+        issues.append(
+            ValidationIssue(
+                level="warning",
+                component="dependencies",
+                message=f"Could not verify Anthropic version: {e}",
+                fix_suggestion="Ensure Anthropic client is properly installed",
+            )
+        )
 
     return issues
 
@@ -154,19 +177,21 @@ def check_genops_imports() -> list[ValidationIssue]:
     genops_modules = {
         "genops.providers.anthropic": "GenOps Anthropic adapter",
         "genops.core.telemetry": "Core telemetry functionality",
-        "genops.core.tracker": "Cost and evaluation tracking"
+        "genops.core.tracker": "Cost and evaluation tracking",
     }
 
     for module, _description in genops_modules.items():
         try:
             __import__(module)
         except ImportError:
-            issues.append(ValidationIssue(
-                level="error",
-                component="genops",
-                message=f"GenOps module not available: {module}",
-                fix_suggestion="Ensure GenOps is installed: pip install genops-ai"
-            ))
+            issues.append(
+                ValidationIssue(
+                    level="error",
+                    component="genops",
+                    message=f"GenOps module not available: {module}",
+                    fix_suggestion="Ensure GenOps is installed: pip install genops-ai",
+                )
+            )
 
     return issues
 
@@ -184,47 +209,57 @@ def test_basic_functionality() -> list[ValidationIssue]:
             adapter = GenOpsAnthropicAdapter()
 
             # Test basic properties
-            if hasattr(adapter, 'GOVERNANCE_ATTRIBUTES'):
-                expected_attrs = {'team', 'project', 'customer_id', 'environment'}
+            if hasattr(adapter, "GOVERNANCE_ATTRIBUTES"):
+                expected_attrs = {"team", "project", "customer_id", "environment"}
                 if not expected_attrs.issubset(adapter.GOVERNANCE_ATTRIBUTES):
-                    issues.append(ValidationIssue(
-                        level="warning",
-                        component="functionality",
-                        message="Missing some expected governance attributes",
-                        fix_suggestion="Ensure all governance attributes are supported"
-                    ))
+                    issues.append(
+                        ValidationIssue(
+                            level="warning",
+                            component="functionality",
+                            message="Missing some expected governance attributes",
+                            fix_suggestion="Ensure all governance attributes are supported",
+                        )
+                    )
             else:
-                issues.append(ValidationIssue(
-                    level="error",
-                    component="functionality",
-                    message="Governance attributes not found in adapter",
-                    fix_suggestion="Check GenOps Anthropic adapter implementation"
-                ))
+                issues.append(
+                    ValidationIssue(
+                        level="error",
+                        component="functionality",
+                        message="Governance attributes not found in adapter",
+                        fix_suggestion="Check GenOps Anthropic adapter implementation",
+                    )
+                )
 
         except Exception as e:
             if "API key" in str(e) or "ANTHROPIC_API_KEY" in str(e):
                 # Expected without API key - adapter structure is fine
-                issues.append(ValidationIssue(
-                    level="info",
-                    component="functionality",
-                    message="Anthropic adapter structure is valid (API key needed for full testing)",
-                    fix_suggestion="Set ANTHROPIC_API_KEY to test full functionality"
-                ))
+                issues.append(
+                    ValidationIssue(
+                        level="info",
+                        component="functionality",
+                        message="Anthropic adapter structure is valid (API key needed for full testing)",
+                        fix_suggestion="Set ANTHROPIC_API_KEY to test full functionality",
+                    )
+                )
             else:
-                issues.append(ValidationIssue(
-                    level="error",
-                    component="functionality",
-                    message=f"Failed to create Anthropic adapter: {e}",
-                    fix_suggestion="Check GenOps installation and dependencies"
-                ))
+                issues.append(
+                    ValidationIssue(
+                        level="error",
+                        component="functionality",
+                        message=f"Failed to create Anthropic adapter: {e}",
+                        fix_suggestion="Check GenOps installation and dependencies",
+                    )
+                )
 
     except Exception as e:
-        issues.append(ValidationIssue(
-            level="error",
-            component="functionality",
-            message=f"Failed to import Anthropic adapter: {e}",
-            fix_suggestion="Check GenOps installation"
-        ))
+        issues.append(
+            ValidationIssue(
+                level="error",
+                component="functionality",
+                message=f"Failed to import Anthropic adapter: {e}",
+                fix_suggestion="Check GenOps installation",
+            )
+        )
 
     return issues
 
@@ -235,6 +270,7 @@ def test_opentelemetry_setup() -> list[ValidationIssue]:
 
     try:
         from opentelemetry import trace
+
         tracer = trace.get_tracer(__name__)
 
         # Test span creation
@@ -243,32 +279,38 @@ def test_opentelemetry_setup() -> list[ValidationIssue]:
             span.set_attribute("genops.provider", "anthropic")
 
     except Exception as e:
-        issues.append(ValidationIssue(
-            level="error",
-            component="opentelemetry",
-            message=f"OpenTelemetry not working: {e}",
-            fix_suggestion="Check OpenTelemetry installation and configuration"
-        ))
+        issues.append(
+            ValidationIssue(
+                level="error",
+                component="opentelemetry",
+                message=f"OpenTelemetry not working: {e}",
+                fix_suggestion="Check OpenTelemetry installation and configuration",
+            )
+        )
 
     # Check exporter configuration
     otlp_endpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
     service_name = os.getenv("OTEL_SERVICE_NAME")
 
     if not service_name:
-        issues.append(ValidationIssue(
-            level="warning",
-            component="opentelemetry",
-            message="OTEL_SERVICE_NAME not set",
-            fix_suggestion="Set service name: export OTEL_SERVICE_NAME=my-anthropic-app"
-        ))
+        issues.append(
+            ValidationIssue(
+                level="warning",
+                component="opentelemetry",
+                message="OTEL_SERVICE_NAME not set",
+                fix_suggestion="Set service name: export OTEL_SERVICE_NAME=my-anthropic-app",
+            )
+        )
 
     if not otlp_endpoint:
-        issues.append(ValidationIssue(
-            level="info",
-            component="opentelemetry",
-            message="OTEL_EXPORTER_OTLP_ENDPOINT not set - telemetry will only be logged",
-            fix_suggestion="For telemetry export, set: export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317"
-        ))
+        issues.append(
+            ValidationIssue(
+                level="info",
+                component="opentelemetry",
+                message="OTEL_EXPORTER_OTLP_ENDPOINT not set - telemetry will only be logged",
+                fix_suggestion="For telemetry export, set: export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317",
+            )
+        )
 
     return issues
 
@@ -279,12 +321,14 @@ def test_live_anthropic_connection() -> list[ValidationIssue]:
 
     api_key = os.getenv("ANTHROPIC_API_KEY")
     if not api_key:
-        issues.append(ValidationIssue(
-            level="info",
-            component="live_test",
-            message="Skipping live test - no Anthropic API key",
-            fix_suggestion="Set ANTHROPIC_API_KEY to test live Anthropic connection"
-        ))
+        issues.append(
+            ValidationIssue(
+                level="info",
+                component="live_test",
+                message="Skipping live test - no Anthropic API key",
+                fix_suggestion="Set ANTHROPIC_API_KEY to test live Anthropic connection",
+            )
+        )
         return issues
 
     try:
@@ -299,69 +343,85 @@ def test_live_anthropic_connection() -> list[ValidationIssue]:
             max_tokens=10,
             temperature=0,
             messages=[
-                {"role": "user", "content": "Say 'Hello from GenOps' in exactly those words."}
+                {
+                    "role": "user",
+                    "content": "Say 'Hello from GenOps' in exactly those words.",
+                }
             ],
-
             # Governance attributes for test
             team="validation-test",
-            project="setup-verification"
+            project="setup-verification",
         )
 
         # Check if response contains expected text
-        if result and hasattr(result, 'content') and result.content:
+        if result and hasattr(result, "content") and result.content:
             response_text = result.content[0].text if result.content else ""
             if "Hello from GenOps" in response_text:
-                issues.append(ValidationIssue(
-                    level="info",
-                    component="live_test",
-                    message="Live Anthropic API test successful",
-                    fix_suggestion=None
-                ))
+                issues.append(
+                    ValidationIssue(
+                        level="info",
+                        component="live_test",
+                        message="Live Anthropic API test successful",
+                        fix_suggestion=None,
+                    )
+                )
             else:
-                issues.append(ValidationIssue(
+                issues.append(
+                    ValidationIssue(
+                        level="warning",
+                        component="live_test",
+                        message=f"Unexpected Anthropic API response: {response_text}",
+                        fix_suggestion="API works but response was unexpected",
+                    )
+                )
+        else:
+            issues.append(
+                ValidationIssue(
                     level="warning",
                     component="live_test",
-                    message=f"Unexpected Anthropic API response: {response_text}",
-                    fix_suggestion="API works but response was unexpected"
-                ))
-        else:
-            issues.append(ValidationIssue(
-                level="warning",
-                component="live_test",
-                message="Anthropic API returned empty or invalid response",
-                fix_suggestion="Check API key permissions and quota"
-            ))
+                    message="Anthropic API returned empty or invalid response",
+                    fix_suggestion="Check API key permissions and quota",
+                )
+            )
 
     except Exception as e:
         error_msg = str(e).lower()
         if "api key" in error_msg or "authentication" in error_msg:
-            issues.append(ValidationIssue(
-                level="error",
-                component="live_test",
-                message="Anthropic API authentication failed",
-                fix_suggestion="Check your ANTHROPIC_API_KEY is valid and has sufficient permissions"
-            ))
+            issues.append(
+                ValidationIssue(
+                    level="error",
+                    component="live_test",
+                    message="Anthropic API authentication failed",
+                    fix_suggestion="Check your ANTHROPIC_API_KEY is valid and has sufficient permissions",
+                )
+            )
         elif "quota" in error_msg or "billing" in error_msg or "credit" in error_msg:
-            issues.append(ValidationIssue(
-                level="error",
-                component="live_test",
-                message="Anthropic API quota or billing issue",
-                fix_suggestion="Check your Anthropic account has available credits"
-            ))
+            issues.append(
+                ValidationIssue(
+                    level="error",
+                    component="live_test",
+                    message="Anthropic API quota or billing issue",
+                    fix_suggestion="Check your Anthropic account has available credits",
+                )
+            )
         elif "rate limit" in error_msg:
-            issues.append(ValidationIssue(
-                level="warning",
-                component="live_test",
-                message="Anthropic API rate limit hit during testing",
-                fix_suggestion="API key is valid but hit rate limits - this is normal"
-            ))
+            issues.append(
+                ValidationIssue(
+                    level="warning",
+                    component="live_test",
+                    message="Anthropic API rate limit hit during testing",
+                    fix_suggestion="API key is valid but hit rate limits - this is normal",
+                )
+            )
         else:
-            issues.append(ValidationIssue(
-                level="error",
-                component="live_test",
-                message=f"Live Anthropic test failed: {e}",
-                fix_suggestion="Check API key, network connectivity, and Anthropic service status"
-            ))
+            issues.append(
+                ValidationIssue(
+                    level="error",
+                    component="live_test",
+                    message=f"Live Anthropic test failed: {e}",
+                    fix_suggestion="Check API key, network connectivity, and Anthropic service status",
+                )
+            )
 
     return issues
 
@@ -397,14 +457,10 @@ def validate_anthropic_setup() -> ValidationResult:
         "errors": len(errors),
         "warnings": len(warnings),
         "info": len(info),
-        "components_checked": list({issue.component for issue in all_issues})
+        "components_checked": list({issue.component for issue in all_issues}),
     }
 
-    return ValidationResult(
-        is_valid=is_valid,
-        issues=all_issues,
-        summary=summary
-    )
+    return ValidationResult(is_valid=is_valid, issues=all_issues, summary=summary)
 
 
 def print_anthropic_validation_result(result: ValidationResult) -> None:
@@ -449,7 +505,9 @@ def print_anthropic_validation_result(result: ValidationResult) -> None:
     if not result.is_valid:
         print("\n🔧 Next Steps:")
         print("   1. Fix the errors listed above")
-        print("   2. Run validation again: python -c \"from genops.providers.anthropic_validation import validate_anthropic_setup, print_anthropic_validation_result; print_anthropic_validation_result(validate_anthropic_setup())\"")
+        print(
+            '   2. Run validation again: python -c "from genops.providers.anthropic_validation import validate_anthropic_setup, print_anthropic_validation_result; print_anthropic_validation_result(validate_anthropic_setup())"'
+        )
         print("   3. Check the troubleshooting guide in documentation")
 
 

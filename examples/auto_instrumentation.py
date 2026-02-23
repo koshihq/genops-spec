@@ -5,6 +5,7 @@ import logging
 # Configure logging to see GenOps initialization messages
 logging.basicConfig(level=logging.INFO)
 
+
 def example_simple_init():
     """Example 1: Simple auto-instrumentation setup."""
     print("=" * 60)
@@ -24,7 +25,9 @@ def example_simple_init():
 
     # Now any AI provider calls will be automatically tracked
     # (This would work if OpenAI/Anthropic were installed)
-    print("\n💡 Any AI provider calls are now automatically tracked with governance telemetry!")
+    print(
+        "\n💡 Any AI provider calls are now automatically tracked with governance telemetry!"
+    )
 
 
 def example_advanced_init():
@@ -45,7 +48,7 @@ def example_advanced_init():
         # For OTLP: otlp_headers={"x-honeycomb-team": "your-api-key"},
         default_team="ai-team",
         default_project="chatbot-service",
-        default_environment="dev"
+        default_environment="dev",
     )
 
     print("✓ Advanced initialization complete with custom settings")
@@ -67,7 +70,7 @@ def example_manual_with_defaults():
     genops.init(
         default_team="platform-team",
         default_project="ai-platform",
-        exporter_type="console"
+        exporter_type="console",
     )
 
     # Get the default attributes for manual instrumentation
@@ -78,14 +81,14 @@ def example_manual_with_defaults():
     @genops.track_usage(
         operation_name="sentiment_analysis",
         # team and project are inherited from init()
-        feature="content-moderation"
+        feature="content-moderation",
     )
     def analyze_sentiment(text: str) -> dict:
         """Analyze text sentiment (mock implementation)."""
         # This would call an actual AI service
         return {
             "sentiment": "positive" if "good" in text.lower() else "neutral",
-            "confidence": 0.85
+            "confidence": 0.85,
         }
 
     # Use the instrumented function
@@ -104,7 +107,7 @@ def example_provider_specific():
     # Initialize with specific providers only
     genops.init(
         providers=["openai"],  # Only instrument OpenAI, not Anthropic
-        service_name="openai-only-service"
+        service_name="openai-only-service",
     )
 
     status = genops.status()
@@ -126,7 +129,7 @@ def example_with_policies():
     genops.init(
         service_name="governed-ai-service",
         default_team="ai-governance",
-        exporter_type="console"
+        exporter_type="console",
     )
 
     # Register governance policies
@@ -134,14 +137,14 @@ def example_with_policies():
         name="cost_control",
         description="Prevent expensive operations",
         enforcement_level=PolicyResult.WARNING,
-        max_cost=1.00
+        max_cost=1.00,
     )
 
     register_policy(
         name="content_safety",
         description="Filter unsafe content",
         enforcement_level=PolicyResult.BLOCKED,
-        blocked_patterns=["violence", "explicit"]
+        blocked_patterns=["violence", "explicit"],
     )
 
     print("✓ Auto-instrumentation + governance policies configured")

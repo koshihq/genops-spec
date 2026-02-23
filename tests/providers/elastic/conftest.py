@@ -2,14 +2,15 @@
 Pytest fixtures and configuration for Elastic integration tests.
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock, patch
-from typing import Dict, Any
 import os
+from typing import Any
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 
 @pytest.fixture
-def sample_elastic_config() -> Dict[str, Any]:
+def sample_elastic_config() -> dict[str, Any]:
     """Sample Elastic configuration for testing."""
     return {
         "url": "https://localhost:9200",
@@ -22,17 +23,14 @@ def sample_elastic_config() -> Dict[str, Any]:
         "cost_center": "engineering",
         "export_mode": "batch",
         "batch_size": 100,
-        "batch_interval_seconds": 60
+        "batch_interval_seconds": 60,
     }
 
 
 @pytest.fixture
-def minimal_elastic_config() -> Dict[str, Any]:
+def minimal_elastic_config() -> dict[str, Any]:
     """Minimal Elastic configuration for testing."""
-    return {
-        "url": "https://localhost:9200",
-        "api_key": "test-api-key"
-    }
+    return {"url": "https://localhost:9200", "api_key": "test-api-key"}
 
 
 @pytest.fixture
@@ -43,22 +41,15 @@ def mock_elasticsearch_client():
     # Mock successful responses
     mock_client.info.return_value = {
         "version": {"number": "8.12.0"},
-        "cluster_name": "test-cluster"
+        "cluster_name": "test-cluster",
     }
 
     mock_client.indices.exists.return_value = False
     mock_client.indices.create.return_value = {"acknowledged": True}
 
-    mock_client.bulk.return_value = {
-        "took": 10,
-        "errors": False,
-        "items": []
-    }
+    mock_client.bulk.return_value = {"took": 10, "errors": False, "items": []}
 
-    mock_client.index.return_value = {
-        "result": "created",
-        "_id": "test-doc-id"
-    }
+    mock_client.index.return_value = {"result": "created", "_id": "test-doc-id"}
 
     return mock_client
 
@@ -66,15 +57,19 @@ def mock_elasticsearch_client():
 @pytest.fixture
 def mock_elastic_adapter(sample_elastic_config, mock_elasticsearch_client):
     """Mock GenOps Elastic adapter with mocked client."""
-    with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+    with patch(
+        "genops.providers.elastic.client.Elasticsearch",
+        return_value=mock_elasticsearch_client,
+    ):
         from genops.providers.elastic import instrument_elastic
+
         adapter = instrument_elastic(**sample_elastic_config)
         adapter._client = mock_elasticsearch_client
         return adapter
 
 
 @pytest.fixture
-def sample_telemetry_event() -> Dict[str, Any]:
+def sample_telemetry_event() -> dict[str, Any]:
     """Sample telemetry event for testing."""
     return {
         "timestamp": "2024-01-18T12:00:00Z",
@@ -90,7 +85,7 @@ def sample_telemetry_event() -> Dict[str, Any]:
         "project": "test-project",
         "environment": "test",
         "customer_id": "test-customer",
-        "cost_center": "engineering"
+        "cost_center": "engineering",
     }
 
 
@@ -115,7 +110,7 @@ def mock_env_vars(sample_elastic_config):
         "GENOPS_ELASTIC_INDEX_PREFIX": sample_elastic_config["index_prefix"],
         "GENOPS_TEAM": sample_elastic_config["team"],
         "GENOPS_PROJECT": sample_elastic_config["project"],
-        "GENOPS_ENVIRONMENT": sample_elastic_config["environment"]
+        "GENOPS_ENVIRONMENT": sample_elastic_config["environment"],
     }
 
     with patch.dict(os.environ, env_vars, clear=False):
@@ -132,8 +127,8 @@ def validation_result_success():
         "config": {
             "url": "https://localhost:9200",
             "index_prefix": "genops-test",
-            "export_mode": "batch"
-        }
+            "export_mode": "batch",
+        },
     }
 
 
@@ -144,10 +139,8 @@ def validation_result_with_errors():
         "is_valid": False,
         "errors": [
             "GENOPS_ELASTIC_URL environment variable is not set",
-            "GENOPS_ELASTIC_API_KEY environment variable is not set"
+            "GENOPS_ELASTIC_API_KEY environment variable is not set",
         ],
-        "warnings": [
-            "GENOPS_TEAM is not set - cost attribution will be limited"
-        ],
-        "config": {}
+        "warnings": ["GENOPS_TEAM is not set - cost attribution will be limited"],
+        "config": {},
     }

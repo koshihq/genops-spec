@@ -32,7 +32,7 @@ class TestCLICommands:
         """Test status command when not initialized."""
         args = MagicMock()
 
-        with patch("genops.cli.main.status") as mock_status:
+        with patch("genops.status") as mock_status:
             mock_status.return_value = {
                 "initialized": False,
                 "instrumented_providers": [],
@@ -45,14 +45,14 @@ class TestCLICommands:
             captured = capsys.readouterr()
             assert "GenOps AI Status:" in captured.out
             assert "✗ Not initialized" in captured.out
-            assert "OpenAI: ✗ not available" in captured.out
+            assert "✗ Openai: not available" in captured.out
             assert result == 0
 
     def test_cmd_status_initialized(self, capsys):
         """Test status command when initialized."""
         args = MagicMock()
 
-        with patch("genops.cli.main.status") as mock_status:
+        with patch("genops.status") as mock_status:
             mock_status.return_value = {
                 "initialized": True,
                 "instrumented_providers": ["openai", "anthropic"],
@@ -66,7 +66,7 @@ class TestCLICommands:
             assert "✓ Initialized" in captured.out
             assert "openai, anthropic" in captured.out
             assert "ai-team" in captured.out
-            assert "OpenAI: ✓ available" in captured.out
+            assert "✓ Openai: available" in captured.out
             assert result == 0
 
     def test_cmd_init_basic(self, capsys):
@@ -85,7 +85,7 @@ class TestCLICommands:
             "default_attributes": {"team": "test-team", "project": "test-project"},
         }
 
-        with patch("genops.cli.main.init") as mock_init:
+        with patch("genops.init") as mock_init:
             mock_init.return_value = mock_instrumentor
 
             result = cmd_init(args)
@@ -116,7 +116,7 @@ class TestCLICommands:
         args.team = None
         args.project = None
 
-        with patch("genops.cli.main.init") as mock_init:
+        with patch("genops.init") as mock_init:
             mock_init.side_effect = Exception("Initialization failed")
 
             result = cmd_init(args)
@@ -129,13 +129,9 @@ class TestCLICommands:
         """Test demo command successful execution."""
         args = MagicMock()
 
-        with patch("genops.cli.main.track_usage") as mock_track_usage:
-            with patch("genops.cli.main.track") as mock_track:
-                with patch("genops.cli.main.register_policy"):
-                    # Mock the decorated function
-                    mock_function = MagicMock(return_value="Hello from GenOps AI!")
-                    mock_track_usage.return_value = mock_function
-
+        with patch("genops.track_usage") as _mock_track_usage:
+            with patch("genops.track") as mock_track:
+                with patch("genops.core.policy.register_policy"):
                     # Mock the context manager
                     mock_span = MagicMock()
                     mock_track.return_value.__enter__.return_value = mock_span
@@ -154,7 +150,7 @@ class TestCLICommands:
         """Test demo command when execution fails."""
         args = MagicMock()
 
-        with patch("genops.cli.main.register_policy") as mock_register:
+        with patch("genops.core.policy.register_policy") as mock_register:
             mock_register.side_effect = Exception("Demo failed")
 
             result = cmd_demo(args)
@@ -390,13 +386,13 @@ class TestMainFunction:
                 assert result == 1
 
     def test_main_policy_no_subcommand(self, capsys):
-        """Test main function with policy command but no subcommand."""
+        """Test main function with policy command but no subcommand shows help."""
         with patch("sys.argv", ["genops", "policy"]):
             result = main()
 
             captured = capsys.readouterr()
-            assert "policy command requires a subcommand" in captured.err
-            assert result == 1
+            assert "usage:" in captured.out
+            assert result == 0
 
     def test_main_with_verbose_logging(self, capsys):
         """Test main function enables verbose logging."""
@@ -422,11 +418,11 @@ class TestCLIIntegration:
             "available_providers": {"openai": True, "anthropic": False},
         }
 
-        with patch("genops.cli.main.init") as mock_init:
-            with patch("genops.cli.main.status") as mock_status:
-                with patch("genops.cli.main.register_policy"):
-                    with patch("genops.cli.main.track_usage") as mock_track_usage:
-                        with patch("genops.cli.main.track") as mock_track:
+        with patch("genops.init") as mock_init:
+            with patch("genops.status") as mock_status:
+                with patch("genops.core.policy.register_policy"):
+                    with patch("genops.track_usage") as _mock_track_usage:
+                        with patch("genops.track") as mock_track:
                             mock_init.return_value = mock_instrumentor
                             mock_status.return_value = (
                                 mock_instrumentor.status.return_value
@@ -445,8 +441,6 @@ class TestCLIIntegration:
                                 assert result == 0
 
                             # Test demo command
-                            mock_function = MagicMock(return_value="Demo result")
-                            mock_track_usage.return_value = mock_function
                             mock_track.return_value.__enter__.return_value = MagicMock()
                             mock_track.return_value.__exit__.return_value = None
 

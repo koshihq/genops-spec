@@ -89,10 +89,26 @@ class GenOpsOpenRouterAdapter:
 
         # Valid OpenAI API parameters that should be passed through
         VALID_OPENAI_PARAMS = {
-            "model", "messages", "prompt", "temperature", "max_tokens", "top_p",
-            "frequency_penalty", "presence_penalty", "stop", "seed", "stream",
-            "response_format", "tools", "tool_choice", "user", "logit_bias",
-            "logprobs", "top_logprobs", "n", "suffix"
+            "model",
+            "messages",
+            "prompt",
+            "temperature",
+            "max_tokens",
+            "top_p",
+            "frequency_penalty",
+            "presence_penalty",
+            "stop",
+            "seed",
+            "stream",
+            "response_format",
+            "tools",
+            "tool_choice",
+            "user",
+            "logit_bias",
+            "logprobs",
+            "top_logprobs",
+            "n",
+            "suffix",
         }
 
         # Extract governance attributes (remove from both request_attrs and api_kwargs)
@@ -203,8 +219,14 @@ class GenOpsOpenRouterAdapter:
 
             effective_attrs = get_effective_attributes(**governance_attrs)
             trace_attrs.update(effective_attrs)
-        except (ImportError, Exception):
-            # Fallback to just governance attributes
+        except ImportError:
+            # Context module not available, use raw governance attributes
+            trace_attrs.update(governance_attrs)
+        except Exception:
+            logger.warning(
+                "Failed to compute effective attributes, falling back to raw governance attrs",
+                exc_info=True,
+            )
             trace_attrs.update(governance_attrs)
 
         with self.telemetry.trace_operation(**trace_attrs) as span:
@@ -306,8 +328,14 @@ class GenOpsOpenRouterAdapter:
 
             effective_attrs = get_effective_attributes(**governance_attrs)
             trace_attrs.update(effective_attrs)
-        except (ImportError, Exception):
-            # Fallback to just governance attributes
+        except ImportError:
+            # Context module not available, use raw governance attributes
+            trace_attrs.update(governance_attrs)
+        except Exception:
+            logger.warning(
+                "Failed to compute effective attributes, falling back to raw governance attrs",
+                exc_info=True,
+            )
             trace_attrs.update(governance_attrs)
 
         with self.telemetry.trace_operation(**trace_attrs) as span:

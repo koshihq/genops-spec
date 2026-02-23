@@ -12,8 +12,8 @@ from .cost_aggregator import (
     get_cost_aggregator,
 )
 from .governance_monitor import (
-    DataLineageMetrics,
     DatabricksGovernanceMonitor,
+    DataLineageMetrics,
     GovernanceOperationSummary,
     UnityMetastore,
     get_governance_monitor,

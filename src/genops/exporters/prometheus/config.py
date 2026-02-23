@@ -2,7 +2,6 @@
 
 import os
 from dataclasses import dataclass, field
-from typing import Optional, Set
 
 
 @dataclass
@@ -32,11 +31,11 @@ class PrometheusConfig:
     enable_alert_rules: bool = True
     max_label_cardinality: int = 10000
     sampling_rate: float = 1.0
-    include_labels: Set[str] = field(default_factory=set)
-    exclude_labels: Set[str] = field(default_factory=set)
+    include_labels: set[str] = field(default_factory=set)
+    exclude_labels: set[str] = field(default_factory=set)
 
     @classmethod
-    def from_env(cls) -> 'PrometheusConfig':
+    def from_env(cls) -> "PrometheusConfig":
         """Load configuration from environment variables.
 
         Environment variables:
@@ -99,10 +98,14 @@ class PrometheusConfig:
 
         # Label filtering
         if include_labels := os.getenv("PROMETHEUS_INCLUDE_LABELS"):
-            config.include_labels = set(label.strip() for label in include_labels.split(",") if label.strip())
+            config.include_labels = {
+                label.strip() for label in include_labels.split(",") if label.strip()
+            }
 
         if exclude_labels := os.getenv("PROMETHEUS_EXCLUDE_LABELS"):
-            config.exclude_labels = set(label.strip() for label in exclude_labels.split(",") if label.strip())
+            config.exclude_labels = {
+                label.strip() for label in exclude_labels.split(",") if label.strip()
+            }
 
         return config
 
@@ -120,7 +123,9 @@ class PrometheusConfig:
 
         # Validate sampling rate
         if not (0.0 <= self.sampling_rate <= 1.0):
-            errors.append(f"Sampling rate {self.sampling_rate} must be between 0.0 and 1.0")
+            errors.append(
+                f"Sampling rate {self.sampling_rate} must be between 0.0 and 1.0"
+            )
 
         # Validate scrape interval
         if self.scrape_interval <= 0:
@@ -128,10 +133,14 @@ class PrometheusConfig:
 
         # Validate max cardinality
         if self.max_label_cardinality <= 0:
-            errors.append(f"Max label cardinality {self.max_label_cardinality} must be positive")
+            errors.append(
+                f"Max label cardinality {self.max_label_cardinality} must be positive"
+            )
 
         # Validate namespace (must be valid Prometheus metric name prefix)
-        if not self.namespace.replace('_', '').isalnum():
-            errors.append(f"Namespace '{self.namespace}' contains invalid characters (use alphanumeric and underscores only)")
+        if not self.namespace.replace("_", "").isalnum():
+            errors.append(
+                f"Namespace '{self.namespace}' contains invalid characters (use alphanumeric and underscores only)"
+            )
 
         return (len(errors) == 0, errors)

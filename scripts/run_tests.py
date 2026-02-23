@@ -12,10 +12,7 @@ def run_command(cmd: list, description: str) -> bool:
     print(f"🧪 {description}...")
     try:
         result = subprocess.run(
-            cmd,
-            cwd=Path(__file__).parent,
-            capture_output=True,
-            text=True
+            cmd, cwd=Path(__file__).parent, capture_output=True, text=True
         )
 
         if result.returncode == 0:
@@ -48,48 +45,56 @@ def main():
 
     # 1. Run unit tests with coverage
     success &= run_command(
-        ["python", "-m", "pytest", "tests/", "-v", "--cov=src/genops", "--cov-report=term-missing", "--cov-report=html"],
-        "Unit tests with coverage"
+        [
+            "python",
+            "-m",
+            "pytest",
+            "tests/",
+            "-v",
+            "--cov=src/genops",
+            "--cov-report=term-missing",
+            "--cov-report=html",
+        ],
+        "Unit tests with coverage",
     )
 
     # 2. Run integration tests separately
     success &= run_command(
         ["python", "-m", "pytest", "tests/integration/", "-v", "-m", "integration"],
-        "Integration tests"
+        "Integration tests",
     )
 
     # 3. Run linting
     success &= run_command(
-        ["ruff", "check", "src/", "tests/"],
-        "Code linting (ruff check)"
+        ["ruff", "check", "src/", "tests/"], "Code linting (ruff check)"
     )
 
     # 4. Run formatting check
     success &= run_command(
         ["ruff", "format", "--check", "src/", "tests/"],
-        "Code formatting check (ruff format)"
+        "Code formatting check (ruff format)",
     )
 
     # 5. Run type checking (if mypy is available)
     try:
         subprocess.run(["mypy", "--version"], check=True, capture_output=True)
-        success &= run_command(
-            ["mypy", "src/genops"],
-            "Type checking (mypy)"
-        )
+        success &= run_command(["mypy", "src/genops"], "Type checking (mypy)")
     except (subprocess.CalledProcessError, FileNotFoundError):
         print("⚠️ mypy not available, skipping type checking")
 
     # 6. Test package import
     success &= run_command(
-        ["python", "-c", "import sys; sys.path.insert(0, 'src'); import genops; print(f'✅ GenOps v{genops.__version__} imports successfully')"],
-        "Package import test"
+        [
+            "python",
+            "-c",
+            "import sys; sys.path.insert(0, 'src'); import genops; print(f'✅ GenOps v{genops.__version__} imports successfully')",
+        ],
+        "Package import test",
     )
 
     # 7. Test CLI entry point
     success &= run_command(
-        ["python", "-m", "genops.cli.main", "version"],
-        "CLI entry point test"
+        ["python", "-m", "genops.cli.main", "version"], "CLI entry point test"
     )
 
     print("\n" + "=" * 50)

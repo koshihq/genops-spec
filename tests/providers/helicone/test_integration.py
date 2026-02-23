@@ -9,16 +9,19 @@ Tests end-to-end integration scenarios including:
 - Cross-provider compatibility
 """
 
-import pytest
-import time
 from unittest.mock import Mock, patch
-from typing import Dict, Any
+
+import pytest
 
 # Import the modules under test
 try:
-    from genops.providers.helicone import GenOpsHeliconeAdapter, instrument_helicone
-    from genops.providers.helicone_validation import validate_setup
+    from genops.providers.helicone import (  # noqa: F401
+        GenOpsHeliconeAdapter,
+        instrument_helicone,
+    )
     from genops.providers.helicone_cost_aggregator import multi_provider_cost_tracking
+    from genops.providers.helicone_validation import validate_setup  # noqa: F401
+
     HELICONE_AVAILABLE = True
 except ImportError:
     HELICONE_AVAILABLE = False
@@ -31,42 +34,42 @@ class TestHeliconeEndToEndIntegration:
     def setup_method(self):
         """Set up integration test fixtures."""
         self.test_config = {
-            'helicone_api_key': 'test-helicone-key',
-            'provider_keys': {
-                'openai': 'test-openai-key',
-                'anthropic': 'test-anthropic-key'
-            }
+            "helicone_api_key": "test-helicone-key",
+            "provider_keys": {
+                "openai": "test-openai-key",
+                "anthropic": "test-anthropic-key",
+            },
         }
 
     def test_complete_workflow_setup_to_response(self):
         """Test complete workflow from setup to response processing."""
         # 1. Setup and validation
         adapter = GenOpsHeliconeAdapter(**self.test_config)
-        
+
         # 2. Validation
         # Note: In real tests, this would use actual validation
         # result = validate_setup()
         # assert result.overall_status == "PASSED"
-        
+
         # 3. Make request with cost tracking
-        with multi_provider_cost_tracking("integration-test") as tracker:
+        with multi_provider_cost_tracking("integration-test"):
             # Mock the actual request
-            with patch('requests.post') as mock_post:
+            with patch("requests.post") as mock_post:
                 mock_response = Mock()
                 mock_response.status_code = 200
                 mock_response.json.return_value = {
-                    'choices': [{'message': {'content': 'Test response'}}],
-                    'usage': {'prompt_tokens': 10, 'completion_tokens': 5}
+                    "choices": [{"message": {"content": "Test response"}}],
+                    "usage": {"prompt_tokens": 10, "completion_tokens": 5},
                 }
                 mock_post.return_value = mock_response
-                
+
                 response = adapter.chat(
                     message="Test integration",
                     provider="openai",
                     team="integration-test",
-                    project="test-project"
+                    project="test-project",
                 )
-        
+
         # 4. Verify results
         assert response is not None
 

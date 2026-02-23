@@ -6,7 +6,7 @@ import logging
 import threading
 import time
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable
 
 from genops.core.policy import PolicyConfig, PolicyResult, register_policy
 from genops.providers.collibra.client import CollibraAPIClient, CollibraAPIError
@@ -21,8 +21,8 @@ class PolicySyncStats:
     policies_imported: int = 0
     policies_updated: int = 0
     policies_failed: int = 0
-    last_sync_time: Optional[float] = None
-    errors: List[str] = field(default_factory=list)
+    last_sync_time: float | None = None
+    errors: list[str] = field(default_factory=list)
 
     def record_import(self, count: int = 1):
         """Record successful policy import."""
@@ -78,10 +78,10 @@ class PolicyImporter:
     def __init__(
         self,
         client: CollibraAPIClient,
-        domain_id: Optional[str] = None,
+        domain_id: str | None = None,
         sync_interval_minutes: int = 5,
         enable_background_sync: bool = False,
-        policy_transformer: Optional[Callable[[Dict], Optional[PolicyConfig]]] = None,
+        policy_transformer: Callable[[dict], PolicyConfig | None] | None = None,
     ):
         """
         Initialize policy importer.
@@ -102,17 +102,17 @@ class PolicyImporter:
         self.stats = PolicySyncStats()
 
         # Imported policy tracking
-        self.imported_policies: Dict[str, PolicyConfig] = {}
+        self.imported_policies: dict[str, PolicyConfig] = {}
 
         # Background sync thread
         self.background_sync_enabled = enable_background_sync
-        self.background_thread: Optional[threading.Thread] = None
+        self.background_thread: threading.Thread | None = None
         self.shutdown_event = threading.Event()
 
         if self.background_sync_enabled:
             self._start_background_sync()
 
-    def fetch_policies(self, domain_id: Optional[str] = None) -> List[Dict[str, Any]]:
+    def fetch_policies(self, domain_id: str | None = None) -> list[dict[str, Any]]:
         """
         Fetch policies from Collibra.
 
@@ -150,7 +150,7 @@ class PolicyImporter:
             self.stats.record_failure(str(e))
             return []
 
-    def _fetch_domain_policies(self, domain_id: str) -> List[Dict[str, Any]]:
+    def _fetch_domain_policies(self, domain_id: str) -> list[dict[str, Any]]:
         """
         Fetch policies from a specific Collibra domain.
 
@@ -178,7 +178,7 @@ class PolicyImporter:
             logger.warning(f"Failed to fetch policies from domain {domain_id}: {e}")
             return []
 
-    def translate_policy(self, collibra_policy: Dict[str, Any]) -> Optional[PolicyConfig]:
+    def translate_policy(self, collibra_policy: dict[str, Any]) -> PolicyConfig | None:
         """
         Translate Collibra policy to GenOps PolicyConfig.
 
@@ -244,8 +244,8 @@ class PolicyImporter:
             return None
 
     def _extract_policy_conditions(
-        self, policy_type: str, attributes: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, policy_type: str, attributes: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Extract policy conditions from Collibra attributes.
 
@@ -326,8 +326,8 @@ class PolicyImporter:
         return conditions
 
     def import_policies(
-        self, domain_id: Optional[str] = None, register: bool = True
-    ) -> List[PolicyConfig]:
+        self, domain_id: str | None = None, register: bool = True
+    ) -> list[PolicyConfig]:
         """
         Import policies from Collibra and optionally register with GenOps.
 
@@ -374,9 +374,7 @@ class PolicyImporter:
         )
         return imported_policies
 
-    def sync_policies(
-        self, domain_id: Optional[str] = None
-    ) -> Dict[str, Any]:
+    def sync_policies(self, domain_id: str | None = None) -> dict[str, Any]:
         """
         Synchronize policies from Collibra (import new, update existing).
 
@@ -469,7 +467,7 @@ class PolicyImporter:
         """
         return self.stats
 
-    def get_imported_policies(self) -> Dict[str, PolicyConfig]:
+    def get_imported_policies(self) -> dict[str, PolicyConfig]:
         """
         Get all imported policies.
 

@@ -31,6 +31,7 @@ from typing import Any, Optional
 @dataclass
 class ClaudeWorkflowResult:
     """Result from a production Claude workflow with full telemetry."""
+
     workflow_id: str
     success: bool
     total_cost: float
@@ -38,6 +39,7 @@ class ClaudeWorkflowResult:
     duration: float
     error: Optional[str] = None
     metadata: dict[str, Any] = None
+
 
 @contextmanager
 def claude_production_workflow_context(workflow_name: str, customer_id: str, **kwargs):
@@ -51,11 +53,13 @@ def claude_production_workflow_context(workflow_name: str, customer_id: str, **k
     print(f"   Workflow ID: {workflow_id}")
     print(f"   Customer: {customer_id}")
 
-    with track(workflow_name,
-               workflow_id=workflow_id,
-               customer_id=customer_id,
-               ai_provider="anthropic",
-               **kwargs) as span:
+    with track(
+        workflow_name,
+        workflow_id=workflow_id,
+        customer_id=customer_id,
+        ai_provider="anthropic",
+        **kwargs,
+    ) as span:
         try:
             yield span, workflow_id
 
@@ -77,6 +81,7 @@ def claude_production_workflow_context(workflow_name: str, customer_id: str, **k
             print(f"   Error: {e}")
             print(f"   Duration: {duration:.2f} seconds")
             raise
+
 
 def legal_document_review_workflow():
     """Enterprise legal document review workflow with Claude."""
@@ -111,7 +116,7 @@ TERMINATION: Either party may terminate for material breach with 30 days cure pe
 LIABILITY: Licensor's total liability shall not exceed the annual license fee. No liability for consequential or indirect damages.
 
 GOVERNING LAW: This Agreement shall be governed by Delaware state law.""",
-            "review_requirements": ["key_terms", "obligations", "risks", "compliance"]
+            "review_requirements": ["key_terms", "obligations", "risks", "compliance"],
         }
 
         with claude_production_workflow_context(
@@ -122,9 +127,8 @@ GOVERNING LAW: This Agreement shall be governed by Delaware state law.""",
             environment="production",
             document_id=legal_document["document_id"],
             document_type=legal_document["document_type"],
-            priority=legal_document["priority"]
+            priority=legal_document["priority"],
         ) as (span, workflow_id):
-
             total_cost = 0
             review_operations = []
 
@@ -133,12 +137,14 @@ GOVERNING LAW: This Agreement shall be governed by Delaware state law.""",
             classification_response = client.messages_create(
                 model="claude-3-5-sonnet-20241022",  # Best for legal analysis
                 messages=[
-                    {"role": "user", "content": f"Classify this legal document and provide an initial risk assessment:\n\n{legal_document['content']}"}
+                    {
+                        "role": "user",
+                        "content": f"Classify this legal document and provide an initial risk assessment:\n\n{legal_document['content']}",
+                    }
                 ],
                 max_tokens=300,
                 temperature=0.3,  # Lower temperature for accuracy
                 system="You are an expert legal analyst. Provide structured analysis focusing on document classification, key risk factors, and initial assessment.",
-
                 # Step-specific governance
                 team="legal-team",
                 project="contract-analysis",
@@ -146,12 +152,14 @@ GOVERNING LAW: This Agreement shall be governed by Delaware state law.""",
                 workflow_id=workflow_id,
                 step="classification_risk_assessment",
                 document_id=legal_document["document_id"],
-                requires_accuracy="critical"
+                requires_accuracy="critical",
             )
 
             classification = classification_response.content[0].text
-            classification_cost = (classification_response.usage.input_tokens / 1000000 * 3.00 +
-                                  classification_response.usage.output_tokens / 1000000 * 15.00)
+            classification_cost = (
+                classification_response.usage.input_tokens / 1000000 * 3.00
+                + classification_response.usage.output_tokens / 1000000 * 15.00
+            )
             total_cost += classification_cost
             review_operations.append(("Document Classification", classification_cost))
 
@@ -163,12 +171,14 @@ GOVERNING LAW: This Agreement shall be governed by Delaware state law.""",
             terms_response = client.messages_create(
                 model="claude-3-5-sonnet-20241022",
                 messages=[
-                    {"role": "user", "content": f"Extract and analyze all key terms, obligations, and conditions from this contract:\n\n{legal_document['content']}"}
+                    {
+                        "role": "user",
+                        "content": f"Extract and analyze all key terms, obligations, and conditions from this contract:\n\n{legal_document['content']}",
+                    }
                 ],
                 max_tokens=500,
                 temperature=0.2,  # Very low for precise extraction
                 system="You are a contract attorney specializing in software licensing. Extract specific terms, obligations, dates, amounts, and conditions with precise details.",
-
                 # Enhanced governance for critical analysis
                 team="legal-team",
                 project="contract-analysis",
@@ -177,12 +187,14 @@ GOVERNING LAW: This Agreement shall be governed by Delaware state law.""",
                 step="terms_obligations_analysis",
                 document_id=legal_document["document_id"],
                 analysis_type="detailed_extraction",
-                legal_specialization="software_licensing"
+                legal_specialization="software_licensing",
             )
 
             terms_analysis = terms_response.content[0].text
-            terms_cost = (terms_response.usage.input_tokens / 1000000 * 3.00 +
-                         terms_response.usage.output_tokens / 1000000 * 15.00)
+            terms_cost = (
+                terms_response.usage.input_tokens / 1000000 * 3.00
+                + terms_response.usage.output_tokens / 1000000 * 15.00
+            )
             total_cost += terms_cost
             review_operations.append(("Terms Analysis", terms_cost))
 
@@ -194,12 +206,14 @@ GOVERNING LAW: This Agreement shall be governed by Delaware state law.""",
             risk_response = client.messages_create(
                 model="claude-3-5-sonnet-20241022",
                 messages=[
-                    {"role": "user", "content": f"Identify potential legal risks, compliance issues, and areas of concern in this contract:\n\n{legal_document['content']}\n\nPrevious analysis:\n{terms_analysis}"}
+                    {
+                        "role": "user",
+                        "content": f"Identify potential legal risks, compliance issues, and areas of concern in this contract:\n\n{legal_document['content']}\n\nPrevious analysis:\n{terms_analysis}",
+                    }
                 ],
                 max_tokens=400,
                 temperature=0.3,
                 system="You are a senior legal counsel specializing in risk assessment. Identify potential legal exposures, compliance risks, unfavorable terms, and recommend protective measures.",
-
                 # Risk assessment governance
                 team="legal-team",
                 project="contract-analysis",
@@ -208,12 +222,14 @@ GOVERNING LAW: This Agreement shall be governed by Delaware state law.""",
                 step="risk_compliance_assessment",
                 document_id=legal_document["document_id"],
                 risk_analysis=True,
-                compliance_check=True
+                compliance_check=True,
             )
 
             risk_assessment = risk_response.content[0].text
-            risk_cost = (risk_response.usage.input_tokens / 1000000 * 3.00 +
-                        risk_response.usage.output_tokens / 1000000 * 15.00)
+            risk_cost = (
+                risk_response.usage.input_tokens / 1000000 * 3.00
+                + risk_response.usage.output_tokens / 1000000 * 15.00
+            )
             total_cost += risk_cost
             review_operations.append(("Risk Assessment", risk_cost))
 
@@ -225,12 +241,14 @@ GOVERNING LAW: This Agreement shall be governed by Delaware state law.""",
             recommendations_response = client.messages_create(
                 model="claude-3-5-sonnet-20241022",
                 messages=[
-                    {"role": "user", "content": f"Based on this contract analysis, provide specific recommendations and action items:\n\nContract: {legal_document['content'][:500]}...\n\nRisk Assessment: {risk_assessment}"}
+                    {
+                        "role": "user",
+                        "content": f"Based on this contract analysis, provide specific recommendations and action items:\n\nContract: {legal_document['content'][:500]}...\n\nRisk Assessment: {risk_assessment}",
+                    }
                 ],
                 max_tokens=350,
                 temperature=0.4,
                 system="You are a legal advisor providing actionable recommendations. Focus on specific steps, negotiations points, protective measures, and decision guidance for the client.",
-
                 # Final recommendations governance
                 team="legal-team",
                 project="contract-analysis",
@@ -238,12 +256,14 @@ GOVERNING LAW: This Agreement shall be governed by Delaware state law.""",
                 workflow_id=workflow_id,
                 step="final_recommendations",
                 document_id=legal_document["document_id"],
-                deliverable_type="actionable_recommendations"
+                deliverable_type="actionable_recommendations",
             )
 
             recommendations = recommendations_response.content[0].text
-            recommendations_cost = (recommendations_response.usage.input_tokens / 1000000 * 3.00 +
-                                   recommendations_response.usage.output_tokens / 1000000 * 15.00)
+            recommendations_cost = (
+                recommendations_response.usage.input_tokens / 1000000 * 3.00
+                + recommendations_response.usage.output_tokens / 1000000 * 15.00
+            )
             total_cost += recommendations_cost
             review_operations.append(("Recommendations", recommendations_cost))
 
@@ -260,7 +280,9 @@ GOVERNING LAW: This Agreement shall be governed by Delaware state law.""",
             print("\n📊 Legal Review Workflow Summary:")
             print(f"   • Total review operations: {len(review_operations)}")
             print(f"   • Total workflow cost: ${total_cost:.6f}")
-            print(f"   • Average cost per operation: ${total_cost / len(review_operations):.6f}")
+            print(
+                f"   • Average cost per operation: ${total_cost / len(review_operations):.6f}"
+            )
 
             for operation, cost in review_operations:
                 print(f"   • {operation}: ${cost:.6f}")
@@ -270,6 +292,7 @@ GOVERNING LAW: This Agreement shall be governed by Delaware state law.""",
     except Exception as e:
         print(f"❌ Legal document review workflow error: {e}")
         return False
+
 
 def intelligent_content_pipeline():
     """Content generation pipeline with Claude-specific optimizations."""
@@ -288,22 +311,22 @@ def intelligent_content_pipeline():
                 "topic": "AI transformation strategy for traditional manufacturing",
                 "target_audience": "C-suite executives",
                 "complexity": "high",
-                "claude_strength": "strategic_analysis"
+                "claude_strength": "strategic_analysis",
             },
             {
                 "type": "technical_whitepaper",
                 "topic": "Implementation guide for sustainable supply chain management",
                 "target_audience": "operations_managers",
                 "complexity": "very_high",
-                "claude_strength": "detailed_reasoning"
+                "claude_strength": "detailed_reasoning",
             },
             {
                 "type": "marketing_copy",
                 "topic": "Product launch campaign for AI-powered analytics platform",
                 "target_audience": "technology_buyers",
                 "complexity": "medium",
-                "claude_strength": "persuasive_writing"
-            }
+                "claude_strength": "persuasive_writing",
+            },
         ]
 
         with claude_production_workflow_context(
@@ -311,23 +334,26 @@ def intelligent_content_pipeline():
             "content-enterprise-001",
             team="content-operations",
             project="ai-content-automation",
-            environment="production"
+            environment="production",
         ) as (span, workflow_id):
-
             total_pipeline_cost = 0
             generated_content = []
 
             for i, request in enumerate(content_requests, 1):
-                print(f"\n🎯 Content Request {i}: {request['type']} - {request['topic'][:50]}...")
+                print(
+                    f"\n🎯 Content Request {i}: {request['type']} - {request['topic'][:50]}..."
+                )
 
                 # Claude model selection based on complexity
                 model_selection = {
-                    "medium": "claude-3-5-haiku-20241022",     # Cost-effective
-                    "high": "claude-3-5-sonnet-20241022",     # Balanced
-                    "very_high": "claude-3-opus-20240229"     # Premium quality
+                    "medium": "claude-3-5-haiku-20241022",  # Cost-effective
+                    "high": "claude-3-5-sonnet-20241022",  # Balanced
+                    "very_high": "claude-3-opus-20240229",  # Premium quality
                 }
 
-                selected_model = model_selection.get(request["complexity"], "claude-3-5-sonnet-20241022")
+                selected_model = model_selection.get(
+                    request["complexity"], "claude-3-5-sonnet-20241022"
+                )
 
                 # Policy enforcement check
                 policy_check = enforce_claude_content_policy(request)
@@ -359,8 +385,12 @@ def intelligent_content_pipeline():
             print(f"   • Requests processed: {len(content_requests)}")
             print(f"   • Content pieces generated: {len(generated_content)}")
             print(f"   • Total pipeline cost: ${total_pipeline_cost:.6f}")
-            print(f"   • Average cost per piece: ${total_pipeline_cost / max(len(generated_content), 1):.6f}")
-            print(f"   • Total word count: {sum(c.get('word_count', 0) for c in generated_content):,}")
+            print(
+                f"   • Average cost per piece: ${total_pipeline_cost / max(len(generated_content), 1):.6f}"
+            )
+            print(
+                f"   • Total word count: {sum(c.get('word_count', 0) for c in generated_content):,}"
+            )
 
         return True
 
@@ -368,10 +398,15 @@ def intelligent_content_pipeline():
         print(f"❌ Claude content pipeline error: {e}")
         return False
 
+
 def enforce_claude_content_policy(request: dict) -> dict:
     """Enforce content policy for Claude operations."""
     # Claude-specific policy enforcement
-    restricted_topics = ["controversial political", "medical diagnosis", "financial advice"]
+    restricted_topics = [
+        "controversial political",
+        "medical diagnosis",
+        "financial advice",
+    ]
     sensitive_audiences = ["minors", "healthcare_patients"]
 
     topic_lower = request["topic"].lower()
@@ -381,39 +416,47 @@ def enforce_claude_content_policy(request: dict) -> dict:
         if restricted in topic_lower:
             return {
                 "approved": False,
-                "reason": f"Topic contains restricted content: {restricted}"
+                "reason": f"Topic contains restricted content: {restricted}",
             }
 
     for sensitive in sensitive_audiences:
         if sensitive in audience_lower:
             return {
                 "approved": False,
-                "reason": f"Sensitive audience requires special handling: {sensitive}"
+                "reason": f"Sensitive audience requires special handling: {sensitive}",
             }
 
     return {"approved": True, "reason": "Content approved for Claude processing"}
 
-def generate_content_with_claude(client, request: dict, model: str, workflow_id: str, request_index: int) -> Optional[dict]:
+
+def generate_content_with_claude(
+    client, request: dict, model: str, workflow_id: str, request_index: int
+) -> Optional[dict]:
     """Generate content with Claude-specific optimizations."""
     try:
         # Claude-optimized system prompts
         claude_system_prompts = {
             "executive_summary": "You are a senior business consultant writing for C-suite executives. Create compelling, strategic content with clear business value propositions and actionable insights.",
             "technical_whitepaper": "You are a technical expert and thought leader. Write authoritative, detailed content with practical implementation guidance and real-world examples.",
-            "marketing_copy": "You are a persuasive marketing copywriter. Create engaging, benefit-focused content that resonates with your target audience and drives action."
+            "marketing_copy": "You are a persuasive marketing copywriter. Create engaging, benefit-focused content that resonates with your target audience and drives action.",
         }
 
-        system_prompt = claude_system_prompts.get(request["type"], "You are a professional writer creating high-quality content.")
+        system_prompt = claude_system_prompts.get(
+            request["type"],
+            "You are a professional writer creating high-quality content.",
+        )
 
         response = client.messages_create(
             model=model,
             messages=[
-                {"role": "user", "content": f"Create a comprehensive {request['type']} about: {request['topic']}. Target audience: {request['target_audience']}. Make it engaging, well-structured, and valuable."}
+                {
+                    "role": "user",
+                    "content": f"Create a comprehensive {request['type']} about: {request['topic']}. Target audience: {request['target_audience']}. Make it engaging, well-structured, and valuable.",
+                }
             ],
             max_tokens=1500 if request["complexity"] == "very_high" else 1000,
             temperature=0.7,
             system=system_prompt,
-
             # Detailed Claude content governance
             team="content-operations",
             project="ai-content-automation",
@@ -423,21 +466,27 @@ def generate_content_with_claude(client, request: dict, model: str, workflow_id:
             complexity_level=request["complexity"],
             claude_strength=request["claude_strength"],
             request_index=request_index,
-            model_selection_reason="complexity_optimized"
+            model_selection_reason="complexity_optimized",
         )
 
         content = response.content[0].text
 
         # Calculate cost based on actual Claude model used
         if model == "claude-3-opus-20240229":
-            cost = (response.usage.input_tokens / 1000000 * 15.00 +
-                   response.usage.output_tokens / 1000000 * 75.00)
+            cost = (
+                response.usage.input_tokens / 1000000 * 15.00
+                + response.usage.output_tokens / 1000000 * 75.00
+            )
         elif model == "claude-3-5-sonnet-20241022":
-            cost = (response.usage.input_tokens / 1000000 * 3.00 +
-                   response.usage.output_tokens / 1000000 * 15.00)
+            cost = (
+                response.usage.input_tokens / 1000000 * 3.00
+                + response.usage.output_tokens / 1000000 * 15.00
+            )
         else:  # Haiku
-            cost = (response.usage.input_tokens / 1000000 * 1.00 +
-                   response.usage.output_tokens / 1000000 * 5.00)
+            cost = (
+                response.usage.input_tokens / 1000000 * 1.00
+                + response.usage.output_tokens / 1000000 * 5.00
+            )
 
         return {
             "content": content,
@@ -445,12 +494,13 @@ def generate_content_with_claude(client, request: dict, model: str, workflow_id:
             "tokens": response.usage.input_tokens + response.usage.output_tokens,
             "model": model,
             "type": request["type"],
-            "word_count": len(content.split())
+            "word_count": len(content.split()),
         }
 
     except Exception as e:
         print(f"   ❌ Content generation failed: {e}")
         return None
+
 
 def claude_resilience_and_monitoring():
     """Demonstrate production-grade resilience and monitoring for Claude."""
@@ -468,29 +518,29 @@ def claude_resilience_and_monitoring():
                 "name": "Normal Claude Operation",
                 "model": "claude-3-5-haiku-20241022",
                 "prompt": "Explain the benefits of renewable energy in business.",
-                "expected_success": True
+                "expected_success": True,
             },
             {
                 "name": "Long Context Test",
                 "model": "claude-3-5-sonnet-20241022",
-                "prompt": "Analyze this extensive document: " + "Sample content. " * 100,
-                "expected_success": True
+                "prompt": "Analyze this extensive document: "
+                + "Sample content. " * 100,
+                "expected_success": True,
             },
             {
                 "name": "Model Availability Test",
                 "model": "claude-3-5-sonnet-20241022",
                 "prompt": "This tests Claude model availability and response.",
-                "expected_success": True
-            }
+                "expected_success": True,
+            },
         ]
 
         with claude_production_workflow_context(
             "claude_resilience_testing",
             "resilience-demo",
             team="sre-team",
-            project="claude-reliability"
+            project="claude-reliability",
         ) as (span, workflow_id):
-
             results = []
 
             for scenario in test_scenarios:
@@ -507,9 +557,10 @@ def claude_resilience_and_monitoring():
 
                             response = client.messages_create(
                                 model=scenario["model"],
-                                messages=[{"role": "user", "content": scenario["prompt"]}],
+                                messages=[
+                                    {"role": "user", "content": scenario["prompt"]}
+                                ],
                                 max_tokens=300,
-
                                 # Resilience testing governance
                                 team="sre-team",
                                 project="claude-reliability",
@@ -517,50 +568,63 @@ def claude_resilience_and_monitoring():
                                 test_scenario=scenario["name"],
                                 attempt_number=attempt + 1,
                                 max_retries=max_retries,
-                                claude_resilience_test=True
+                                claude_resilience_test=True,
                             )
 
                             duration = time.time() - start_time
 
-                            results.append({
-                                "scenario": scenario["name"],
-                                "success": True,
-                                "attempt": attempt + 1,
-                                "duration": duration,
-                                "tokens": response.usage.input_tokens + response.usage.output_tokens,
-                                "claude_model": scenario["model"]
-                            })
+                            results.append(
+                                {
+                                    "scenario": scenario["name"],
+                                    "success": True,
+                                    "attempt": attempt + 1,
+                                    "duration": duration,
+                                    "tokens": response.usage.input_tokens
+                                    + response.usage.output_tokens,
+                                    "claude_model": scenario["model"],
+                                }
+                            )
 
                             print(f"   ✅ Success on attempt {attempt + 1}")
-                            print(f"   📊 Duration: {duration:.2f}s, Tokens: {response.usage.input_tokens + response.usage.output_tokens}")
-                            print(f"   🤖 Claude response: {response.content[0].text[:80]}...")
+                            print(
+                                f"   📊 Duration: {duration:.2f}s, Tokens: {response.usage.input_tokens + response.usage.output_tokens}"
+                            )
+                            print(
+                                f"   🤖 Claude response: {response.content[0].text[:80]}..."
+                            )
                             break
 
                         except Exception as e:
                             if attempt < max_retries - 1:
                                 print(f"   ⚠️  Attempt {attempt + 1} failed: {e}")
-                                print(f"   🔄 Retrying Claude request in {retry_delay}s...")
+                                print(
+                                    f"   🔄 Retrying Claude request in {retry_delay}s..."
+                                )
                                 time.sleep(retry_delay)
                                 retry_delay *= 1.5  # Gentle exponential backoff
                             else:
                                 # Final failure
-                                results.append({
-                                    "scenario": scenario["name"],
-                                    "success": False,
-                                    "error": str(e),
-                                    "attempts": max_retries,
-                                    "claude_model": scenario["model"]
-                                })
+                                results.append(
+                                    {
+                                        "scenario": scenario["name"],
+                                        "success": False,
+                                        "error": str(e),
+                                        "attempts": max_retries,
+                                        "claude_model": scenario["model"],
+                                    }
+                                )
                                 print(f"   ❌ Failed after {max_retries} attempts: {e}")
 
                 except Exception as e:
-                    results.append({
-                        "scenario": scenario["name"],
-                        "success": False,
-                        "error": str(e),
-                        "attempts": 1,
-                        "claude_model": scenario["model"]
-                    })
+                    results.append(
+                        {
+                            "scenario": scenario["name"],
+                            "success": False,
+                            "error": str(e),
+                            "attempts": 1,
+                            "claude_model": scenario["model"],
+                        }
+                    )
                     print(f"   ❌ Immediate failure: {e}")
 
             # Analyze Claude-specific results
@@ -569,7 +633,10 @@ def claude_resilience_and_monitoring():
 
             span.set_attribute("total_claude_tests", total_tests)
             span.set_attribute("successful_claude_tests", successful_tests)
-            span.set_attribute("claude_success_rate", successful_tests / total_tests if total_tests > 0 else 0)
+            span.set_attribute(
+                "claude_success_rate",
+                successful_tests / total_tests if total_tests > 0 else 0,
+            )
             span.set_attribute("claude_resilience_patterns", True)
 
             print("\n📊 Claude Resilience Test Results:")
@@ -588,6 +655,7 @@ def claude_resilience_and_monitoring():
     except Exception as e:
         print(f"❌ Claude resilience testing error: {e}")
         return False
+
 
 def main():
     """Run production patterns demonstrations."""
@@ -627,8 +695,12 @@ def main():
 
         print("\n🚀 Claude Deployment Recommendations:")
         print("   • Use Claude 3.5 Sonnet for complex reasoning and analysis")
-        print("   • Implement Claude 3.5 Haiku for high-volume, cost-sensitive operations")
-        print("   • Deploy Claude 3 Opus for highest quality creative and strategic work")
+        print(
+            "   • Implement Claude 3.5 Haiku for high-volume, cost-sensitive operations"
+        )
+        print(
+            "   • Deploy Claude 3 Opus for highest quality creative and strategic work"
+        )
         print("   • Set up Claude-specific monitoring and alerting thresholds")
         print("   • Establish backup strategies and graceful degradation patterns")
 
@@ -636,6 +708,7 @@ def main():
     else:
         print("❌ Claude production patterns demonstration encountered issues.")
         return False
+
 
 if __name__ == "__main__":
     success = main()

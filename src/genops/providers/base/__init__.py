@@ -15,5 +15,5 @@ __all__ = [
     "FrameworkInfo",
     "get_framework_detector",
     "detect_frameworks",
-    "is_framework_available"
+    "is_framework_available",
 ]

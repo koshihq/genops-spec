@@ -5,7 +5,7 @@ from genops.core.telemetry import GenOpsTelemetry
 
 __all__ = [
     "BaseProvider",
-    "OperationContext", 
+    "OperationContext",
     "provider_registry",
     "GenOpsTelemetry",
 ]

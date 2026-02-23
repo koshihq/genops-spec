@@ -28,26 +28,41 @@ from genops.core.context import (
 # Provider integrations - Key functions for easy access
 try:
     from genops.providers import instrument_helicone
+
     _helicone_available = True
 except ImportError:
+
     def instrument_helicone(*args, **kwargs):
-        raise ImportError("Helicone provider not available. Install with: pip install 'genops[helicone]'")
+        raise ImportError(
+            "Helicone provider not available. Install with: pip install 'genops[helicone]'"
+        )
+
     _helicone_available = False
 
 try:
     from genops.providers import instrument_langfuse
+
     _langfuse_available = True
 except ImportError:
+
     def instrument_langfuse(*args, **kwargs):
-        raise ImportError("Langfuse provider not available. Install with: pip install 'genops[langfuse]'")
+        raise ImportError(
+            "Langfuse provider not available. Install with: pip install 'genops[langfuse]'"
+        )
+
     _langfuse_available = False
 
 try:
     from genops.providers import instrument_dust
+
     _dust_available = True
 except ImportError:
+
     def instrument_dust(*args, **kwargs):
-        raise ImportError("Dust provider not available. Install with: pip install requests")
+        raise ImportError(
+            "Dust provider not available. Install with: pip install requests"
+        )
+
     _dust_available = False
 from genops.core.context_manager import track, track_enhanced
 
@@ -95,6 +110,7 @@ __version__ = "0.1.0"
 def auto_instrument(**kwargs):
     """Convenience function for auto-instrumentation. Alias for init()."""
     return init(**kwargs)
+
 
 __all__ = [
     # Core functions

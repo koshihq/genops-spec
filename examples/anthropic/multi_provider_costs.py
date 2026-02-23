@@ -30,6 +30,7 @@ from typing import Optional
 @dataclass
 class ProviderResult:
     """Result from a provider with cost and performance data."""
+
     provider: str
     model: str
     cost: float
@@ -39,6 +40,7 @@ class ProviderResult:
     latency: float
     response: str
     error: Optional[str] = None
+
 
 def compare_providers_for_task():
     """Compare Anthropic and OpenAI for the same task with cost analysis."""
@@ -65,12 +67,18 @@ def compare_providers_for_task():
 
     # Display comparison
     if len(results) >= 2:
-        print(f"\n{'Provider':<15} {'Model':<30} {'Cost':<12} {'Tokens':<10} {'Latency':<10} {'Cost/Token':<15}")
+        print(
+            f"\n{'Provider':<15} {'Model':<30} {'Cost':<12} {'Tokens':<10} {'Latency':<10} {'Cost/Token':<15}"
+        )
         print("-" * 100)
 
         for result in results:
-            cost_per_token = result.cost / result.tokens_total if result.tokens_total > 0 else 0
-            print(f"{result.provider:<15} {result.model:<30} ${result.cost:<11.6f} {result.tokens_total:<10} {result.latency:<9.2f}s ${cost_per_token:<14.9f}")
+            cost_per_token = (
+                result.cost / result.tokens_total if result.tokens_total > 0 else 0
+            )
+            print(
+                f"{result.provider:<15} {result.model:<30} ${result.cost:<11.6f} {result.tokens_total:<10} {result.latency:<9.2f}s ${cost_per_token:<14.9f}"
+            )
 
         # Detailed cost comparison analysis
         anthropic_result = next((r for r in results if r.provider == "Anthropic"), None)
@@ -78,9 +86,13 @@ def compare_providers_for_task():
 
         if anthropic_result and openai_result:
             cost_diff = abs(anthropic_result.cost - openai_result.cost)
-            cheaper = "Anthropic" if anthropic_result.cost < openai_result.cost else "OpenAI"
+            cheaper = (
+                "Anthropic" if anthropic_result.cost < openai_result.cost else "OpenAI"
+            )
 
-            percentage_diff = (cost_diff / max(anthropic_result.cost, openai_result.cost)) * 100
+            percentage_diff = (
+                cost_diff / max(anthropic_result.cost, openai_result.cost)
+            ) * 100
 
             print("\n💰 Detailed Cost Analysis:")
             print(f"   • Cheaper provider: {cheaper}")
@@ -89,7 +101,9 @@ def compare_providers_for_task():
             print("   • OpenAI response quality: Structured and comprehensive")
 
             # Token efficiency comparison
-            claude_efficiency = len(anthropic_result.response) / anthropic_result.tokens_total
+            claude_efficiency = (
+                len(anthropic_result.response) / anthropic_result.tokens_total
+            )
             openai_efficiency = len(openai_result.response) / openai_result.tokens_total
 
             print(f"   • Claude content/token ratio: {claude_efficiency:.2f}")
@@ -111,6 +125,7 @@ def compare_providers_for_task():
 
     return True
 
+
 def test_anthropic_provider(task: str) -> Optional[ProviderResult]:
     """Test Anthropic Claude with cost tracking."""
     try:
@@ -126,22 +141,27 @@ def test_anthropic_provider(task: str) -> Optional[ProviderResult]:
             messages=[{"role": "user", "content": task}],
             max_tokens=400,
             temperature=0.7,
-
             # Multi-provider comparison tracking
             team="comparison-team",
             project="multi-provider-analysis",
             customer_id="comparison-demo",
             provider="anthropic",
-            comparison_study="cross_provider_claude_focus"
+            comparison_study="cross_provider_claude_focus",
         )
         latency = time.time() - start_time
 
         # Calculate cost (Claude 3.5 Sonnet pricing)
-        input_cost = (response.usage.input_tokens / 1000000) * 3.00  # $3 per 1M input tokens
-        output_cost = (response.usage.output_tokens / 1000000) * 15.00  # $15 per 1M output tokens
+        input_cost = (
+            response.usage.input_tokens / 1000000
+        ) * 3.00  # $3 per 1M input tokens
+        output_cost = (
+            response.usage.output_tokens / 1000000
+        ) * 15.00  # $15 per 1M output tokens
         total_cost = input_cost + output_cost
 
-        print(f"✅ Claude completed: ${total_cost:.6f}, {response.usage.input_tokens + response.usage.output_tokens} tokens, {latency:.2f}s")
+        print(
+            f"✅ Claude completed: ${total_cost:.6f}, {response.usage.input_tokens + response.usage.output_tokens} tokens, {latency:.2f}s"
+        )
 
         return ProviderResult(
             provider="Anthropic",
@@ -151,17 +171,20 @@ def test_anthropic_provider(task: str) -> Optional[ProviderResult]:
             tokens_output=response.usage.output_tokens,
             tokens_total=response.usage.input_tokens + response.usage.output_tokens,
             latency=latency,
-            response=response.content[0].text
+            response=response.content[0].text,
         )
 
     except ImportError:
-        print("❌ Anthropic provider not available (install with: pip install genops-ai[anthropic])")
+        print(
+            "❌ Anthropic provider not available (install with: pip install genops-ai[anthropic])"
+        )
         return None
     except Exception as e:
         print(f"❌ Anthropic test failed: {e}")
         if "ANTHROPIC_API_KEY" not in os.environ:
             print("💡 Set ANTHROPIC_API_KEY environment variable")
         return None
+
 
 def test_openai_provider(task: str) -> Optional[ProviderResult]:
     """Test OpenAI provider with cost tracking."""
@@ -178,22 +201,27 @@ def test_openai_provider(task: str) -> Optional[ProviderResult]:
             messages=[{"role": "user", "content": task}],
             max_tokens=400,
             temperature=0.7,
-
             # Multi-provider comparison tracking
             team="comparison-team",
             project="multi-provider-analysis",
             customer_id="comparison-demo",
             provider="openai",
-            comparison_study="cross_provider_claude_focus"
+            comparison_study="cross_provider_claude_focus",
         )
         latency = time.time() - start_time
 
         # Calculate cost (GPT-4 pricing)
-        input_cost = (response.usage.prompt_tokens / 1000) * 0.03  # $0.03 per 1K input tokens
-        output_cost = (response.usage.completion_tokens / 1000) * 0.06  # $0.06 per 1K output tokens
+        input_cost = (
+            response.usage.prompt_tokens / 1000
+        ) * 0.03  # $0.03 per 1K input tokens
+        output_cost = (
+            response.usage.completion_tokens / 1000
+        ) * 0.06  # $0.06 per 1K output tokens
         total_cost = input_cost + output_cost
 
-        print(f"✅ OpenAI completed: ${total_cost:.6f}, {response.usage.total_tokens} tokens, {latency:.2f}s")
+        print(
+            f"✅ OpenAI completed: ${total_cost:.6f}, {response.usage.total_tokens} tokens, {latency:.2f}s"
+        )
 
         return ProviderResult(
             provider="OpenAI",
@@ -203,17 +231,20 @@ def test_openai_provider(task: str) -> Optional[ProviderResult]:
             tokens_output=response.usage.completion_tokens,
             tokens_total=response.usage.total_tokens,
             latency=latency,
-            response=response.choices[0].message.content
+            response=response.choices[0].message.content,
         )
 
     except ImportError:
-        print("ℹ️  OpenAI provider not available (install with: pip install genops-ai[openai])")
+        print(
+            "ℹ️  OpenAI provider not available (install with: pip install genops-ai[openai])"
+        )
         return None
     except Exception as e:
         print(f"❌ OpenAI test failed: {e}")
         if "OPENAI_API_KEY" not in os.environ:
             print("💡 Set OPENAI_API_KEY environment variable for comparison")
         return None
+
 
 def claude_migration_cost_analysis():
     """Analyze costs for migrating to or from Claude."""
@@ -228,7 +259,7 @@ def claude_migration_cost_analysis():
             "avg_input_tokens": 2000,  # Long documents
             "avg_output_tokens": 500,  # Detailed analysis
             "description": "Contract analysis, compliance review",
-            "claude_advantage": "Superior reasoning for legal nuances"
+            "claude_advantage": "Superior reasoning for legal nuances",
         },
         {
             "name": "Customer Service Chat",
@@ -236,7 +267,7 @@ def claude_migration_cost_analysis():
             "avg_input_tokens": 100,
             "avg_output_tokens": 150,
             "description": "Customer support automation",
-            "claude_advantage": "Natural, helpful responses"
+            "claude_advantage": "Natural, helpful responses",
         },
         {
             "name": "Content Generation",
@@ -244,7 +275,7 @@ def claude_migration_cost_analysis():
             "avg_input_tokens": 300,
             "avg_output_tokens": 800,
             "description": "Blog posts, marketing copy",
-            "claude_advantage": "Creative, engaging content"
+            "claude_advantage": "Creative, engaging content",
         },
         {
             "name": "Data Analysis Reports",
@@ -252,74 +283,95 @@ def claude_migration_cost_analysis():
             "avg_input_tokens": 1500,
             "avg_output_tokens": 600,
             "description": "Business intelligence summaries",
-            "claude_advantage": "Clear, structured analysis"
-        }
+            "claude_advantage": "Clear, structured analysis",
+        },
     ]
 
     # Provider pricing comparison (simplified)
     provider_pricing = {
         "Claude 3.5 Sonnet": {
-            "input_cost_per_1k": 0.003,   # $3 per 1M = $0.003 per 1K
-            "output_cost_per_1k": 0.015   # $15 per 1M = $0.015 per 1K
+            "input_cost_per_1k": 0.003,  # $3 per 1M = $0.003 per 1K
+            "output_cost_per_1k": 0.015,  # $15 per 1M = $0.015 per 1K
         },
         "Claude 3.5 Haiku": {
-            "input_cost_per_1k": 0.001,   # $1 per 1M = $0.001 per 1K
-            "output_cost_per_1k": 0.005   # $5 per 1M = $0.005 per 1K
+            "input_cost_per_1k": 0.001,  # $1 per 1M = $0.001 per 1K
+            "output_cost_per_1k": 0.005,  # $5 per 1M = $0.005 per 1K
         },
         "Claude 3 Opus": {
-            "input_cost_per_1k": 0.015,   # $15 per 1M = $0.015 per 1K
-            "output_cost_per_1k": 0.075   # $75 per 1M = $0.075 per 1K
+            "input_cost_per_1k": 0.015,  # $15 per 1M = $0.015 per 1K
+            "output_cost_per_1k": 0.075,  # $75 per 1M = $0.075 per 1K
         },
-        "GPT-4 (comparison)": {
-            "input_cost_per_1k": 0.03,
-            "output_cost_per_1k": 0.06
-        }
+        "GPT-4 (comparison)": {"input_cost_per_1k": 0.03, "output_cost_per_1k": 0.06},
     }
 
     print("📈 Monthly Cost Projections by Provider (Claude Focus):")
-    print(f"{'Workload':<25} {'Provider':<20} {'Daily Cost':<12} {'Monthly Cost':<15} {'Yearly Cost':<12} {'Advantage'}")
+    print(
+        f"{'Workload':<25} {'Provider':<20} {'Daily Cost':<12} {'Monthly Cost':<15} {'Yearly Cost':<12} {'Advantage'}"
+    )
     print("-" * 120)
 
     for workload in workloads:
         print(f"\n{workload['name']:<25}")
-        print(f"   ({workload['daily_requests']} req/day, ~{workload['avg_input_tokens']}+{workload['avg_output_tokens']} tokens)")
+        print(
+            f"   ({workload['daily_requests']} req/day, ~{workload['avg_input_tokens']}+{workload['avg_output_tokens']} tokens)"
+        )
 
         workload_costs = []
 
         for provider, pricing in provider_pricing.items():
             # Calculate daily cost
-            daily_input_cost = (workload["daily_requests"] * workload["avg_input_tokens"] / 1000) * pricing["input_cost_per_1k"]
-            daily_output_cost = (workload["daily_requests"] * workload["avg_output_tokens"] / 1000) * pricing["output_cost_per_1k"]
+            daily_input_cost = (
+                workload["daily_requests"] * workload["avg_input_tokens"] / 1000
+            ) * pricing["input_cost_per_1k"]
+            daily_output_cost = (
+                workload["daily_requests"] * workload["avg_output_tokens"] / 1000
+            ) * pricing["output_cost_per_1k"]
             daily_total = daily_input_cost + daily_output_cost
 
             monthly_cost = daily_total * 30
             yearly_cost = daily_total * 365
 
-            workload_costs.append({
-                "provider": provider,
-                "daily": daily_total,
-                "monthly": monthly_cost,
-                "yearly": yearly_cost
-            })
+            workload_costs.append(
+                {
+                    "provider": provider,
+                    "daily": daily_total,
+                    "monthly": monthly_cost,
+                    "yearly": yearly_cost,
+                }
+            )
 
-            advantage = workload["claude_advantage"] if "Claude" in provider else "Comparison baseline"
+            advantage = (
+                workload["claude_advantage"]
+                if "Claude" in provider
+                else "Comparison baseline"
+            )
             if len(advantage) > 25:
                 advantage = advantage[:25] + "..."
 
-            print(f"{'':<25} {provider:<20} ${daily_total:<11.4f} ${monthly_cost:<14.2f} ${yearly_cost:<11.0f} {advantage}")
+            print(
+                f"{'':<25} {provider:<20} ${daily_total:<11.4f} ${monthly_cost:<14.2f} ${yearly_cost:<11.0f} {advantage}"
+            )
 
         # Find best Claude model vs GPT-4
-        claude_models = [cost for cost in workload_costs if "Claude" in cost["provider"]]
-        gpt4_cost = next((cost for cost in workload_costs if "GPT-4" in cost["provider"]), None)
+        claude_models = [
+            cost for cost in workload_costs if "Claude" in cost["provider"]
+        ]
+        gpt4_cost = next(
+            (cost for cost in workload_costs if "GPT-4" in cost["provider"]), None
+        )
 
         if claude_models and gpt4_cost:
             best_claude = min(claude_models, key=lambda x: x["yearly"])
             if best_claude["yearly"] < gpt4_cost["yearly"]:
                 savings = gpt4_cost["yearly"] - best_claude["yearly"]
-                print(f"   💰 Best Claude option: {best_claude['provider']} saves ${savings:.0f}/year vs GPT-4")
+                print(
+                    f"   💰 Best Claude option: {best_claude['provider']} saves ${savings:.0f}/year vs GPT-4"
+                )
             else:
                 premium = best_claude["yearly"] - gpt4_cost["yearly"]
-                print(f"   💎 Claude premium: {best_claude['provider']} costs ${premium:.0f}/year more than GPT-4")
+                print(
+                    f"   💎 Claude premium: {best_claude['provider']} costs ${premium:.0f}/year more than GPT-4"
+                )
 
     # Claude-specific migration recommendations
     print("\n🎯 Claude Migration Recommendations:")
@@ -331,6 +383,7 @@ def claude_migration_cost_analysis():
 
     return True
 
+
 def unified_claude_cost_tracking():
     """Demonstrate unified cost tracking with Claude-focused multi-provider workflow."""
     print("\n\n📊 Unified Multi-Provider Cost Tracking (Claude Focus)")
@@ -340,16 +393,19 @@ def unified_claude_cost_tracking():
         from genops import track
 
         # Simulate Claude-centric multi-provider operation
-        with track("claude_multi_provider_workflow",
-                   team="multi-provider-team",
-                   project="claude-unified-tracking",
-                   customer_id="unified-claude-demo") as span:
-
+        with track(
+            "claude_multi_provider_workflow",
+            team="multi-provider-team",
+            project="claude-unified-tracking",
+            customer_id="unified-claude-demo",
+        ) as span:
             total_cost = 0
             operations = []
 
             # Operation 1: Claude for primary analysis
-            claude_cost = simulate_claude_operation("Primary document analysis and reasoning")
+            claude_cost = simulate_claude_operation(
+                "Primary document analysis and reasoning"
+            )
             if claude_cost:
                 total_cost += claude_cost
                 operations.append(("Claude", "Document Analysis", claude_cost))
@@ -361,41 +417,58 @@ def unified_claude_cost_tracking():
                 operations.append(("OpenAI", "Data Extraction", openai_cost))
 
             # Operation 3: Claude for final synthesis
-            claude_synthesis_cost = simulate_claude_operation("Final synthesis and recommendations")
+            claude_synthesis_cost = simulate_claude_operation(
+                "Final synthesis and recommendations"
+            )
             if claude_synthesis_cost:
                 total_cost += claude_synthesis_cost
                 operations.append(("Claude", "Synthesis", claude_synthesis_cost))
 
             # Set unified tracking attributes
-            span.set_attribute("total_providers_used", len({op[0] for op in operations}))
+            span.set_attribute(
+                "total_providers_used", len({op[0] for op in operations})
+            )
             span.set_attribute("total_operations", len(operations))
             span.set_attribute("total_cost", total_cost)
-            span.set_attribute("claude_operations", len([op for op in operations if op[0] == "Claude"]))
+            span.set_attribute(
+                "claude_operations", len([op for op in operations if op[0] == "Claude"])
+            )
             span.set_attribute("workflow_pattern", "claude_primary")
 
             print("✅ Claude-focused multi-provider workflow completed:")
             print(f"   • Total operations: {len(operations)}")
             print(f"   • Total cost: ${total_cost:.6f}")
-            print(f"   • Claude operations: {len([op for op in operations if op[0] == 'Claude'])}")
+            print(
+                f"   • Claude operations: {len([op for op in operations if op[0] == 'Claude'])}"
+            )
 
             for provider, operation, cost in operations:
                 print(f"   • {provider} ({operation}): ${cost:.6f}")
 
             if len(operations) > 1:
-                claude_cost_total = sum(cost for provider, _, cost in operations if provider == "Claude")
+                claude_cost_total = sum(
+                    cost for provider, _, cost in operations if provider == "Claude"
+                )
                 other_cost_total = total_cost - claude_cost_total
 
                 print("\n💡 Claude-centric workflow benefits:")
-                print(f"   • Claude cost: ${claude_cost_total:.6f} ({claude_cost_total/total_cost*100:.1f}%)")
-                print(f"   • Other providers: ${other_cost_total:.6f} ({other_cost_total/total_cost*100:.1f}%)")
+                print(
+                    f"   • Claude cost: ${claude_cost_total:.6f} ({claude_cost_total / total_cost * 100:.1f}%)"
+                )
+                print(
+                    f"   • Other providers: ${other_cost_total:.6f} ({other_cost_total / total_cost * 100:.1f}%)"
+                )
                 print("   • Unified governance across all providers")
-                print("   • Claude handles complex reasoning, others for specialized tasks")
+                print(
+                    "   • Claude handles complex reasoning, others for specialized tasks"
+                )
 
     except Exception as e:
         print(f"❌ Unified tracking error: {e}")
         return False
 
     return True
+
 
 def simulate_claude_operation(task: str) -> Optional[float]:
     """Simulate Claude operation and return cost."""
@@ -407,8 +480,9 @@ def simulate_claude_operation(task: str) -> Optional[float]:
             simulated_cost = 0.000234  # Standard task with Haiku
         print(f"🔄 Claude - {task}: ${simulated_cost:.6f}")
         return simulated_cost
-    except:
+    except Exception:
         return None
+
 
 def simulate_openai_operation(task: str) -> Optional[float]:
     """Simulate OpenAI operation and return cost."""
@@ -417,8 +491,9 @@ def simulate_openai_operation(task: str) -> Optional[float]:
         simulated_cost = 0.002300  # GPT-4 cost for comparison
         print(f"🔄 OpenAI - {task}: ${simulated_cost:.6f}")
         return simulated_cost
-    except:
+    except Exception:
         return None
+
 
 def main():
     """Run multi-provider cost comparison examples with Claude focus."""
@@ -477,6 +552,7 @@ def main():
     else:
         print("❌ Multi-provider analysis encountered issues.")
         return False
+
 
 if __name__ == "__main__":
     success = main()

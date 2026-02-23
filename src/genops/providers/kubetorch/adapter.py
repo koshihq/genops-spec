@@ -14,13 +14,14 @@ from __future__ import annotations
 import logging
 import time
 import uuid
-from typing import Any, Dict, List, Optional
-from dataclasses import dataclass, field
 from contextlib import contextmanager
+from dataclasses import dataclass, field
+from typing import Any
 
-from genops.providers.base import BaseFrameworkProvider
 from opentelemetry import trace
 from opentelemetry.trace import Status, StatusCode
+
+from genops.providers.base import BaseFrameworkProvider
 
 logger = logging.getLogger(__name__)
 tracer = trace.get_tracer(__name__)
@@ -28,6 +29,7 @@ tracer = trace.get_tracer(__name__)
 # Check for Kubetorch availability
 try:
     import kubetorch
+
     HAS_KUBETORCH = True
 except ImportError:
     HAS_KUBETORCH = False
@@ -47,32 +49,32 @@ class KubetorchOperation:
     resource_type: str  # 'gpu', 'cpu'
     instance_type: str  # 'a100', 'h100', etc.
     num_devices: int
-    device_memory_gb: Optional[int] = None
+    device_memory_gb: int | None = None
 
     # Timing
     start_time: float = field(default_factory=time.time)
-    end_time: Optional[float] = None
-    duration_seconds: Optional[float] = None
+    end_time: float | None = None
+    duration_seconds: float | None = None
 
     # Cost tracking
-    cost_compute: Optional[float] = None
-    cost_storage: Optional[float] = None
-    cost_network: Optional[float] = None
-    cost_total: Optional[float] = None
+    cost_compute: float | None = None
+    cost_storage: float | None = None
+    cost_network: float | None = None
+    cost_total: float | None = None
     currency: str = "USD"
 
     # Governance attributes
-    governance_attributes: Dict[str, Any] = field(default_factory=dict)
+    governance_attributes: dict[str, Any] = field(default_factory=dict)
 
     # Distributed training metadata
-    distributed_strategy: Optional[str] = None  # 'ddp', 'fsdp', 'deepspeed'
-    num_nodes: Optional[int] = None
-    num_replicas: Optional[int] = None
+    distributed_strategy: str | None = None  # 'ddp', 'fsdp', 'deepspeed'
+    num_nodes: int | None = None
+    num_replicas: int | None = None
 
     @property
     def gpu_hours(self) -> float:
         """Calculate GPU-hours consumed."""
-        if self.duration_seconds is None or self.resource_type != 'gpu':
+        if self.duration_seconds is None or self.resource_type != "gpu":
             return 0.0
         hours = self.duration_seconds / 3600
         return self.num_devices * hours
@@ -80,7 +82,7 @@ class KubetorchOperation:
     @property
     def cpu_hours(self) -> float:
         """Calculate CPU-hours consumed."""
-        if self.duration_seconds is None or self.resource_type != 'cpu':
+        if self.duration_seconds is None or self.resource_type != "cpu":
             return 0.0
         hours = self.duration_seconds / 3600
         return self.num_devices * hours
@@ -119,7 +121,7 @@ class GenOpsKubetorchAdapter(BaseFrameworkProvider):
 
     def __init__(
         self,
-        kubetorch_client: Optional[Any] = None,
+        kubetorch_client: Any | None = None,
         telemetry_enabled: bool = True,
         cost_tracking_enabled: bool = True,
         debug: bool = False,
@@ -130,7 +132,7 @@ class GenOpsKubetorchAdapter(BaseFrameworkProvider):
         enable_circuit_breaker: bool = False,
         circuit_breaker_threshold: int = 5,
         sampling_rate: float = 1.0,
-        **governance_defaults
+        **governance_defaults,
     ):
         """
         Initialize GenOps Kubetorch adapter.
@@ -162,10 +164,11 @@ class GenOpsKubetorchAdapter(BaseFrameworkProvider):
 
         # Load pricing calculator
         from .pricing import KubetorchPricing
+
         self._pricing = KubetorchPricing()
 
         # Operation tracking
-        self._current_operations: Dict[str, KubetorchOperation] = {}
+        self._current_operations: dict[str, KubetorchOperation] = {}
 
         # Enterprise features
         self.enable_retry = enable_retry
@@ -193,6 +196,7 @@ class GenOpsKubetorchAdapter(BaseFrameworkProvider):
         """Detect if running in Kubernetes and capture context."""
         try:
             from genops.providers.kubernetes.detector import KubernetesDetector
+
             self.k8s_detector = KubernetesDetector()
             self.in_kubernetes = self.k8s_detector.is_kubernetes()
 
@@ -211,7 +215,7 @@ class GenOpsKubetorchAdapter(BaseFrameworkProvider):
             logger.warning(f"Failed to detect Kubernetes context: {e}")
             self.in_kubernetes = False
             self.k8s_context = None
-            self.k8s_detector = None
+            self.k8s_detector = None  # type: ignore[assignment]
 
     # ==========================================
     # BaseFrameworkProvider Abstract Methods
@@ -220,10 +224,16 @@ class GenOpsKubetorchAdapter(BaseFrameworkProvider):
     def setup_governance_attributes(self) -> None:
         """Setup Kubetorch-specific governance attributes."""
         self.REQUEST_ATTRIBUTES = {
-            'instance_type', 'num_devices', 'device_memory_gb',
-            'workload_type', 'distributed_strategy', 'num_nodes',
-            'checkpoint_frequency_minutes', 'max_duration_hours',
-            'priority', 'resource_type'
+            "instance_type",
+            "num_devices",
+            "device_memory_gb",
+            "workload_type",
+            "distributed_strategy",
+            "num_nodes",
+            "checkpoint_frequency_minutes",
+            "max_duration_hours",
+            "priority",
+            "resource_type",
         }
         logger.debug(f"Kubetorch REQUEST_ATTRIBUTES: {self.REQUEST_ATTRIBUTES}")
 
@@ -240,7 +250,7 @@ class GenOpsKubetorchAdapter(BaseFrameworkProvider):
         if not HAS_KUBETORCH or kubetorch is None:
             return None
         try:
-            return getattr(kubetorch, '__version__', 'unknown')
+            return getattr(kubetorch, "__version__", "unknown")
         except (AttributeError, Exception):
             return None
 
@@ -268,27 +278,27 @@ class GenOpsKubetorchAdapter(BaseFrameworkProvider):
             return 0.0
 
         try:
-            instance_type = operation_context.get('instance_type', '')
-            num_devices = operation_context.get('num_devices', 1)
-            duration_seconds = operation_context.get('duration_seconds', 0)
-            resource_type = operation_context.get('resource_type', 'gpu')
+            instance_type = operation_context.get("instance_type", "")
+            num_devices = operation_context.get("num_devices", 1)
+            duration_seconds = operation_context.get("duration_seconds", 0)
+            resource_type = operation_context.get("resource_type", "gpu")
 
             # Calculate compute cost
             cost_compute = self._pricing.calculate_compute_cost(
                 instance_type=instance_type,
                 num_devices=num_devices,
                 duration_seconds=duration_seconds,
-                resource_type=resource_type
+                resource_type=resource_type,
             )
 
             # Add storage cost if provided
             cost_storage = 0.0
-            storage_gb_hours = operation_context.get('storage_gb_hours', 0)
+            storage_gb_hours = operation_context.get("storage_gb_hours", 0)
             if storage_gb_hours > 0:
                 cost_storage = self._pricing.calculate_storage_cost(storage_gb_hours)
 
             # Add network cost if provided
-            cost_network = operation_context.get('cost_network', 0.0)
+            cost_network = operation_context.get("cost_network", 0.0)
 
             total_cost = cost_compute + cost_storage + cost_network
 
@@ -308,19 +318,16 @@ class GenOpsKubetorchAdapter(BaseFrameworkProvider):
     def get_operation_mappings(self) -> dict[str, str]:
         """Return mapping of Kubetorch operations to instrumentation methods."""
         return {
-            'compute.deploy': 'track_compute_deployment',
-            'compute.scale': 'track_scaling_operation',
-            'compute.checkpoint': 'track_checkpoint_operation',
-            'compute.terminate': 'track_termination',
-            'training.run': 'track_training_run',
-            'inference.run': 'track_inference_run',
+            "compute.deploy": "track_compute_deployment",
+            "compute.scale": "track_scaling_operation",
+            "compute.checkpoint": "track_checkpoint_operation",
+            "compute.terminate": "track_termination",
+            "training.run": "track_training_run",
+            "inference.run": "track_inference_run",
         }
 
     def _record_framework_metrics(
-        self,
-        span: Any,
-        operation_type: str,
-        context: dict
+        self, span: Any, operation_type: str, context: dict
     ) -> None:
         """Record Kubetorch-specific metrics on span."""
         if not span:
@@ -328,49 +335,63 @@ class GenOpsKubetorchAdapter(BaseFrameworkProvider):
 
         try:
             # Compute resource metrics
-            if 'instance_type' in context:
-                span.set_attribute("genops.compute.instance_type", context['instance_type'])
-            if 'num_devices' in context:
-                span.set_attribute("genops.compute.num_devices", context['num_devices'])
-            if 'resource_type' in context:
-                span.set_attribute("genops.compute.resource_type", context['resource_type'])
-            if 'device_memory_gb' in context:
-                span.set_attribute("genops.compute.device_memory_gb", context['device_memory_gb'])
+            if "instance_type" in context:
+                span.set_attribute(
+                    "genops.compute.instance_type", context["instance_type"]
+                )
+            if "num_devices" in context:
+                span.set_attribute("genops.compute.num_devices", context["num_devices"])
+            if "resource_type" in context:
+                span.set_attribute(
+                    "genops.compute.resource_type", context["resource_type"]
+                )
+            if "device_memory_gb" in context:
+                span.set_attribute(
+                    "genops.compute.device_memory_gb", context["device_memory_gb"]
+                )
 
             # Workload classification
-            if 'workload_type' in context:
-                span.set_attribute("genops.workload.type", context['workload_type'])
-            if 'workload_framework' in context:
-                span.set_attribute("genops.workload.framework", context['workload_framework'])
-            if 'workload_job_id' in context:
-                span.set_attribute("genops.workload.job_id", context['workload_job_id'])
+            if "workload_type" in context:
+                span.set_attribute("genops.workload.type", context["workload_type"])
+            if "workload_framework" in context:
+                span.set_attribute(
+                    "genops.workload.framework", context["workload_framework"]
+                )
+            if "workload_job_id" in context:
+                span.set_attribute("genops.workload.job_id", context["workload_job_id"])
 
             # Cost metrics
-            if 'cost_compute' in context:
-                span.set_attribute("genops.cost.compute", context['cost_compute'])
-            if 'cost_storage' in context:
-                span.set_attribute("genops.cost.storage", context['cost_storage'])
-            if 'cost_network' in context:
-                span.set_attribute("genops.cost.network", context['cost_network'])
-            if 'cost_total' in context:
-                span.set_attribute("genops.cost.total", context['cost_total'])
+            if "cost_compute" in context:
+                span.set_attribute("genops.cost.compute", context["cost_compute"])
+            if "cost_storage" in context:
+                span.set_attribute("genops.cost.storage", context["cost_storage"])
+            if "cost_network" in context:
+                span.set_attribute("genops.cost.network", context["cost_network"])
+            if "cost_total" in context:
+                span.set_attribute("genops.cost.total", context["cost_total"])
                 span.set_attribute("genops.cost.currency", "USD")
 
             # Resource consumption
-            if 'gpu_hours' in context:
-                span.set_attribute("genops.compute.gpu_hours", context['gpu_hours'])
-            if 'cpu_hours' in context:
-                span.set_attribute("genops.compute.cpu_hours", context['cpu_hours'])
-            if 'duration_seconds' in context:
-                span.set_attribute("genops.compute.duration_seconds", context['duration_seconds'])
+            if "gpu_hours" in context:
+                span.set_attribute("genops.compute.gpu_hours", context["gpu_hours"])
+            if "cpu_hours" in context:
+                span.set_attribute("genops.compute.cpu_hours", context["cpu_hours"])
+            if "duration_seconds" in context:
+                span.set_attribute(
+                    "genops.compute.duration_seconds", context["duration_seconds"]
+                )
 
             # Distributed training metrics
-            if 'distributed_strategy' in context:
-                span.set_attribute("genops.distributed.strategy", context['distributed_strategy'])
-            if 'num_nodes' in context:
-                span.set_attribute("genops.distributed.num_nodes", context['num_nodes'])
-            if 'num_replicas' in context:
-                span.set_attribute("genops.distributed.num_replicas", context['num_replicas'])
+            if "distributed_strategy" in context:
+                span.set_attribute(
+                    "genops.distributed.strategy", context["distributed_strategy"]
+                )
+            if "num_nodes" in context:
+                span.set_attribute("genops.distributed.num_nodes", context["num_nodes"])
+            if "num_replicas" in context:
+                span.set_attribute(
+                    "genops.distributed.num_replicas", context["num_replicas"]
+                )
 
             # Kubernetes context if available
             if self.in_kubernetes and self.k8s_context:
@@ -409,9 +430,9 @@ class GenOpsKubetorchAdapter(BaseFrameworkProvider):
         instance_type: str,
         num_devices: int,
         workload_type: str = "training",
-        duration_seconds: Optional[float] = None,
-        **kwargs
-    ) -> Dict[str, Any]:
+        duration_seconds: float | None = None,
+        **kwargs,
+    ) -> dict[str, Any]:
         """
         Track compute resource deployment with governance.
 
@@ -439,7 +460,10 @@ class GenOpsKubetorchAdapter(BaseFrameworkProvider):
 
         # Create operation tracking
         operation_id = str(uuid.uuid4())
-        resource_type = kwargs.get('resource_type', 'gpu' if instance_type in ['a100', 'h100', 'v100', 'a10g', 't4'] else 'cpu')
+        resource_type = kwargs.get(
+            "resource_type",
+            "gpu" if instance_type in ["a100", "h100", "v100", "a10g", "t4"] else "cpu",
+        )
 
         operation = KubetorchOperation(
             operation_id=operation_id,
@@ -448,11 +472,11 @@ class GenOpsKubetorchAdapter(BaseFrameworkProvider):
             resource_type=resource_type,
             instance_type=instance_type,
             num_devices=num_devices,
-            device_memory_gb=kwargs.get('device_memory_gb'),
-            distributed_strategy=kwargs.get('distributed_strategy'),
-            num_nodes=kwargs.get('num_nodes'),
-            num_replicas=kwargs.get('num_replicas'),
-            governance_attributes=effective_governance
+            device_memory_gb=kwargs.get("device_memory_gb"),
+            distributed_strategy=kwargs.get("distributed_strategy"),
+            num_nodes=kwargs.get("num_nodes"),
+            num_replicas=kwargs.get("num_replicas"),
+            governance_attributes=effective_governance,
         )
 
         # Store operation
@@ -466,13 +490,12 @@ class GenOpsKubetorchAdapter(BaseFrameworkProvider):
             instance_type=instance_type,
             num_devices=num_devices,
             workload_type=workload_type,
-            resource_type=resource_type
+            resource_type=resource_type,
         )
 
         # Start OpenTelemetry span
         with tracer.start_as_current_span(
-            "kubetorch.compute.deploy",
-            attributes=trace_attrs
+            "kubetorch.compute.deploy", attributes=trace_attrs
         ) as span:
             try:
                 # If duration provided, calculate cost immediately
@@ -481,27 +504,33 @@ class GenOpsKubetorchAdapter(BaseFrameworkProvider):
                     operation.finalize()
 
                     if self.cost_tracking_enabled:
-                        operation.cost_compute = self.calculate_cost({
-                            'instance_type': instance_type,
-                            'num_devices': num_devices,
-                            'duration_seconds': duration_seconds,
-                            'resource_type': resource_type
-                        })
+                        operation.cost_compute = self.calculate_cost(
+                            {
+                                "instance_type": instance_type,
+                                "num_devices": num_devices,
+                                "duration_seconds": duration_seconds,
+                                "resource_type": resource_type,
+                            }
+                        )
                         operation.cost_total = operation.cost_compute
 
                 # Record metrics
-                self._record_framework_metrics(span, "compute.deploy", {
-                    'instance_type': instance_type,
-                    'num_devices': num_devices,
-                    'resource_type': resource_type,
-                    'workload_type': workload_type,
-                    'cost_compute': operation.cost_compute,
-                    'cost_total': operation.cost_total,
-                    'gpu_hours': operation.gpu_hours,
-                    'cpu_hours': operation.cpu_hours,
-                    'duration_seconds': operation.duration_seconds,
-                    **kwargs
-                })
+                self._record_framework_metrics(
+                    span,
+                    "compute.deploy",
+                    {
+                        "instance_type": instance_type,
+                        "num_devices": num_devices,
+                        "resource_type": resource_type,
+                        "workload_type": workload_type,
+                        "cost_compute": operation.cost_compute,
+                        "cost_total": operation.cost_total,
+                        "gpu_hours": operation.gpu_hours,
+                        "cpu_hours": operation.cpu_hours,
+                        "duration_seconds": operation.duration_seconds,
+                        **kwargs,
+                    },
+                )
 
                 span.set_status(Status(StatusCode.OK))
 
@@ -519,7 +548,7 @@ class GenOpsKubetorchAdapter(BaseFrameworkProvider):
                     "cpu_hours": operation.cpu_hours,
                     "resource_type": resource_type,
                     "instance_type": instance_type,
-                    "num_devices": num_devices
+                    "num_devices": num_devices,
                 }
 
             except Exception as e:
@@ -529,7 +558,7 @@ class GenOpsKubetorchAdapter(BaseFrameworkProvider):
                 logger.error(f"Compute deployment failed: {e}")
                 raise
 
-    def finalize_operation(self, operation_id: str) -> Optional[KubetorchOperation]:
+    def finalize_operation(self, operation_id: str) -> KubetorchOperation | None:
         """
         Finalize a tracked operation and calculate final costs.
 
@@ -548,12 +577,14 @@ class GenOpsKubetorchAdapter(BaseFrameworkProvider):
 
         # Calculate final cost
         if self.cost_tracking_enabled:
-            operation.cost_compute = self.calculate_cost({
-                'instance_type': operation.instance_type,
-                'num_devices': operation.num_devices,
-                'duration_seconds': operation.duration_seconds,
-                'resource_type': operation.resource_type
-            })
+            operation.cost_compute = self.calculate_cost(
+                {
+                    "instance_type": operation.instance_type,
+                    "num_devices": operation.num_devices,
+                    "duration_seconds": operation.duration_seconds,
+                    "resource_type": operation.resource_type,
+                }
+            )
             operation.cost_total = operation.cost_compute
 
         # Remove from tracking
@@ -566,13 +597,14 @@ class GenOpsKubetorchAdapter(BaseFrameworkProvider):
 # Context Managers
 # ==========================================
 
+
 @contextmanager
 def create_compute_context(
     workload_name: str,
     instance_type: str,
     num_devices: int,
-    adapter: Optional[GenOpsKubetorchAdapter] = None,
-    **governance_attrs
+    adapter: GenOpsKubetorchAdapter | None = None,
+    **governance_attrs,
 ):
     """
     Context manager for Kubetorch compute operations.
@@ -609,7 +641,7 @@ def create_compute_context(
         instance_type=instance_type,
         num_devices=num_devices,
         workload_type="training",
-        **governance_attrs
+        **governance_attrs,
     )
 
     operation_id = result["operation_id"]
@@ -620,11 +652,11 @@ def create_compute_context(
             "instance_type": instance_type,
             "num_devices": num_devices,
             "start_time": start_time,
-            "operation_id": operation_id
+            "operation_id": operation_id,
         }
 
         # Finalize operation on success
-        duration = time.time() - start_time
+        time.time() - start_time
         operation = adapter.finalize_operation(operation_id)
 
         if operation:

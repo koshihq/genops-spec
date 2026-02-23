@@ -12,8 +12,8 @@ Pattern follows LangChain cost_aggregator for consistency with GenOps patterns.
 
 import logging
 import time
-from typing import Dict, List, Optional, Set
 from dataclasses import dataclass, field
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ class ComputeResourceCost:
     currency: str = "USD"
     operation_name: Optional[str] = None
     timestamp: float = field(default_factory=time.time)
-    metadata: Dict[str, any] = field(default_factory=dict)
+    metadata: dict[str, any] = field(default_factory=dict)
 
     def __str__(self) -> str:
         return (
@@ -44,12 +44,12 @@ class ComputeCostSummary:
 
     total_cost: float = 0.0
     currency: str = "USD"
-    resource_costs: List[ComputeResourceCost] = field(default_factory=list)
+    resource_costs: list[ComputeResourceCost] = field(default_factory=list)
 
     # Cost breakdowns
-    cost_by_resource_type: Dict[str, float] = field(default_factory=dict)
-    cost_by_instance_type: Dict[str, float] = field(default_factory=dict)
-    cost_by_operation: Dict[str, float] = field(default_factory=dict)
+    cost_by_resource_type: dict[str, float] = field(default_factory=dict)
+    cost_by_instance_type: dict[str, float] = field(default_factory=dict)
+    cost_by_operation: dict[str, float] = field(default_factory=dict)
 
     # Resource consumption totals
     total_gpu_hours: float = 0.0
@@ -58,7 +58,7 @@ class ComputeCostSummary:
     total_network_gb: float = 0.0
 
     # Unique resources used
-    unique_instance_types: Set[str] = field(default_factory=set)
+    unique_instance_types: set[str] = field(default_factory=set)
     total_operations: int = 0
     total_resources: int = 0
 
@@ -122,16 +122,16 @@ class ComputeCostSummary:
             self.unique_instance_types.add(rc.instance_type)
 
             # Resource consumption totals
-            if rc.resource_type == 'gpu':
+            if rc.resource_type == "gpu":
                 self.total_gpu_hours += rc.quantity
-            elif rc.resource_type == 'cpu':
+            elif rc.resource_type == "cpu":
                 self.total_cpu_hours += rc.quantity
-            elif rc.resource_type == 'storage':
+            elif rc.resource_type == "storage":
                 self.total_storage_gb_hours += rc.quantity
-            elif rc.resource_type == 'network':
+            elif rc.resource_type == "network":
                 self.total_network_gb += rc.quantity
 
-    def get_summary_dict(self) -> Dict[str, any]:
+    def get_summary_dict(self) -> dict[str, any]:
         """
         Get summary as dictionary for serialization.
 
@@ -151,13 +151,13 @@ class ComputeCostSummary:
             "unique_instance_types": list(self.unique_instance_types),
             "total_operations": self.total_operations,
             "total_resources": self.total_resources,
-            "duration_seconds": self.duration_seconds
+            "duration_seconds": self.duration_seconds,
         }
 
     def __str__(self) -> str:
         """String representation of cost summary."""
         lines = [
-            f"Compute Cost Summary:",
+            "Compute Cost Summary:",
             f"  Total Cost: ${self.total_cost:.2f} {self.currency}",
             f"  GPU-hours: {self.total_gpu_hours:.2f}",
             f"  CPU-hours: {self.total_cpu_hours:.2f}",
@@ -206,13 +206,14 @@ class KubetorchCostAggregator:
 
     def __init__(self):
         """Initialize cost aggregator."""
-        self.active_operations: Dict[str, ComputeCostSummary] = {}
+        self.active_operations: dict[str, ComputeCostSummary] = {}
         self._setup_pricing_calculator()
         logger.debug("Initialized KubetorchCostAggregator")
 
     def _setup_pricing_calculator(self) -> None:
         """Setup pricing calculator for different resource types."""
         from .pricing import KubetorchPricing
+
         self.pricing = KubetorchPricing()
 
     def start_operation_tracking(self, operation_id: str) -> None:
@@ -237,7 +238,7 @@ class KubetorchCostAggregator:
         instance_type: str,
         quantity: float,
         operation_name: Optional[str] = None,
-        **metadata
+        **metadata,
     ) -> Optional[ComputeResourceCost]:
         """
         Add compute resource cost to operation tracking.
@@ -266,7 +267,7 @@ class KubetorchCostAggregator:
             quantity=quantity,
             cost=cost,
             operation_name=operation_name,
-            metadata=metadata
+            metadata=metadata,
         )
 
         self.active_operations[operation_id].add_resource_cost(resource_cost)
@@ -284,7 +285,7 @@ class KubetorchCostAggregator:
         instance_type: str,
         gpu_hours: float,
         operation_name: Optional[str] = None,
-        **metadata
+        **metadata,
     ) -> Optional[ComputeResourceCost]:
         """
         Add GPU cost (convenience method).
@@ -301,11 +302,11 @@ class KubetorchCostAggregator:
         """
         return self.add_compute_cost(
             operation_id=operation_id,
-            resource_type='gpu',
+            resource_type="gpu",
             instance_type=instance_type,
             quantity=gpu_hours,
             operation_name=operation_name,
-            **metadata
+            **metadata,
         )
 
     def add_storage_cost(
@@ -313,7 +314,7 @@ class KubetorchCostAggregator:
         operation_id: str,
         storage_gb_hours: float,
         operation_name: Optional[str] = None,
-        **metadata
+        **metadata,
     ) -> Optional[ComputeResourceCost]:
         """
         Add storage cost (convenience method).
@@ -329,11 +330,11 @@ class KubetorchCostAggregator:
         """
         return self.add_compute_cost(
             operation_id=operation_id,
-            resource_type='storage',
-            instance_type='storage',
+            resource_type="storage",
+            instance_type="storage",
             quantity=storage_gb_hours,
             operation_name=operation_name,
-            **metadata
+            **metadata,
         )
 
     def add_network_cost(
@@ -341,7 +342,7 @@ class KubetorchCostAggregator:
         operation_id: str,
         data_transfer_gb: float,
         operation_name: Optional[str] = None,
-        **metadata
+        **metadata,
     ) -> Optional[ComputeResourceCost]:
         """
         Add network cost (convenience method).
@@ -357,18 +358,15 @@ class KubetorchCostAggregator:
         """
         return self.add_compute_cost(
             operation_id=operation_id,
-            resource_type='network',
-            instance_type='network',
+            resource_type="network",
+            instance_type="network",
             quantity=data_transfer_gb,
             operation_name=operation_name,
-            **metadata
+            **metadata,
         )
 
     def _calculate_resource_cost(
-        self,
-        resource_type: str,
-        instance_type: str,
-        quantity: float
+        self, resource_type: str, instance_type: str, quantity: float
     ) -> float:
         """
         Calculate cost for specific resource usage.
@@ -382,7 +380,7 @@ class KubetorchCostAggregator:
             Cost in USD
         """
         try:
-            if resource_type == 'gpu':
+            if resource_type == "gpu":
                 # Calculate GPU cost: quantity is GPU-hours
                 # Convert to duration_seconds for pricing calculator
                 num_devices = 1  # Already in GPU-hours
@@ -391,9 +389,9 @@ class KubetorchCostAggregator:
                     instance_type=instance_type,
                     num_devices=num_devices,
                     duration_seconds=duration_seconds,
-                    resource_type='gpu'
+                    resource_type="gpu",
                 )
-            elif resource_type == 'cpu':
+            elif resource_type == "cpu":
                 # Calculate CPU cost: quantity is CPU-hours
                 num_devices = 1
                 duration_seconds = quantity * 3600
@@ -401,12 +399,12 @@ class KubetorchCostAggregator:
                     instance_type=instance_type,
                     num_devices=num_devices,
                     duration_seconds=duration_seconds,
-                    resource_type='cpu'
+                    resource_type="cpu",
                 )
-            elif resource_type == 'storage':
+            elif resource_type == "storage":
                 # Calculate storage cost: quantity is GB-hours
                 return self.pricing.calculate_storage_cost(quantity)
-            elif resource_type == 'network':
+            elif resource_type == "network":
                 # Calculate network cost: quantity is GB transferred
                 return self.pricing.calculate_network_cost(quantity)
             else:
@@ -418,9 +416,7 @@ class KubetorchCostAggregator:
             return 0.0
 
     def finalize_operation_tracking(
-        self,
-        operation_id: str,
-        increment_operation_count: bool = True
+        self, operation_id: str, increment_operation_count: bool = True
     ) -> Optional[ComputeCostSummary]:
         """
         Finalize and return cost summary for an operation.
@@ -449,7 +445,7 @@ class KubetorchCostAggregator:
 
         return summary
 
-    def get_active_operations(self) -> List[str]:
+    def get_active_operations(self) -> list[str]:
         """
         Get list of active operation IDs.
 
@@ -467,6 +463,7 @@ class KubetorchCostAggregator:
 # ==========================================
 # Context Manager
 # ==========================================
+
 
 def create_compute_cost_context(operation_id: str):
     """
@@ -502,7 +499,7 @@ class ComputeCostContext:
         self.summary: Optional[ComputeCostSummary] = None
         self.start_time: Optional[float] = None
 
-    def __enter__(self) -> 'ComputeCostContext':
+    def __enter__(self) -> "ComputeCostContext":
         """Start cost tracking."""
         self.start_time = time.time()
         self.aggregator.start_operation_tracking(self.operation_id)
@@ -518,7 +515,7 @@ class ComputeCostContext:
         instance_type: str,
         quantity: float,
         operation_name: Optional[str] = None,
-        **metadata
+        **metadata,
     ) -> Optional[ComputeResourceCost]:
         """Add compute resource cost within this context."""
         return self.aggregator.add_compute_cost(
@@ -527,7 +524,7 @@ class ComputeCostContext:
             instance_type,
             quantity,
             operation_name,
-            **metadata
+            **metadata,
         )
 
     def add_gpu_cost(
@@ -535,43 +532,27 @@ class ComputeCostContext:
         instance_type: str,
         gpu_hours: float,
         operation_name: Optional[str] = None,
-        **metadata
+        **metadata,
     ) -> Optional[ComputeResourceCost]:
         """Add GPU cost (convenience method)."""
         return self.aggregator.add_gpu_cost(
-            self.operation_id,
-            instance_type,
-            gpu_hours,
-            operation_name,
-            **metadata
+            self.operation_id, instance_type, gpu_hours, operation_name, **metadata
         )
 
     def add_storage_cost(
-        self,
-        storage_gb_hours: float,
-        operation_name: Optional[str] = None,
-        **metadata
+        self, storage_gb_hours: float, operation_name: Optional[str] = None, **metadata
     ) -> Optional[ComputeResourceCost]:
         """Add storage cost (convenience method)."""
         return self.aggregator.add_storage_cost(
-            self.operation_id,
-            storage_gb_hours,
-            operation_name,
-            **metadata
+            self.operation_id, storage_gb_hours, operation_name, **metadata
         )
 
     def add_network_cost(
-        self,
-        data_transfer_gb: float,
-        operation_name: Optional[str] = None,
-        **metadata
+        self, data_transfer_gb: float, operation_name: Optional[str] = None, **metadata
     ) -> Optional[ComputeResourceCost]:
         """Add network cost (convenience method)."""
         return self.aggregator.add_network_cost(
-            self.operation_id,
-            data_transfer_gb,
-            operation_name,
-            **metadata
+            self.operation_id, data_transfer_gb, operation_name, **metadata
         )
 
 

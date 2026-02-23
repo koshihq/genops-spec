@@ -50,8 +50,8 @@ def basic_tracking_example():
                 "governance": {
                     "team": "sustainability-team",
                     "project": "green-energy-chatbot",
-                    "customer_id": "demo-customer-001"
-                }
+                    "customer_id": "demo-customer-001",
+                },
             },
             {
                 "name": "⚡ Meta Llama 3.2 3B (Fast, cost-effective)",
@@ -60,8 +60,8 @@ def basic_tracking_example():
                 "governance": {
                     "team": "ml-team",
                     "project": "educational-content",
-                    "environment": "development"
-                }
+                    "environment": "development",
+                },
             },
             {
                 "name": "🧠 OpenAI GPT-4o (Balanced performance)",
@@ -70,9 +70,9 @@ def basic_tracking_example():
                 "governance": {
                     "team": "engineering-team",
                     "project": "code-assistant",
-                    "cost_center": "R&D"
-                }
-            }
+                    "cost_center": "R&D",
+                },
+            },
         ]
 
         total_cost = 0.0
@@ -91,12 +91,12 @@ def basic_tracking_example():
                     model=scenario["model"],
                     messages=[{"role": "user", "content": scenario["message"]}],
                     max_tokens=100,  # Keep costs low for demo
-                    **scenario["governance"]  # Add governance attributes
+                    **scenario["governance"],  # Add governance attributes
                 )
 
                 # Extract response details
                 content = response.choices[0].message.content
-                usage = response.usage if hasattr(response, 'usage') else None
+                usage = response.usage if hasattr(response, "usage") else None
 
                 # Calculate cost (GenOps automatically tracks this)
                 if usage:
@@ -108,24 +108,31 @@ def basic_tracking_example():
                     from genops.providers.openrouter_pricing import (
                         calculate_openrouter_cost,
                     )
+
                     estimated_cost = calculate_openrouter_cost(
                         scenario["model"],
                         input_tokens=input_tokens,
-                        output_tokens=output_tokens
+                        output_tokens=output_tokens,
                     )
 
                     print("   ✅ Success!")
-                    print(f"      Tokens: {input_tokens} in, {output_tokens} out ({total_tokens} total)")
+                    print(
+                        f"      Tokens: {input_tokens} in, {output_tokens} out ({total_tokens} total)"
+                    )
                     print(f"      Est. Cost: ${estimated_cost:.6f}")
-                    print(f"      Response: {content[:100]}{'...' if len(content) > 100 else ''}")
+                    print(
+                        f"      Response: {content[:100]}{'...' if len(content) > 100 else ''}"
+                    )
 
                     total_cost += estimated_cost
-                    results.append({
-                        "model": scenario["model"],
-                        "cost": estimated_cost,
-                        "tokens": total_tokens,
-                        "governance": scenario["governance"]
-                    })
+                    results.append(
+                        {
+                            "model": scenario["model"],
+                            "cost": estimated_cost,
+                            "tokens": total_tokens,
+                            "governance": scenario["governance"],
+                        }
+                    )
                 else:
                     print("   ⚠️  No usage data available")
 
@@ -144,11 +151,13 @@ def basic_tracking_example():
 
             print("\n📋 Breakdown by Model:")
             for result in results:
-                print(f"   • {result['model']}: ${result['cost']:.6f} ({result['tokens']} tokens)")
+                print(
+                    f"   • {result['model']}: ${result['cost']:.6f} ({result['tokens']} tokens)"
+                )
 
             print("\n🏷️  Governance Attribution:")
-            teams = {r['governance'].get('team', 'unknown') for r in results}
-            projects = {r['governance'].get('project', 'unknown') for r in results}
+            teams = {r["governance"].get("team", "unknown") for r in results}
+            projects = {r["governance"].get("project", "unknown") for r in results}
             print(f"   • Teams: {', '.join(teams)}")
             print(f"   • Projects: {', '.join(projects)}")
         else:

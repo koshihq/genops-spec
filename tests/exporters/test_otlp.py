@@ -1,7 +1,6 @@
 """Tests for genops.exporters.otlp module."""
 
-import os
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 from opentelemetry import trace
@@ -14,7 +13,7 @@ from genops.exporters.otlp import configure_otlp_exporter
 def reset_tracer_provider():
     """Reset the tracer provider after each test."""
     # Store original provider
-    original_provider = trace.get_tracer_provider()
+    trace.get_tracer_provider()
     yield
     # Note: OpenTelemetry doesn't allow overriding the global tracer provider
     # Tests should mock the TracerProvider creation instead of relying on global state
@@ -104,11 +103,15 @@ class TestConfigureOTLPExporter:
         """Test default service name when none provided."""
         endpoint = "https://api.honeycomb.io/v1/traces"
 
-        configure_otlp_exporter(endpoint=endpoint)
+        with patch("genops.exporters.otlp.TracerProvider") as mock_provider_class:
+            mock_provider = Mock(spec=TracerProvider)
+            mock_provider_class.return_value = mock_provider
 
-        provider = trace.get_tracer_provider()
-        resource = provider.resource
-        assert resource.attributes["service.name"] == "genops-ai"
+            configure_otlp_exporter(endpoint=endpoint)
+
+            call_kwargs = mock_provider_class.call_args[1]
+            resource = call_kwargs["resource"]
+            assert resource.attributes["service.name"] == "genops-ai"
 
     def test_service_name_from_env(
         self, mock_otlp_exporter, mock_batch_processor, monkeypatch
@@ -161,7 +164,9 @@ class TestConfigureOTLPExporter:
             mock_provider_class.return_value = mock_provider
 
             configure_otlp_exporter(
-                endpoint=endpoint, service_name="explicit-service", environment="explicit-env"
+                endpoint=endpoint,
+                service_name="explicit-service",
+                environment="explicit-env",
             )
 
             # Verify explicit params override env
@@ -247,18 +252,20 @@ class TestConfigureOTLPExporter:
 
         mock_otlp_exporter.assert_called_once_with(endpoint=endpoint, headers={})
 
-    def test_service_version_included(
-        self, mock_otlp_exporter, mock_batch_processor
-    ):
+    def test_service_version_included(self, mock_otlp_exporter, mock_batch_processor):
         """Test that service version is included in resource attributes."""
         endpoint = "https://api.honeycomb.io/v1/traces"
 
-        configure_otlp_exporter(endpoint=endpoint)
+        with patch("genops.exporters.otlp.TracerProvider") as mock_provider_class:
+            mock_provider = Mock(spec=TracerProvider)
+            mock_provider_class.return_value = mock_provider
 
-        provider = trace.get_tracer_provider()
-        resource = provider.resource
-        assert "service.version" in resource.attributes
-        assert resource.attributes["service.version"] == "1.0.0"
+            configure_otlp_exporter(endpoint=endpoint)
+
+            call_kwargs = mock_provider_class.call_args[1]
+            resource = call_kwargs["resource"]
+            assert "service.version" in resource.attributes
+            assert resource.attributes["service.version"] == "1.0.0"
 
     def test_all_parameters(self, mock_otlp_exporter, mock_batch_processor):
         """Test configuration with all parameters specified."""
@@ -268,8 +275,12 @@ class TestConfigureOTLPExporter:
         environment = "testing"
         sampling_rate = 0.5
 
-        with patch("genops.exporters.otlp.TracerProvider") as mock_provider_class, \
-             patch("opentelemetry.sdk.trace.sampling.TraceIdRatioBased") as mock_sampler_class:
+        with (
+            patch("genops.exporters.otlp.TracerProvider") as mock_provider_class,
+            patch(
+                "opentelemetry.sdk.trace.sampling.TraceIdRatioBased"
+            ) as mock_sampler_class,
+        ):
             mock_provider = Mock(spec=TracerProvider)
             mock_provider_class.return_value = mock_provider
             mock_sampler = Mock()
@@ -284,7 +295,9 @@ class TestConfigureOTLPExporter:
             )
 
             # Verify exporter creation
-            mock_otlp_exporter.assert_called_once_with(endpoint=endpoint, headers=headers)
+            mock_otlp_exporter.assert_called_once_with(
+                endpoint=endpoint, headers=headers
+            )
 
             # Verify resource attributes
             call_kwargs = mock_provider_class.call_args[1]

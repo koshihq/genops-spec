@@ -10,35 +10,36 @@ Tests the advanced cost tracking context manager including:
 - Error handling and edge cases
 """
 
-import pytest
 import time
-from unittest.mock import Mock, patch, MagicMock
-from datetime import datetime
-from typing import Dict, List
+
+import pytest
 
 # Import the modules under test
 try:
     from genops.providers.bedrock_cost_aggregator import (
-        create_bedrock_cost_context,
         BedrockCostContext,
         BedrockCostSummary,
-        CostOperation,
+        CostOperation,  # noqa: F401
         add_bedrock_operation,
-        get_optimization_recommendations
+        create_bedrock_cost_context,
+        get_optimization_recommendations,
     )
+
     COST_AGGREGATOR_AVAILABLE = True
 except ImportError:
     COST_AGGREGATOR_AVAILABLE = False
 
 
-@pytest.mark.skipif(not COST_AGGREGATOR_AVAILABLE, reason="Bedrock cost aggregator not available")
+@pytest.mark.skipif(
+    not COST_AGGREGATOR_AVAILABLE, reason="Bedrock cost aggregator not available"
+)
 class TestBedrockCostContext:
     """Test the cost context manager."""
 
     def test_context_manager_creation(self):
         """Test basic context manager creation."""
         context_id = "test_context_123"
-        
+
         with create_bedrock_cost_context(context_id) as context:
             assert isinstance(context, BedrockCostContext)
             assert context.context_id == context_id
@@ -48,13 +49,13 @@ class TestBedrockCostContext:
     def test_context_manager_lifecycle(self):
         """Test complete context manager lifecycle."""
         start_time = time.time()
-        
+
         with create_bedrock_cost_context("lifecycle_test") as context:
             # Test context is properly initialized
             assert context.context_id == "lifecycle_test"
             assert context.start_time >= start_time
             assert context.end_time is None
-            
+
             # Add a sample operation
             context.add_operation(
                 operation_id="test_op_1",
@@ -64,11 +65,11 @@ class TestBedrockCostContext:
                 input_tokens=100,
                 output_tokens=50,
                 latency_ms=1200,
-                governance_attributes={"team": "test-team"}
+                governance_attributes={"team": "test-team"},
             )
-            
+
             assert len(context.operations) == 1
-        
+
         # After context exit, should be finalized
         assert context.end_time is not None
         assert context.end_time >= context.start_time
@@ -87,13 +88,13 @@ class TestBedrockCostContext:
                 governance_attributes={
                     "team": "engineering",
                     "project": "ai-platform",
-                    "customer_id": "client-123"
-                }
+                    "customer_id": "client-123",
+                },
             )
-            
+
             assert len(context.operations) == 1
             operation = context.operations[0]
-            
+
             assert operation.operation_id == "op_001"
             assert operation.model_id == "anthropic.claude-3-sonnet-20240229-v1:0"
             assert operation.provider == "anthropic"
@@ -115,9 +116,9 @@ class TestBedrockCostContext:
                 input_tokens=100,
                 output_tokens=50,
                 latency_ms=800,
-                governance_attributes={"team": "team-a"}
+                governance_attributes={"team": "team-a"},
             )
-            
+
             # Add second operation with different model
             context.add_operation(
                 operation_id="op_002",
@@ -127,9 +128,9 @@ class TestBedrockCostContext:
                 input_tokens=200,
                 output_tokens=100,
                 latency_ms=1200,
-                governance_attributes={"team": "team-b"}
+                governance_attributes={"team": "team-b"},
             )
-            
+
             # Add third operation with same model as first
             context.add_operation(
                 operation_id="op_003",
@@ -139,11 +140,11 @@ class TestBedrockCostContext:
                 input_tokens=150,
                 output_tokens=75,
                 latency_ms=900,
-                governance_attributes={"team": "team-a"}
+                governance_attributes={"team": "team-a"},
             )
-            
+
             assert len(context.operations) == 3
-            
+
             # Test that operations are stored correctly
             op_ids = [op.operation_id for op in context.operations]
             assert "op_001" in op_ids
@@ -162,9 +163,9 @@ class TestBedrockCostContext:
                 input_tokens=1000,
                 output_tokens=500,
                 latency_ms=1000,
-                governance_attributes={"team": "test"}
+                governance_attributes={"team": "test"},
             )
-            
+
             context.add_operation(
                 operation_id="op_002",
                 model_id="amazon.titan-text-express-v1",
@@ -173,11 +174,11 @@ class TestBedrockCostContext:
                 input_tokens=800,
                 output_tokens=400,
                 latency_ms=1200,
-                governance_attributes={"team": "test"}
+                governance_attributes={"team": "test"},
             )
-            
+
             summary = context.get_current_summary()
-            
+
             assert isinstance(summary, BedrockCostSummary)
             assert summary.total_cost > 0
             assert summary.total_operations == 2
@@ -194,28 +195,30 @@ class TestBedrockCostContext:
             context.add_operation(
                 operation_id="cost_test",
                 model_id="anthropic.claude-3-haiku-20240307-v1:0",
-                provider="anthropic", 
+                provider="anthropic",
                 region="us-east-1",
                 input_tokens=1000,
                 output_tokens=500,
                 latency_ms=1000,
-                governance_attributes={"team": "cost-test"}
+                governance_attributes={"team": "cost-test"},
             )
-            
+
             summary = context.get_current_summary()
-            
+
             # Verify cost structure
             assert summary.total_cost > 0
             assert summary.cost_by_model is not None
             assert summary.cost_by_provider is not None
-            
+
             # Cost should be positive for non-zero tokens
-            model_cost = summary.cost_by_model.get("anthropic.claude-3-haiku-20240307-v1:0", 0)
+            model_cost = summary.cost_by_model.get(
+                "anthropic.claude-3-haiku-20240307-v1:0", 0
+            )
             assert model_cost > 0
-            
+
             provider_cost = summary.cost_by_provider.get("anthropic", 0)
             assert provider_cost > 0
-            
+
             # Total cost should equal sum of provider costs
             total_provider_cost = sum(summary.cost_by_provider.values())
             assert abs(summary.total_cost - total_provider_cost) < 0.000001
@@ -231,30 +234,30 @@ class TestBedrockCostContext:
                 ("ai21.j2-ultra-v1", "ai21"),
                 ("anthropic.claude-3-haiku-20240307-v1:0", "anthropic"),  # Duplicate
             ]
-            
+
             for i, (model, provider) in enumerate(models_and_providers):
                 context.add_operation(
-                    operation_id=f"op_{i+1}",
+                    operation_id=f"op_{i + 1}",
                     model_id=model,
                     provider=provider,
                     region="us-east-1",
                     input_tokens=100,
                     output_tokens=50,
                     latency_ms=1000,
-                    governance_attributes={"team": "unique-test"}
+                    governance_attributes={"team": "unique-test"},
                 )
-            
+
             summary = context.get_current_summary()
-            
+
             # Should track unique models and providers correctly
             assert len(summary.unique_models) == 4  # 4 unique models
             assert len(summary.unique_providers) == 3  # 3 unique providers
-            
+
             assert "anthropic.claude-3-haiku-20240307-v1:0" in summary.unique_models
             assert "anthropic.claude-3-sonnet-20240229-v1:0" in summary.unique_models
             assert "amazon.titan-text-express-v1" in summary.unique_models
             assert "ai21.j2-ultra-v1" in summary.unique_models
-            
+
             assert "anthropic" in summary.unique_providers
             assert "amazon" in summary.unique_providers
             assert "ai21" in summary.unique_providers
@@ -274,10 +277,10 @@ class TestBedrockCostContext:
                 governance_attributes={
                     "team": "team-a",
                     "project": "project-alpha",
-                    "customer_id": "customer-1"
-                }
+                    "customer_id": "customer-1",
+                },
             )
-            
+
             context.add_operation(
                 operation_id="op_team_b",
                 model_id="amazon.titan-text-express-v1",
@@ -289,18 +292,22 @@ class TestBedrockCostContext:
                 governance_attributes={
                     "team": "team-b",
                     "project": "project-beta",
-                    "customer_id": "customer-2"
-                }
+                    "customer_id": "customer-2",
+                },
             )
-            
+
             # Operations should maintain their governance attributes
             assert len(context.operations) == 2
-            
-            team_a_op = next(op for op in context.operations if op.operation_id == "op_team_a")
+
+            team_a_op = next(
+                op for op in context.operations if op.operation_id == "op_team_a"
+            )
             assert team_a_op.governance_attributes["team"] == "team-a"
             assert team_a_op.governance_attributes["project"] == "project-alpha"
-            
-            team_b_op = next(op for op in context.operations if op.operation_id == "op_team_b")
+
+            team_b_op = next(
+                op for op in context.operations if op.operation_id == "op_team_b"
+            )
             assert team_b_op.governance_attributes["team"] == "team-b"
             assert team_b_op.governance_attributes["project"] == "project-beta"
 
@@ -308,28 +315,28 @@ class TestBedrockCostContext:
         """Test tracking of operations across regions."""
         with create_bedrock_cost_context("regional_test") as context:
             regions = ["us-east-1", "us-west-2", "eu-west-1"]
-            
+
             for i, region in enumerate(regions):
                 context.add_operation(
-                    operation_id=f"op_region_{i+1}",
+                    operation_id=f"op_region_{i + 1}",
                     model_id="anthropic.claude-3-haiku-20240307-v1:0",
                     provider="anthropic",
                     region=region,
                     input_tokens=100,
                     output_tokens=50,
                     latency_ms=1000,
-                    governance_attributes={"region": region}
+                    governance_attributes={"region": region},
                 )
-            
-            summary = context.get_current_summary()
-            
+
+            context.get_current_summary()
+
             # Should track regional operations
             regional_ops = {}
             for op in context.operations:
                 if op.region not in regional_ops:
                     regional_ops[op.region] = 0
                 regional_ops[op.region] += 1
-            
+
             assert len(regional_ops) == 3
             assert all(count == 1 for count in regional_ops.values())
 
@@ -337,7 +344,7 @@ class TestBedrockCostContext:
         """Test context with no operations."""
         with create_bedrock_cost_context("empty_test") as context:
             summary = context.get_current_summary()
-            
+
             assert summary.total_cost == 0
             assert summary.total_operations == 0
             assert summary.total_input_tokens == 0
@@ -351,8 +358,10 @@ class TestBedrockCostContext:
     def test_context_with_budget_limit(self):
         """Test context with budget constraints."""
         budget_limit = 0.01  # $0.01 limit
-        
-        with create_bedrock_cost_context("budget_test", budget_limit=budget_limit) as context:
+
+        with create_bedrock_cost_context(
+            "budget_test", budget_limit=budget_limit
+        ) as context:
             # Add operation that should be within budget
             context.add_operation(
                 operation_id="small_op",
@@ -362,13 +371,15 @@ class TestBedrockCostContext:
                 input_tokens=10,
                 output_tokens=5,
                 latency_ms=500,
-                governance_attributes={"team": "budget-test"}
+                governance_attributes={"team": "budget-test"},
             )
-            
+
             summary = context.get_current_summary()
-            
+
             # Should track budget information
-            assert hasattr(context, 'budget_limit') or summary.total_cost <= budget_limit
+            assert (
+                hasattr(context, "budget_limit") or summary.total_cost <= budget_limit
+            )
 
     def test_optimization_recommendations(self):
         """Test optimization recommendations generation."""
@@ -382,17 +393,19 @@ class TestBedrockCostContext:
                 input_tokens=5000,
                 output_tokens=2000,
                 latency_ms=3000,
-                governance_attributes={"team": "optimization-test"}
+                governance_attributes={"team": "optimization-test"},
             )
-            
+
             summary = context.get_current_summary()
-            
+
             # Should provide optimization recommendations
-            if hasattr(summary, 'optimization_recommendations'):
+            if hasattr(summary, "optimization_recommendations"):
                 assert isinstance(summary.optimization_recommendations, list)
 
 
-@pytest.mark.skipif(not COST_AGGREGATOR_AVAILABLE, reason="Bedrock cost aggregator not available")
+@pytest.mark.skipif(
+    not COST_AGGREGATOR_AVAILABLE, reason="Bedrock cost aggregator not available"
+)
 class TestCostSummaryCalculations:
     """Test cost summary calculation functionality."""
 
@@ -407,18 +420,24 @@ class TestCostSummaryCalculations:
                 input_tokens=100,
                 output_tokens=50,
                 latency_ms=1000,
-                governance_attributes={"team": "test"}
+                governance_attributes={"team": "test"},
             )
-            
+
             summary = context.get_current_summary()
-            
+
             # Check all required fields exist
             required_fields = [
-                'total_cost', 'total_operations', 'total_input_tokens',
-                'total_output_tokens', 'total_latency_ms', 'unique_models',
-                'unique_providers', 'cost_by_model', 'cost_by_provider'
+                "total_cost",
+                "total_operations",
+                "total_input_tokens",
+                "total_output_tokens",
+                "total_latency_ms",
+                "unique_models",
+                "unique_providers",
+                "cost_by_model",
+                "cost_by_provider",
             ]
-            
+
             for field in required_fields:
                 assert hasattr(summary, field), f"Missing field: {field}"
 
@@ -430,29 +449,31 @@ class TestCostSummaryCalculations:
                 ("anthropic.claude-3-haiku-20240307-v1:0", "anthropic", 500, 250),
                 ("amazon.titan-text-express-v1", "amazon", 400, 200),
                 ("ai21.j2-mid-v1", "ai21", 300, 150),
-                ("cohere.command-text-v14", "cohere", 600, 300)
+                ("cohere.command-text-v14", "cohere", 600, 300),
             ]
-            
-            for i, (model, provider, input_tokens, output_tokens) in enumerate(providers_data):
+
+            for i, (model, provider, input_tokens, output_tokens) in enumerate(
+                providers_data
+            ):
                 context.add_operation(
-                    operation_id=f"op_{i+1}",
+                    operation_id=f"op_{i + 1}",
                     model_id=model,
                     provider=provider,
                     region="us-east-1",
                     input_tokens=input_tokens,
                     output_tokens=output_tokens,
                     latency_ms=1000,
-                    governance_attributes={"team": "multi-provider-test"}
+                    governance_attributes={"team": "multi-provider-test"},
                 )
-            
+
             summary = context.get_current_summary()
-            
+
             # Verify aggregation
             assert summary.total_operations == 4
             assert summary.total_input_tokens == 1800  # Sum of all input tokens
-            assert summary.total_output_tokens == 900   # Sum of all output tokens
+            assert summary.total_output_tokens == 900  # Sum of all output tokens
             assert len(summary.unique_providers) == 4
-            
+
             # Each provider should have associated costs
             for provider in ["anthropic", "amazon", "ai21", "cohere"]:
                 assert provider in summary.cost_by_provider
@@ -464,19 +485,19 @@ class TestCostSummaryCalculations:
             # Add multiple operations
             for i in range(5):
                 context.add_operation(
-                    operation_id=f"avg_op_{i+1}",
+                    operation_id=f"avg_op_{i + 1}",
                     model_id="anthropic.claude-3-haiku-20240307-v1:0",
                     provider="anthropic",
                     region="us-east-1",
                     input_tokens=100,
                     output_tokens=50,
                     latency_ms=1000,
-                    governance_attributes={"team": "average-test"}
+                    governance_attributes={"team": "average-test"},
                 )
-            
+
             summary = context.get_current_summary()
-            
-            if hasattr(summary, 'get_average_cost_per_operation'):
+
+            if hasattr(summary, "get_average_cost_per_operation"):
                 avg_cost = summary.get_average_cost_per_operation()
                 assert avg_cost > 0
                 assert abs(avg_cost * 5 - summary.total_cost) < 0.000001
@@ -485,22 +506,22 @@ class TestCostSummaryCalculations:
         """Test average latency calculation."""
         with create_bedrock_cost_context("latency_test") as context:
             latencies = [800, 1200, 1000, 1500, 900]
-            
+
             for i, latency in enumerate(latencies):
                 context.add_operation(
-                    operation_id=f"latency_op_{i+1}",
+                    operation_id=f"latency_op_{i + 1}",
                     model_id="anthropic.claude-3-haiku-20240307-v1:0",
                     provider="anthropic",
                     region="us-east-1",
                     input_tokens=100,
                     output_tokens=50,
                     latency_ms=latency,
-                    governance_attributes={"team": "latency-test"}
+                    governance_attributes={"team": "latency-test"},
                 )
-            
+
             summary = context.get_current_summary()
-            
-            if hasattr(summary, 'get_average_latency_ms'):
+
+            if hasattr(summary, "get_average_latency_ms"):
                 avg_latency = summary.get_average_latency_ms()
                 expected_avg = sum(latencies) / len(latencies)
                 assert abs(avg_latency - expected_avg) < 1.0  # Within 1ms tolerance
@@ -512,27 +533,31 @@ class TestCostSummaryCalculations:
             models_data = [
                 ("anthropic.claude-3-haiku-20240307-v1:0", 1000, 500),
                 ("anthropic.claude-3-sonnet-20240229-v1:0", 800, 400),
-                ("anthropic.claude-3-haiku-20240307-v1:0", 500, 250)  # Duplicate model
+                ("anthropic.claude-3-haiku-20240307-v1:0", 500, 250),  # Duplicate model
             ]
-            
+
             for i, (model, input_tokens, output_tokens) in enumerate(models_data):
                 context.add_operation(
-                    operation_id=f"model_op_{i+1}",
+                    operation_id=f"model_op_{i + 1}",
                     model_id=model,
                     provider="anthropic",
                     region="us-east-1",
                     input_tokens=input_tokens,
                     output_tokens=output_tokens,
                     latency_ms=1000,
-                    governance_attributes={"team": "model-breakdown-test"}
+                    governance_attributes={"team": "model-breakdown-test"},
                 )
-            
+
             summary = context.get_current_summary()
-            
+
             # Should have costs aggregated by model
-            haiku_total_cost = summary.cost_by_model.get("anthropic.claude-3-haiku-20240307-v1:0", 0)
-            sonnet_cost = summary.cost_by_model.get("anthropic.claude-3-sonnet-20240229-v1:0", 0)
-            
+            haiku_total_cost = summary.cost_by_model.get(
+                "anthropic.claude-3-haiku-20240307-v1:0", 0
+            )
+            sonnet_cost = summary.cost_by_model.get(
+                "anthropic.claude-3-sonnet-20240229-v1:0", 0
+            )
+
             # Haiku should have higher total cost (2 operations vs 1)
             assert haiku_total_cost > sonnet_cost
             assert haiku_total_cost > 0
@@ -549,11 +574,11 @@ class TestCostSummaryCalculations:
                 input_tokens=0,
                 output_tokens=0,
                 latency_ms=500,
-                governance_attributes={"team": "zero-test"}
+                governance_attributes={"team": "zero-test"},
             )
-            
+
             summary = context.get_current_summary()
-            
+
             # Should handle zero tokens gracefully
             assert summary.total_cost == 0
             assert summary.total_operations == 1
@@ -561,7 +586,9 @@ class TestCostSummaryCalculations:
             assert summary.total_output_tokens == 0
 
 
-@pytest.mark.skipif(not COST_AGGREGATOR_AVAILABLE, reason="Bedrock cost aggregator not available")
+@pytest.mark.skipif(
+    not COST_AGGREGATOR_AVAILABLE, reason="Bedrock cost aggregator not available"
+)
 class TestErrorHandling:
     """Test error handling and edge cases."""
 
@@ -578,7 +605,7 @@ class TestErrorHandling:
                     input_tokens=-100,  # Invalid
                     output_tokens=50,
                     latency_ms=1000,
-                    governance_attributes={"team": "invalid-test"}
+                    governance_attributes={"team": "invalid-test"},
                 )
 
     def test_duplicate_operation_ids(self):
@@ -593,9 +620,9 @@ class TestErrorHandling:
                 input_tokens=100,
                 output_tokens=50,
                 latency_ms=1000,
-                governance_attributes={"team": "duplicate-test"}
+                governance_attributes={"team": "duplicate-test"},
             )
-            
+
             # Add second operation with same ID
             try:
                 context.add_operation(
@@ -606,9 +633,9 @@ class TestErrorHandling:
                     input_tokens=200,
                     output_tokens=100,
                     latency_ms=1200,
-                    governance_attributes={"team": "duplicate-test"}
+                    governance_attributes={"team": "duplicate-test"},
                 )
-                
+
                 # Should either accept (overwrite) or have 2 operations
                 assert len(context.operations) >= 1
             except ValueError:
@@ -626,9 +653,9 @@ class TestErrorHandling:
                 input_tokens=100,
                 output_tokens=50,
                 latency_ms=1000,
-                governance_attributes={}  # Empty
+                governance_attributes={},  # Empty
             )
-            
+
             summary = context.get_current_summary()
             assert summary.total_operations == 1
 
@@ -644,9 +671,9 @@ class TestErrorHandling:
                     input_tokens=100,
                     output_tokens=50,
                     latency_ms=1000,
-                    governance_attributes=None  # None
+                    governance_attributes=None,  # None
                 )
-                
+
                 summary = context.get_current_summary()
                 assert summary.total_operations == 1
             except (TypeError, ValueError):
@@ -665,15 +692,15 @@ class TestErrorHandling:
                     input_tokens=100,
                     output_tokens=50,
                     latency_ms=1000,
-                    governance_attributes={"team": "exception-test"}
+                    governance_attributes={"team": "exception-test"},
                 )
-                
+
                 # Raise exception within context
                 raise Exception("Test exception")
-                
+
         except Exception as e:
             assert str(e) == "Test exception"
-        
+
         # Context should still be properly finalized
         assert context.end_time is not None
 
@@ -681,9 +708,9 @@ class TestErrorHandling:
         """Test performance with large number of operations."""
         with create_bedrock_cost_context("large_test") as context:
             num_operations = 1000
-            
+
             start_time = time.time()
-            
+
             for i in range(num_operations):
                 context.add_operation(
                     operation_id=f"large_op_{i}",
@@ -693,46 +720,51 @@ class TestErrorHandling:
                     input_tokens=100,
                     output_tokens=50,
                     latency_ms=1000,
-                    governance_attributes={"team": "large-test", "batch": str(i // 100)}
+                    governance_attributes={
+                        "team": "large-test",
+                        "batch": str(i // 100),
+                    },
                 )
-            
+
             end_time = time.time()
             summary = context.get_current_summary()
-            
+
             # Should handle large number of operations
             assert summary.total_operations == num_operations
             assert summary.total_input_tokens == num_operations * 100
-            
+
             # Should complete reasonably quickly (under 1 second for 1000 ops)
             assert (end_time - start_time) < 1.0
 
 
-@pytest.mark.skipif(not COST_AGGREGATOR_AVAILABLE, reason="Bedrock cost aggregator not available")
+@pytest.mark.skipif(
+    not COST_AGGREGATOR_AVAILABLE, reason="Bedrock cost aggregator not available"
+)
 class TestConcurrencyAndThreadSafety:
     """Test concurrency and thread safety."""
 
     def test_concurrent_context_creation(self):
         """Test creating multiple contexts concurrently."""
         import threading
-        
+
         contexts = []
-        
+
         def create_context(context_id):
             with create_bedrock_cost_context(f"concurrent_{context_id}") as context:
                 contexts.append(context)
                 time.sleep(0.1)  # Simulate some work
-        
+
         # Create multiple contexts in threads
         threads = []
         for i in range(5):
             thread = threading.Thread(target=create_context, args=(i,))
             threads.append(thread)
             thread.start()
-        
+
         # Wait for all threads
         for thread in threads:
             thread.join(timeout=5)
-        
+
         # All contexts should be created successfully
         assert len(contexts) == 5
         for context in contexts:
@@ -741,8 +773,9 @@ class TestConcurrencyAndThreadSafety:
     def test_concurrent_operation_addition(self):
         """Test adding operations to context concurrently."""
         import threading
-        
+
         with create_bedrock_cost_context("concurrent_ops_test") as context:
+
             def add_operations(thread_id):
                 for i in range(10):
                     try:
@@ -754,38 +787,40 @@ class TestConcurrencyAndThreadSafety:
                             input_tokens=100,
                             output_tokens=50,
                             latency_ms=1000,
-                            governance_attributes={"thread_id": str(thread_id)}
+                            governance_attributes={"thread_id": str(thread_id)},
                         )
-                    except Exception as e:
+                    except Exception:
                         # Some thread safety issues may be expected
                         pass
-            
+
             # Add operations from multiple threads
             threads = []
             for i in range(3):
                 thread = threading.Thread(target=add_operations, args=(i,))
                 threads.append(thread)
                 thread.start()
-            
+
             # Wait for all threads
             for thread in threads:
                 thread.join(timeout=5)
-            
+
             # Should have some operations (exact count depends on thread safety)
             summary = context.get_current_summary()
             assert summary.total_operations > 0
 
 
-@pytest.mark.skipif(not COST_AGGREGATOR_AVAILABLE, reason="Bedrock cost aggregator not available")
+@pytest.mark.skipif(
+    not COST_AGGREGATOR_AVAILABLE, reason="Bedrock cost aggregator not available"
+)
 class TestUtilityFunctions:
     """Test utility functions."""
 
     def test_add_bedrock_operation_function(self):
         """Test standalone add_bedrock_operation function if available."""
-        if 'add_bedrock_operation' in globals():
+        if "add_bedrock_operation" in globals():
             # Test the standalone function
             context_id = "utility_test"
-            
+
             with create_bedrock_cost_context(context_id) as context:
                 # If there's a standalone function, test it
                 try:
@@ -798,19 +833,19 @@ class TestUtilityFunctions:
                         input_tokens=100,
                         output_tokens=50,
                         latency_ms=1000,
-                        governance_attributes={"team": "utility-test"}
+                        governance_attributes={"team": "utility-test"},
                     )
-                    
+
                     summary = context.get_current_summary()
                     assert summary.total_operations >= 1
-                    
+
                 except Exception:
                     # Function may not be implemented or work differently
                     pass
 
     def test_optimization_recommendations_function(self):
         """Test optimization recommendations utility function if available."""
-        if 'get_optimization_recommendations' in globals():
+        if "get_optimization_recommendations" in globals():
             with create_bedrock_cost_context("optimization_util_test") as context:
                 # Add some expensive operations
                 context.add_operation(
@@ -821,13 +856,13 @@ class TestUtilityFunctions:
                     input_tokens=10000,
                     output_tokens=5000,
                     latency_ms=5000,
-                    governance_attributes={"team": "optimization-util-test"}
+                    governance_attributes={"team": "optimization-util-test"},
                 )
-                
+
                 try:
                     recommendations = get_optimization_recommendations(context)
                     assert isinstance(recommendations, list)
-                    
+
                 except Exception:
                     # Function may not be implemented
                     pass
@@ -841,10 +876,10 @@ class TestPerformance:
         """Test performance of adding operations."""
         if not COST_AGGREGATOR_AVAILABLE:
             pytest.skip("Cost aggregator not available")
-        
+
         with create_bedrock_cost_context("perf_test") as context:
             start_time = time.time()
-            
+
             # Add many operations
             for i in range(1000):
                 context.add_operation(
@@ -855,11 +890,11 @@ class TestPerformance:
                     input_tokens=100,
                     output_tokens=50,
                     latency_ms=1000,
-                    governance_attributes={"batch": str(i // 100)}
+                    governance_attributes={"batch": str(i // 100)},
                 )
-            
+
             end_time = time.time()
-            
+
             # Should complete in reasonable time
             assert (end_time - start_time) < 2.0  # Less than 2 seconds for 1000 ops
 
@@ -867,7 +902,7 @@ class TestPerformance:
         """Test performance of summary calculations."""
         if not COST_AGGREGATOR_AVAILABLE:
             pytest.skip("Cost aggregator not available")
-        
+
         with create_bedrock_cost_context("summary_perf_test") as context:
             # Add operations
             for i in range(100):
@@ -879,17 +914,17 @@ class TestPerformance:
                     input_tokens=100,
                     output_tokens=50,
                     latency_ms=1000,
-                    governance_attributes={"batch": str(i // 10)}
+                    governance_attributes={"batch": str(i // 10)},
                 )
-            
+
             start_time = time.time()
-            
+
             # Calculate summary multiple times
             for _ in range(10):
                 summary = context.get_current_summary()
                 assert summary.total_operations == 100
-            
+
             end_time = time.time()
-            
+
             # Summary calculation should be fast
             assert (end_time - start_time) < 0.1  # Less than 100ms for 10 calculations

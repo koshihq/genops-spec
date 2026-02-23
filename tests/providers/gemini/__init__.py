@@ -4,7 +4,7 @@ Test suite for GenOps Gemini provider integration.
 This package contains comprehensive tests for all Gemini components:
 
 - test_gemini_adapter: Core adapter functionality tests
-- test_gemini_pricing: Pricing and cost calculation tests  
+- test_gemini_pricing: Pricing and cost calculation tests
 - test_gemini_cost_aggregator: Cost aggregation and context manager tests
 - test_gemini_validation: Setup validation and diagnostics tests
 - test_gemini_integration: End-to-end integration tests

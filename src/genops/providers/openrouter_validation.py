@@ -341,7 +341,7 @@ def check_openrouter_connection() -> list[ValidationIssue]:
                 )
 
         except Exception:
-            error_msg = str(e)
+            error_msg = str(e)  # type: ignore  # noqa: F821
             if "401" in error_msg or "authentication" in error_msg.lower():
                 issues.append(
                     ValidationIssue(
@@ -505,7 +505,9 @@ def test_basic_functionality() -> list[ValidationIssue]:
 
         # Test adapter creation
         try:
-            adapter = genops.providers.openrouter.instrument_openrouter(openrouter_api_key=api_key)
+            adapter = genops.providers.openrouter.instrument_openrouter(
+                openrouter_api_key=api_key
+            )
             issues.append(
                 ValidationIssue(
                     level="info",
@@ -567,7 +569,7 @@ def test_basic_functionality() -> list[ValidationIssue]:
                 )
 
         except Exception:
-            error_msg = str(e)
+            error_msg = str(e)  # type: ignore  # noqa: F821
             if "import" in error_msg.lower():
                 issues.append(
                     ValidationIssue(
@@ -823,7 +825,7 @@ def check_common_issues() -> list[ValidationIssue]:
         # Check for common endpoint URLs and provide specific guidance
         parsed_url = urlparse(otel_endpoint)
         if parsed_url.hostname and (
-            parsed_url.hostname == "honeycomb.io" 
+            parsed_url.hostname == "honeycomb.io"
             or parsed_url.hostname.endswith(".honeycomb.io")
         ):
             headers = os.getenv("OTEL_EXPORTER_OTLP_HEADERS")

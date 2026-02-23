@@ -3,16 +3,17 @@
 from __future__ import annotations
 
 import logging
+import os
 import time
 import uuid
-import os
-from typing import Any, Dict, List, Optional, Union
-from dataclasses import dataclass, field
 from contextlib import contextmanager
+from dataclasses import dataclass, field
+from typing import Any
 
-from genops.providers.base import BaseFrameworkProvider
 from opentelemetry import trace
 from opentelemetry.trace import Status, StatusCode
+
+from genops.providers.base import BaseFrameworkProvider
 
 logger = logging.getLogger(__name__)
 tracer = trace.get_tracer(__name__)
@@ -20,6 +21,7 @@ tracer = trace.get_tracer(__name__)
 # Check for required dependencies
 try:
     import requests
+
     HAS_REQUESTS = True
 except ImportError:
     HAS_REQUESTS = False
@@ -28,10 +30,13 @@ except ImportError:
 # Optional: OpenAI SDK for compatibility (Anyscale is OpenAI-compatible)
 try:
     from openai import OpenAI
+
     HAS_OPENAI_SDK = True
 except ImportError:
     HAS_OPENAI_SDK = False
-    logger.info("OpenAI SDK not installed. Will use direct HTTP requests. Install with: pip install openai")
+    logger.info(
+        "OpenAI SDK not installed. Will use direct HTTP requests. Install with: pip install openai"
+    )
 
 
 @dataclass
@@ -42,23 +47,23 @@ class AnyscaleOperation:
     operation_type: str  # 'completion', 'chat', 'embedding'
     model: str
     start_time: float
-    end_time: Optional[float] = None
+    end_time: float | None = None
 
     # Token usage
-    input_tokens: Optional[int] = None
-    output_tokens: Optional[int] = None
-    total_tokens: Optional[int] = None
+    input_tokens: int | None = None
+    output_tokens: int | None = None
+    total_tokens: int | None = None
 
     # Cost tracking
-    cost: Optional[float] = None
+    cost: float | None = None
     currency: str = "USD"
 
     # Performance metrics
-    latency_ms: Optional[float] = None
-    first_token_ms: Optional[float] = None
+    latency_ms: float | None = None
+    first_token_ms: float | None = None
 
     # Governance attributes
-    governance_attributes: Dict[str, Any] = field(default_factory=dict)
+    governance_attributes: dict[str, Any] = field(default_factory=dict)
 
     @property
     def duration_ms(self) -> float:
@@ -74,8 +79,8 @@ class AnyscaleCostSummary:
 
     total_cost: float = 0.0
     currency: str = "USD"
-    operations: List[AnyscaleOperation] = field(default_factory=list)
-    cost_by_model: Dict[str, float] = field(default_factory=dict)
+    operations: list[AnyscaleOperation] = field(default_factory=list)
+    cost_by_model: dict[str, float] = field(default_factory=dict)
     total_input_tokens: int = 0
     total_output_tokens: int = 0
     total_operations: int = 0
@@ -110,7 +115,7 @@ class GenOpsAnyscaleAdapter(BaseFrameworkProvider):
 
     def __init__(
         self,
-        anyscale_api_key: Optional[str] = None,
+        anyscale_api_key: str | None = None,
         anyscale_base_url: str = "https://api.endpoints.anyscale.com/v1",
         telemetry_enabled: bool = True,
         cost_tracking_enabled: bool = True,
@@ -124,7 +129,7 @@ class GenOpsAnyscaleAdapter(BaseFrameworkProvider):
         circuit_breaker_timeout: int = 60,
         sampling_rate: float = 1.0,
         request_timeout: int = 60,
-        **governance_defaults
+        **governance_defaults,
     ):
         """
         Initialize GenOps Anyscale adapter.
@@ -152,7 +157,7 @@ class GenOpsAnyscaleAdapter(BaseFrameworkProvider):
 
         # API configuration
         self.anyscale_api_key = anyscale_api_key or os.getenv("ANYSCALE_API_KEY")
-        self.anyscale_base_url = anyscale_base_url.rstrip('/')
+        self.anyscale_base_url = anyscale_base_url.rstrip("/")
         self.telemetry_enabled = telemetry_enabled
         self.cost_tracking_enabled = cost_tracking_enabled
         self.debug = debug
@@ -168,8 +173,7 @@ class GenOpsAnyscaleAdapter(BaseFrameworkProvider):
         # Initialize HTTP client or OpenAI SDK client
         if HAS_OPENAI_SDK and self.anyscale_api_key:
             self.client = OpenAI(
-                api_key=self.anyscale_api_key,
-                base_url=self.anyscale_base_url
+                api_key=self.anyscale_api_key, base_url=self.anyscale_base_url
             )
             self._use_sdk = True
             logger.debug("Initialized Anyscale adapter with OpenAI SDK")
@@ -185,10 +189,11 @@ class GenOpsAnyscaleAdapter(BaseFrameworkProvider):
 
         # Load pricing calculator
         from .pricing import AnyscalePricing
+
         self._pricing = AnyscalePricing()
 
         # Operation tracking
-        self._current_operations: Dict[str, AnyscaleOperation] = {}
+        self._current_operations: dict[str, AnyscaleOperation] = {}
 
         # Enterprise features
         self.enable_retry = enable_retry
@@ -203,63 +208,72 @@ class GenOpsAnyscaleAdapter(BaseFrameworkProvider):
         # Circuit breaker state
         self._circuit_breaker_state = "CLOSED"  # CLOSED, OPEN, HALF_OPEN
         self._circuit_breaker_failure_count = 0
-        self._circuit_breaker_last_failure_time: Optional[float] = None
+        self._circuit_breaker_last_failure_time: float | None = None
 
-        logger.info(f"GenOps Anyscale adapter initialized (telemetry={'enabled' if telemetry_enabled else 'disabled'}, "
-                   f"retry={'enabled' if enable_retry else 'disabled'}, "
-                   f"circuit_breaker={'enabled' if enable_circuit_breaker else 'disabled'}, "
-                   f"sampling={sampling_rate*100:.0f}%)")
+        logger.info(
+            f"GenOps Anyscale adapter initialized (telemetry={'enabled' if telemetry_enabled else 'disabled'}, "
+            f"retry={'enabled' if enable_retry else 'disabled'}, "
+            f"circuit_breaker={'enabled' if enable_circuit_breaker else 'disabled'}, "
+            f"sampling={sampling_rate * 100:.0f}%)"
+        )
 
     # Security methods for secret protection and input validation
 
     def _sanitize_error_message(self, error: Exception) -> str:
         """Remove sensitive information from error messages."""
         import re
+
         error_str = str(error)
         # Redact anything that looks like a bearer token
-        error_str = re.sub(r'Bearer\s+\S+', 'Bearer [REDACTED]', error_str)
+        error_str = re.sub(r"Bearer\s+\S+", "Bearer [REDACTED]", error_str)
         # Redact API keys
-        error_str = re.sub(r'api[_-]?key["\']?\s*[:=]\s*["\']?\S+', 'api_key=[REDACTED]', error_str, flags=re.IGNORECASE)
+        error_str = re.sub(
+            r'api[_-]?key["\']?\s*[:=]\s*["\']?\S+',
+            "api_key=[REDACTED]",
+            error_str,
+            flags=re.IGNORECASE,
+        )
         return error_str
 
     def _sanitize_response_text(self, text: str, max_length: int = 200) -> str:
         """Sanitize API response text before logging."""
         import re
+
         if not text:
             return "No response text"
         truncated = text[:max_length]
-        sanitized = re.sub(r'Bearer\s+\S+', 'Bearer [REDACTED]', truncated)
+        sanitized = re.sub(r"Bearer\s+\S+", "Bearer [REDACTED]", truncated)
         sanitized = re.sub(r'"token":\s*"\S+"', '"token": "[REDACTED]"', sanitized)
         return sanitized
 
     def _build_headers(self) -> dict:
         """Build HTTP headers with secret protection."""
         auth_value = "Bearer " + self.anyscale_api_key
-        return {
-            "Authorization": auth_value,
-            "Content-Type": "application/json"
-        }
+        return {"Authorization": auth_value, "Content-Type": "application/json"}
 
     def _validate_endpoint(self, endpoint: str) -> str:
         """Validate endpoint path to prevent injection."""
-        if not endpoint.startswith('/'):
-            endpoint = '/' + endpoint
-        if '://' in endpoint:
+        if not endpoint.startswith("/"):
+            endpoint = "/" + endpoint
+        if "://" in endpoint:
             raise ValueError("Endpoint must not contain protocol")
-        if '..' in endpoint:
+        if ".." in endpoint:
             raise ValueError("Endpoint must not contain '..'")
         return endpoint
 
     def _validate_completion_response(self, response_data: dict) -> dict:
         """Validate completion response structure."""
-        required_fields = ['choices', 'usage']
-        for field in required_fields:
+        required_fields = ["choices", "usage"]
+        for field in required_fields:  # noqa: F402
             if field not in response_data:
                 raise ValueError(f"Invalid response: missing '{field}'")
-        if not isinstance(response_data['choices'], list) or not response_data['choices']:
+        if (
+            not isinstance(response_data["choices"], list)
+            or not response_data["choices"]
+        ):
             raise ValueError("Invalid response: 'choices' must be non-empty list")
-        usage = response_data.get('usage', {})
-        for token_field in ['prompt_tokens', 'completion_tokens', 'total_tokens']:
+        usage = response_data.get("usage", {})
+        for token_field in ["prompt_tokens", "completion_tokens", "total_tokens"]:
             if token_field in usage:
                 value = usage[token_field]
                 if not isinstance(value, int) or value < 0 or value > 1000000:
@@ -268,11 +282,11 @@ class GenOpsAnyscaleAdapter(BaseFrameworkProvider):
 
     def _validate_embeddings_response(self, response_data: dict) -> dict:
         """Validate embeddings response structure."""
-        required_fields = ['data', 'usage']
-        for field in required_fields:
+        required_fields = ["data", "usage"]
+        for field in required_fields:  # noqa: F402
             if field not in response_data:
                 raise ValueError(f"Invalid response: missing '{field}'")
-        if not isinstance(response_data['data'], list) or not response_data['data']:
+        if not isinstance(response_data["data"], list) or not response_data["data"]:
             raise ValueError("Invalid response: 'data' must be non-empty list")
         return response_data
 
@@ -282,9 +296,18 @@ class GenOpsAnyscaleAdapter(BaseFrameworkProvider):
         """Setup Anyscale-specific governance attributes."""
         # Add any Anyscale-specific request attributes
         self.REQUEST_ATTRIBUTES = {
-            'model', 'messages', 'temperature', 'max_tokens', 'top_p',
-            'frequency_penalty', 'presence_penalty', 'stop', 'stream',
-            'input', 'encoding_format', 'dimensions'  # For embeddings
+            "model",
+            "messages",
+            "temperature",
+            "max_tokens",
+            "top_p",
+            "frequency_penalty",
+            "presence_penalty",
+            "stop",
+            "stream",
+            "input",
+            "encoding_format",
+            "dimensions",  # For embeddings
         }
 
     def get_framework_name(self) -> str:
@@ -300,9 +323,11 @@ class GenOpsAnyscaleAdapter(BaseFrameworkProvider):
         try:
             if self._use_sdk:
                 import openai
+
                 return f"openai-{openai.__version__}"
             else:
                 import requests
+
                 return f"requests-{requests.__version__}"
         except Exception as e:
             logger.debug(f"Failed to get framework version: {e}")
@@ -328,9 +353,9 @@ class GenOpsAnyscaleAdapter(BaseFrameworkProvider):
         if not self.cost_tracking_enabled:
             return 0.0
 
-        model = operation_context.get('model', '')
-        input_tokens = operation_context.get('input_tokens', 0)
-        output_tokens = operation_context.get('output_tokens', 0)
+        model = operation_context.get("model", "")
+        input_tokens = operation_context.get("input_tokens", 0)
+        output_tokens = operation_context.get("output_tokens", 0)
 
         try:
             cost = self._pricing.calculate_cost(model, input_tokens, output_tokens)
@@ -342,37 +367,47 @@ class GenOpsAnyscaleAdapter(BaseFrameworkProvider):
     def get_operation_mappings(self) -> dict[str, str]:
         """Return mapping of operations to instrumentation methods."""
         return {
-            'chat.completions.create': 'completion_create',
-            'completions.create': 'completion_create',
-            'embeddings.create': 'embeddings_create',
+            "chat.completions.create": "completion_create",
+            "completions.create": "completion_create",
+            "embeddings.create": "embeddings_create",
         }
 
-    def _record_framework_metrics(self, span: Any, operation_type: str, context: dict) -> None:
+    def _record_framework_metrics(
+        self, span: Any, operation_type: str, context: dict
+    ) -> None:
         """Record Anyscale-specific metrics on span."""
         if not span:
             return
 
         try:
             # Record model info
-            if 'model' in context:
-                span.set_attribute("genops.anyscale.model", context['model'])
+            if "model" in context:
+                span.set_attribute("genops.anyscale.model", context["model"])
 
             # Record token usage
-            if 'input_tokens' in context:
-                span.set_attribute("genops.anyscale.tokens.input", context['input_tokens'])
-            if 'output_tokens' in context:
-                span.set_attribute("genops.anyscale.tokens.output", context['output_tokens'])
-            if 'total_tokens' in context:
-                span.set_attribute("genops.anyscale.tokens.total", context['total_tokens'])
+            if "input_tokens" in context:
+                span.set_attribute(
+                    "genops.anyscale.tokens.input", context["input_tokens"]
+                )
+            if "output_tokens" in context:
+                span.set_attribute(
+                    "genops.anyscale.tokens.output", context["output_tokens"]
+                )
+            if "total_tokens" in context:
+                span.set_attribute(
+                    "genops.anyscale.tokens.total", context["total_tokens"]
+                )
 
             # Record cost
-            if 'cost' in context:
-                span.set_attribute("genops.anyscale.cost.total", context['cost'])
+            if "cost" in context:
+                span.set_attribute("genops.anyscale.cost.total", context["cost"])
                 span.set_attribute("genops.anyscale.cost.currency", "USD")
 
             # Record performance metrics
-            if 'latency_ms' in context:
-                span.set_attribute("genops.anyscale.performance.latency_ms", context['latency_ms'])
+            if "latency_ms" in context:
+                span.set_attribute(
+                    "genops.anyscale.performance.latency_ms", context["latency_ms"]
+                )
 
             # Record operation type
             span.set_attribute("genops.anyscale.operation.type", operation_type)
@@ -399,6 +434,7 @@ class GenOpsAnyscaleAdapter(BaseFrameworkProvider):
             return False
 
         import random
+
         return random.random() < self.sampling_rate
 
     def _check_circuit_breaker(self) -> None:
@@ -408,8 +444,11 @@ class GenOpsAnyscaleAdapter(BaseFrameworkProvider):
 
         if self._circuit_breaker_state == "OPEN":
             # Check if recovery timeout has passed
-            if (self._circuit_breaker_last_failure_time and
-                time.time() - self._circuit_breaker_last_failure_time > self.circuit_breaker_timeout):
+            if (
+                self._circuit_breaker_last_failure_time
+                and time.time() - self._circuit_breaker_last_failure_time
+                > self.circuit_breaker_timeout
+            ):
                 logger.info("Circuit breaker: Moving to HALF_OPEN state")
                 self._circuit_breaker_state = "HALF_OPEN"
                 self._circuit_breaker_failure_count = 0
@@ -448,9 +487,9 @@ class GenOpsAnyscaleAdapter(BaseFrameworkProvider):
         self,
         method: str,
         url: str,
-        headers: Dict[str, str],
-        json: Dict[str, Any],
-        timeout: int
+        headers: dict[str, str],
+        json: dict[str, Any],
+        timeout: int,
     ) -> Any:
         """Make HTTP request with retry logic."""
         # Check circuit breaker before attempting request
@@ -466,18 +505,16 @@ class GenOpsAnyscaleAdapter(BaseFrameworkProvider):
                     # Calculate exponential backoff
                     wait_time = min(
                         self.retry_backoff_factor * (2 ** (attempt - 1)),
-                        10  # Max 10 seconds
+                        10,  # Max 10 seconds
                     )
-                    logger.debug(f"Retry attempt {attempt}/{max_attempts-1}, waiting {wait_time:.2f}s")
+                    logger.debug(
+                        f"Retry attempt {attempt}/{max_attempts - 1}, waiting {wait_time:.2f}s"
+                    )
                     time.sleep(wait_time)
 
                 # Make the request
                 response = requests.request(
-                    method=method,
-                    url=url,
-                    headers=headers,
-                    json=json,
-                    timeout=timeout
+                    method=method, url=url, headers=headers, json=json, timeout=timeout
                 )
 
                 # Check for HTTP errors
@@ -518,11 +555,11 @@ class GenOpsAnyscaleAdapter(BaseFrameworkProvider):
     def completion_create(
         self,
         model: str,
-        messages: List[Dict[str, str]],
+        messages: list[dict[str, str]],
         temperature: float = 1.0,
-        max_tokens: Optional[int] = None,
-        **kwargs
-    ) -> Dict[str, Any]:
+        max_tokens: int | None = None,
+        **kwargs,
+    ) -> dict[str, Any]:
         """
         Create a chat completion with governance tracking.
 
@@ -549,7 +586,7 @@ class GenOpsAnyscaleAdapter(BaseFrameworkProvider):
             operation_type="chat.completion",
             model=model,
             start_time=time.time(),
-            governance_attributes=effective_governance
+            governance_attributes=effective_governance,
         )
 
         # Build trace attributes
@@ -559,13 +596,12 @@ class GenOpsAnyscaleAdapter(BaseFrameworkProvider):
             governance_attrs=effective_governance,
             model=model,
             temperature=temperature,
-            max_tokens=max_tokens
+            max_tokens=max_tokens,
         )
 
         # Start OpenTelemetry span
         with tracer.start_as_current_span(
-            "anyscale.completion.create",
-            attributes=trace_attrs
+            "anyscale.completion.create", attributes=trace_attrs
         ) as span:
             try:
                 # Make API call
@@ -575,7 +611,7 @@ class GenOpsAnyscaleAdapter(BaseFrameworkProvider):
                         messages=messages,
                         temperature=temperature,
                         max_tokens=max_tokens,
-                        **api_kwargs
+                        **api_kwargs,
                     )
                     response_dict = self._parse_sdk_response(response)
                 else:
@@ -586,37 +622,43 @@ class GenOpsAnyscaleAdapter(BaseFrameworkProvider):
                             "messages": messages,
                             "temperature": temperature,
                             **({"max_tokens": max_tokens} if max_tokens else {}),
-                            **api_kwargs
-                        }
+                            **api_kwargs,
+                        },
                     )
 
                 # Extract token usage
-                usage = response_dict.get('usage', {})
-                operation.input_tokens = usage.get('prompt_tokens', 0)
-                operation.output_tokens = usage.get('completion_tokens', 0)
-                operation.total_tokens = usage.get('total_tokens', 0)
+                usage = response_dict.get("usage", {})
+                operation.input_tokens = usage.get("prompt_tokens", 0)
+                operation.output_tokens = usage.get("completion_tokens", 0)
+                operation.total_tokens = usage.get("total_tokens", 0)
 
                 # Calculate cost
                 if self.cost_tracking_enabled:
-                    operation.cost = self.calculate_cost({
-                        'model': model,
-                        'input_tokens': operation.input_tokens,
-                        'output_tokens': operation.output_tokens
-                    })
+                    operation.cost = self.calculate_cost(
+                        {
+                            "model": model,
+                            "input_tokens": operation.input_tokens,
+                            "output_tokens": operation.output_tokens,
+                        }
+                    )
 
                 # Record metrics
                 operation.end_time = time.time()
                 operation.latency_ms = operation.duration_ms
 
                 # Update span
-                self._record_framework_metrics(span, "chat.completion", {
-                    'model': model,
-                    'input_tokens': operation.input_tokens,
-                    'output_tokens': operation.output_tokens,
-                    'total_tokens': operation.total_tokens,
-                    'cost': operation.cost,
-                    'latency_ms': operation.latency_ms
-                })
+                self._record_framework_metrics(
+                    span,
+                    "chat.completion",
+                    {
+                        "model": model,
+                        "input_tokens": operation.input_tokens,
+                        "output_tokens": operation.output_tokens,
+                        "total_tokens": operation.total_tokens,
+                        "cost": operation.cost,
+                        "latency_ms": operation.latency_ms,
+                    },
+                )
 
                 span.set_status(Status(StatusCode.OK))
 
@@ -637,11 +679,8 @@ class GenOpsAnyscaleAdapter(BaseFrameworkProvider):
                 raise
 
     def embeddings_create(
-        self,
-        model: str,
-        input: Union[str, List[str]],
-        **kwargs
-    ) -> Dict[str, Any]:
+        self, model: str, input: str | list[str], **kwargs
+    ) -> dict[str, Any]:
         """
         Create embeddings with governance tracking.
 
@@ -664,7 +703,7 @@ class GenOpsAnyscaleAdapter(BaseFrameworkProvider):
             operation_type="embedding",
             model=model,
             start_time=time.time(),
-            governance_attributes=effective_governance
+            governance_attributes=effective_governance,
         )
 
         # Build trace attributes
@@ -672,57 +711,56 @@ class GenOpsAnyscaleAdapter(BaseFrameworkProvider):
             operation_name="anyscale.embeddings.create",
             operation_type="ai.embedding",
             governance_attrs=effective_governance,
-            model=model
+            model=model,
         )
 
         # Start OpenTelemetry span
         with tracer.start_as_current_span(
-            "anyscale.embeddings.create",
-            attributes=trace_attrs
+            "anyscale.embeddings.create", attributes=trace_attrs
         ) as span:
             try:
                 # Make API call
                 if self._use_sdk:
                     response = self.client.embeddings.create(
-                        model=model,
-                        input=input,
-                        **api_kwargs
+                        model=model, input=input, **api_kwargs
                     )
                     response_dict = self._parse_sdk_response(response)
                 else:
                     response_dict = self._make_http_request(
                         endpoint="/embeddings",
-                        data={
-                            "model": model,
-                            "input": input,
-                            **api_kwargs
-                        }
+                        data={"model": model, "input": input, **api_kwargs},
                     )
 
                 # Extract token usage
-                usage = response_dict.get('usage', {})
-                operation.input_tokens = usage.get('total_tokens', 0)
+                usage = response_dict.get("usage", {})
+                operation.input_tokens = usage.get("total_tokens", 0)
                 operation.output_tokens = 0  # Embeddings don't have output tokens
 
                 # Calculate cost
                 if self.cost_tracking_enabled:
-                    operation.cost = self.calculate_cost({
-                        'model': model,
-                        'input_tokens': operation.input_tokens,
-                        'output_tokens': 0
-                    })
+                    operation.cost = self.calculate_cost(
+                        {
+                            "model": model,
+                            "input_tokens": operation.input_tokens,
+                            "output_tokens": 0,
+                        }
+                    )
 
                 # Record metrics
                 operation.end_time = time.time()
                 operation.latency_ms = operation.duration_ms
 
                 # Update span
-                self._record_framework_metrics(span, "embedding", {
-                    'model': model,
-                    'input_tokens': operation.input_tokens,
-                    'cost': operation.cost,
-                    'latency_ms': operation.latency_ms
-                })
+                self._record_framework_metrics(
+                    span,
+                    "embedding",
+                    {
+                        "model": model,
+                        "input_tokens": operation.input_tokens,
+                        "cost": operation.cost,
+                        "latency_ms": operation.latency_ms,
+                    },
+                )
 
                 span.set_status(Status(StatusCode.OK))
 
@@ -742,7 +780,7 @@ class GenOpsAnyscaleAdapter(BaseFrameworkProvider):
                 logger.error(f"Embeddings failed: {sanitized_error}")
                 raise
 
-    def _make_http_request(self, endpoint: str, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _make_http_request(self, endpoint: str, data: dict[str, Any]) -> dict[str, Any]:
         """Make direct HTTP request to Anyscale API."""
         if not HAS_REQUESTS:
             raise ImportError("requests library required for HTTP API calls")
@@ -759,18 +797,18 @@ class GenOpsAnyscaleAdapter(BaseFrameworkProvider):
 
         # Validate response structure based on endpoint type
         response_json = response.json()
-        if '/completions' in endpoint:
+        if "/completions" in endpoint:
             return self._validate_completion_response(response_json)
-        elif '/embeddings' in endpoint:
+        elif "/embeddings" in endpoint:
             return self._validate_embeddings_response(response_json)
 
         return response_json
 
-    def _parse_sdk_response(self, response: Any) -> Dict[str, Any]:
+    def _parse_sdk_response(self, response: Any) -> dict[str, Any]:
         """Parse OpenAI SDK response to dict."""
-        if hasattr(response, 'model_dump'):
+        if hasattr(response, "model_dump"):
             return response.model_dump()
-        elif hasattr(response, 'dict'):
+        elif hasattr(response, "dict"):
             return response.dict()
         else:
             return dict(response)
@@ -794,8 +832,7 @@ class GenOpsAnyscaleAdapter(BaseFrameworkProvider):
 
 # Convenience factory function
 def instrument_anyscale(
-    anyscale_api_key: Optional[str] = None,
-    **governance_defaults
+    anyscale_api_key: str | None = None, **governance_defaults
 ) -> GenOpsAnyscaleAdapter:
     """
     Create and initialize GenOps Anyscale adapter.
@@ -815,15 +852,14 @@ def instrument_anyscale(
         )
     """
     return GenOpsAnyscaleAdapter(
-        anyscale_api_key=anyscale_api_key,
-        **governance_defaults
+        anyscale_api_key=anyscale_api_key, **governance_defaults
     )
 
 
 # Export public API
 __all__ = [
-    'GenOpsAnyscaleAdapter',
-    'AnyscaleOperation',
-    'AnyscaleCostSummary',
-    'instrument_anyscale',
+    "GenOpsAnyscaleAdapter",
+    "AnyscaleOperation",
+    "AnyscaleCostSummary",
+    "instrument_anyscale",
 ]

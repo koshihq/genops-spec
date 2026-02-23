@@ -14,11 +14,13 @@ def setup_console_exporter():
     print("Setting up OpenTelemetry with console exporter...")
 
     # Create resource with service information
-    resource = Resource.create({
-        "service.name": "genops-ai-demo",
-        "service.version": "0.1.0",
-        "deployment.environment": "development"
-    })
+    resource = Resource.create(
+        {
+            "service.name": "genops-ai-demo",
+            "service.version": "0.1.0",
+            "deployment.environment": "development",
+        }
+    )
 
     # Set up tracer provider
     tracer_provider = TracerProvider(resource=resource)
@@ -38,11 +40,13 @@ def setup_otlp_exporter(endpoint: str = "http://localhost:4317"):
     print(f"Setting up OpenTelemetry with OTLP exporter to {endpoint}...")
 
     # Create resource with service information
-    resource = Resource.create({
-        "service.name": "genops-ai-app",
-        "service.version": "0.1.0",
-        "deployment.environment": os.getenv("DEPLOYMENT_ENV", "production")
-    })
+    resource = Resource.create(
+        {
+            "service.name": "genops-ai-app",
+            "service.version": "0.1.0",
+            "deployment.environment": os.getenv("DEPLOYMENT_ENV", "production"),
+        }
+    )
 
     # Set up tracer provider
     tracer_provider = TracerProvider(resource=resource)
@@ -51,9 +55,9 @@ def setup_otlp_exporter(endpoint: str = "http://localhost:4317"):
     # Add OTLP exporter
     otlp_exporter = OTLPSpanExporter(
         endpoint=endpoint,
-        headers={
-            "api-key": os.getenv("OTEL_API_KEY", "")
-        } if os.getenv("OTEL_API_KEY") else None
+        headers={"api-key": os.getenv("OTEL_API_KEY", "")}
+        if os.getenv("OTEL_API_KEY")
+        else None,
     )
     span_processor = BatchSpanProcessor(otlp_exporter)
     tracer_provider.add_span_processor(span_processor)
@@ -70,10 +74,9 @@ def setup_jaeger_exporter():
         from opentelemetry.exporter.jaeger.thrift import JaegerExporter
 
         # Create resource
-        resource = Resource.create({
-            "service.name": "genops-ai-app",
-            "service.version": "0.1.0"
-        })
+        resource = Resource.create(
+            {"service.name": "genops-ai-app", "service.version": "0.1.0"}
+        )
 
         # Set up tracer provider
         tracer_provider = TracerProvider(resource=resource)
@@ -91,7 +94,9 @@ def setup_jaeger_exporter():
         return tracer_provider
 
     except ImportError:
-        print("Jaeger exporter not available. Install with: pip install opentelemetry-exporter-jaeger")
+        print(
+            "Jaeger exporter not available. Install with: pip install opentelemetry-exporter-jaeger"
+        )
         return None
 
 
@@ -103,10 +108,9 @@ def setup_datadog_exporter():
         from opentelemetry.exporter.datadog import DatadogExporter
 
         # Create resource
-        resource = Resource.create({
-            "service.name": "genops-ai-app",
-            "service.version": "0.1.0"
-        })
+        resource = Resource.create(
+            {"service.name": "genops-ai-app", "service.version": "0.1.0"}
+        )
 
         # Set up tracer provider
         tracer_provider = TracerProvider(resource=resource)
@@ -115,7 +119,7 @@ def setup_datadog_exporter():
         # Add Datadog exporter
         datadog_exporter = DatadogExporter(
             agent_url=os.getenv("DD_TRACE_AGENT_URL", "http://localhost:8126"),
-            service_name="genops-ai-app"
+            service_name="genops-ai-app",
         )
         span_processor = BatchSpanProcessor(datadog_exporter)
         tracer_provider.add_span_processor(span_processor)
@@ -124,7 +128,9 @@ def setup_datadog_exporter():
         return tracer_provider
 
     except ImportError:
-        print("Datadog exporter not available. Install with: pip install opentelemetry-exporter-datadog")
+        print(
+            "Datadog exporter not available. Install with: pip install opentelemetry-exporter-datadog"
+        )
         return None
 
 
@@ -139,7 +145,9 @@ def demo_with_setup():
     if exporter_type == "console":
         setup_console_exporter()
     elif exporter_type == "otlp":
-        setup_otlp_exporter(os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317"))
+        setup_otlp_exporter(
+            os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317")
+        )
     elif exporter_type == "jaeger":
         setup_jaeger_exporter()
     elif exporter_type == "datadog":
@@ -154,11 +162,7 @@ def demo_with_setup():
     from genops import track, track_usage
     from genops.core.tracker import track_cost, track_evaluation
 
-    @track_usage(
-        operation_name="ai_inference",
-        team="demo-team",
-        project="otel-demo"
-    )
+    @track_usage(operation_name="ai_inference", team="demo-team", project="otel-demo")
     def demo_ai_operation():
         # Simulate AI operation
         track_cost(
@@ -166,14 +170,11 @@ def demo_with_setup():
             provider="openai",
             model="gpt-3.5-turbo",
             tokens_input=100,
-            tokens_output=50
+            tokens_output=50,
         )
 
         track_evaluation(
-            evaluation_name="quality_score",
-            score=0.85,
-            threshold=0.8,
-            passed=True
+            evaluation_name="quality_score", score=0.85, threshold=0.8, passed=True
         )
 
         return "Demo AI result"
@@ -186,7 +187,7 @@ def demo_with_setup():
         operation_name="batch_processing",
         team="demo-team",
         project="otel-demo",
-        customer="demo-customer"
+        customer="demo-customer",
     ) as span:
         span.set_attribute("batch_size", 5)
 
@@ -194,10 +195,7 @@ def demo_with_setup():
             span.set_attribute(f"item_{i}_processed", True)
 
         track_cost(
-            cost=0.25,
-            provider="anthropic",
-            model="claude-3-sonnet",
-            batch_size=5
+            cost=0.25, provider="anthropic", model="claude-3-sonnet", batch_size=5
         )
 
     print("Batch processing completed")

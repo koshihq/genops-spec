@@ -32,46 +32,59 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 try:
-    from genops.providers.raindrop_validation import validate_setup, print_validation_result, validate_setup_interactive
+    from genops.providers.raindrop_validation import (
+        print_validation_result,
+        validate_setup,
+        validate_setup_interactive,
+    )
 except ImportError as e:
     print(f"❌ Error importing GenOps Raindrop validation: {e}")
-    print("💡 Make sure you're in the project root directory and GenOps is properly installed")
+    print(
+        "💡 Make sure you're in the project root directory and GenOps is properly installed"
+    )
     sys.exit(1)
+
 
 def main():
     """Main validation workflow."""
     print("🔍 Raindrop AI + GenOps Setup Validation")
     print("=" * 60)
-    
+
     # Check if this is an interactive session
     interactive = len(sys.argv) > 1 and sys.argv[1] == "--interactive"
-    
+
     if interactive:
         print("🔧 Running in interactive mode...")
         result = validate_setup_interactive()
     else:
         # Check basic environment configuration first
         print("\n📋 Environment Configuration Check:")
-        
+
         api_key = os.getenv("RAINDROP_API_KEY")
         team = os.getenv("GENOPS_TEAM")
         project = os.getenv("GENOPS_PROJECT")
         environment = os.getenv("GENOPS_ENVIRONMENT", "production")
         budget_limit = os.getenv("GENOPS_DAILY_BUDGET_LIMIT")
-        
-        print(f"  {'✅' if api_key else '❌'} RAINDROP_API_KEY {'configured' if api_key else 'not found'}")
-        print(f"  {'✅' if team else '⚠️'} GENOPS_TEAM {'configured' if team else 'not set (will use default)'}")
-        print(f"  {'✅' if project else '⚠️'} GENOPS_PROJECT {'configured' if project else 'not set (will use default)'}")
+
+        print(
+            f"  {'✅' if api_key else '❌'} RAINDROP_API_KEY {'configured' if api_key else 'not found'}"
+        )
+        print(
+            f"  {'✅' if team else '⚠️'} GENOPS_TEAM {'configured' if team else 'not set (will use default)'}"
+        )
+        print(
+            f"  {'✅' if project else '⚠️'} GENOPS_PROJECT {'configured' if project else 'not set (will use default)'}"
+        )
         print(f"  ℹ️  GENOPS_ENVIRONMENT: {environment}")
         if budget_limit:
             print(f"  ✅ GENOPS_DAILY_BUDGET_LIMIT: ${budget_limit}")
-        
+
         # Run comprehensive validation
         result = validate_setup(api_key)
-    
+
     # Display detailed results
     print_validation_result(result, verbose=True)
-    
+
     # Provide next steps guidance
     if result.is_valid:
         print("🚀 Setup validation completed successfully!")
@@ -87,9 +100,10 @@ def main():
         print("  2. Check the integration guide: docs/integrations/raindrop.md")
         print("  3. Run interactive setup: python setup_validation.py --interactive")
         print("  4. Get help: https://github.com/KoshiHQ/GenOps-AI/discussions")
-        
+
         # Exit with error code for CI/CD integration
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

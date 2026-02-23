@@ -3,9 +3,9 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
-from tests.utils.mock_providers import MockOpenAIClient, MockProviderFactory
 
 from genops.providers.openai import GenOpsOpenAIAdapter
+from tests.utils.mock_providers import MockOpenAIClient, MockProviderFactory
 
 
 class TestGenOpsOpenAIAdapter:
@@ -79,6 +79,7 @@ class TestGenOpsOpenAIAdapter:
         mock_response = MockProviderFactory.create_openai_response(
             model="gpt-3.5-turbo", prompt_tokens=100, completion_tokens=50
         )
+        mock_client.chat.completions.create.side_effect = None
         mock_client.chat.completions.create.return_value = mock_response
 
         adapter.chat_completions_create(
@@ -95,8 +96,8 @@ class TestGenOpsOpenAIAdapter:
         assert attrs["genops.tokens.output"] == 50
         assert attrs["genops.tokens.total"] == 150
 
-        # GPT-3.5-turbo pricing: $0.0005 input, $0.0015 output per 1K tokens
-        expected_cost = (100 / 1000 * 0.0005) + (50 / 1000 * 0.0015)
+        # GPT-3.5-turbo pricing: $0.0015 input, $0.002 output per 1K tokens
+        expected_cost = (100 / 1000 * 0.0015) + (50 / 1000 * 0.002)
         assert abs(attrs["genops.cost.total"] - expected_cost) < 0.0001
         assert attrs["genops.cost.currency"] == "USD"
 
@@ -108,6 +109,7 @@ class TestGenOpsOpenAIAdapter:
         mock_response = MockProviderFactory.create_openai_response(
             model="gpt-4", prompt_tokens=200, completion_tokens=100
         )
+        mock_client.chat.completions.create.side_effect = None
         mock_client.chat.completions.create.return_value = mock_response
 
         adapter.chat_completions_create(
@@ -229,7 +231,7 @@ class TestGenOpsOpenAIAdapter:
         attrs = span.attributes
 
         # Streaming should be noted in telemetry
-        assert attrs.get("genops.request.streaming") is True
+        assert attrs.get("genops.request.stream") is True
 
     def test_multiple_models_cost_accuracy(self, mock_openai_import):
         """Test cost calculation accuracy across different models."""

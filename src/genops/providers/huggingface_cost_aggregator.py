@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Any, Dict, Set
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class HuggingFaceCallCost:
     """Represents cost information for a single Hugging Face operation call."""
+
     provider: str
     model: str
     tokens_input: int
@@ -28,18 +29,19 @@ class HuggingFaceCallCost:
 class HuggingFaceCostSummary:
     """
     Framework-agnostic cost summary for Hugging Face operations.
-    
+
     This follows the standardized cost structure specified in CLAUDE.md
     for consistency across all GenOps provider adapters.
     """
+
     total_cost: float = 0.0
     currency: str = "USD"
-    cost_by_provider: Dict[str, float] = field(default_factory=dict)
-    cost_by_model: Dict[str, float] = field(default_factory=dict)
-    unique_providers: Set[str] = field(default_factory=set)
+    cost_by_provider: dict[str, float] = field(default_factory=dict)
+    cost_by_model: dict[str, float] = field(default_factory=dict)
+    unique_providers: set[str] = field(default_factory=set)
     total_time: float = 0.0
-    governance_attributes: Dict[str, str] = field(default_factory=dict)
-    
+    governance_attributes: dict[str, str] = field(default_factory=dict)
+
     # Hugging Face specific attributes
     hf_calls: list[HuggingFaceCallCost] = field(default_factory=list)
     total_tokens_input: int = 0
@@ -68,11 +70,11 @@ class HuggingFaceCostSummary:
             self.cost_by_provider[call.provider] += call.cost
             self.cost_by_model[call.model] += call.cost
             self.total_cost += call.cost
-            
+
             # Aggregate tokens
             self.total_tokens_input += call.tokens_input
             self.total_tokens_output += call.tokens_output
-            
+
             # Track unique values
             self.unique_providers.add(call.provider)
             self.unique_models.add(call.model)
@@ -96,13 +98,15 @@ class HuggingFaceCostSummary:
         """Get detailed breakdown by provider."""
         breakdown = {}
         for provider in self.unique_providers:
-            provider_calls = [call for call in self.hf_calls if call.provider == provider]
+            provider_calls = [
+                call for call in self.hf_calls if call.provider == provider
+            ]
             breakdown[provider] = {
                 "cost": self.cost_by_provider[provider],
                 "calls": len(provider_calls),
                 "tokens_input": sum(call.tokens_input for call in provider_calls),
                 "tokens_output": sum(call.tokens_output for call in provider_calls),
-                "models_used": list({call.model for call in provider_calls})
+                "models_used": list({call.model for call in provider_calls}),
             }
         return breakdown
 
@@ -116,7 +120,7 @@ class HuggingFaceCostSummary:
                 "calls": len(model_calls),
                 "tokens_input": sum(call.tokens_input for call in model_calls),
                 "tokens_output": sum(call.tokens_output for call in model_calls),
-                "provider": model_calls[0].provider if model_calls else "unknown"
+                "provider": model_calls[0].provider if model_calls else "unknown",
             }
         return breakdown
 
@@ -131,7 +135,7 @@ class HuggingFaceCostSummary:
                 "calls": len(task_calls),
                 "tokens_input": sum(call.tokens_input for call in task_calls),
                 "tokens_output": sum(call.tokens_output for call in task_calls),
-                "models_used": list({call.model for call in task_calls})
+                "models_used": list({call.model for call in task_calls}),
             }
         return breakdown
 
@@ -139,7 +143,7 @@ class HuggingFaceCostSummary:
 class HuggingFaceCostAggregator:
     """
     Aggregates costs across multiple Hugging Face operations and providers.
-    
+
     This follows the exact same pattern as LangChain's cost aggregator
     to maintain consistency across GenOps provider adapters.
     """
@@ -153,17 +157,20 @@ class HuggingFaceCostAggregator:
         """Setup cost calculators for different providers."""
         try:
             from genops.providers.huggingface_pricing import calculate_huggingface_cost
+
             self.calculate_cost_func = calculate_huggingface_cost
         except ImportError:
-            logger.debug("Hugging Face pricing module not available, using fallback cost calculation")
-            self.calculate_cost_func = self._fallback_cost_calculation
+            logger.debug(
+                "Hugging Face pricing module not available, using fallback cost calculation"
+            )
+            self.calculate_cost_func = self._fallback_cost_calculation  # type: ignore[assignment]
 
     def _fallback_cost_calculation(self, **kwargs) -> float:
         """Fallback cost calculation when pricing module is unavailable."""
-        provider = kwargs.get('provider', 'huggingface_hub')
-        tokens_input = kwargs.get('input_tokens', 0)
-        tokens_output = kwargs.get('output_tokens', 0)
-        
+        provider = kwargs.get("provider", "huggingface_hub")
+        tokens_input = kwargs.get("input_tokens", 0)
+        tokens_output = kwargs.get("output_tokens", 0)
+
         # Basic fallback pricing
         generic_pricing = {
             "openai": {"input": 0.0015 / 1000, "output": 0.002 / 1000},
@@ -174,21 +181,27 @@ class HuggingFaceCostAggregator:
             "mistral": {"input": 0.0004 / 1000, "output": 0.0004 / 1000},
             "google": {"input": 0.0001 / 1000, "output": 0.0003 / 1000},
         }
-        
+
         pricing = generic_pricing.get(provider, generic_pricing["huggingface_hub"])
         input_cost = tokens_input * pricing["input"]
         output_cost = tokens_output * pricing["output"]
-        
+
         return input_cost + output_cost
 
-    def start_operation_tracking(self, operation_id: str, governance_attributes: dict[str, str] = None) -> None:
+    def start_operation_tracking(
+        self,
+        operation_id: str,
+        governance_attributes: dict[str, str] = None,  # type: ignore[assignment]
+    ) -> None:
         """Start tracking costs for a Hugging Face operation."""
         summary = HuggingFaceCostSummary()
         if governance_attributes:
             summary.governance_attributes = governance_attributes.copy()
-        
+
         self.active_operations[operation_id] = summary
-        logger.debug(f"Started cost tracking for Hugging Face operation: {operation_id}")
+        logger.debug(
+            f"Started cost tracking for Hugging Face operation: {operation_id}"
+        )
 
     def add_operation_call_cost(
         self,
@@ -197,9 +210,9 @@ class HuggingFaceCostAggregator:
         model: str,
         tokens_input: int,
         tokens_output: int,
-        task: str = None,
+        task: str = None,  # type: ignore[assignment]
         operation_name: str | None = None,
-        **metadata
+        **metadata,
     ) -> HuggingFaceCallCost | None:
         """
         Add a Hugging Face call cost to an operation's tracking.
@@ -228,14 +241,14 @@ class HuggingFaceCostAggregator:
                 model=model,
                 input_tokens=tokens_input,
                 output_tokens=tokens_output,
-                task=task or 'text-generation'
+                task=task or "text-generation",
             )
         except Exception as e:
             logger.warning(f"Cost calculation failed for {provider}/{model}: {e}")
             cost = self._fallback_cost_calculation(
                 provider=provider,
                 input_tokens=tokens_input,
-                output_tokens=tokens_output
+                output_tokens=tokens_output,
             )
 
         # Create call cost object
@@ -247,16 +260,20 @@ class HuggingFaceCostAggregator:
             cost=cost,
             task=task,
             operation_name=operation_name,
-            metadata=metadata
+            metadata=metadata,
         )
 
         # Add to operation tracking
         self.active_operations[operation_id].add_call(call_cost)
-        logger.debug(f"Added call cost to operation {operation_id}: ${cost:.4f} ({provider}/{model})")
+        logger.debug(
+            f"Added call cost to operation {operation_id}: ${cost:.4f} ({provider}/{model})"
+        )
 
         return call_cost
 
-    def finalize_operation_tracking(self, operation_id: str, total_time: float = 0.0) -> HuggingFaceCostSummary | None:
+    def finalize_operation_tracking(
+        self, operation_id: str, total_time: float = 0.0
+    ) -> HuggingFaceCostSummary | None:
         """
         Finalize cost tracking for an operation and return summary.
 
@@ -274,7 +291,9 @@ class HuggingFaceCostAggregator:
         summary = self.active_operations.pop(operation_id)
         summary.total_time = total_time
         summary.total_cost = summary.calculate_total_cost()
-        logger.debug(f"Finalized cost tracking for operation {operation_id}: ${summary.total_cost:.4f}")
+        logger.debug(
+            f"Finalized cost tracking for operation {operation_id}: ${summary.total_cost:.4f}"
+        )
 
         return summary
 
@@ -305,16 +324,16 @@ def get_cost_aggregator() -> HuggingFaceCostAggregator:
     return _cost_aggregator
 
 
-def create_huggingface_cost_context(operation_id: str) -> 'HuggingFaceCostContext':
+def create_huggingface_cost_context(operation_id: str) -> "HuggingFaceCostContext":
     """
     Create a context manager for Hugging Face cost tracking.
-    
+
     This follows the exact pattern specified in CLAUDE.md:
-    
+
     with create_huggingface_cost_context("operation_id") as context:
         # Multiple providers automatically aggregated
         result1 = provider1_operation()
-        result2 = provider2_operation() 
+        result2 = provider2_operation()
         summary = context.get_final_summary()
     """
     return HuggingFaceCostContext(operation_id)
@@ -323,28 +342,34 @@ def create_huggingface_cost_context(operation_id: str) -> 'HuggingFaceCostContex
 class HuggingFaceCostContext:
     """
     Context manager for Hugging Face cost tracking.
-    
+
     This enables the standardized multi-provider cost aggregation pattern
     specified in CLAUDE.md for all GenOps framework adapters.
     """
 
-    def __init__(self, operation_id: str, governance_attributes: dict[str, str] = None):
+    def __init__(self, operation_id: str, governance_attributes: dict[str, str] = None):  # type: ignore[assignment]
         self.operation_id = operation_id
         self.governance_attributes = governance_attributes or {}
         self.aggregator = get_cost_aggregator()
         self.summary: HuggingFaceCostSummary | None = None
         self.start_time = None
 
-    def __enter__(self) -> 'HuggingFaceCostContext':
+    def __enter__(self) -> "HuggingFaceCostContext":
         import time
-        self.start_time = time.time()
-        self.aggregator.start_operation_tracking(self.operation_id, self.governance_attributes)
+
+        self.start_time = time.time()  # type: ignore[assignment]
+        self.aggregator.start_operation_tracking(
+            self.operation_id, self.governance_attributes
+        )
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         import time
+
         total_time = time.time() - self.start_time if self.start_time else 0.0
-        self.summary = self.aggregator.finalize_operation_tracking(self.operation_id, total_time)
+        self.summary = self.aggregator.finalize_operation_tracking(
+            self.operation_id, total_time
+        )
 
     def add_hf_call(
         self,
@@ -352,14 +377,20 @@ class HuggingFaceCostContext:
         model: str,
         tokens_input: int,
         tokens_output: int,
-        task: str = None,
+        task: str = None,  # type: ignore[assignment]
         operation_name: str | None = None,
-        **metadata
+        **metadata,
     ) -> HuggingFaceCallCost | None:
         """Add a Hugging Face call cost within this context."""
         return self.aggregator.add_operation_call_cost(
-            self.operation_id, provider, model, tokens_input, tokens_output,
-            task, operation_name, **metadata
+            self.operation_id,
+            provider,
+            model,
+            tokens_input,
+            tokens_output,
+            task,
+            operation_name,
+            **metadata,
         )
 
     def get_current_summary(self) -> HuggingFaceCostSummary | None:
@@ -379,5 +410,5 @@ class HuggingFaceCostContext:
             tokens_input=0,
             tokens_output=0,
             operation_name="manual_cost",
-            manual_cost=cost
+            manual_cost=cost,
         )

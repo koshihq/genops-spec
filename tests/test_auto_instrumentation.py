@@ -83,13 +83,9 @@ class TestGenOpsInstrumentor:
         instrumentor = GenOpsInstrumentor()
 
         with patch("opentelemetry.trace.set_tracer_provider"):
-            with patch(
-                "genops.auto_instrumentation.TracerProvider"
-            ):
+            with patch("genops.auto_instrumentation.TracerProvider"):
                 with patch("genops.auto_instrumentation.OTLPSpanExporter") as mock_otlp:
-                    with patch(
-                        "genops.auto_instrumentation.BatchSpanProcessor"
-                    ):
+                    with patch("genops.auto_instrumentation.BatchSpanProcessor"):
                         instrumentor._setup_opentelemetry(
                             service_name="test-service",
                             exporter_type="otlp",

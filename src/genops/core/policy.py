@@ -94,12 +94,16 @@ class PolicyEngine:
         """
         if policy_name not in self.policies:
             logger.warning(f"Unknown policy: {policy_name}")
-            return PolicyEvaluationResult(policy_name, PolicyResult.ALLOWED, "Policy not found")
+            return PolicyEvaluationResult(
+                policy_name, PolicyResult.ALLOWED, "Policy not found"
+            )
 
         policy = self.policies[policy_name]
 
         if not policy.enabled:
-            return PolicyEvaluationResult(policy_name, PolicyResult.ALLOWED, "Policy disabled")
+            return PolicyEvaluationResult(
+                policy_name, PolicyResult.ALLOWED, "Policy disabled"
+            )
 
         # Example policy evaluations - extend as needed
         if policy.name == "cost_limit":
@@ -126,7 +130,7 @@ class PolicyEngine:
                 policy.name,
                 policy.enforcement_level,
                 f"Cost limit exceeded: ${estimated_cost:.4f} exceeds limit ${max_cost:.4f}",
-                metadata={"limit": max_cost, "actual": estimated_cost}
+                metadata={"limit": max_cost, "actual": estimated_cost},
             )
 
         return PolicyEvaluationResult(policy.name, PolicyResult.ALLOWED, None)
@@ -136,9 +140,14 @@ class PolicyEngine:
     ) -> PolicyEvaluationResult:
         """Evaluate rate limit policy."""
         # Simplified rate limiting - in production, use Redis or similar
-        max_requests = policy.conditions.get("max_requests_per_minute", policy.conditions.get("max_requests", 100))
+        max_requests = policy.conditions.get(
+            "max_requests_per_minute", policy.conditions.get("max_requests", 100)
+        )
         # Check multiple keys for backwards compatibility
-        current_requests = context.get("request_count", context.get("requests_count", context.get("current_requests", 0)))
+        current_requests = context.get(
+            "request_count",
+            context.get("requests_count", context.get("current_requests", 0)),
+        )
 
         if current_requests >= max_requests:
             return PolicyEvaluationResult(
@@ -260,7 +269,9 @@ def enforce_policy(
                         policy_name, policy_result.reason or "Policy violation"
                     )
                 elif policy_result.result == PolicyResult.WARNING:
-                    logger.warning(f"Policy warning for '{policy_name}': {policy_result.reason}")
+                    logger.warning(
+                        f"Policy warning for '{policy_name}': {policy_result.reason}"
+                    )
                 elif policy_result.result == PolicyResult.RATE_LIMITED:
                     raise PolicyViolationError(
                         policy_name, policy_result.reason or "Rate limit exceeded"
@@ -269,7 +280,7 @@ def enforce_policy(
             # All policies passed, execute the function
             return func(*args, **kwargs)
 
-        return wrapper
+        return wrapper  # type: ignore[return-value]
 
     return decorator
 

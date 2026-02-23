@@ -1,7 +1,5 @@
 """Unit tests for Collibra data mapping."""
 
-import pytest
-
 from genops.providers.collibra.mapping import (
     create_collibra_asset_from_span,
     create_collibra_asset_name,
@@ -27,14 +25,10 @@ def test_map_genops_to_collibra_asset_type():
 def test_map_collibra_to_genops_asset_type():
     """Test Collibra to GenOps asset type mapping."""
     assert map_collibra_to_genops_asset_type("AI Operation Cost") == "cost"
-    assert (
-        map_collibra_to_genops_asset_type("Policy Evaluation Event") == "policy"
-    )
+    assert map_collibra_to_genops_asset_type("Policy Evaluation Event") == "policy"
     assert map_collibra_to_genops_asset_type("Model Evaluation") == "evaluation"
     assert map_collibra_to_genops_asset_type("Budget Allocation") == "budget"
-    assert (
-        map_collibra_to_genops_asset_type("AI Workflow Execution") == "operation"
-    )
+    assert map_collibra_to_genops_asset_type("AI Workflow Execution") == "operation"
     assert map_collibra_to_genops_asset_type("Unknown Type") == "operation"
 
 

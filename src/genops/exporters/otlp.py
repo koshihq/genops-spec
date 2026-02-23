@@ -5,8 +5,8 @@ Provides simplified API for configuring OTLP export to observability backends
 like Honeycomb, Datadog, Grafana, etc.
 """
 
-from typing import Dict, Optional
 import os
+from typing import Optional
 
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
@@ -17,7 +17,7 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
 def configure_otlp_exporter(
     endpoint: str,
-    headers: Optional[Dict[str, str]] = None,
+    headers: Optional[dict[str, str]] = None,
     service_name: Optional[str] = None,
     environment: Optional[str] = None,
     sampling_rate: float = 1.0,
@@ -59,15 +59,14 @@ def configure_otlp_exporter(
     """
     # Create resource with service metadata
     resource_attrs = {
-        "service.name": service_name
-        or os.getenv("OTEL_SERVICE_NAME", "genops-ai"),
+        "service.name": service_name or os.getenv("OTEL_SERVICE_NAME", "genops-ai"),
         "service.version": "1.0.0",
     }
 
     if environment:
         resource_attrs["deployment.environment"] = environment
     elif os.getenv("ENVIRONMENT"):
-        resource_attrs["deployment.environment"] = os.getenv("ENVIRONMENT")
+        resource_attrs["deployment.environment"] = os.getenv("ENVIRONMENT")  # type: ignore
 
     resource = Resource.create(resource_attrs)
 

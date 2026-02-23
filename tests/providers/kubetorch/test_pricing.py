@@ -12,13 +12,13 @@ Tests cover:
 
 import pytest
 from src.genops.providers.kubetorch.pricing import (
+    GPU_PRICING,
+    NETWORK_COST_PER_GB,
+    STORAGE_COST_PER_GB_MONTH,
     GPUInstancePricing,
     KubetorchPricing,
-    GPU_PRICING,
     calculate_gpu_cost,
     get_pricing_info,
-    STORAGE_COST_PER_GB_MONTH,
-    NETWORK_COST_PER_GB,
 )
 
 
@@ -60,12 +60,14 @@ class TestGPUPricingDatabase:
         """Test that pricing values are within reasonable ranges."""
         for key, pricing in GPU_PRICING.items():
             # All GPUs should cost between $1 and $150 per hour
-            assert 1.0 <= pricing.cost_per_hour <= 150.0, \
+            assert 1.0 <= pricing.cost_per_hour <= 150.0, (
                 f"{key} cost ${pricing.cost_per_hour}/hr seems unreasonable"
+            )
 
             # GPU memory should be between 8GB and 128GB
-            assert 8 <= pricing.gpu_memory_gb <= 128, \
+            assert 8 <= pricing.gpu_memory_gb <= 128, (
                 f"{key} memory {pricing.gpu_memory_gb}GB seems unreasonable"
+            )
 
     def test_pricing_hierarchy(self):
         """Test that pricing follows expected hierarchy (H100 > A100 > V100 > T4)."""
@@ -95,7 +97,7 @@ class TestKubetorchPricing:
                 instance_type="custom-gpu",
                 gpu_type="custom",
                 cost_per_hour=50.0,
-                gpu_memory_gb=64
+                gpu_memory_gb=64,
             )
         }
         pricing = KubetorchPricing(custom_pricing=custom_pricing)
@@ -109,7 +111,7 @@ class TestKubetorchPricing:
             instance_type="a100",
             num_devices=1,
             duration_seconds=3600,  # 1 hour
-            resource_type="gpu"
+            resource_type="gpu",
         )
         expected = GPU_PRICING["a100"].cost_per_hour
         assert abs(cost - expected) < 0.01, f"Expected ${expected:.2f}, got ${cost:.2f}"
@@ -121,7 +123,7 @@ class TestKubetorchPricing:
             instance_type="a100",
             num_devices=8,
             duration_seconds=3600,  # 1 hour
-            resource_type="gpu"
+            resource_type="gpu",
         )
         expected = GPU_PRICING["a100"].cost_per_hour * 8
         assert abs(cost - expected) < 0.01
@@ -133,7 +135,7 @@ class TestKubetorchPricing:
             instance_type="a100",
             num_devices=1,
             duration_seconds=1800,  # 30 minutes
-            resource_type="gpu"
+            resource_type="gpu",
         )
         expected = GPU_PRICING["a100"].cost_per_hour * 0.5
         assert abs(cost - expected) < 0.01
@@ -145,7 +147,7 @@ class TestKubetorchPricing:
             instance_type="cpu",  # Type doesn't matter for CPU
             num_devices=16,
             duration_seconds=3600,  # 1 hour
-            resource_type="cpu"
+            resource_type="cpu",
         )
         expected = 16 * 1 * 0.50  # 16 cores × 1 hour × $0.50/core-hour
         assert abs(cost - expected) < 0.01
@@ -157,7 +159,7 @@ class TestKubetorchPricing:
             instance_type="unknown-gpu-xyz",
             num_devices=1,
             duration_seconds=3600,
-            resource_type="gpu"
+            resource_type="gpu",
         )
         # Should use A100 fallback pricing
         expected_fallback = 32.77
@@ -195,7 +197,7 @@ class TestKubetorchPricing:
             num_devices=8,
             estimated_hours=24,
             checkpoint_size_gb=0,  # No checkpoints
-            data_transfer_gb=0  # No data transfer
+            data_transfer_gb=0,  # No data transfer
         )
 
         assert "cost_compute" in result
@@ -222,7 +224,7 @@ class TestKubetorchPricing:
             estimated_hours=24,
             checkpoint_size_gb=25.6,
             checkpoint_frequency_hours=2.0,  # Checkpoint every 2 hours
-            data_transfer_gb=50
+            data_transfer_gb=50,
         )
 
         # Should have compute, storage, and network costs
@@ -362,7 +364,7 @@ class TestPricingDataclass:
             instance_type="test-gpu",
             gpu_type="test",
             cost_per_hour=10.0,
-            gpu_memory_gb=32
+            gpu_memory_gb=32,
         )
 
         assert pricing.instance_type == "test-gpu"

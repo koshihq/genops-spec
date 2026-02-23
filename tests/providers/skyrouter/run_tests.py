@@ -7,7 +7,7 @@ Executes the complete test suite with detailed reporting and coverage analysis.
 
 Usage:
     python run_tests.py [options]
-    
+
 Options:
     --verbose    Enable verbose output
     --coverage   Run with coverage analysis
@@ -17,10 +17,9 @@ Options:
     --fast       Run only fast unit tests
 """
 
-import sys
-import os
-import subprocess
 import argparse
+import subprocess
+import sys
 from pathlib import Path
 
 
@@ -44,29 +43,32 @@ def run_command(cmd, capture_output=False):
 def check_dependencies():
     """Check if required dependencies are installed."""
     print("Checking dependencies...")
-    
+
     # Check if pytest is installed
     try:
         import pytest
+
         print(f"✅ pytest {pytest.__version__} found")
     except ImportError:
         print("❌ pytest not found. Install with: pip install pytest")
         return False
-    
+
     # Check if coverage is available (optional)
     try:
         import coverage
+
         print(f"✅ coverage {coverage.__version__} found")
     except ImportError:
         print("⚠️  coverage not found. Install with: pip install coverage")
-    
+
     # Check if SkyRouter provider is available
     try:
-        from genops.providers.skyrouter import GenOpsSkyRouterAdapter
+        from genops.providers.skyrouter import GenOpsSkyRouterAdapter  # noqa: F401
+
         print("✅ SkyRouter provider found")
     except ImportError:
         print("⚠️  SkyRouter provider not found. Some tests may be skipped.")
-    
+
     return True
 
 
@@ -74,34 +76,36 @@ def run_tests(args):
     """Run the test suite with specified options."""
     if not check_dependencies():
         return False
-    
+
     # Base pytest command
     cmd = ["python", "-m", "pytest"]
-    
+
     # Add test directory
     test_dir = Path(__file__).parent
     cmd.append(str(test_dir))
-    
+
     # Configure verbosity
     if args.verbose:
         cmd.extend(["-v", "-s"])
     else:
         cmd.append("-q")
-    
+
     # Configure coverage
     if args.coverage:
-        cmd.extend([
-            "--cov=genops.providers.skyrouter",
-            "--cov=genops.providers.skyrouter_pricing", 
-            "--cov=genops.providers.skyrouter_validation",
-            "--cov=genops.providers.skyrouter_cost_aggregator",
-            "--cov-report=term-missing",
-            "--cov-report=html:coverage_html"
-        ])
-    
+        cmd.extend(
+            [
+                "--cov=genops.providers.skyrouter",
+                "--cov=genops.providers.skyrouter_pricing",
+                "--cov=genops.providers.skyrouter_validation",
+                "--cov=genops.providers.skyrouter_cost_aggregator",
+                "--cov-report=term-missing",
+                "--cov-report=html:coverage_html",
+            ]
+        )
+
     # Configure test selection
     markers = []
-    
+
     if args.fast:
         # Only run fast unit tests (exclude slow integration/performance tests)
         markers.append("not integration and not performance")
@@ -113,25 +117,27 @@ def run_tests(args):
             markers.append("not performance")
         if not args.enterprise:
             markers.append("not enterprise")
-    
+
     if markers:
         cmd.extend(["-m", " and ".join(markers)])
-    
+
     # Add additional pytest options
-    cmd.extend([
-        "--tb=short",  # Shorter traceback format
-        "--strict-markers",  # Enforce marker definitions
-        "--disable-warnings"  # Reduce noise from warnings
-    ])
-    
+    cmd.extend(
+        [
+            "--tb=short",  # Shorter traceback format
+            "--strict-markers",  # Enforce marker definitions
+            "--disable-warnings",  # Reduce noise from warnings
+        ]
+    )
+
     print("\n🧪 Running SkyRouter Test Suite")
     print("=" * 50)
-    
+
     success = run_command(cmd) is not None
-    
+
     if args.coverage and success:
         print("\n📊 Coverage report generated in coverage_html/")
-    
+
     return success
 
 
@@ -140,10 +146,10 @@ def run_specific_test_file(test_file, verbose=False):
     cmd = ["python", "-m", "pytest", str(test_file)]
     if verbose:
         cmd.extend(["-v", "-s"])
-    
+
     print(f"\n🧪 Running {test_file.name}")
     print("=" * 30)
-    
+
     return run_command(cmd) is not None
 
 
@@ -151,42 +157,42 @@ def run_test_analysis():
     """Run test analysis and reporting."""
     print("\n📋 Test Suite Analysis")
     print("=" * 25)
-    
+
     test_dir = Path(__file__).parent
     test_files = list(test_dir.glob("test_*.py"))
-    
+
     print(f"📁 Test files found: {len(test_files)}")
     for test_file in test_files:
         print(f"   • {test_file.name}")
-    
+
     # Count test functions
     total_tests = 0
     for test_file in test_files:
         try:
-            with open(test_file, 'r') as f:
+            with open(test_file) as f:
                 content = f.read()
                 test_count = content.count("def test_")
                 total_tests += test_count
                 print(f"   📊 {test_file.name}: {test_count} tests")
         except Exception as e:
             print(f"   ❌ Error reading {test_file.name}: {e}")
-    
+
     print(f"\n📈 Total estimated tests: {total_tests}")
-    
+
     # Check for required test coverage
     required_modules = [
         "test_skyrouter_adapter.py",
-        "test_skyrouter_pricing.py", 
+        "test_skyrouter_pricing.py",
         "test_skyrouter_validation.py",
         "test_skyrouter_cost_aggregator.py",
-        "test_integration.py"
+        "test_integration.py",
     ]
-    
+
     missing_modules = []
     for module in required_modules:
         if not (test_dir / module).exists():
             missing_modules.append(module)
-    
+
     if missing_modules:
         print(f"\n⚠️  Missing test modules: {missing_modules}")
     else:
@@ -206,68 +212,54 @@ Examples:
   python run_tests.py --fast             # Run only fast unit tests
   python run_tests.py --integration      # Include integration tests
   python run_tests.py --analysis         # Show test suite analysis
-        """
+        """,
     )
-    
+
     parser.add_argument(
-        "--verbose", "-v",
+        "--verbose", "-v", action="store_true", help="Enable verbose output"
+    )
+
+    parser.add_argument(
+        "--coverage", "-c", action="store_true", help="Run with coverage analysis"
+    )
+
+    parser.add_argument(
+        "--integration", "-i", action="store_true", help="Include integration tests"
+    )
+
+    parser.add_argument(
+        "--performance", "-p", action="store_true", help="Include performance tests"
+    )
+
+    parser.add_argument(
+        "--enterprise",
+        "-e",
         action="store_true",
-        help="Enable verbose output"
+        help="Include enterprise feature tests",
     )
-    
+
     parser.add_argument(
-        "--coverage", "-c",
-        action="store_true",
-        help="Run with coverage analysis"
+        "--fast", "-f", action="store_true", help="Run only fast unit tests"
     )
-    
+
     parser.add_argument(
-        "--integration", "-i",
-        action="store_true",
-        help="Include integration tests"
+        "--analysis", "-a", action="store_true", help="Show test suite analysis"
     )
-    
-    parser.add_argument(
-        "--performance", "-p",
-        action="store_true",
-        help="Include performance tests"
-    )
-    
-    parser.add_argument(
-        "--enterprise", "-e",
-        action="store_true",
-        help="Include enterprise feature tests"
-    )
-    
-    parser.add_argument(
-        "--fast", "-f",
-        action="store_true",
-        help="Run only fast unit tests"
-    )
-    
-    parser.add_argument(
-        "--analysis", "-a",
-        action="store_true",
-        help="Show test suite analysis"
-    )
-    
-    parser.add_argument(
-        "--file",
-        help="Run specific test file"
-    )
-    
+
+    parser.add_argument("--file", help="Run specific test file")
+
     args = parser.parse_args()
-    
+
     # Handle specific operations
     if args.analysis:
         run_test_analysis()
         return
-    
+
     if args.file:
         test_file = Path(args.file)
         if not test_file.exists():
             test_file = Path(__file__).parent / args.file
-        
+
         if test_file.exists():
             success = run_specific_test_file(test_file, args.verbose)
         else:
@@ -276,7 +268,7 @@ Examples:
     else:
         # Run main test suite
         success = run_tests(args)
-    
+
     # Exit with appropriate code
     sys.exit(0 if success else 1)
 

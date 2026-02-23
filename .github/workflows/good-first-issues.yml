@@ -4,7 +4,10 @@ on:
   issues:
     types: [opened, edited, labeled, unlabeled]
   pull_request:
-    types: [opened, closed, merged]
+    types: [opened, closed]
+  schedule:
+    - cron: '0 10 * * 1'  # Every Monday at 10 AM UTC
+  workflow_dispatch: {}
 
 permissions:
   issues: write
@@ -84,7 +87,7 @@ jobs:
             }
 
   create-good-first-issues:
-    if: github.event_name == 'pull_request' && github.event.action == 'merged'
+    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -107,15 +110,15 @@ jobs:
                 title: `📖 Add documentation for ${pr.title.replace(/^(add|implement|feature:?\s*)/i, '')}`,
                 body: `This PR (#${pr.number}) added new functionality that needs documentation.
 
-**Tasks:**
-- [ ] Add docstrings to new functions/classes
-- [ ] Update README if needed
-- [ ] Add examples in \`examples/\` directory
-- [ ] Update API documentation
+            **Tasks:**
+            - [ ] Add docstrings to new functions/classes
+            - [ ] Update README if needed
+            - [ ] Add examples in \`examples/\` directory
+            - [ ] Update API documentation
 
-**Related PR:** #${pr.number}
+            **Related PR:** #${pr.number}
 
-This is a great first issue for someone wanting to contribute to documentation!`,
+            This is a great first issue for someone wanting to contribute to documentation!`.replace(/^ +/gm, ''),
                 labels: ['good first issue', 'documentation', 'help wanted', 'priority: medium']
               });
             }
@@ -126,15 +129,15 @@ This is a great first issue for someone wanting to contribute to documentation!`
                 title: `🧪 Add comprehensive tests for ${pr.title.replace(/^(add|implement|feature:?\s*)/i, '')}`,
                 body: `This PR (#${pr.number}) added a new provider adapter that needs more test coverage.
 
-**Tasks:**
-- [ ] Add unit tests for edge cases
-- [ ] Add property-based tests using Hypothesis
-- [ ] Add integration tests
-- [ ] Ensure 100% code coverage for the new adapter
+            **Tasks:**
+            - [ ] Add unit tests for edge cases
+            - [ ] Add property-based tests using Hypothesis
+            - [ ] Add integration tests
+            - [ ] Ensure 100% code coverage for the new adapter
 
-**Related PR:** #${pr.number}
+            **Related PR:** #${pr.number}
 
-Perfect for someone wanting to learn about testing patterns in GenOps AI!`,
+            Perfect for someone wanting to learn about testing patterns in GenOps AI!`.replace(/^ +/gm, ''),
                 labels: ['good first issue', 'testing', 'help wanted', 'priority: medium']
               });
             }
@@ -200,13 +203,13 @@ Perfect for someone wanting to learn about testing patterns in GenOps AI!`,
                     issue_number: issue.number,
                     body: `👋 This good first issue is still available and is a great way to get started contributing to GenOps AI!
 
-**Getting started:**
-1. Comment on this issue to let us know you're working on it
-2. Fork the repository
-3. Check out our [Contributing Guide](../blob/main/CONTRIBUTING.md)
-4. Ask questions if you need help!
+                    **Getting started:**
+                    1. Comment on this issue to let us know you're working on it
+                    2. Fork the repository
+                    3. Check out our [Contributing Guide](../blob/main/CONTRIBUTING.md)
+                    4. Ask questions if you need help!
 
-**Need help?** Feel free to ask questions in this issue or in our [GitHub Discussions](https://github.com/KoshiHQ/GenOps-AI/discussions).`
+                    **Need help?** Feel free to ask questions in this issue or in our [GitHub Discussions](https://github.com/KoshiHQ/GenOps-AI/discussions).`.replace(/^ +/gm, '')
                   });
                 }
               }
@@ -234,9 +237,3 @@ Perfect for someone wanting to learn about testing patterns in GenOps AI!`,
                 }
               }
             }
-
-# Schedule to run weekly
-on:
-  schedule:
-    - cron: '0 10 * * 1'  # Every Monday at 10 AM UTC
-  workflow_dispatch:  # Allow manual trigger

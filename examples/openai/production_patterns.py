@@ -31,6 +31,7 @@ from typing import Any, Optional
 @dataclass
 class WorkflowResult:
     """Result from a production workflow with full telemetry."""
+
     workflow_id: str
     success: bool
     total_cost: float
@@ -38,6 +39,7 @@ class WorkflowResult:
     duration: float
     error: Optional[str] = None
     metadata: dict[str, Any] = None
+
 
 @contextmanager
 def production_workflow_context(workflow_name: str, customer_id: str, **kwargs):
@@ -51,10 +53,9 @@ def production_workflow_context(workflow_name: str, customer_id: str, **kwargs):
     print(f"   Workflow ID: {workflow_id}")
     print(f"   Customer: {customer_id}")
 
-    with track(workflow_name,
-               workflow_id=workflow_id,
-               customer_id=customer_id,
-               **kwargs) as span:
+    with track(
+        workflow_name, workflow_id=workflow_id, customer_id=customer_id, **kwargs
+    ) as span:
         try:
             yield span, workflow_id
 
@@ -76,6 +77,7 @@ def production_workflow_context(workflow_name: str, customer_id: str, **kwargs):
             print(f"   Duration: {duration:.2f} seconds")
             raise
 
+
 def customer_support_workflow():
     """Enterprise customer support workflow with full governance."""
     print("🎧 Enterprise Customer Support Workflow")
@@ -93,7 +95,7 @@ def customer_support_workflow():
             "priority": "high",
             "category": "billing",
             "description": "I was charged twice for my subscription this month and need a refund processed urgently.",
-            "customer_tier": "enterprise"
+            "customer_tier": "enterprise",
         }
 
         with production_workflow_context(
@@ -103,9 +105,8 @@ def customer_support_workflow():
             project="automated-support",
             environment="production",
             ticket_id=customer_ticket["ticket_id"],
-            priority=customer_ticket["priority"]
+            priority=customer_ticket["priority"],
         ) as (span, workflow_id):
-
             total_cost = 0
             operations = []
 
@@ -114,22 +115,31 @@ def customer_support_workflow():
             classification_response = client.chat_completions_create(
                 model="gpt-3.5-turbo",
                 messages=[
-                    {"role": "system", "content": "Classify support tickets by category, urgency, and required department."},
-                    {"role": "user", "content": f"Classify this ticket: {customer_ticket['description']}"}
+                    {
+                        "role": "system",
+                        "content": "Classify support tickets by category, urgency, and required department.",
+                    },
+                    {
+                        "role": "user",
+                        "content": f"Classify this ticket: {customer_ticket['description']}",
+                    },
                 ],
                 max_tokens=200,
-
                 # Step-specific governance
                 team="customer-support",
                 project="automated-support",
                 customer_id=customer_ticket["customer_id"],
                 workflow_id=workflow_id,
                 step="classification",
-                ticket_id=customer_ticket["ticket_id"]
+                ticket_id=customer_ticket["ticket_id"],
             )
 
             classification = classification_response.choices[0].message.content
-            classification_cost = (classification_response.usage.prompt_tokens / 1000) * 0.0015 + (classification_response.usage.completion_tokens / 1000) * 0.002
+            classification_cost = (
+                classification_response.usage.prompt_tokens / 1000
+            ) * 0.0015 + (
+                classification_response.usage.completion_tokens / 1000
+            ) * 0.002
             total_cost += classification_cost
             operations.append(("Classification", classification_cost))
 
@@ -141,12 +151,14 @@ def customer_support_workflow():
             response_generation = client.chat_completions_create(
                 model="gpt-4",  # Higher quality for customer-facing content
                 messages=[
-                    {"role": "system", "content": f"You are a professional customer support representative. Generate a helpful response for this {customer_ticket['priority']} priority {customer_ticket['category']} issue."},
-                    {"role": "user", "content": customer_ticket["description"]}
+                    {
+                        "role": "system",
+                        "content": f"You are a professional customer support representative. Generate a helpful response for this {customer_ticket['priority']} priority {customer_ticket['category']} issue.",
+                    },
+                    {"role": "user", "content": customer_ticket["description"]},
                 ],
                 max_tokens=400,
                 temperature=0.3,  # Lower temperature for professional tone
-
                 # Enhanced governance for customer-facing content
                 team="customer-support",
                 project="automated-support",
@@ -155,11 +167,13 @@ def customer_support_workflow():
                 step="response_generation",
                 ticket_id=customer_ticket["ticket_id"],
                 customer_tier=customer_ticket["customer_tier"],
-                content_type="customer_facing"
+                content_type="customer_facing",
             )
 
             response_content = response_generation.choices[0].message.content
-            response_cost = (response_generation.usage.prompt_tokens / 1000) * 0.03 + (response_generation.usage.completion_tokens / 1000) * 0.06
+            response_cost = (response_generation.usage.prompt_tokens / 1000) * 0.03 + (
+                response_generation.usage.completion_tokens / 1000
+            ) * 0.06
             total_cost += response_cost
             operations.append(("Response Generation", response_cost))
 
@@ -171,11 +185,16 @@ def customer_support_workflow():
             qa_check = client.chat_completions_create(
                 model="gpt-3.5-turbo",
                 messages=[
-                    {"role": "system", "content": "Review customer support responses for tone, accuracy, and completeness. Rate from 1-10 and suggest improvements."},
-                    {"role": "user", "content": f"Review this response to a {customer_ticket['category']} issue: {response_content}"}
+                    {
+                        "role": "system",
+                        "content": "Review customer support responses for tone, accuracy, and completeness. Rate from 1-10 and suggest improvements.",
+                    },
+                    {
+                        "role": "user",
+                        "content": f"Review this response to a {customer_ticket['category']} issue: {response_content}",
+                    },
                 ],
                 max_tokens=200,
-
                 # QA governance tracking
                 team="customer-support",
                 project="automated-support",
@@ -183,11 +202,13 @@ def customer_support_workflow():
                 workflow_id=workflow_id,
                 step="quality_assurance",
                 ticket_id=customer_ticket["ticket_id"],
-                qa_check=True
+                qa_check=True,
             )
 
             qa_result = qa_check.choices[0].message.content
-            qa_cost = (qa_check.usage.prompt_tokens / 1000) * 0.0015 + (qa_check.usage.completion_tokens / 1000) * 0.002
+            qa_cost = (qa_check.usage.prompt_tokens / 1000) * 0.0015 + (
+                qa_check.usage.completion_tokens / 1000
+            ) * 0.002
             total_cost += qa_cost
             operations.append(("Quality Assurance", qa_cost))
 
@@ -203,7 +224,9 @@ def customer_support_workflow():
             print("\n📊 Workflow Summary:")
             print(f"   • Total operations: {len(operations)}")
             print(f"   • Total cost: ${total_cost:.4f}")
-            print(f"   • Average cost per operation: ${total_cost / len(operations):.4f}")
+            print(
+                f"   • Average cost per operation: ${total_cost / len(operations):.4f}"
+            )
 
             for operation, cost in operations:
                 print(f"   • {operation}: ${cost:.4f}")
@@ -213,6 +236,7 @@ def customer_support_workflow():
     except Exception as e:
         print(f"❌ Customer support workflow error: {e}")
         return False
+
 
 def content_pipeline_with_policy_enforcement():
     """Content generation pipeline with policy enforcement."""
@@ -230,20 +254,20 @@ def content_pipeline_with_policy_enforcement():
                 "type": "blog_post",
                 "topic": "Benefits of renewable energy for businesses",
                 "target_audience": "business_executives",
-                "word_count": 800
+                "word_count": 800,
             },
             {
                 "type": "social_media",
                 "topic": "New product launch announcement",
                 "target_audience": "general_public",
-                "word_count": 100
+                "word_count": 100,
             },
             {
                 "type": "technical_documentation",
                 "topic": "API integration best practices",
                 "target_audience": "developers",
-                "word_count": 1200
-            }
+                "word_count": 1200,
+            },
         ]
 
         with production_workflow_context(
@@ -251,14 +275,15 @@ def content_pipeline_with_policy_enforcement():
             "content-team-001",
             team="content-marketing",
             project="automated-content",
-            environment="production"
+            environment="production",
         ) as (span, workflow_id):
-
             total_content_cost = 0
             generated_content = []
 
             for i, request in enumerate(content_requests, 1):
-                print(f"\n🎯 Content Request {i}: {request['type']} - {request['topic'][:40]}...")
+                print(
+                    f"\n🎯 Content Request {i}: {request['type']} - {request['topic'][:40]}..."
+                )
 
                 # Policy enforcement check
                 policy_check = enforce_content_policy(client, request, workflow_id)
@@ -287,13 +312,16 @@ def content_pipeline_with_policy_enforcement():
             print(f"   • Requests processed: {len(content_requests)}")
             print(f"   • Content pieces generated: {len(generated_content)}")
             print(f"   • Total pipeline cost: ${total_content_cost:.4f}")
-            print(f"   • Average cost per piece: ${total_content_cost / max(len(generated_content), 1):.4f}")
+            print(
+                f"   • Average cost per piece: ${total_content_cost / max(len(generated_content), 1):.4f}"
+            )
 
         return True
 
     except Exception as e:
         print(f"❌ Content pipeline error: {e}")
         return False
+
 
 def enforce_content_policy(client, request: dict, workflow_id: str) -> dict:
     """Enforce content policy using AI-powered policy checking."""
@@ -305,20 +333,23 @@ def enforce_content_policy(client, request: dict, workflow_id: str) -> dict:
         if restricted in topic_lower:
             return {
                 "approved": False,
-                "reason": f"Topic contains restricted content: {restricted}"
+                "reason": f"Topic contains restricted content: {restricted}",
             }
 
     # In production, you might use a dedicated policy model here
     return {"approved": True, "reason": "Content approved"}
 
-def generate_content_with_governance(client, request: dict, workflow_id: str, request_index: int) -> Optional[dict]:
+
+def generate_content_with_governance(
+    client, request: dict, workflow_id: str, request_index: int
+) -> Optional[dict]:
     """Generate content with full governance tracking."""
     try:
         # Select model based on content complexity
         model_selection = {
-            "social_media": "gpt-3.5-turbo",     # Simple, fast
-            "blog_post": "gpt-4",                # Higher quality
-            "technical_documentation": "gpt-4"   # Complex, accurate
+            "social_media": "gpt-3.5-turbo",  # Simple, fast
+            "blog_post": "gpt-4",  # Higher quality
+            "technical_documentation": "gpt-4",  # Complex, accurate
         }
 
         model = model_selection.get(request["type"], "gpt-3.5-turbo")
@@ -326,12 +357,17 @@ def generate_content_with_governance(client, request: dict, workflow_id: str, re
         response = client.chat_completions_create(
             model=model,
             messages=[
-                {"role": "system", "content": f"You are a professional {request['type']} writer. Create high-quality content for {request['target_audience']}."},
-                {"role": "user", "content": f"Write a {request['word_count']}-word {request['type']} about: {request['topic']}"}
+                {
+                    "role": "system",
+                    "content": f"You are a professional {request['type']} writer. Create high-quality content for {request['target_audience']}.",
+                },
+                {
+                    "role": "user",
+                    "content": f"Write a {request['word_count']}-word {request['type']} about: {request['topic']}",
+                },
             ],
             max_tokens=min(request["word_count"] * 2, 2000),  # Rough token estimate
             temperature=0.7,
-
             # Detailed content governance
             team="content-marketing",
             project="automated-content",
@@ -340,28 +376,33 @@ def generate_content_with_governance(client, request: dict, workflow_id: str, re
             target_audience=request["target_audience"],
             word_count=request["word_count"],
             request_index=request_index,
-            model_selection_reason="complexity_based"
+            model_selection_reason="complexity_based",
         )
 
         content = response.choices[0].message.content
 
         # Calculate cost based on actual model used
         if model == "gpt-4":
-            cost = (response.usage.prompt_tokens / 1000) * 0.03 + (response.usage.completion_tokens / 1000) * 0.06
+            cost = (response.usage.prompt_tokens / 1000) * 0.03 + (
+                response.usage.completion_tokens / 1000
+            ) * 0.06
         else:
-            cost = (response.usage.prompt_tokens / 1000) * 0.0015 + (response.usage.completion_tokens / 1000) * 0.002
+            cost = (response.usage.prompt_tokens / 1000) * 0.0015 + (
+                response.usage.completion_tokens / 1000
+            ) * 0.002
 
         return {
             "content": content,
             "cost": cost,
             "tokens": response.usage.total_tokens,
             "model": model,
-            "type": request["type"]
+            "type": request["type"],
         }
 
     except Exception as e:
         print(f"   ❌ Content generation failed: {e}")
         return None
+
 
 def resilience_and_error_handling():
     """Demonstrate production-grade error handling and resilience patterns."""
@@ -379,29 +420,28 @@ def resilience_and_error_handling():
                 "name": "Normal Operation",
                 "model": "gpt-3.5-turbo",
                 "prompt": "What is machine learning?",
-                "should_fail": False
+                "should_fail": False,
             },
             {
                 "name": "Rate Limit Simulation",
                 "model": "gpt-3.5-turbo",
                 "prompt": "Explain artificial intelligence",
-                "should_fail": False  # We'll simulate this
+                "should_fail": False,  # We'll simulate this
             },
             {
                 "name": "Invalid Model Test",
                 "model": "nonexistent-model",
                 "prompt": "This should fail",
-                "should_fail": True
-            }
+                "should_fail": True,
+            },
         ]
 
         with production_workflow_context(
             "resilience_testing",
             "resilience-demo",
             team="reliability-team",
-            project="error-handling"
+            project="error-handling",
         ) as (span, workflow_id):
-
             results = []
 
             for scenario in test_scenarios:
@@ -418,30 +458,35 @@ def resilience_and_error_handling():
 
                             response = client.chat_completions_create(
                                 model=scenario["model"],
-                                messages=[{"role": "user", "content": scenario["prompt"]}],
+                                messages=[
+                                    {"role": "user", "content": scenario["prompt"]}
+                                ],
                                 max_tokens=100,
-
                                 # Error handling governance
                                 team="reliability-team",
                                 project="error-handling",
                                 workflow_id=workflow_id,
                                 test_scenario=scenario["name"],
                                 attempt_number=attempt + 1,
-                                max_retries=max_retries
+                                max_retries=max_retries,
                             )
 
                             duration = time.time() - start_time
 
-                            results.append({
-                                "scenario": scenario["name"],
-                                "success": True,
-                                "attempt": attempt + 1,
-                                "duration": duration,
-                                "tokens": response.usage.total_tokens
-                            })
+                            results.append(
+                                {
+                                    "scenario": scenario["name"],
+                                    "success": True,
+                                    "attempt": attempt + 1,
+                                    "duration": duration,
+                                    "tokens": response.usage.total_tokens,
+                                }
+                            )
 
                             print(f"   ✅ Success on attempt {attempt + 1}")
-                            print(f"   📊 Duration: {duration:.2f}s, Tokens: {response.usage.total_tokens}")
+                            print(
+                                f"   📊 Duration: {duration:.2f}s, Tokens: {response.usage.total_tokens}"
+                            )
                             break
 
                         except Exception as e:
@@ -452,21 +497,25 @@ def resilience_and_error_handling():
                                 retry_delay *= 2  # Exponential backoff
                             else:
                                 # Final failure
-                                results.append({
-                                    "scenario": scenario["name"],
-                                    "success": False,
-                                    "error": str(e),
-                                    "attempts": max_retries
-                                })
+                                results.append(
+                                    {
+                                        "scenario": scenario["name"],
+                                        "success": False,
+                                        "error": str(e),
+                                        "attempts": max_retries,
+                                    }
+                                )
                                 print(f"   ❌ Failed after {max_retries} attempts: {e}")
 
                 except Exception as e:
-                    results.append({
-                        "scenario": scenario["name"],
-                        "success": False,
-                        "error": str(e),
-                        "attempts": 1
-                    })
+                    results.append(
+                        {
+                            "scenario": scenario["name"],
+                            "success": False,
+                            "error": str(e),
+                            "attempts": 1,
+                        }
+                    )
                     print(f"   ❌ Immediate failure: {e}")
 
             # Analyze results
@@ -475,7 +524,9 @@ def resilience_and_error_handling():
 
             span.set_attribute("total_tests", total_tests)
             span.set_attribute("successful_tests", successful_tests)
-            span.set_attribute("success_rate", successful_tests / total_tests if total_tests > 0 else 0)
+            span.set_attribute(
+                "success_rate", successful_tests / total_tests if total_tests > 0 else 0
+            )
 
             print("\n📊 Resilience Test Results:")
             print(f"   • Total tests: {total_tests}")
@@ -494,6 +545,7 @@ def resilience_and_error_handling():
         print(f"❌ Resilience testing error: {e}")
         return False
 
+
 def performance_monitoring_and_alerting():
     """Demonstrate performance monitoring and alerting patterns."""
     print("\n\n📈 Performance Monitoring and Alerting")
@@ -506,10 +558,10 @@ def performance_monitoring_and_alerting():
 
         # Performance test scenarios
         performance_thresholds = {
-            "response_time_ms": 5000,    # 5 seconds max
-            "cost_per_request": 0.01,    # $0.01 max per request
+            "response_time_ms": 5000,  # 5 seconds max
+            "cost_per_request": 0.01,  # $0.01 max per request
             "tokens_per_request": 1000,  # 1000 tokens max
-            "success_rate": 0.95         # 95% success rate min
+            "success_rate": 0.95,  # 95% success rate min
         }
 
         print("📊 Performance Thresholds:")
@@ -521,16 +573,15 @@ def performance_monitoring_and_alerting():
             "monitoring-demo",
             team="sre-team",
             project="performance-optimization",
-            environment="production"
+            environment="production",
         ) as (span, workflow_id):
-
             performance_metrics = {
                 "total_requests": 0,
                 "successful_requests": 0,
                 "total_response_time": 0,
                 "total_cost": 0,
                 "total_tokens": 0,
-                "alerts": []
+                "alerts": [],
             }
 
             # Simulate multiple requests for performance analysis
@@ -538,7 +589,7 @@ def performance_monitoring_and_alerting():
                 "Explain quantum computing briefly",
                 "What are the benefits of cloud computing?",
                 "How does machine learning work?",
-                "Describe the future of artificial intelligence"
+                "Describe the future of artificial intelligence",
             ]
 
             for i, request in enumerate(test_requests, 1):
@@ -551,18 +602,19 @@ def performance_monitoring_and_alerting():
                         model="gpt-3.5-turbo",
                         messages=[{"role": "user", "content": request}],
                         max_tokens=200,
-
                         # Performance monitoring governance
                         team="sre-team",
                         project="performance-optimization",
                         workflow_id=workflow_id,
                         request_id=f"perf-test-{i}",
-                        performance_monitoring=True
+                        performance_monitoring=True,
                     )
 
                     response_time = (time.time() - start_time) * 1000  # Convert to ms
                     tokens = response.usage.total_tokens
-                    cost = (response.usage.prompt_tokens / 1000) * 0.0015 + (response.usage.completion_tokens / 1000) * 0.002
+                    cost = (response.usage.prompt_tokens / 1000) * 0.0015 + (
+                        response.usage.completion_tokens / 1000
+                    ) * 0.002
 
                     # Update metrics
                     performance_metrics["total_requests"] += 1
@@ -572,7 +624,9 @@ def performance_monitoring_and_alerting():
                     performance_metrics["total_tokens"] += tokens
 
                     # Check thresholds and generate alerts
-                    alerts = check_performance_thresholds(response_time, cost, tokens, performance_thresholds)
+                    alerts = check_performance_thresholds(
+                        response_time, cost, tokens, performance_thresholds
+                    )
                     if alerts:
                         performance_metrics["alerts"].extend(alerts)
                         for alert in alerts:
@@ -588,10 +642,21 @@ def performance_monitoring_and_alerting():
                     print(f"   ❌ Request failed: {e}")
 
             # Calculate final metrics
-            avg_response_time = performance_metrics["total_response_time"] / max(performance_metrics["successful_requests"], 1)
-            success_rate = performance_metrics["successful_requests"] / performance_metrics["total_requests"] if performance_metrics["total_requests"] > 0 else 0
-            avg_cost = performance_metrics["total_cost"] / max(performance_metrics["successful_requests"], 1)
-            avg_tokens = performance_metrics["total_tokens"] / max(performance_metrics["successful_requests"], 1)
+            avg_response_time = performance_metrics["total_response_time"] / max(
+                performance_metrics["successful_requests"], 1
+            )
+            success_rate = (
+                performance_metrics["successful_requests"]
+                / performance_metrics["total_requests"]
+                if performance_metrics["total_requests"] > 0
+                else 0
+            )
+            avg_cost = performance_metrics["total_cost"] / max(
+                performance_metrics["successful_requests"], 1
+            )
+            avg_tokens = performance_metrics["total_tokens"] / max(
+                performance_metrics["successful_requests"], 1
+            )
 
             # Set performance metrics in span
             span.set_attribute("avg_response_time_ms", avg_response_time)
@@ -618,20 +683,28 @@ def performance_monitoring_and_alerting():
         print(f"❌ Performance monitoring error: {e}")
         return False
 
-def check_performance_thresholds(response_time: float, cost: float, tokens: int, thresholds: dict) -> list[str]:
+
+def check_performance_thresholds(
+    response_time: float, cost: float, tokens: int, thresholds: dict
+) -> list[str]:
     """Check performance metrics against thresholds and generate alerts."""
     alerts = []
 
     if response_time > thresholds["response_time_ms"]:
-        alerts.append(f"High response time: {response_time:.0f}ms > {thresholds['response_time_ms']}ms")
+        alerts.append(
+            f"High response time: {response_time:.0f}ms > {thresholds['response_time_ms']}ms"
+        )
 
     if cost > thresholds["cost_per_request"]:
         alerts.append(f"High cost: ${cost:.4f} > ${thresholds['cost_per_request']}")
 
     if tokens > thresholds["tokens_per_request"]:
-        alerts.append(f"High token usage: {tokens} > {thresholds['tokens_per_request']}")
+        alerts.append(
+            f"High token usage: {tokens} > {thresholds['tokens_per_request']}"
+        )
 
     return alerts
+
 
 def main():
     """Run production patterns demonstrations."""
@@ -681,6 +754,7 @@ def main():
     else:
         print("❌ Production patterns demonstration encountered issues.")
         return False
+
 
 if __name__ == "__main__":
     success = main()

@@ -40,7 +40,7 @@ def setup_environment() -> bool:
     optional_vars = {
         "OTEL_EXPORTER_OTLP_ENDPOINT": "http://localhost:4317",
         "OTEL_SERVICE_NAME": "langchain-auto-instrumentation-example",
-        "GENOPS_ENVIRONMENT": "development"
+        "GENOPS_ENVIRONMENT": "development",
     }
 
     missing_required = [var for var in required_vars if not os.getenv(var)]
@@ -83,14 +83,16 @@ def set_governance_attributes():
     print("🏢 Setting governance context...")
 
     # Set governance context that will apply to all operations
-    set_governance_context({
-        "team": "ai-automation",
-        "project": "auto-instrumentation-demo",
-        "environment": "development",
-        "customer_id": "internal_testing",
-        "deployment": "local",
-        "cost_center": "engineering"
-    })
+    set_governance_context(
+        {
+            "team": "ai-automation",
+            "project": "auto-instrumentation-demo",
+            "environment": "development",
+            "customer_id": "internal_testing",
+            "deployment": "local",
+            "cost_center": "engineering",
+        }
+    )
 
     print("✅ Governance context set - all operations will be attributed properly")
 
@@ -108,13 +110,13 @@ def create_sequential_chain() -> SimpleSequentialChain:
         - 3-4 main sections with subsections
         - A conclusion
 
-        Outline:"""
+        Outline:""",
     )
 
     outline_chain = LLMChain(
         llm=OpenAI(temperature=0.7, max_tokens=300),
         prompt=outline_prompt,
-        output_key="outline"
+        output_key="outline",
     )
 
     # Step 2: Write the article from the outline
@@ -126,19 +128,19 @@ def create_sequential_chain() -> SimpleSequentialChain:
 
         Write a comprehensive, well-structured article. Make it informative and engaging.
 
-        Article:"""
+        Article:""",
     )
 
     article_chain = LLMChain(
         llm=OpenAI(temperature=0.6, max_tokens=800),
         prompt=article_prompt,
-        output_key="article"
+        output_key="article",
     )
 
     # Create sequential chain
     sequential_chain = SimpleSequentialChain(
         chains=[outline_chain, article_chain],
-        verbose=True  # This will show the intermediate steps
+        verbose=True,  # This will show the intermediate steps
     )
 
     return sequential_chain
@@ -186,8 +188,8 @@ def demonstrate_cost_visibility():
         llm=OpenAI(temperature=0.5, max_tokens=100),
         prompt=PromptTemplate(
             input_variables=["question"],
-            template="Provide a concise answer to: {question}"
-        )
+            template="Provide a concise answer to: {question}",
+        ),
     )
 
     # This will automatically be tracked due to auto-instrumentation
@@ -209,9 +211,8 @@ def demonstrate_different_chain_types():
     llm_chain = LLMChain(
         llm=OpenAI(temperature=0.3, max_tokens=50),
         prompt=PromptTemplate(
-            input_variables=["task"],
-            template="Complete this task briefly: {task}"
-        )
+            input_variables=["task"], template="Complete this task briefly: {task}"
+        ),
     )
     result1 = llm_chain.run("Explain quantum computing")
     print(f"   ✅ LLMChain result: {result1[:100]}...")
@@ -229,11 +230,12 @@ def demonstrate_different_chain_types():
     """
 
     text_splitter = CharacterTextSplitter(chunk_size=200, chunk_overlap=0)
-    docs = [Document(page_content=chunk) for chunk in text_splitter.split_text(sample_text)]
+    docs = [
+        Document(page_content=chunk) for chunk in text_splitter.split_text(sample_text)
+    ]
 
     summarize_chain = load_summarize_chain(
-        OpenAI(temperature=0.2, max_tokens=100),
-        chain_type="map_reduce"
+        OpenAI(temperature=0.2, max_tokens=100), chain_type="map_reduce"
     )
 
     summary = summarize_chain.run(docs)
@@ -257,6 +259,7 @@ def check_telemetry_export():
     # Verify OpenTelemetry is working
     try:
         from opentelemetry import trace
+
         tracer = trace.get_tracer(__name__)
 
         with tracer.start_as_current_span("auto_instrumentation_test") as span:

@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 import os
-import re
 from dataclasses import dataclass, field
-from typing import List, Optional
 from urllib.parse import urlparse
 
 from genops.providers.collibra.client import CollibraAPIClient, CollibraAPIError
@@ -16,12 +14,12 @@ class CollibraValidationResult:
     """Result of Collibra setup validation."""
 
     valid: bool
-    errors: List[str] = field(default_factory=list)
-    warnings: List[str] = field(default_factory=list)
-    recommendations: List[str] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+    recommendations: list[str] = field(default_factory=list)
     connectivity: bool = False
-    api_version: Optional[str] = None
-    available_domains: List[str] = field(default_factory=list)
+    api_version: str | None = None
+    available_domains: list[str] = field(default_factory=list)
     policy_count: int = 0
 
     @property
@@ -35,7 +33,7 @@ class CollibraValidationResult:
         return len(self.warnings) > 0
 
 
-def validate_url_format(url: str) -> tuple[bool, Optional[str]]:
+def validate_url_format(url: str) -> tuple[bool, str | None]:
     """
     Validate URL format.
 
@@ -53,7 +51,10 @@ def validate_url_format(url: str) -> tuple[bool, Optional[str]]:
         if not parsed.scheme:
             return False, "URL missing scheme (http/https)"
         if parsed.scheme not in ["http", "https"]:
-            return False, f"Invalid URL scheme: {parsed.scheme} (expected http or https)"
+            return (
+                False,
+                f"Invalid URL scheme: {parsed.scheme} (expected http or https)",
+            )
         if not parsed.netloc:
             return False, "URL missing domain"
         return True, None
@@ -62,10 +63,10 @@ def validate_url_format(url: str) -> tuple[bool, Optional[str]]:
 
 
 def validate_setup(
-    collibra_url: Optional[str] = None,
-    username: Optional[str] = None,
-    password: Optional[str] = None,
-    api_token: Optional[str] = None,
+    collibra_url: str | None = None,
+    username: str | None = None,
+    password: str | None = None,
+    api_token: str | None = None,
     check_connectivity: bool = True,
     check_permissions: bool = True,
 ) -> CollibraValidationResult:
@@ -263,7 +264,9 @@ def print_validation_result(result: CollibraValidationResult) -> None:
 
     # Available domains
     if result.available_domains:
-        print(f"[SUCCESS] Available Domains: {len(result.available_domains)} domains accessible")
+        print(
+            f"[SUCCESS] Available Domains: {len(result.available_domains)} domains accessible"
+        )
         for domain in result.available_domains:
             print(f"   - {domain}")
 

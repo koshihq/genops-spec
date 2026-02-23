@@ -11,10 +11,10 @@ Tests cover:
 - Governance attribute propagation
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock, call
-from contextlib import contextmanager
 import logging
+from unittest.mock import patch
+
+import pytest
 
 from genops.providers.elastic import (
     GenOpsElasticAdapter,
@@ -26,13 +26,18 @@ from genops.providers.elastic.event_exporter import ExportMode
 class TestElasticAdapterInitialization:
     """Test adapter initialization and configuration."""
 
-    def test_adapter_initialization_with_defaults(self, minimal_elastic_config, mock_elasticsearch_client):
+    def test_adapter_initialization_with_defaults(
+        self, minimal_elastic_config, mock_elasticsearch_client
+    ):
         """Test adapter initialization with minimal configuration."""
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             adapter = GenOpsElasticAdapter(
                 elastic_url=minimal_elastic_config["url"],
                 api_key=minimal_elastic_config["api_key"],
-                auto_validate=False
+                auto_validate=False,
             )
 
             assert adapter.elastic_url == "https://localhost:9200"
@@ -41,9 +46,14 @@ class TestElasticAdapterInitialization:
             assert adapter.environment == "development"  # default
             assert adapter.export_mode == ExportMode.BATCH  # default
 
-    def test_adapter_initialization_with_full_config(self, sample_elastic_config, mock_elasticsearch_client):
+    def test_adapter_initialization_with_full_config(
+        self, sample_elastic_config, mock_elasticsearch_client
+    ):
         """Test adapter initialization with complete configuration."""
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             adapter = GenOpsElasticAdapter(**sample_elastic_config, auto_validate=False)
 
             assert adapter.elastic_url == sample_elastic_config["url"]
@@ -56,9 +66,14 @@ class TestElasticAdapterInitialization:
             assert adapter.cost_center == sample_elastic_config["cost_center"]
             assert adapter.export_mode == ExportMode.BATCH
 
-    def test_adapter_initialization_with_env_vars(self, mock_env_vars, mock_elasticsearch_client):
+    def test_adapter_initialization_with_env_vars(
+        self, mock_env_vars, mock_elasticsearch_client
+    ):
         """Test adapter initialization with environment variables."""
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             adapter = GenOpsElasticAdapter(auto_validate=False)
 
             assert adapter.elastic_url == mock_env_vars["GENOPS_ELASTIC_URL"]
@@ -66,35 +81,43 @@ class TestElasticAdapterInitialization:
             assert adapter.team == mock_env_vars["GENOPS_TEAM"]
             assert adapter.project == mock_env_vars["GENOPS_PROJECT"]
 
-    def test_adapter_export_mode_validation(self, minimal_elastic_config, mock_elasticsearch_client):
+    def test_adapter_export_mode_validation(
+        self, minimal_elastic_config, mock_elasticsearch_client
+    ):
         """Test export mode validation and fallback."""
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             # Valid modes
             for mode in ["batch", "realtime", "hybrid"]:
                 adapter = GenOpsElasticAdapter(
-                    **minimal_elastic_config,
-                    export_mode=mode,
-                    auto_validate=False
+                    **minimal_elastic_config, export_mode=mode, auto_validate=False
                 )
                 assert adapter.export_mode.value == mode
 
             # Invalid mode should fallback to BATCH with warning
-            with patch.object(logging.getLogger('genops.providers.elastic.adapter'), 'warning') as mock_warn:
+            with patch.object(
+                logging.getLogger("genops.providers.elastic.adapter"), "warning"
+            ) as mock_warn:
                 adapter = GenOpsElasticAdapter(
                     **minimal_elastic_config,
                     export_mode="invalid_mode",
-                    auto_validate=False
+                    auto_validate=False,
                 )
                 assert adapter.export_mode == ExportMode.BATCH
                 mock_warn.assert_called()
 
-    def test_adapter_namespace_fallback(self, minimal_elastic_config, mock_elasticsearch_client):
+    def test_adapter_namespace_fallback(
+        self, minimal_elastic_config, mock_elasticsearch_client
+    ):
         """Test namespace falls back to team if not specified."""
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             adapter = GenOpsElasticAdapter(
-                **minimal_elastic_config,
-                team="test-team",
-                auto_validate=False
+                **minimal_elastic_config, team="test-team", auto_validate=False
             )
             assert adapter.namespace == "test-team"
 
@@ -102,7 +125,7 @@ class TestElasticAdapterInitialization:
                 **minimal_elastic_config,
                 team="test-team",
                 namespace="custom-namespace",
-                auto_validate=False
+                auto_validate=False,
             )
             assert adapter_with_namespace.namespace == "custom-namespace"
 
@@ -122,30 +145,44 @@ class TestElasticAdapterContextManager:
             "test-operation",
             team="custom-team",
             project="custom-project",
-            customer_id="custom-customer"
+            customer_id="custom-customer",
         ) as span:
             # Verify attributes were set
             assert span.attributes.get("genops.team") == "custom-team"
             assert span.attributes.get("genops.project") == "custom-project"
             assert span.attributes.get("genops.customer_id") == "custom-customer"
 
-    def test_context_manager_uses_default_governance_attrs(self, sample_elastic_config, mock_elasticsearch_client):
+    def test_context_manager_uses_default_governance_attrs(
+        self, sample_elastic_config, mock_elasticsearch_client
+    ):
         """Test context manager uses adapter default governance attributes."""
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             adapter = GenOpsElasticAdapter(**sample_elastic_config, auto_validate=False)
 
             with adapter.track_ai_operation("test-operation") as span:
-                assert span.attributes.get("genops.team") == sample_elastic_config["team"]
-                assert span.attributes.get("genops.project") == sample_elastic_config["project"]
-                assert span.attributes.get("genops.environment") == sample_elastic_config["environment"]
-                assert span.attributes.get("genops.customer_id") == sample_elastic_config["customer_id"]
+                assert (
+                    span.attributes.get("genops.team") == sample_elastic_config["team"]
+                )
+                assert (
+                    span.attributes.get("genops.project")
+                    == sample_elastic_config["project"]
+                )
+                assert (
+                    span.attributes.get("genops.environment")
+                    == sample_elastic_config["environment"]
+                )
+                assert (
+                    span.attributes.get("genops.customer_id")
+                    == sample_elastic_config["customer_id"]
+                )
 
     def test_context_manager_with_custom_attributes(self, mock_elastic_adapter):
         """Test context manager with additional custom attributes."""
         with mock_elastic_adapter.track_ai_operation(
-            "test-operation",
-            model_version="v1.0",
-            user_segment="premium"
+            "test-operation", model_version="v1.0", user_segment="premium"
         ) as span:
             assert span.attributes.get("genops.model_version") == "v1.0"
             assert span.attributes.get("genops.user_segment") == "premium"
@@ -153,7 +190,7 @@ class TestElasticAdapterContextManager:
     def test_context_manager_error_handling(self, mock_elastic_adapter):
         """Test context manager properly handles exceptions."""
         with pytest.raises(ValueError, match="test error"):
-            with mock_elastic_adapter.track_ai_operation("test-operation") as span:
+            with mock_elastic_adapter.track_ai_operation("test-operation"):
                 raise ValueError("test error")
 
         # Verify span status was set to ERROR
@@ -161,8 +198,8 @@ class TestElasticAdapterContextManager:
 
     def test_context_manager_span_export(self, mock_elastic_adapter):
         """Test that span is exported after context manager exits."""
-        with patch.object(mock_elastic_adapter.exporter, 'export_span') as mock_export:
-            with mock_elastic_adapter.track_ai_operation("test-operation") as span:
+        with patch.object(mock_elastic_adapter.exporter, "export_span") as mock_export:
+            with mock_elastic_adapter.track_ai_operation("test-operation"):
                 pass
 
             # Verify export_span was called
@@ -176,10 +213,7 @@ class TestElasticAdapterCostRecording:
         """Test basic cost recording."""
         with mock_elastic_adapter.track_ai_operation("test-operation") as span:
             mock_elastic_adapter.record_cost(
-                span=span,
-                cost=0.05,
-                provider="openai",
-                model="gpt-4"
+                span=span, cost=0.05, provider="openai", model="gpt-4"
             )
 
             assert span.attributes.get("genops.cost.total") == 0.05
@@ -195,7 +229,7 @@ class TestElasticAdapterCostRecording:
                 provider="anthropic",
                 model="claude-3-sonnet",
                 tokens_input=1000,
-                tokens_output=500
+                tokens_output=500,
             )
 
             assert span.attributes.get("genops.cost.total") == 0.10
@@ -211,7 +245,7 @@ class TestElasticAdapterCostRecording:
                 provider="openai",
                 model="gpt-4",
                 cost_input=0.10,
-                cost_output=0.05
+                cost_output=0.05,
             )
 
             assert span.attributes.get("genops.cost.total") == 0.15
@@ -229,7 +263,7 @@ class TestElasticAdapterPolicyRecording:
                 span=span,
                 policy_name="content-filter",
                 policy_result="allowed",
-                policy_reason="content approved"
+                policy_reason="content approved",
             )
 
             assert span.attributes.get("genops.policy.name") == "content-filter"
@@ -243,7 +277,7 @@ class TestElasticAdapterPolicyRecording:
                 span=span,
                 policy_name="content-filter",
                 policy_result="blocked",
-                policy_reason="inappropriate content detected"
+                policy_reason="inappropriate content detected",
             )
 
             assert span.attributes.get("genops.policy.result") == "blocked"
@@ -252,39 +286,50 @@ class TestElasticAdapterPolicyRecording:
 class TestElasticAdapterExportModes:
     """Test different export modes (BATCH, REALTIME, HYBRID)."""
 
-    def test_batch_mode_initialization(self, minimal_elastic_config, mock_elasticsearch_client):
+    def test_batch_mode_initialization(
+        self, minimal_elastic_config, mock_elasticsearch_client
+    ):
         """Test adapter with BATCH export mode."""
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             adapter = GenOpsElasticAdapter(
                 **minimal_elastic_config,
                 export_mode="batch",
                 batch_size=100,
                 batch_interval_seconds=60,
-                auto_validate=False
+                auto_validate=False,
             )
 
             assert adapter.export_mode == ExportMode.BATCH
             assert adapter.exporter.batch_size == 100
             assert adapter.exporter.batch_interval_seconds == 60
 
-    def test_realtime_mode_initialization(self, minimal_elastic_config, mock_elasticsearch_client):
+    def test_realtime_mode_initialization(
+        self, minimal_elastic_config, mock_elasticsearch_client
+    ):
         """Test adapter with REALTIME export mode."""
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             adapter = GenOpsElasticAdapter(
-                **minimal_elastic_config,
-                export_mode="realtime",
-                auto_validate=False
+                **minimal_elastic_config, export_mode="realtime", auto_validate=False
             )
 
             assert adapter.export_mode == ExportMode.REALTIME
 
-    def test_hybrid_mode_initialization(self, minimal_elastic_config, mock_elasticsearch_client):
+    def test_hybrid_mode_initialization(
+        self, minimal_elastic_config, mock_elasticsearch_client
+    ):
         """Test adapter with HYBRID export mode."""
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             adapter = GenOpsElasticAdapter(
-                **minimal_elastic_config,
-                export_mode="hybrid",
-                auto_validate=False
+                **minimal_elastic_config, export_mode="hybrid", auto_validate=False
             )
 
             assert adapter.export_mode == ExportMode.HYBRID
@@ -293,18 +338,28 @@ class TestElasticAdapterExportModes:
 class TestElasticAdapterInstrumentFunction:
     """Test instrument_elastic factory function."""
 
-    def test_instrument_elastic_basic(self, minimal_elastic_config, mock_elasticsearch_client):
+    def test_instrument_elastic_basic(
+        self, minimal_elastic_config, mock_elasticsearch_client
+    ):
         """Test instrument_elastic factory function."""
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             adapter = instrument_elastic(**minimal_elastic_config, auto_validate=False)
 
             assert isinstance(adapter, GenOpsElasticAdapter)
             assert adapter.elastic_url == minimal_elastic_config["url"]
             assert adapter.api_key == minimal_elastic_config["api_key"]
 
-    def test_instrument_elastic_with_full_config(self, sample_elastic_config, mock_elasticsearch_client):
+    def test_instrument_elastic_with_full_config(
+        self, sample_elastic_config, mock_elasticsearch_client
+    ):
         """Test instrument_elastic with complete configuration."""
-        with patch('genops.providers.elastic.client.Elasticsearch', return_value=mock_elasticsearch_client):
+        with patch(
+            "genops.providers.elastic.client.Elasticsearch",
+            return_value=mock_elasticsearch_client,
+        ):
             adapter = instrument_elastic(**sample_elastic_config, auto_validate=False)
 
             assert adapter.team == sample_elastic_config["team"]

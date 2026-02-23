@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class LLMCallCost:
     """Represents cost information for a single LLM call."""
+
     provider: str
     model: str
     tokens_input: int
@@ -26,6 +27,7 @@ class LLMCallCost:
 @dataclass
 class ChainCostSummary:
     """Aggregated cost summary for a LangChain operation."""
+
     total_cost: float = 0.0
     currency: str = "USD"
     llm_calls: list[LLMCallCost] = field(default_factory=list)
@@ -84,7 +86,7 @@ class ChainCostSummary:
             "unique_providers": list(self.unique_providers),
             "unique_models": list(self.unique_models),
             "provider_count": len(self.unique_providers),
-            "model_count": len(self.unique_models)
+            "model_count": len(self.unique_models),
         }
 
 
@@ -100,19 +102,25 @@ class LangChainCostAggregator:
         """Setup cost calculators for different providers."""
         try:
             from genops.providers.openai import GenOpsOpenAIAdapter
+
             # Create adapter without client to avoid requiring API keys
             adapter = GenOpsOpenAIAdapter.__new__(GenOpsOpenAIAdapter)
             self.provider_cost_calculators["openai"] = adapter._calculate_cost
-        except (ImportError, Exception) as e:
+        except ImportError as e:
             logger.debug(f"OpenAI provider not available for cost calculation: {e}")
+        except Exception as e:
+            logger.warning(f"Unexpected error loading OpenAI cost calculator: {e}")
 
         try:
             from genops.providers.anthropic import GenOpsAnthropicAdapter
+
             # Create adapter without client to avoid requiring API keys
-            adapter = GenOpsAnthropicAdapter.__new__(GenOpsAnthropicAdapter)
+            adapter = GenOpsAnthropicAdapter.__new__(GenOpsAnthropicAdapter)  # type: ignore[assignment]
             self.provider_cost_calculators["anthropic"] = adapter._calculate_cost
-        except (ImportError, Exception) as e:
+        except ImportError as e:
             logger.debug(f"Anthropic provider not available for cost calculation: {e}")
+        except Exception as e:
+            logger.warning(f"Unexpected error loading Anthropic cost calculator: {e}")
 
     def start_chain_tracking(self, chain_id: str) -> None:
         """Start tracking costs for a chain execution."""
@@ -127,7 +135,7 @@ class LangChainCostAggregator:
         tokens_input: int,
         tokens_output: int,
         operation_name: str | None = None,
-        **metadata
+        **metadata,
     ) -> LLMCallCost | None:
         """
         Add an LLM call cost to a chain's tracking.
@@ -149,7 +157,9 @@ class LangChainCostAggregator:
             return None
 
         # Calculate cost using provider-specific calculator
-        cost = self._calculate_provider_cost(provider, model, tokens_input, tokens_output)
+        cost = self._calculate_provider_cost(
+            provider, model, tokens_input, tokens_output
+        )
 
         llm_call = LLMCallCost(
             provider=provider,
@@ -158,20 +168,18 @@ class LangChainCostAggregator:
             tokens_output=tokens_output,
             cost=cost,
             operation_name=operation_name,
-            metadata=metadata
+            metadata=metadata,
         )
 
         self.active_chains[chain_id].add_llm_call(llm_call)
-        logger.debug(f"Added LLM call cost: ${cost:.4f} ({provider}/{model}) to chain {chain_id}")
+        logger.debug(
+            f"Added LLM call cost: ${cost:.4f} ({provider}/{model}) to chain {chain_id}"
+        )
 
         return llm_call
 
     def _calculate_provider_cost(
-        self,
-        provider: str,
-        model: str,
-        tokens_input: int,
-        tokens_output: int
+        self, provider: str, model: str, tokens_input: int, tokens_output: int
     ) -> float:
         """Calculate cost using provider-specific logic."""
         provider_key = provider.lower()
@@ -188,10 +196,7 @@ class LangChainCostAggregator:
         return self._generic_cost_calculation(model, tokens_input, tokens_output)
 
     def _generic_cost_calculation(
-        self,
-        model: str,
-        tokens_input: int,
-        tokens_output: int
+        self, model: str, tokens_input: int, tokens_output: int
     ) -> float:
         """Generic cost calculation for unknown providers."""
         # Very rough estimates - should be configured per deployment
@@ -203,7 +208,7 @@ class LangChainCostAggregator:
             "claude-3": {"input": 3.0 / 1000000, "output": 15.0 / 1000000},
             "claude-2": {"input": 8.0 / 1000000, "output": 24.0 / 1000000},
             # Default fallback
-            "default": {"input": 0.001 / 1000, "output": 0.002 / 1000}
+            "default": {"input": 0.001 / 1000, "output": 0.002 / 1000},
         }
 
         # Find matching pricing
@@ -221,7 +226,9 @@ class LangChainCostAggregator:
 
         return input_cost + output_cost
 
-    def finalize_chain_tracking(self, chain_id: str, total_time: float = 0.0) -> ChainCostSummary | None:
+    def finalize_chain_tracking(
+        self, chain_id: str, total_time: float = 0.0
+    ) -> ChainCostSummary | None:
         """
         Finalize cost tracking for a chain and return summary.
 
@@ -239,7 +246,9 @@ class LangChainCostAggregator:
         summary = self.active_chains.pop(chain_id)
         summary.total_time = total_time
         summary.total_cost = summary.calculate_total_cost()
-        logger.debug(f"Finalized cost tracking for chain {chain_id}: ${summary.total_cost:.4f}")
+        logger.debug(
+            f"Finalized cost tracking for chain {chain_id}: ${summary.total_cost:.4f}"
+        )
 
         return summary
 
@@ -270,7 +279,7 @@ def get_cost_aggregator() -> LangChainCostAggregator:
     return _cost_aggregator
 
 
-def create_chain_cost_context(chain_id: str) -> 'ChainCostContext':
+def create_chain_cost_context(chain_id: str) -> "ChainCostContext":
     """Create a context manager for chain cost tracking."""
     return ChainCostContext(chain_id)
 
@@ -285,17 +294,21 @@ class ChainCostContext:
         self.start_time = None
         self.operation_id = None
 
-    def __enter__(self) -> 'ChainCostContext':
+    def __enter__(self) -> "ChainCostContext":
         import time
-        self.start_time = time.time()
-        self.operation_id = self.chain_id  # Use chain_id as operation_id
+
+        self.start_time = time.time()  # type: ignore[assignment]
+        self.operation_id = self.chain_id  # type: ignore  # Use chain_id as operation_id
         self.aggregator.start_chain_tracking(self.chain_id)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         import time
+
         total_time = time.time() - self.start_time if self.start_time else 0.0
-        self.summary = self.aggregator.finalize_chain_tracking(self.chain_id, total_time)
+        self.summary = self.aggregator.finalize_chain_tracking(
+            self.chain_id, total_time
+        )
 
     def add_llm_call(
         self,
@@ -304,12 +317,17 @@ class ChainCostContext:
         tokens_input: int,
         tokens_output: int,
         operation_name: str | None = None,
-        **metadata
+        **metadata,
     ) -> LLMCallCost | None:
         """Add an LLM call cost within this context."""
         return self.aggregator.add_llm_call_cost(
-            self.chain_id, provider, model, tokens_input, tokens_output,
-            operation_name, **metadata
+            self.chain_id,
+            provider,
+            model,
+            tokens_input,
+            tokens_output,
+            operation_name,
+            **metadata,
         )
 
     def get_current_summary(self) -> ChainCostSummary | None:
@@ -324,5 +342,5 @@ class ChainCostContext:
         """Record generation cost within this context."""
         # For now, just store it on the current summary
         current_summary = self.get_current_summary()
-        if current_summary and hasattr(current_summary, 'generation_cost'):
+        if current_summary and hasattr(current_summary, "generation_cost"):
             current_summary.generation_cost = cost
