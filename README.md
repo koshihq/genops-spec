@@ -2,17 +2,17 @@
   <img width="500" src="./assets/brand/genops-logo-optimized.jpg" alt="GenOps: Open Runtime Governance for AI Systems" style="max-width: 100%;">
 </p>
 
-# GenOps AI: Runtime Authority Control for AI Systems
+# GenOps: Runtime Authority Control for AI Systems
 
-GenOps AI extends <a href="https://opentelemetry.io" target="_blank">OpenTelemetry</a> with **runtime authority control** for production AI workloads, the missing control plane that enables organizations to deploy autonomous AI systems with governance built into the infrastructure.
+GenOps extends <a href="https://opentelemetry.io" target="_blank">OpenTelemetry</a> with **runtime authority control** for production AI workloads, the missing control plane that enables organizations to deploy autonomous AI systems with governance built into the infrastructure.
 
-For comprehensive operational foundations and architectural context, see: 📄 [**GenOps AI Technical Whitepaper**](https://github.com/KoshiHQ/genops-whitepaper/)
+For comprehensive operational foundations and architectural context, see: 📄 [**GenOps Technical Whitepaper**](https://github.com/koshihq/genops-whitepaper/)
 <br><br>
 
 <div align="center">
   
-  [![GitHub stars](https://img.shields.io/github/stars/KoshiHQ/GenOps-AI?style=social)](https://github.com/KoshiHQ/GenOps-AI/stargazers)
-  [![CI Status](https://img.shields.io/github/actions/workflow/status/KoshiHQ/GenOps-AI/ci.yml?branch=main)](https://github.com/KoshiHQ/GenOps-AI/actions)  
+  [![GitHub stars](https://img.shields.io/github/stars/koshihq/genops-spec?style=social)](https://github.com/koshihq/genops-spec/stargazers)
+  [![CI Status](https://img.shields.io/github/actions/workflow/status/koshihq/genops-spec/ci.yml?branch=main)](https://github.com/koshihq/genops-spec/actions)  
   [![PyPI version](https://badge.fury.io/py/genops.svg)](https://badge.fury.io/py/genops)
   [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
   [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
@@ -63,9 +63,9 @@ Your AI systems operate with unlimited authority:
 
 ---
 
-## The GenOps AI Solution: Infrastructure-Native Authority Control
+## The GenOps Solution: Infrastructure-Native Authority Control
 
-GenOps AI fills the **missing authority control plane** in modern AI infrastructure, using the same patterns that enabled confident cloud adoption:
+GenOps fills the **missing authority control plane** in modern AI infrastructure, using the same patterns that enabled confident cloud adoption:
 
 - **Authority boundaries** that constrain AI system decision-making at the infrastructure level
 - **Runtime budget enforcement** with automatic intervention before overruns occur
@@ -74,7 +74,7 @@ GenOps AI fills the **missing authority control plane** in modern AI infrastruct
 
 **The FinOps model for AI systems**: Just as cloud infrastructure needed cost control to enable confident scaling, AI systems need authority control to enable confident autonomy.
 
-Because GenOps AI extends standard OpenTelemetry, it enhances your existing observability stack without replacing tools or creating vendor lock-in.
+Because GenOps extends standard OpenTelemetry, it enhances your existing observability stack without replacing tools or creating vendor lock-in.
 
 ---
 
@@ -114,21 +114,21 @@ Because GenOps AI extends standard OpenTelemetry, it enhances your existing obse
 - Alert on problems that have already occurred
 - Track usage and performance for optimization
 
-**GenOps AI Authority Control:**
+**GenOps Authority Control:**
 - **Constrains AI operations before they execute** using infrastructure-level policies
 - **Enforces budget and resource limits at runtime** preventing overruns
 - **Enables governance boundaries** that autonomous AI systems cannot exceed
 - **Prevents** unauthorized operations through authority constraint enforcement
 
-**The critical difference:** Observability tools answer "What happened?" while GenOps AI answers "What is *allowed* to happen?" 
+**The critical difference:** Observability tools answer "What happened?" while GenOps answers "What is *allowed* to happen?" 
 
-**Both are essential**: Observability for understanding, GenOps AI for control. They complement each other in production AI infrastructure.
+**Both are essential**: Observability for understanding, GenOps for control. They complement each other in production AI infrastructure.
 
 ---
 
 ## The Missing Standard: Authority Control for AI Infrastructure
 
-GenOps AI extends OpenTelemetry semantic conventions into the governance domain, creating the open standard for AI authority control that the industry needs.
+GenOps extends OpenTelemetry semantic conventions into the governance domain, creating the open standard for AI authority control that the industry needs.
 
 **Why this approach matters:**
 - **Standards-based foundation** - Building on OpenTelemetry ensures interoperability and prevents vendor lock-in
@@ -136,7 +136,7 @@ GenOps AI extends OpenTelemetry semantic conventions into the governance domain,
 - **Community-driven development** - Open-source approach with transparent governance and contribution pathways
 - **Provider-agnostic** - Works across all AI providers, frameworks, and observability platforms
 
-**The inevitable evolution**: Just as FinOps emerged to control cloud costs, GenOps AI provides the authority control that AI systems require for confident autonomous operation.
+**The inevitable evolution**: Just as FinOps emerged to control cloud costs, GenOps provides the authority control that AI systems require for confident autonomous operation.
 
 ---
 
@@ -144,11 +144,11 @@ GenOps AI extends OpenTelemetry semantic conventions into the governance domain,
 
 **Keep the tools you love, add the governance layer that gives you control:**
 
-**Already using LLM providers directly?** GenOps AI adds runtime authority constraints without changing your application code.
+**Already using LLM providers directly?** GenOps adds runtime authority constraints without changing your application code.
 
-**Already using AI frameworks or routing tools?** GenOps AI provides governance infrastructure that works across all your existing tools.
+**Already using AI frameworks or routing tools?** GenOps provides governance infrastructure that works across all your existing tools.
 
-**Already using observability platforms?** GenOps AI extends your existing telemetry with governance semantics and control capabilities.
+**Already using observability platforms?** GenOps extends your existing telemetry with governance semantics and control capabilities.
 
 **The result**: Authority control infrastructure for your entire AI stack without migration complexity or vendor lock-in.
 
@@ -210,7 +210,7 @@ GenOps automatically captures governance telemetry with control actions:
 
 ## What You'll See in 5 Minutes
 
-After the 3-step setup above, GenOps AI immediately provides runtime authority control and constraint enforcement:
+After the 3-step setup above, GenOps immediately provides runtime authority control and constraint enforcement:
 
 ### **Runtime Governance Dashboard**
 ```
@@ -250,7 +250,7 @@ AUTHORITY CONTROL: Team 'marketing' budget constraint activated
 ## Authority Control Architecture Patterns
 
 **Individual Developer Authority**
-Add budget and policy constraints to personal AI projects without changing application code. GenOps AI provides immediate authority boundary enforcement across all AI operations.
+Add budget and policy constraints to personal AI projects without changing application code. GenOps provides immediate authority boundary enforcement across all AI operations.
 
 **Team Authority Coordination**  
 Unified authority policies across team members with shared budget pools and escalation workflows. Multiple developers operate within consistent constraint frameworks with centralized governance telemetry.
@@ -270,43 +270,43 @@ Scale authority control from individual constraints to organization-wide AI gove
 ## Integrations & Support
 
 ### AI & LLM Ecosystem
-- ✅ [OpenAI](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/openai) (<a href="https://openai.com/" target="_blank">↗</a>)
-- ✅ [Anthropic](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/anthropic) (<a href="https://www.anthropic.com/" target="_blank">↗</a>)
+- ✅ [OpenAI](https://github.com/koshihq/genops-spec/tree/main/examples/openai) (<a href="https://openai.com/" target="_blank">↗</a>)
+- ✅ [Anthropic](https://github.com/koshihq/genops-spec/tree/main/examples/anthropic) (<a href="https://www.anthropic.com/" target="_blank">↗</a>)
 - ✅ [Anyscale](docs/anyscale-quickstart.md) (<a href="https://www.anyscale.com/endpoints" target="_blank">↗</a>)
-- ✅ [Google Gemini](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/gemini) (<a href="https://deepmind.google/technologies/gemini/" target="_blank">↗</a>)
-- ✅ [Hugging Face](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/huggingface) (<a href="https://huggingface.co/docs/inference-providers/index" target="_blank">↗</a>)
-- ✅ [AWS Bedrock](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/bedrock) (<a href="https://aws.amazon.com/bedrock/" target="_blank">↗</a>)
-- ✅ [Anyscale](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/anyscale-quickstart.md) (<a href="https://www.anyscale.com/endpoints" target="_blank">↗</a>)
-- ✅ [OpenRouter](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/openrouter) (<a href="https://openrouter.ai/" target="_blank">↗</a>)
-- ✅ [LiteLLM](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/litellm-quickstart.md) (<a href="https://docs.litellm.ai/" target="_blank">↗</a>)
-- ✅ [Vercel AI SDK](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/vercel-ai-sdk-quickstart.md) (<a href="https://ai-sdk.dev/" target="_blank">↗</a>)
-- ✅ [Helicone](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/helicone) (<a href="https://helicone.ai/" target="_blank">↗</a>)
-- ✅ [LangChain](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/langchain) (<a href="https://python.langchain.com/" target="_blank">↗</a>)
-- ✅ [LlamaIndex](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/llamaindex) (<a href="https://www.llamaindex.ai/" target="_blank">↗</a>)
-- ✅ [Haystack AI](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/integrations/haystack.md) (<a href="https://haystack.deepset.ai/" target="_blank">↗</a>)
-- ✅ [Kubetorch](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/kubetorch-quickstart.md) (<a href="https://www.run.house/" target="_blank">↗</a>)
-- ✅ [CrewAI](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/quickstart/crewai-quickstart.md) (<a href="https://www.crewai.com/" target="_blank">↗</a>)
-- ✅ [Replicate](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/replicate) (<a href="https://replicate.com/" target="_blank">↗</a>)
-- ✅ [Cohere](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/cohere) (<a href="https://cohere.com/" target="_blank">↗</a>)
-- ✅ [Mistral](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/mistral) (<a href="https://mistral.ai/" target="_blank">↗</a>)
-- ✅ [Ollama](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/ollama) (<a href="https://ollama.com/" target="_blank">↗</a>)
-- ✅ [Perplexity AI](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/perplexity) (<a href="https://www.perplexity.ai/" target="_blank">↗</a>)
-- ✅ [Together AI](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/together) (<a href="https://www.together.ai/" target="_blank">↗</a>)
-- ✅ [Fireworks AI](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/fireworks) (<a href="https://fireworks.ai/" target="_blank">↗</a>)
-- ✅ [Traceloop + OpenLLMetry](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/traceloop) (<a href="https://traceloop.com/" target="_blank">↗</a>)
-- ✅ [PromptLayer](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/promptlayer) (<a href="https://promptlayer.com/" target="_blank">↗</a>)
-- ✅ [Weights & Biases](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/wandb) (<a href="https://wandb.ai/" target="_blank">↗</a>)
-- ✅ [Arize AI](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/arize) (<a href="https://arize.com/" target="_blank">↗</a>)
-- ✅ [Raindrop AI](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/raindrop-quickstart.md) (<a href="https://www.raindrop.ai/" target="_blank">↗</a>)
-- ✅ [PostHog](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/posthog) (<a href="https://posthog.com/" target="_blank">↗</a>)
-- ✅ [Langfuse](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/langfuse) (<a href="https://langfuse.com/" target="_blank">↗</a>)
-- ✅ [AutoGen](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/integrations/autogen.md) (<a href="https://github.com/microsoft/autogen" target="_blank">↗</a>)
-- ✅ [Dust](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/dust-quickstart.md) (<a href="https://dust.tt/" target="_blank">↗</a>)
-- ✅ [Flowise](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/flowise-quickstart.md) (<a href="https://flowiseai.com/" target="_blank">↗</a>)
-- ✅ [Griptape](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/griptape-quickstart.md) (<a href="https://www.griptape.ai/" target="_blank">↗</a>)
-- ✅ [SkyRouter](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/skyrouter-quickstart.md) (<a href="https://skyrouter.ai/" target="_blank">↗</a>)
-- ✅ [Databricks Unity Catalog](https://github.com/KoshiHQ/GenOps-AI/tree/main/examples/databricks_unity_catalog) (<a href="https://docs.databricks.com/en/data-governance/unity-catalog/index.html" target="_blank">↗</a>)
-- ✅ [MLflow](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/mlflow-quickstart.md) (<a href="https://mlflow.org/" target="_blank">↗</a>)
+- ✅ [Google Gemini](https://github.com/koshihq/genops-spec/tree/main/examples/gemini) (<a href="https://deepmind.google/technologies/gemini/" target="_blank">↗</a>)
+- ✅ [Hugging Face](https://github.com/koshihq/genops-spec/tree/main/examples/huggingface) (<a href="https://huggingface.co/docs/inference-providers/index" target="_blank">↗</a>)
+- ✅ [AWS Bedrock](https://github.com/koshihq/genops-spec/tree/main/examples/bedrock) (<a href="https://aws.amazon.com/bedrock/" target="_blank">↗</a>)
+- ✅ [Anyscale](https://github.com/koshihq/genops-spec/tree/main/docs/anyscale-quickstart.md) (<a href="https://www.anyscale.com/endpoints" target="_blank">↗</a>)
+- ✅ [OpenRouter](https://github.com/koshihq/genops-spec/tree/main/examples/openrouter) (<a href="https://openrouter.ai/" target="_blank">↗</a>)
+- ✅ [LiteLLM](https://github.com/koshihq/genops-spec/tree/main/docs/litellm-quickstart.md) (<a href="https://docs.litellm.ai/" target="_blank">↗</a>)
+- ✅ [Vercel AI SDK](https://github.com/koshihq/genops-spec/tree/main/docs/vercel-ai-sdk-quickstart.md) (<a href="https://ai-sdk.dev/" target="_blank">↗</a>)
+- ✅ [Helicone](https://github.com/koshihq/genops-spec/tree/main/examples/helicone) (<a href="https://helicone.ai/" target="_blank">↗</a>)
+- ✅ [LangChain](https://github.com/koshihq/genops-spec/tree/main/examples/langchain) (<a href="https://python.langchain.com/" target="_blank">↗</a>)
+- ✅ [LlamaIndex](https://github.com/koshihq/genops-spec/tree/main/examples/llamaindex) (<a href="https://www.llamaindex.ai/" target="_blank">↗</a>)
+- ✅ [Haystack AI](https://github.com/koshihq/genops-spec/tree/main/docs/integrations/haystack.md) (<a href="https://haystack.deepset.ai/" target="_blank">↗</a>)
+- ✅ [Kubetorch](https://github.com/koshihq/genops-spec/tree/main/docs/kubetorch-quickstart.md) (<a href="https://www.run.house/" target="_blank">↗</a>)
+- ✅ [CrewAI](https://github.com/koshihq/genops-spec/tree/main/docs/quickstart/crewai-quickstart.md) (<a href="https://www.crewai.com/" target="_blank">↗</a>)
+- ✅ [Replicate](https://github.com/koshihq/genops-spec/tree/main/examples/replicate) (<a href="https://replicate.com/" target="_blank">↗</a>)
+- ✅ [Cohere](https://github.com/koshihq/genops-spec/tree/main/examples/cohere) (<a href="https://cohere.com/" target="_blank">↗</a>)
+- ✅ [Mistral](https://github.com/koshihq/genops-spec/tree/main/examples/mistral) (<a href="https://mistral.ai/" target="_blank">↗</a>)
+- ✅ [Ollama](https://github.com/koshihq/genops-spec/tree/main/examples/ollama) (<a href="https://ollama.com/" target="_blank">↗</a>)
+- ✅ [Perplexity AI](https://github.com/koshihq/genops-spec/tree/main/examples/perplexity) (<a href="https://www.perplexity.ai/" target="_blank">↗</a>)
+- ✅ [Together AI](https://github.com/koshihq/genops-spec/tree/main/examples/together) (<a href="https://www.together.ai/" target="_blank">↗</a>)
+- ✅ [Fireworks AI](https://github.com/koshihq/genops-spec/tree/main/examples/fireworks) (<a href="https://fireworks.ai/" target="_blank">↗</a>)
+- ✅ [Traceloop + OpenLLMetry](https://github.com/koshihq/genops-spec/tree/main/examples/traceloop) (<a href="https://traceloop.com/" target="_blank">↗</a>)
+- ✅ [PromptLayer](https://github.com/koshihq/genops-spec/tree/main/examples/promptlayer) (<a href="https://promptlayer.com/" target="_blank">↗</a>)
+- ✅ [Weights & Biases](https://github.com/koshihq/genops-spec/tree/main/examples/wandb) (<a href="https://wandb.ai/" target="_blank">↗</a>)
+- ✅ [Arize AI](https://github.com/koshihq/genops-spec/tree/main/examples/arize) (<a href="https://arize.com/" target="_blank">↗</a>)
+- ✅ [Raindrop AI](https://github.com/koshihq/genops-spec/tree/main/docs/raindrop-quickstart.md) (<a href="https://www.raindrop.ai/" target="_blank">↗</a>)
+- ✅ [PostHog](https://github.com/koshihq/genops-spec/tree/main/examples/posthog) (<a href="https://posthog.com/" target="_blank">↗</a>)
+- ✅ [Langfuse](https://github.com/koshihq/genops-spec/tree/main/examples/langfuse) (<a href="https://langfuse.com/" target="_blank">↗</a>)
+- ✅ [AutoGen](https://github.com/koshihq/genops-spec/tree/main/docs/integrations/autogen.md) (<a href="https://github.com/microsoft/autogen" target="_blank">↗</a>)
+- ✅ [Dust](https://github.com/koshihq/genops-spec/tree/main/docs/dust-quickstart.md) (<a href="https://dust.tt/" target="_blank">↗</a>)
+- ✅ [Flowise](https://github.com/koshihq/genops-spec/tree/main/docs/flowise-quickstart.md) (<a href="https://flowiseai.com/" target="_blank">↗</a>)
+- ✅ [Griptape](https://github.com/koshihq/genops-spec/tree/main/docs/griptape-quickstart.md) (<a href="https://www.griptape.ai/" target="_blank">↗</a>)
+- ✅ [SkyRouter](https://github.com/koshihq/genops-spec/tree/main/docs/skyrouter-quickstart.md) (<a href="https://skyrouter.ai/" target="_blank">↗</a>)
+- ✅ [Databricks Unity Catalog](https://github.com/koshihq/genops-spec/tree/main/examples/databricks_unity_catalog) (<a href="https://docs.databricks.com/en/data-governance/unity-catalog/index.html" target="_blank">↗</a>)
+- ✅ [MLflow](https://github.com/koshihq/genops-spec/tree/main/docs/mlflow-quickstart.md) (<a href="https://mlflow.org/" target="_blank">↗</a>)
 - ☐ ElevenLabs (<a href="https://elevenlabs.io/" target="_blank">↗</a>)
 - ☐ Deepgram (<a href="https://deepgram.com/" target="_blank">↗</a>)
 - ☐ OpenAI Whisper (<a href="https://openai.com/research/whisper" target="_blank">↗</a>)
@@ -317,18 +317,18 @@ Scale authority control from individual constraints to organization-wide AI gove
 ---
 
 ### Platform & Infrastructure
-- ✅ [Kubernetes](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/kubernetes-getting-started.md) (<a href="https://kubernetes.io/" target="_blank">↗</a>)
-- ✅ [OpenTelemetry Collector](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/otel-collector-quickstart.md) (<a href="https://opentelemetry.io/docs/collector/" target="_blank">↗</a>)
-- ✅ [Datadog](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/datadog-quickstart.md) (<a href="https://www.datadoghq.com/" target="_blank">↗</a>)
-- ✅ [Grafana](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/grafana-quickstart.md) (<a href="https://grafana.com/" target="_blank">↗</a>)
-- ✅ [Loki](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/loki-quickstart.md) (<a href="https://grafana.com/oss/loki/" target="_blank">↗</a>)
-- ✅ [Honeycomb](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/honeycomb-quickstart.md) (<a href="https://www.honeycomb.io/" target="_blank">↗</a>)
-- ✅ [Cribl](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/integrations/cribl.md) (<a href="https://cribl.io" target="_blank">↗</a>)
-- ✅ [Prometheus](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/prometheus-quickstart.md) (<a href="https://prometheus.io/" target="_blank">↗</a>)
-- ✅ [Tempo](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/tempo-quickstart.md) (<a href="https://grafana.com/oss/tempo/" target="_blank">↗</a>)
-- ✅ [Splunk](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/splunk-quickstart.md) (<a href="https://www.splunk.com/" target="_blank">↗</a>)
-- ✅ [Elastic](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/quickstarts/elastic-quickstart.md) (<a href="https://www.elastic.co/" target="_blank">↗</a>)
-- ✅ [Collibra](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs/quickstarts/collibra-quickstart.md) (<a href="https://www.collibra.com/" target="_blank">↗</a>)
+- ✅ [Kubernetes](https://github.com/koshihq/genops-spec/tree/main/docs/kubernetes-getting-started.md) (<a href="https://kubernetes.io/" target="_blank">↗</a>)
+- ✅ [OpenTelemetry Collector](https://github.com/koshihq/genops-spec/tree/main/docs/otel-collector-quickstart.md) (<a href="https://opentelemetry.io/docs/collector/" target="_blank">↗</a>)
+- ✅ [Datadog](https://github.com/koshihq/genops-spec/tree/main/docs/datadog-quickstart.md) (<a href="https://www.datadoghq.com/" target="_blank">↗</a>)
+- ✅ [Grafana](https://github.com/koshihq/genops-spec/tree/main/docs/grafana-quickstart.md) (<a href="https://grafana.com/" target="_blank">↗</a>)
+- ✅ [Loki](https://github.com/koshihq/genops-spec/tree/main/docs/loki-quickstart.md) (<a href="https://grafana.com/oss/loki/" target="_blank">↗</a>)
+- ✅ [Honeycomb](https://github.com/koshihq/genops-spec/tree/main/docs/honeycomb-quickstart.md) (<a href="https://www.honeycomb.io/" target="_blank">↗</a>)
+- ✅ [Cribl](https://github.com/koshihq/genops-spec/tree/main/docs/integrations/cribl.md) (<a href="https://cribl.io" target="_blank">↗</a>)
+- ✅ [Prometheus](https://github.com/koshihq/genops-spec/tree/main/docs/prometheus-quickstart.md) (<a href="https://prometheus.io/" target="_blank">↗</a>)
+- ✅ [Tempo](https://github.com/koshihq/genops-spec/tree/main/docs/tempo-quickstart.md) (<a href="https://grafana.com/oss/tempo/" target="_blank">↗</a>)
+- ✅ [Splunk](https://github.com/koshihq/genops-spec/tree/main/docs/splunk-quickstart.md) (<a href="https://www.splunk.com/" target="_blank">↗</a>)
+- ✅ [Elastic](https://github.com/koshihq/genops-spec/tree/main/docs/quickstarts/elastic-quickstart.md) (<a href="https://www.elastic.co/" target="_blank">↗</a>)
+- ✅ [Collibra](https://github.com/koshihq/genops-spec/tree/main/docs/quickstarts/collibra-quickstart.md) (<a href="https://www.collibra.com/" target="_blank">↗</a>)
 - ☐ Docker (<a href="https://www.docker.com/" target="_blank">↗</a>)
 - ☐ AWS Lambda (<a href="https://aws.amazon.com/lambda/" target="_blank">↗</a>)
 - ☐ Google Cloud Run (<a href="https://cloud.google.com/run" target="_blank">↗</a>)
@@ -387,10 +387,10 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for:
 - Community guidelines and code of conduct
 
 ### **Getting Help**
-- **Documentation**: [GitHub Docs](https://github.com/KoshiHQ/GenOps-AI/tree/main/docs)
-- **Performance Guide**: [Performance Benchmarking](https://github.com/KoshiHQ/GenOps-AI/blob/main/docs/performance-benchmarking.md)
-- **Discussions**: [GitHub Discussions](https://github.com/KoshiHQ/GenOps-AI/discussions)
-- **Issues**: [GitHub Issues](https://github.com/KoshiHQ/GenOps-AI/issues)
+- **Documentation**: [GitHub Docs](https://github.com/koshihq/genops-spec/tree/main/docs)
+- **Performance Guide**: [Performance Benchmarking](https://github.com/koshihq/genops-spec/blob/main/docs/performance-benchmarking.md)
+- **Discussions**: [GitHub Discussions](https://github.com/koshihq/genops-spec/discussions)
+- **Issues**: [GitHub Issues](https://github.com/koshihq/genops-spec/issues)
 
 ---
 
@@ -411,23 +411,23 @@ Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for detai
 
 **The only platform that adds authority control infrastructure WITHOUT replacing your existing AI tools.**
 
-*When you're ready to scale authority control across larger teams, GenOps AI provides the governance infrastructure foundation for enterprise AI systems with confidence and constraints.*
+*When you're ready to scale authority control across larger teams, GenOps provides the governance infrastructure foundation for enterprise AI systems with confidence and constraints.*
 
 ---
 
 ## **Community & Quick Wins**
 
 **New to open source?** Start here:
-- [Good first issues](https://github.com/KoshiHQ/GenOps-AI/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) - Perfect for newcomers
-- [Documentation improvements](https://github.com/KoshiHQ/GenOps-AI/issues?q=is%3Aissue+is%3Aopen+label%3Adocumentation) - Help others learn
-- [Help fix our CI tests!](https://github.com/KoshiHQ/GenOps-AI/issues?q=is%3Aissue+is%3Aopen+label%3Aci-fix) - Great for contributors who love debugging
+- [Good first issues](https://github.com/koshihq/genops-spec/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) - Perfect for newcomers
+- [Documentation improvements](https://github.com/koshihq/genops-spec/issues?q=is%3Aissue+is%3Aopen+label%3Adocumentation) - Help others learn
+- [Help fix our CI tests!](https://github.com/koshihq/genops-spec/issues?q=is%3Aissue+is%3Aopen+label%3Aci-fix) - Great for contributors who love debugging
 
 **5-minute contributions welcome!** Every small improvement helps the community grow.
 
 **Looking for bigger challenges?**
-- [Provider integrations](https://github.com/KoshiHQ/GenOps-AI/issues?q=is%3Aissue+is%3Aopen+label%3Aprovider) - Add new provider integrations
-- [Dashboard templates](https://github.com/KoshiHQ/GenOps-AI/issues?q=is%3Aissue+is%3Aopen+label%3Adashboard) - Pre-built observability dashboards
-- [Cross-stack tracking patterns](https://github.com/KoshiHQ/GenOps-AI/issues?q=is%3Aissue+is%3Aopen+label%3Agovernance) - Real-world cost tracking scenarios
+- [Provider integrations](https://github.com/koshihq/genops-spec/issues?q=is%3Aissue+is%3Aopen+label%3Aprovider) - Add new provider integrations
+- [Dashboard templates](https://github.com/koshihq/genops-spec/issues?q=is%3Aissue+is%3Aopen+label%3Adashboard) - Pre-built observability dashboards
+- [Cross-stack tracking patterns](https://github.com/koshihq/genops-spec/issues?q=is%3Aissue+is%3Aopen+label%3Agovernance) - Real-world cost tracking scenarios
 
 ---
 
@@ -439,18 +439,18 @@ GenOps is actively developed with comprehensive cross-stack AI tracking features
 - **Core functionality**: Security scans pass, package installation works
 - **Production examples**: All cost tracking scenarios and integrations functional
 - **OpenTelemetry compliance**: Standard OTLP telemetry export working
-- **Community contributions welcome**: [See open issues](https://github.com/KoshiHQ/GenOps-AI/issues) for opportunities
+- **Community contributions welcome**: [See open issues](https://github.com/koshihq/genops-spec/issues) for opportunities
 
 ### **Need Help?**
-- **Questions**: [GitHub Discussions](https://github.com/KoshiHQ/GenOps-AI/discussions)
-- **Issues**: [GitHub Issues](https://github.com/KoshiHQ/GenOps-AI/issues)
+- **Questions**: [GitHub Discussions](https://github.com/koshihq/genops-spec/discussions)
+- **Issues**: [GitHub Issues](https://github.com/koshihq/genops-spec/issues)
 - **Contributing**: [Contributing Guide](CONTRIBUTING.md)
 
 ---
 
 ## Contributors
 
-Thanks goes to these wonderful people who have contributed to GenOps AI:
+Thanks goes to these wonderful people who have contributed to GenOps:
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
@@ -465,15 +465,15 @@ This project follows the [all-contributors](https://github.com/all-contributors/
 
 ## **Trademark & Brand Guidelines**
 
-### **GenOps AI Trademark Usage**
+### **GenOps Trademark Usage**
 
-The "GenOps AI" name and associated branding are trademarks used to identify this project and its official implementations.
+The "GenOps" name and associated branding are trademarks used to identify this project and its official implementations.
 
 **✅ Acceptable Use:**
 - Referring to this project in documentation, blog posts, or presentations
-- Building integrations or extensions that work with GenOps AI
-- Using "Built with GenOps AI" or "Powered by GenOps AI" attributions
-- Community projects that extend or integrate with GenOps AI functionality
+- Building integrations or extensions that work with GenOps
+- Using "Built with GenOps" or "Powered by GenOps" attributions
+- Community projects that extend or integrate with GenOps functionality
 
 **❌ Prohibited Use:**
 - Using "GenOps" in the name of competing commercial AI governance products
@@ -481,7 +481,7 @@ The "GenOps AI" name and associated branding are trademarks used to identify thi
 - Using GenOps branding for unrelated products or services
 - Implying official endorsement without permission
 
-**License Note:** The GenOps AI code is licensed under Apache 2.0, but trademark rights are separate from code rights. You're free to use, modify, and distribute the code under Apache 2.0, but please respect our trademark guidelines when naming your projects or products.
+**License Note:** The GenOps code is licensed under Apache 2.0, but trademark rights are separate from code rights. You're free to use, modify, and distribute the code under Apache 2.0, but please respect our trademark guidelines when naming your projects or products.
 
 For questions about trademark usage, please open an issue or contact the maintainers.
 
@@ -491,8 +491,8 @@ For questions about trademark usage, please open an issue or contact the maintai
 
 - **Code License**: [Apache License 2.0](LICENSE) - Permissive open source license
 - **Contributor Agreement**: All contributions require [DCO sign-off](CONTRIBUTING.md#developer-certificate-of-origin-dco)
-- **Copyright**: Copyright © 2024 GenOps AI Contributors
-- **Trademark**: "GenOps AI" and associated marks are trademarks of the project maintainers
+- **Copyright**: Copyright © 2024 GenOps Contributors
+- **Trademark**: "GenOps" and associated marks are trademarks of the project maintainers
 
 ---
 
@@ -503,7 +503,7 @@ For questions about trademark usage, please open an issue or contact the maintai
   pip install genops
   ```
   
-  <p><strong>Star us on GitHub</strong> if you find GenOps AI useful!</p>
+  <p><strong>Star us on GitHub</strong> if you find GenOps useful!</p>
   
-  [![GitHub stars](https://img.shields.io/github/stars/KoshiHQ/GenOps-AI?style=social)](https://github.com/KoshiHQ/GenOps-AI/stargazers)
+  [![GitHub stars](https://img.shields.io/github/stars/koshihq/genops-spec?style=social)](https://github.com/koshihq/genops-spec/stargazers)
 </div>
