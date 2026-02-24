@@ -1,1 +1,0 @@
-"""Elastic provider tests package."""

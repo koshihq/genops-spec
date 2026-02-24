@@ -1,9 +1,0 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: genops-openrouter
-  labels:
-    name: genops-openrouter
-    app.kubernetes.io/name: openrouter-service
-    app.kubernetes.io/component: ai-governance
-    app.kubernetes.io/managed-by: kubernetes

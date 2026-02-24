@@ -148,6 +148,12 @@ GenOps v0.1.0 is a **Working Draft**. Feedback from platform engineers, runtime 
 
 ---
 
+## Repository History
+
+Prior experimental tooling, validation harnesses, operators, and benchmarks have been preserved on branch `archive/full-repo-2026-02-23`. The main branch now contains the normative GenOps specification only.
+
+---
+
 ## License
 
 [Apache License 2.0](LICENSE)
