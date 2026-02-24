@@ -38,6 +38,7 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 8. [Event Schema Definitions](#8-event-schema-definitions)
 9. [Compliance Requirements](#9-compliance-requirements)
 10. [Non-Goals](#10-non-goals)
+11. [Versioning and Compatibility Policy](#11-versioning-and-compatibility-policy)
 - [Appendix A: Attribute Quick Reference](#appendix-a-attribute-quick-reference)
 - [Appendix B: Event Quick Reference](#appendix-b-event-quick-reference)
 - [References](#references)
@@ -70,7 +71,7 @@ GenOps extends OpenTelemetry. It defines additional semantic conventions in the 
 
 ### 1.4 Versioning
 
-This is version 0.1.0 of the GenOps Governance Specification. The specification follows [Semantic Versioning 2.0.0](https://semver.org/). Backwards-incompatible changes increment the major version. New attributes, events, or reason codes that do not remove or change existing definitions increment the minor version.
+This is version 0.1.0 of the GenOps Governance Specification. The specification follows [Semantic Versioning 2.0.0](https://semver.org/). For version 1.0.0 and later, backwards-incompatible changes increment the major version. New attributes, events, or reason codes that do not remove or change existing definitions increment the minor version. For pre-1.0 stability rules, see Section 11.1. See Section 11 for the full versioning and compatibility policy.
 
 ---
 
@@ -114,7 +115,7 @@ An AWU has three ordered phases:
 
 3. **Post-execution.** Actual resource consumption is recorded and reconciliation occurs. This phase completes the accounting invariant.
 
-A compliant runtime MUST emit telemetry from all three phases for every AWU that reaches execution. If an AWU is blocked during pre-execution, only pre-execution telemetry is required.
+A compliant runtime MUST emit telemetry from all three phases for every AWU that reaches execution. If an AWU does not reach execution due to a pre-execution decision, only pre-execution telemetry is required.
 
 ### 2.5 Composition
 
@@ -132,7 +133,7 @@ The Deterministic Accounting Invariant ensures that resource consumption for eve
 
 ### 3.2 Accounting Unit
 
-The accounting unit is the measurable resource being governed. It MAY be currency (e.g., USD), tokens, compute-seconds, or any other quantifiable unit. The specification does not prescribe which unit to use. The unit MUST be declared on every AWU.
+The accounting unit is the measurable resource being governed. It MAY be currency (e.g., USD), tokens, compute-seconds, or any other quantifiable unit. The specification does not prescribe which unit to use. The unit MUST be declared on AWUs that reach resource reservation, subject to the conditional exceptions in Section 7.1.
 
 ### 3.3 The Invariant
 
@@ -152,7 +153,7 @@ The following attributes enforce the accounting invariant:
 |---|---|---|---|
 | `genops.accounting.reserved` | double | Pre-execution | The estimated resource consumption reserved before execution. |
 | `genops.accounting.actual` | double | Post-execution | The measured resource consumption after execution. |
-| `genops.accounting.unit` | string | All | The unit of measure (e.g., `USD`, `tokens`, `compute_seconds`). |
+| `genops.accounting.unit` | string | Reservation and reconciliation | The unit of measure (e.g., `USD`, `tokens`, `compute_seconds`). |
 
 ### 3.5 Failure Semantics
 
@@ -190,7 +191,7 @@ Every enforcement decision MUST include:
 
 ### 4.3 Decision Immutability
 
-An enforcement decision, once recorded, MUST NOT be modified. If a subsequent evaluation produces a different result for the same AWU (for example, a retry after a rate limit), it MUST be recorded as a separate decision event.
+An enforcement decision, once recorded, MUST NOT be modified. If a subsequent evaluation produces a different result (for example, a retry after a rate limit), it MUST be recorded as a separate decision event. Retries SHOULD be represented as distinct AWUs.
 
 ### 4.4 Attribution
 
@@ -212,7 +213,7 @@ This is the reason_code taxonomy for GenOps Specification version 0.1. The taxon
 | `BUDGET_RESERVATION_FAILED` | Budget | The requested reservation could not be fulfilled against the available budget. |
 | `POLICY_DENY_MODEL` | Policy | The requested model is not permitted by the governing policy. |
 | `POLICY_DENY_REGION` | Policy | The requested provider region is not permitted by the governing policy. |
-| `POLICY_DENY_CONTENT` | Policy | The request was denied due to content policy enforcement. |
+| `POLICY_DENY_CONTENT` | Policy | The request was denied due to an organization-defined policy rule evaluating request content. |
 | `RATE_LIMITED` | Rate | The request exceeded the permitted request rate. |
 | `SLA_LATENCY_VIOLATION` | SLA | The predicted or observed latency exceeds the SLA boundary. |
 | `PROVIDER_ERROR_UPSTREAM` | Provider | The upstream provider returned an error preventing fulfillment. |
@@ -234,9 +235,11 @@ Implementations MAY define additional reason codes using the `x_` prefix (e.g., 
 
 Non-prefixed reason codes are reserved for the specification. Implementations MUST NOT define non-prefixed reason codes outside this specification.
 
-### 5.6 Backwards Compatibility
+### 5.6 Taxonomy Evolution Rules
 
-New reason codes MAY be added in future minor versions of this specification. Existing reason codes MUST NOT be removed or redefined within the same major version. Consumers of reason_code values SHOULD handle unrecognized codes gracefully.
+For specification versions 1.0.0 and later, new reason codes MAY be added in future minor versions. Existing reason codes MUST NOT be removed or redefined within the same major version. Consumers of reason_code values SHOULD handle unrecognized codes gracefully.
+
+For specification versions prior to 1.0.0, reason code stability follows the pre-1.0 stability policy in Section 11.1.
 
 ---
 
@@ -277,7 +280,7 @@ All attributes defined in this specification use the `genops.*` namespace. Imple
 
 ### 7.1 Required Attributes
 
-The following attributes are the normative minimum. A compliant runtime MUST emit these attributes on every AWU.
+The following attributes are the normative minimum. A compliant runtime MUST emit these attributes on every AWU, subject to the conditional exceptions below.
 
 | Attribute | Type | Description |
 |---|---|---|
@@ -291,8 +294,15 @@ The following attributes are the normative minimum. A compliant runtime MUST emi
 | `genops.accounting.unit` | string | Unit of measure for accounting values. |
 | `genops.policy.result` | string | Enforcement decision: `ALLOWED`, `BLOCKED`, `WARNING`, or `RATE_LIMITED`. |
 | `genops.policy.reason_code` | string | Reason code from the taxonomy in Section 5. REQUIRED when `genops.policy.result` is not `ALLOWED`. |
+| `genops.spec.version` | string | GenOps specification version implemented, SemVer `MAJOR.MINOR.PATCH`. |
 
-For AWUs that do not reach execution due to a `BLOCKED` pre-execution decision, `genops.accounting.actual` MAY be omitted. In such cases, the omission does not constitute non-compliance with Section 7.1.
+`genops.spec.version` MUST be emitted on every AWU, including AWUs that do not reach resource reservation due to a pre-execution decision.
+
+For AWUs that do not reach resource reservation due to a pre-execution decision (for example, `BLOCKED` or `RATE_LIMITED`), `genops.accounting.reserved`, `genops.accounting.actual`, and `genops.accounting.unit` MAY be omitted. In such cases, the omission does not constitute non-compliance with Section 7.1.
+
+For AWUs that reach resource reservation, `genops.accounting.reserved` and `genops.accounting.unit` MUST be present.
+
+For AWUs that reach execution completion, `genops.accounting.actual` MUST be present.
 
 ### 7.2 Required Events
 
@@ -304,11 +314,11 @@ A compliant runtime MUST emit the following events at the specified lifecycle po
 | `genops.budget.reservation` | Pre-execution | Emitted when a resource reservation is recorded. |
 | `genops.budget.reconciliation` | Post-execution | Emitted when actual consumption is reconciled against the reservation. |
 
-#### 7.2.1 Blocked AWU Event Requirements
+#### 7.2.1 Non-Executing AWU Event Requirements
 
-If an AWU is blocked prior to resource reservation, only the `genops.policy.evaluated` event is REQUIRED.
+If an AWU does not reach resource reservation due to a pre-execution decision (for example, `BLOCKED` or `RATE_LIMITED`), only the `genops.policy.evaluated` event is REQUIRED.
 
-If an AWU is blocked after reservation but before execution begins, the `genops.budget.reservation` event MUST have been emitted. In this case, `genops.budget.reconciliation` is not required.
+If an AWU does not reach execution but is stopped after reservation and before execution begins, the `genops.budget.reservation` event MUST have been emitted. In this case, `genops.budget.reconciliation` is not required.
 
 An AWU that does not reach execution MUST NOT emit `genops.budget.reconciliation`.
 
@@ -406,6 +416,8 @@ This section defines the normative schema for each required event and the schema
 | `genops.policy.result` | string | `ALLOWED`, `BLOCKED`, `WARNING`, or `RATE_LIMITED`. |
 | `genops.policy.reason_code` | string | From the taxonomy in Section 5. REQUIRED when result is not `ALLOWED`. |
 
+When `genops.policy.result` is `ALLOWED`, `genops.policy.reason_code` MUST NOT be set.
+
 **Optional attributes:**
 
 | Attribute | Type | Description |
@@ -486,7 +498,9 @@ This section defines the normative schema for each required event and the schema
 
 ### 8.5 Event Stability
 
-All events in Sections 8.1 through 8.3 have **stability: stable**. Their schemas MUST NOT change within the same major version of this specification.
+For specification versions 1.0.0 and later, the required events listed in Section 7.2 (schemas in Sections 8.1–8.3) have **stability: stable**. Their schemas MUST NOT change within the same major version.
+
+For versions prior to 1.0.0, required event schemas follow the pre-1.0 stability policy in Section 11.1.
 
 All events in Section 8.4 have **stability: experimental**. Their schemas MAY change in minor versions.
 
@@ -498,7 +512,7 @@ All events in Section 8.4 have **stability: experimental**. Their schemas MAY ch
 
 A **GenOps v0.1 compliant runtime** MUST satisfy all of the following:
 
-1. Emit all required attributes defined in Section 7.1 on every AWU.
+1. Emit all required attributes defined in Section 7.1 on every AWU, subject to any conditional exceptions defined in Section 7.1.
 2. Implement the Deterministic Accounting Invariant defined in Section 3 — specifically, the reservation-before-execution guarantee.
 3. Emit all required events defined in Section 7.2 at the specified lifecycle points.
 4. Use the `genops.policy.result` values exclusively from the set defined in Section 4.1.
@@ -542,6 +556,51 @@ The following are explicitly out of scope for this specification:
 
 ---
 
+## 11. Versioning and Compatibility Policy
+
+GenOps follows [Semantic Versioning 2.0.0](https://semver.org/).
+
+The GenOps specification is the authoritative definition of event names, attribute names, decision states, and reason codes. Implementations MUST NOT redefine or reinterpret these definitions.
+
+### 11.1 Pre-1.0 Stability (0.x)
+
+Versions prior to 1.0.0 are considered stabilization releases. Breaking changes MAY occur in minor version increments. Required attributes, required events, decision states, and reason codes MAY evolve. Implementations MUST declare the exact GenOps version they implement.
+
+### 11.2 1.0.0 and Later
+
+Starting at version 1.0.0:
+
+- Required attributes (Section 7.1) and required events (Section 7.2) are stable. Their semantics, types, and cardinality MUST NOT change within the same major version.
+- Optional attributes (Section 7.3) and events designated **stability: experimental** by this specification (Sections 8.4–8.5) MAY evolve in minor versions. They are not covered by the stability guarantee.
+- `reason_code` values defined in the major version MUST NOT be removed or redefined within that major version.
+- Backwards-incompatible changes — including removal, renaming, or redefinition of required attributes, required events, decision states, or reason codes — MUST increment the major version.
+
+### 11.3 Version Declaration
+
+A runtime MUST declare the specification version it implements using the format `MAJOR.MINOR.PATCH` as defined by [Semantic Versioning 2.0.0](https://semver.org/). At minimum, this declaration MUST be machine-verifiable via the `genops.spec.version` attribute (Section 7.1). The canonical location for this machine-verifiable declaration is the AWU span attributes (that is, the `genops.spec.version` attribute emitted on the AWU). Additional declaration mechanisms are implementation-defined.
+
+A runtime MAY declare compatibility with a minor version range within the same major version, provided all versions in the declared range share identical required attributes, required events, decision states, and reason codes. The runtime MUST be able to demonstrate this identity via documentation, test artifact, or the published conformance suite.
+
+### 11.4 Runtime Compatibility
+
+A runtime claiming GenOps compliance MUST:
+
+1. Declare the GenOps specification version it implements (Section 11.3).
+2. Emit all REQUIRED attributes and REQUIRED events required by that version, including any conditional or phase-specific exceptions defined in Sections 7.1 and 7.2.1.
+3. Pass the published GenOps conformance suite for the declared version, if available.
+
+A runtime MAY emit OPTIONAL attributes and EXPERIMENTAL events defined by that version. A runtime MAY emit extension reason codes permitted under Section 5.5. A runtime MAY emit additional non-GenOps telemetry, but such telemetry MUST NOT conflict with or redefine GenOps required definitions. A runtime MUST NOT claim compliance if REQUIRED definitions are missing or reinterpreted.
+
+In the absence of a published conformance suite, compliance MUST be verifiable through inspection of emitted telemetry as defined in Section 9.4.
+
+A runtime MUST NOT claim compliance with a specification version it does not implement. Partial compliance (Section 9.2) MUST be declared explicitly, including the specification version. Compliance criteria are defined in Section 9; this section defines version declaration and compatibility expectations for compliance claims.
+
+### 11.5 Change Control (Non-Normative)
+
+Semantic changes to required definitions are spec-first: the specification SHOULD be updated before any reference implementation reflects the change. Reference implementations SHOULD update to match the specification within the same release cycle.
+
+---
+
 ## Appendix A: Attribute Quick Reference
 
 ### Required Attributes
@@ -558,6 +617,7 @@ The following are explicitly out of scope for this specification:
 | `genops.accounting.unit` | string | 3.4 |
 | `genops.policy.result` | string | 4.2 |
 | `genops.policy.reason_code` | string | 4.2, 5.3 |
+| `genops.spec.version` | string | 7.1, 11.3 |
 
 ### Optional Attributes
 
@@ -600,9 +660,9 @@ The following are explicitly out of scope for this specification:
 
 | Event Name | Phase | Stability | Section |
 |---|---|---|---|
-| `genops.policy.evaluated` | Pre-execution | Stable | 8.1 |
-| `genops.budget.reservation` | Pre-execution | Stable | 8.2 |
-| `genops.budget.reconciliation` | Post-execution | Stable | 8.3 |
+| `genops.policy.evaluated` | Pre-execution | Stable (1.0+), see 8.5 (0.x) | 8.1 |
+| `genops.budget.reservation` | Pre-execution | Stable (1.0+), see 8.5 (0.x) | 8.2 |
+| `genops.budget.reconciliation` | Post-execution | Stable (1.0+), see 8.5 (0.x) | 8.3 |
 
 ### Optional Events
 
