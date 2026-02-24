@@ -4,9 +4,13 @@
 
 # GenOps Governance Specification
 
+**[Specification: GenOps Governance Specification v0.1](spec/genops-spec-v0.1.md)**
+
+GenOps is an open, runtime-agnostic governance specification for AI workloads.
+
 GenOps defines the minimal interoperable governance surface for AI workloads. It specifies the semantic contract required for consistent runtime governance across independently developed systems.
 
-This repository contains the GenOps specification document.
+This repository contains the GenOps specification document. Governance model: [GOVERNANCE.md](GOVERNANCE.md). Contribution process: [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
@@ -119,26 +123,20 @@ The current version is: **v0.1.0**
 ```
 spec/
   genops-spec-v0.1.md
+GOVERNANCE.md
+CONTRIBUTING.md
 ```
 
-Future versions will be added under the `spec/` directory.
+Future specification versions will be added under the `spec/` directory.
 
 ---
 
-## Contributing
+## Governance and Contributing
 
-GenOps is an open specification. Proposals for changes must:
+GenOps is governed by a transparent model based on lazy consensus, with explicit voting and supermajority requirements for breaking changes. The governance model defines roles, decision thresholds, version governance, and conflict resolution.
 
-- Preserve deterministic behavior.
-- Avoid expanding scope beyond runtime governance semantics.
-- Maintain backward compatibility within a major version.
-
-All proposed changes should include:
-
-- A clear problem statement.
-- Rationale.
-- Compatibility analysis.
-- Updated compliance impact.
+- **[GOVERNANCE.md](GOVERNANCE.md)** -- Project roles, decision model, specification lifecycle, version governance.
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** -- Change types, proposal requirements, review process, backward compatibility policy.
 
 ---
 
