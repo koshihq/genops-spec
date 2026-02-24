@@ -200,4 +200,4 @@ Initial maintainers are the repository owners of the `koshihq/genops-spec` organ
 
 | Name | GitHub Handle | Role | Status |
 |------|---------------|------|--------|
-| Guy Derry | @nordiclion | Maintainer | Active |
+| Guy Derry | [@nordiclion](https://github.com/nordiclion) | Maintainer | Active |
