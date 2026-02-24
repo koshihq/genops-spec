@@ -1,1 +1,0 @@
-# Traceloop + OpenLLMetry integration tests
